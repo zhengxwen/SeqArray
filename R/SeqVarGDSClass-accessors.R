@@ -485,8 +485,8 @@ seqDelete <- function(gdsfile, info.varname=NULL, format.varname=NULL)
         stop("There is no variable.")
 
     # call C function
-    .Call("seq_Delete", gdsfile, info.varname, format.varname,
-    	PACKAGE="SeqArray")
+    # .Call("seq_Delete", gdsfile, info.varname, format.varname,
+    #	PACKAGE="SeqArray")
 
     # return
     invisible()

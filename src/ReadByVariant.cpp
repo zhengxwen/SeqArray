@@ -29,19 +29,19 @@
 
 
 /// 
-static void _MappingIndex(PdSequenceX Node, const vector<CBOOL> &sel,
-	vector<int> &out_len, vector<CBOOL> &out_var_sel,
-	CoreArray::Int32 &out_var_start, CoreArray::Int32 &out_var_count)
+static void MAP_INDEX(PdSequenceX Node, const vector<C_BOOL> &sel,
+	vector<int> &out_len, vector<C_BOOL> &out_var_sel,
+	C_Int32 &out_var_start, C_Int32 &out_var_count)
 {
-	if (gds_SeqDimCnt(Node) != 1)
+	if (GDS_Seq_DimCnt(Node) != 1)
 		throw ErrSeqArray("Invalid dimension.");
-	int Cnt = CHECK(gds_SeqGetCount(Node));
+	C_Int64 Cnt = GDS_Seq_GetTotalCount(Node);
 
 	if (sel.empty())
 	{
 		out_len.resize(Cnt);
-		CoreArray::Int32 _st=0, _cnt=Cnt;
-		CHECK(gds_rData(Node, &_st, &_cnt, &out_len[0], svInt32));
+		C_Int32 _st=0, _cnt=Cnt;
+		GDS_Seq_rData(Node, &_st, &_cnt, &out_len[0], svInt32);
 
 		out_var_start = 0;
 		out_var_count = 0;
@@ -70,7 +70,7 @@ static void _MappingIndex(PdSequenceX Node, const vector<CBOOL> &sel,
 		if (_end >= 0)
 		{
 			const int N_MAX = 16384;
-			CoreArray::Int32 buffer[N_MAX];
+			C_Int32 buffer[N_MAX];
 
 			out_var_start = 0;
 			int pos = 0;
@@ -78,7 +78,7 @@ static void _MappingIndex(PdSequenceX Node, const vector<CBOOL> &sel,
 			{
 				int L = _start - pos;
 				if (L > N_MAX) L = N_MAX;
-				CHECK(gds_rData(Node, &pos, &L, buffer, svInt32));
+				GDS_Seq_rData(Node, &pos, &L, buffer, svInt32);
 				pos += L;
 				for (int i=0; i < L; i++)
 				{
@@ -93,7 +93,7 @@ static void _MappingIndex(PdSequenceX Node, const vector<CBOOL> &sel,
 			{
 				int L = _end - pos + 1;
 				if (L > N_MAX) L = N_MAX;
-				CHECK(gds_rData(Node, &pos, &L, buffer, svInt32));
+				GDS_Seq_rData(Node, &pos, &L, buffer, svInt32);
 				for (int i=0; i < L; i++)
 				{
 					int LL = (buffer[i] > 0) ? buffer[i] : 0;
@@ -137,16 +137,16 @@ public:
 	}
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
-		int nVariant, CBOOL *VariantSel, int nSample, CBOOL *SampleSel)
+		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel)
 	{
 		static const char *ErrDim = "Invalid dimension of '%s'.";
 
 		// initialize
 		GDS_PATH_PREFIX_CHECK(Path);
 		VarType = Type;
-		Node = CHECK(gds_NodePath(Root, Path));
-		SVType = gds_SeqSVType(Node);
-		DimCnt = gds_SeqDimCnt(Node);
+		Node = GDS_Node_Path(Root, Path, TRUE);
+		SVType = GDS_Seq_GetSVType(Node);
+		DimCnt = GDS_Seq_DimCnt(Node);
 
 		Num_Variant = nVariant;
 		TotalNum_Sample = nSample;
@@ -165,7 +165,7 @@ public:
 		{
 			case ctBasic:
 				// VARIABLE: variant.id, position, allele
-				if ((DimCnt != 1) || (gds_SeqGetCount(Node) != nVariant))
+				if ((DimCnt != 1) || (GDS_Seq_GetTotalCount(Node) != nVariant))
 					throw ErrSeqArray(ErrDim, Path);
 				break;
 
@@ -173,15 +173,15 @@ public:
 				// VARIABLE: genotype/data, genotype/@data
 				if (DimCnt != 3)
 					throw ErrSeqArray(ErrDim, Path);
-				CHECK(gds_SeqGetDim(Node, DLen));
+				GDS_Seq_GetDim(Node, DLen, 3);
 				if ((DLen[0] < nVariant) || (DLen[1] != nSample))
 					throw ErrSeqArray(ErrDim, Path);
 
 				Path2 = GDS_PATH_PREFIX(Path, '@');
-				IndexNode = gds_NodePath(Root, Path2.c_str());
+				IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
 				if (IndexNode == NULL)
 					throw ErrSeqArray("'%s' is missing!", Path2.c_str());
-				if ((gds_SeqDimCnt(IndexNode) != 1) || (gds_SeqGetCount(IndexNode) != nVariant))
+				if ((GDS_Seq_DimCnt(IndexNode) != 1) || (GDS_Seq_GetTotalCount(IndexNode) != nVariant))
 					throw ErrSeqArray(ErrDim, Path2.c_str());
 
 				SelPtr[1] = SampleSel;
@@ -193,7 +193,7 @@ public:
 				// VARIABLE: phase/data
 				if ((DimCnt != 2) && (DimCnt != 3))
 					throw ErrSeqArray(ErrDim, Path);
-				CHECK(gds_SeqGetDim(Node, DLen));
+				GDS_Seq_GetDim(Node, DLen, 3);
 				if ((DLen[0] != nVariant) || (DLen[1] != nSample))
 					throw ErrSeqArray(ErrDim, Path);
 
@@ -209,13 +209,13 @@ public:
 				// VARIABLE: info/...
 				if ((DimCnt!=1) && (DimCnt!=2))
 					throw ErrSeqArray(ErrDim, Path);
-				CHECK(gds_SeqGetDim(Node, DLen));
+				GDS_Seq_GetDim(Node, DLen, 2);
 
 				Path2 = GDS_PATH_PREFIX(Path, '@');
-				IndexNode = gds_NodePath(Root, Path2.c_str());
+				IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
 				if (IndexNode != NULL)
 				{
-					if ((gds_SeqDimCnt(IndexNode) != 1) || (gds_SeqGetCount(IndexNode) != nVariant))
+					if ((GDS_Seq_DimCnt(IndexNode) != 1) || (GDS_Seq_GetTotalCount(IndexNode) != nVariant))
 						throw ErrSeqArray(ErrDim, Path2.c_str());
 				} else {
 					if (DLen[0] != nVariant)
@@ -233,13 +233,13 @@ public:
 				// VARIABLE: format/...
 				if ((DimCnt!=2) && (DimCnt!=3))
 					throw ErrSeqArray(ErrDim, Path);
-				CHECK(gds_SeqGetDim(Node, DLen));
+				GDS_Seq_GetDim(Node, DLen, 3);
 
 				Path2 = GDS_PATH_PREFIX(Path, '@');
-				IndexNode = gds_NodePath(Root, Path2.c_str());
+				IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
 				if (IndexNode != NULL)
 				{
-					if ((gds_SeqDimCnt(IndexNode) != 1) || (gds_SeqGetCount(IndexNode) != nVariant))
+					if ((GDS_Seq_DimCnt(IndexNode) != 1) || (GDS_Seq_GetTotalCount(IndexNode) != nVariant))
 						throw ErrSeqArray(ErrDim, Path2.c_str());
 				} else
 					throw ErrSeqArray("'%s' is missing!", Path2.c_str());
@@ -260,8 +260,8 @@ public:
 		IndexCellVariant = 0;
 		if (IndexNode)
 		{
-			CoreArray::Int32 Cnt=1;
-			CHECK(gds_rData(IndexNode, &_Index, &Cnt, &NumCellVariant, svInt32));
+			C_Int32 Cnt=1;
+			GDS_Seq_rData(IndexNode, &_Index, &Cnt, &NumCellVariant, svInt32);
 			if (NumCellVariant < 0) NumCellVariant = 0;
 		} else
 			NumCellVariant = 1;
@@ -282,16 +282,17 @@ public:
 		IndexCellVariant += NumCellVariant;
 		if (IndexNode)
 		{
-			CoreArray::Int32 Cnt=1, L;
+			C_Int32 Cnt=1, L;
 			while ((_Index<Num_Variant) && !VariantSelection[_Index])
 			{
-				CHECK(gds_rData(IndexNode, &_Index, &Cnt, &L, svInt32));
+				GDS_Seq_rData(IndexNode, &_Index, &Cnt, &L, svInt32);
 				if (L > 0) IndexCellVariant += L;
 				_Index ++;
 			}
 			if (_Index < Num_Variant)
 			{
-				CHECK(gds_rData(IndexNode, &_Index, &Cnt, &NumCellVariant, svInt32));
+				GDS_Seq_rData(IndexNode, &_Index, &Cnt,
+					&NumCellVariant, svInt32);
 				if (NumCellVariant < 0) NumCellVariant = 0;
 			} else
 				NumCellVariant = 0;
@@ -310,10 +311,10 @@ public:
 		int SlideCnt = DLen[1]*DLen[2];
 
 		TdIterator it;
-		CHECK(gds_IterGetStart(Node, it));
-		CHECK(gds_IterAdvEx(it, IndexCellVariant*SlideCnt));
-		CHECK_SIZE(gds_IterRData(it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8));
-		UInt8 *s = &Init.GENO_BUFFER[0];
+		GDS_Iter_GetStart(Node, &it);
+		GDS_Iter_Offset(&it, IndexCellVariant*SlideCnt);
+		GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
+		C_UInt8 *s = &Init.GENO_BUFFER[0];
 		int *p = Base;
 		for (int i=0; i < DLen[1]; i++)
 		{
@@ -331,9 +332,9 @@ public:
 		// CellCount = Num_Sample * DLen[2] in 'NeedRData'
 		for (int idx=1; idx < NumCellVariant; idx ++)
 		{
-			CHECK(gds_IterGetStart(Node, it));
-			CHECK(gds_IterAdvEx(it, (IndexCellVariant + idx)*SlideCnt));
-			CHECK_SIZE(gds_IterRData(it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8));
+			GDS_Iter_GetStart(Node, &it);
+			GDS_Iter_Offset(&it, (IndexCellVariant + idx)*SlideCnt);
+			GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
 
 			int shift = idx*2;
 			s = &Init.GENO_BUFFER[0];
@@ -375,14 +376,14 @@ public:
 			SelPtr[0] = &Init.TRUE_ARRAY[0];
 			if (COREARRAY_SV_INTEGER(SVType))
 			{
-				CHECK(gds_rDataEx(Node, st, DLen, SelPtr, INTEGER(Val), svInt32));
+				GDS_Seq_rDataEx(Node, st, DLen, SelPtr, INTEGER(Val), svInt32);
 			} else if (COREARRAY_SV_FLOAT(SVType))
 			{
-				CHECK(gds_rDataEx(Node, st, DLen, SelPtr, REAL(Val), svFloat64));
+				GDS_Seq_rDataEx(Node, st, DLen, SelPtr, REAL(Val), svFloat64);
 			} else if (COREARRAY_SV_STRING(SVType))
 			{
 				vector<string> buffer(CellCount);
-				CHECK(gds_rDataEx(Node, st, DLen, SelPtr, &buffer[0], svStrUTF8));
+				GDS_Seq_rDataEx(Node, st, DLen, SelPtr, &buffer[0], svStrUTF8);
 				for (int i=0; i < (int)buffer.size(); i++)
 					SET_STRING_ELT(Val, i, mkChar(buffer[i].c_str()));
 			}
@@ -420,16 +421,16 @@ public:
 			{
 				char classname[32];
 				classname[0] = 0;
-				gds_NodeClassName(Node, classname, sizeof(classname));
+				GDS_Node_GetClassName(Node, classname, sizeof(classname));
 				if (strcmp(classname, "dBit1") == 0)
 				{
 					PROTECT(ans = NEW_LOGICAL(CellCount));
-				} else if (gds_Is_R_Logical(Node))
+				} else if (GDS_R_Is_Logical(Node))
 				{
 					PROTECT(ans = NEW_LOGICAL(CellCount));
 				} else {
 					PROTECT(ans = NEW_INTEGER(CellCount));
-					nProtected += gds_Set_If_R_Factor(Node, ans);
+					nProtected += GDS_R_Set_IfFactor(Node, ans);
 				}
 				nProtected ++;
 			} else if (COREARRAY_SV_FLOAT(SVType))
@@ -505,8 +506,8 @@ public:
 	int Num_Variant;      //< the total number of variants
 	int TotalNum_Sample;  //< the total number of samples
 	int Num_Sample;       //< the number of selected samples
-	CBOOL *SelPtr[3];
-	CBOOL *VariantSelection;
+	C_BOOL *SelPtr[3];
+	C_BOOL *VariantSelection;
 
 protected:
 	int IndexCellVariant;  //< 
@@ -523,11 +524,11 @@ extern "C"
 // Get data from a working space
 // ###########################################################
 
-static SEXP _VarLogical(PdGDSObj Node, SEXP Array)
+static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 {
 	char classname[32];
 	classname[0] = 0;
-	gds_NodeClassName(Node, classname, sizeof(classname));
+	GDS_Node_GetClassName(Node, classname, sizeof(classname));
 	if (strcmp(classname, "dBit1") == 0)
 	{
 		PROTECT(Array);
@@ -538,40 +539,41 @@ static SEXP _VarLogical(PdGDSObj Node, SEXP Array)
 }
 
 /// Get data from a working space
-DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
+COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 {
-	SEXP rv_ans = R_NilValue, tmp;
-	CORETRY_CALL
+	COREARRAY_TRY
+
+		SEXP tmp;
 
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
 
 		// 
-		CBOOL *SelPtr[256];
+		C_BOOL *SelPtr[256];
 		int DimCnt, DStart[256], DLen[256];
 
 		// the path of GDS variable
 		const char *s = CHAR(STRING_ELT(var_name, 0));
 		if (strcmp(s, "sample.id") == 0)
 		{
-			// ***********************************************************
+			// -----------------------------------------------------------
 			// sample.id
 
-			PdSequenceX N = CHECK(gds_NodePath(Root, s));
-			DimCnt = gds_SeqDimCnt(N);
+			PdSequenceX N = GDS_Node_Path(Root, s, TRUE);
+			DimCnt = GDS_Seq_DimCnt(N);
 			if (DimCnt != 1)
 				throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 			if (Sel.Sample.empty())
 			{
-				rv_ans = _(gds_Read_SEXP(N, NULL, NULL, NULL));
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
 			} else {
-				CHECK(gds_SeqGetDim(N, DLen));
+				GDS_Seq_GetDim(N, DLen, 1);
 				if ((int)Sel.Sample.size() != DLen[0])
 					throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 				SelPtr[0] = &Sel.Sample[0];
-				rv_ans = _(gds_Read_SEXP(N, NULL, NULL, &SelPtr[0]));
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
 			}
 
 		} else if ( (strcmp(s, "variant.id")==0) || (strcmp(s, "position")==0) ||
@@ -579,37 +581,37 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 			(strcmp(s, "annotation/id")==0) || (strcmp(s, "annotation/qual")==0) ||
 			(strcmp(s, "annotation/filter")==0) )
 		{
-			// ***********************************************************
+			// -----------------------------------------------------------
 			// variant.id, position, chromosome, allele, annotation/id
 			// annotation/qual, annotation/filter
 
-			PdSequenceX N = CHECK(gds_NodePath(Root, s));
-			DimCnt = gds_SeqDimCnt(N);
+			PdSequenceX N = GDS_Node_Path(Root, s, TRUE);
+			DimCnt = GDS_Seq_DimCnt(N);
 			if (DimCnt != 1)
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 			if (Sel.Variant.empty())
 			{
-				rv_ans = _(gds_Read_SEXP(N, NULL, NULL, NULL));
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
 			} else {
-				CHECK(gds_SeqGetDim(N, DLen));
+				GDS_Seq_GetDim(N, DLen, 1);
 				if ((int)Sel.Variant.size() != DLen[0])
 					throw ErrSeqArray("Invalid dimension of '%s'.", s);
 				SelPtr[0] = &Sel.Variant[0];
-				rv_ans = _(gds_Read_SEXP(N, NULL, NULL, &SelPtr[0]));
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
 			}
 
 		} else if (strcmp(s, "phase") == 0)
 		{
-			// *******************************************************
+			// -----------------------------------------------------------
 			// phase/
 
-			PdSequenceX N = CHECK(gds_NodePath(Root, "phase/data"));
-			DimCnt = gds_SeqDimCnt(N);
+			PdSequenceX N = GDS_Node_Path(Root, "phase/data", TRUE);
+			DimCnt = GDS_Seq_DimCnt(N);
 			if ((DimCnt != 2) && (DimCnt != 3))
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 			if (!Sel.Sample.empty() || !Sel.Variant.empty())
 			{
-				CHECK(gds_SeqGetDim(N, DLen));
+				GDS_Seq_GetDim(N, DLen, 3);
 
 				if (Sel.Variant.empty())
 					Sel.Variant.resize(DLen[0], TRUE);
@@ -629,35 +631,35 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 					SelPtr[2] = &Init.TRUE_ARRAY[0];
 				}
 
-				rv_ans = _(gds_Read_SEXP(N, NULL, NULL, &SelPtr[0]));
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
 			} else {
-				rv_ans = _(gds_Read_SEXP(N, NULL, NULL, NULL));
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
 			}
 
 		} else if (strcmp(s, "genotype") == 0)
 		{
-			// *******************************************************
+			// -----------------------------------------------------------
 			// genotypic data
 
 			// init selection
 			if (Sel.Sample.empty())
 			{
-				PdSequenceX N = CHECK(gds_NodePath(Root, "sample.id"));
-				int Cnt = gds_SeqGetCount(N);
+				PdSequenceX N = GDS_Node_Path(Root, "sample.id", TRUE);
+				int Cnt = GDS_Seq_GetTotalCount(N);
 				if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 				Sel.Sample.resize(Cnt, TRUE);
 			}
 			if (Sel.Variant.empty())
 			{
-				PdSequenceX N = CHECK(gds_NodePath(Root, "variant.id"));
-				int Cnt = gds_SeqGetCount(N);
+				PdSequenceX N = GDS_Node_Path(Root, "variant.id", TRUE);
+				int Cnt = GDS_Seq_GetTotalCount(N);
 				if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
 				Sel.Variant.resize(Cnt, TRUE);
 			}
 
 			// the number of selected variants
 			int nVariant = 0;
-			for (vector<CBOOL>::iterator it = Sel.Variant.begin();
+			for (vector<C_BOOL>::iterator it = Sel.Variant.begin();
 				it != Sel.Variant.end(); it ++)
 			{
 				if (*it) nVariant ++;
@@ -700,19 +702,19 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 		} else if (strncmp(s, "annotation/info/", 16) == 0)
 		{
 			GDS_PATH_PREFIX_CHECK(s);
-			PdSequenceX N = CHECK(gds_NodePath(Root, s));
-			DimCnt = gds_SeqDimCnt(N);
+			PdSequenceX N = GDS_Node_Path(Root, s, TRUE);
+			DimCnt = GDS_Seq_DimCnt(N);
 			if ((DimCnt!=1) && (DimCnt!=2))
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 
 			string path_ex = GDS_PATH_PREFIX(s, '@');
-			PdSequenceX N_idx = gds_NodePath(Root, path_ex.c_str());
+			PdSequenceX N_idx = GDS_Node_Path(Root, path_ex.c_str(), FALSE);
 			if (N_idx == NULL)
 			{
 				// no index
 				if (!Sel.Variant.empty())
 				{
-					CHECK(gds_SeqGetDim(N, DLen));
+					GDS_Seq_GetDim(N, DLen, 2);
 					SelPtr[0] = &Sel.Variant[0];
 					if (DimCnt == 2)
 					{
@@ -720,22 +722,22 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 						SelPtr[1] = &Init.TRUE_ARRAY[0];
 					}
 	
-					rv_ans = _(gds_Read_SEXP(N, NULL, NULL, &SelPtr[0]));
+					rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
 				} else
-					rv_ans = _(gds_Read_SEXP(N, NULL, NULL, NULL));
+					rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
 
-				rv_ans = _VarLogical(N, rv_ans);
+				rv_ans = VAR_LOGICAL(N, rv_ans);
 
 			} else {
 				// with index
 				if (!Sel.Variant.empty())
 				{
 					memset(DStart, 0, sizeof(DStart));
-					CHECK(gds_SeqGetDim(N, DLen));
+					GDS_Seq_GetDim(N, DLen, 2);
 
 					vector<int> len;
-					vector<CBOOL> var_sel;
-					_MappingIndex(N_idx, Sel.Variant, len, var_sel, DStart[0], DLen[0]);
+					vector<C_BOOL> var_sel;
+					MAP_INDEX(N_idx, Sel.Variant, len, var_sel, DStart[0], DLen[0]);
 
 					SelPtr[0] = &var_sel[0];
 					if (DimCnt == 2)
@@ -752,7 +754,7 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 							base[i] = len[i];
 						SET_ELEMENT(rv_ans, 0, I32);
 						SET_ELEMENT(rv_ans, 1,
-							_VarLogical(N, _(gds_Read_SEXP(N, DStart, DLen, &SelPtr[0]))));
+							VAR_LOGICAL(N, GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0])));
 					PROTECT(tmp = NEW_CHARACTER(2));
 						SET_STRING_ELT(tmp, 0, mkChar("length"));
 						SET_STRING_ELT(tmp, 1, mkChar("data"));
@@ -762,9 +764,9 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 				} else {
 					PROTECT(rv_ans = NEW_LIST(2));
 						SET_ELEMENT(rv_ans, 0,
-							_(gds_Read_SEXP(N_idx, NULL, NULL, NULL)));
+							GDS_R_Array_Read(N_idx, NULL, NULL, NULL));
 						SET_ELEMENT(rv_ans, 1,
-							_VarLogical(N, _(gds_Read_SEXP(N, NULL, NULL, NULL))));
+							VAR_LOGICAL(N, GDS_R_Array_Read(N, NULL, NULL, NULL)));
 					PROTECT(tmp = NEW_CHARACTER(2));
 						SET_STRING_ELT(tmp, 0, mkChar("length"));
 						SET_STRING_ELT(tmp, 1, mkChar("data"));
@@ -777,24 +779,24 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 		{
 			GDS_PATH_PREFIX_CHECK(s);
 			PdSequenceX N =
-				CHECK(gds_NodePath(Root, string(string(s)+"/data").c_str()));
+				GDS_Node_Path(Root, string(string(s)+"/data").c_str(), TRUE);
 			PdSequenceX N_idx =
-				CHECK(gds_NodePath(Root, string(string(s)+"/@data").c_str()));
+				GDS_Node_Path(Root, string(string(s)+"/@data").c_str(), TRUE);
 
-			DimCnt = gds_SeqDimCnt(N);
+			DimCnt = GDS_Seq_DimCnt(N);
 			if ((DimCnt!=2) && (DimCnt!=3))
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 			memset(DStart, 0, sizeof(DStart));
-			CHECK(gds_SeqGetDim(N, DLen));
+			GDS_Seq_GetDim(N, DLen, 3);
 
 			if (Sel.Sample.empty())
 				Sel.Sample.resize(DLen[1], TRUE);
 			if (Sel.Variant.empty())
-				Sel.Variant.resize(gds_SeqGetCount(N_idx), TRUE);
+				Sel.Variant.resize(GDS_Seq_GetTotalCount(N_idx), TRUE);
 
 			vector<int> len;
-			vector<CBOOL> var_sel;
-			_MappingIndex(N_idx, Sel.Variant, len, var_sel, DStart[0], DLen[0]);
+			vector<C_BOOL> var_sel;
+			MAP_INDEX(N_idx, Sel.Variant, len, var_sel, DStart[0], DLen[0]);
 
 			SelPtr[0] = &var_sel[0];
 			SelPtr[1] = &Sel.Sample[0];
@@ -811,7 +813,7 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 				for (int i=0; i < (int)len.size(); i++)
 					base[i] = len[i];
 				SET_ELEMENT(rv_ans, 0, I32);
-				SEXP DAT = _(gds_Read_SEXP(N, DStart, DLen, &SelPtr[0]));
+				SEXP DAT = GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0]);
 				SET_ELEMENT(rv_ans, 1, DAT);
 			PROTECT(tmp = NEW_CHARACTER(2));
 				SET_STRING_ELT(tmp, 0, mkChar("length"));
@@ -839,10 +841,7 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 				"\tannotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME", s);
 		}
 
-	CORECATCH_CALL
-
-	// output
-	return(rv_ans);
+	COREARRAY_CATCH
 }
 
 
@@ -852,29 +851,28 @@ DLLEXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 // ###########################################################
 
 /// Apply functions over margins on a working space
-DLLEXPORT SEXP seq_Apply_Variant(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP seq_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho)
 {
-	SEXP rv_ans = R_NilValue;
-	CORETRY_CALL
+	COREARRAY_TRY
 
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
 
 		// init selection
 		if (Sel.Sample.empty())
 		{
-			PdSequenceX N = CHECK(gds_NodePath(Root, "sample.id"));
-			int Cnt = gds_SeqGetCount(N);
+			PdSequenceX N = GDS_Node_Path(Root, "sample.id", TRUE);
+			int Cnt = GDS_Seq_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 			Sel.Sample.resize(Cnt, TRUE);
 		}
 		if (Sel.Variant.empty())
 		{
-			PdSequenceX N = CHECK(gds_NodePath(Root, "variant.id"));
-			int Cnt = gds_SeqGetCount(N);
+			PdSequenceX N = GDS_Node_Path(Root, "variant.id", TRUE);
+			int Cnt = GDS_Seq_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
 			Sel.Variant.resize(Cnt, TRUE);
 		}
@@ -883,7 +881,7 @@ DLLEXPORT SEXP seq_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		int nProtected = 0;
 		// the number of selected variants
 		int nVariant = 0;
-		for (vector<CBOOL>::iterator it = Sel.Variant.begin();
+		for (vector<C_BOOL>::iterator it = Sel.Variant.begin();
 			it != Sel.Variant.end(); it ++)
 		{
 			if (*it) nVariant ++;
@@ -1102,10 +1100,7 @@ DLLEXPORT SEXP seq_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// finally
 		UNPROTECT(nProtected);
 
-	CORECATCH_CALL
-
-	// output
-	return(rv_ans);
+	COREARRAY_CATCH
 }
 
 
@@ -1115,30 +1110,29 @@ DLLEXPORT SEXP seq_Apply_Variant(SEXP gdsfile, SEXP var_name,
 // ###########################################################
 
 /// Apply functions via a sliding window over variants
-DLLEXPORT SEXP seq_SlidingWindow(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP seq_SlidingWindow(SEXP gdsfile, SEXP var_name,
 	SEXP win_size, SEXP shift_size, SEXP FUN, SEXP as_is, SEXP var_index,
 	SEXP rho)
 {
-	SEXP rv_ans = R_NilValue;
-	CORETRY_CALL
+	COREARRAY_TRY
 
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
 
-		// init selection
+		// initialize selection
 		if (Sel.Sample.empty())
 		{
-			PdSequenceX N = CHECK(gds_NodePath(Root, "sample.id"));
-			int Cnt = gds_SeqGetCount(N);
+			PdSequenceX N = GDS_Node_Path(Root, "sample.id", TRUE);
+			int Cnt = GDS_Seq_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 			Sel.Sample.resize(Cnt, TRUE);
 		}
 		if (Sel.Variant.empty())
 		{
-			PdSequenceX N = CHECK(gds_NodePath(Root, "variant.id"));
-			int Cnt = gds_SeqGetCount(N);
+			PdSequenceX N = GDS_Node_Path(Root, "variant.id", TRUE);
+			int Cnt = GDS_Seq_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
 			Sel.Variant.resize(Cnt, TRUE);
 		}
@@ -1147,7 +1141,7 @@ DLLEXPORT SEXP seq_SlidingWindow(SEXP gdsfile, SEXP var_name,
 		int nProtected = 0;
 		// the number of selected variants
 		int nVariant = 0;
-		for (vector<CBOOL>::iterator it = Sel.Variant.begin();
+		for (vector<C_BOOL>::iterator it = Sel.Variant.begin();
 			it != Sel.Variant.end(); it ++)
 		{
 			if (*it) nVariant ++;
@@ -1415,10 +1409,7 @@ DLLEXPORT SEXP seq_SlidingWindow(SEXP gdsfile, SEXP var_name,
 		// finally
 		UNPROTECT(nProtected);
 
-	CORECATCH_CALL
-
-	// output
-	return(rv_ans);
+	COREARRAY_CATCH
 }
 
 } // extern "C"

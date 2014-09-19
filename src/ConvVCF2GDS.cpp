@@ -200,14 +200,15 @@ struct TVCF_Field_Info
 
 	template<typename TYPE> void Check(vector<TYPE> &array, string &name, int num_allele)
 	{
-		CoreArray::Int32 I32;
+		C_Int32 I32;
 		switch (number)
 		{
 			case -1:
 				// variable-length
 				I32 = array.size();
-				CHECK(gds_AppendData(len_obj, 1, &I32, svInt32));
+				GDS_Seq_AppendData(len_obj, 1, &I32, svInt32);
 				break;		
+
 			case -2:
 				// # of alleles
 				I32 = array.size();
@@ -216,8 +217,9 @@ struct TVCF_Field_Info
 					throw ErrSeqArray("INFO ID '%s' should have %d value(s).",
 						name.c_str(), num_allele-1);
 				}
-				CHECK(gds_AppendData(len_obj, 1, &I32, svInt32));
+				GDS_Seq_AppendData(len_obj, 1, &I32, svInt32);
 				break;		
+
 			case -3:
 				// # of genotypes
 				I32 = array.size();
@@ -226,8 +228,9 @@ struct TVCF_Field_Info
 					throw ErrSeqArray("INFO ID '%s' should have %d value(s).",
 						name.c_str(), (num_allele+1)*num_allele/2);
 				}
-				CHECK(gds_AppendData(len_obj, 1, &I32, svInt32));
+				GDS_Seq_AppendData(len_obj, 1, &I32, svInt32);
 				break;		
+
 			default:
 				if (number >= 0)
 				{
@@ -245,12 +248,13 @@ struct TVCF_Field_Info
 	{
 		if (number < 0)
 		{
-			CoreArray::Int32 I32 = 0;
-			CHECK(gds_AppendData(len_obj, 1, &I32, svInt32));
+			C_Int32 I32 = 0;
+			GDS_Seq_AppendData(len_obj, 1, &I32, svInt32);
 		} else {
 			array.clear();
 			array.resize(number, val);
-			CHECK(gds_AppendData(data_obj, number, &(array[0]), TdTraits<TYPE>::SVType));
+			GDS_Seq_AppendData(data_obj, number, &(array[0]),
+				TdTraits<TYPE>::SVType);
 		}
 	}
 };
@@ -268,19 +272,25 @@ struct TVCF_Field_Format
 	bool used;             //< if TRUE, it has been parsed for the current line
 
 	/// data -- Int32
-	vector< vector<CoreArray::Int32> > I32ss;
-	/// data -- Float32
-	vector< vector<Float32> > F32ss;
+	vector< vector<C_Int32> > I32ss;
+	/// data -- C_Float32
+	vector< vector<C_Float32> > F32ss;
 	/// data -- UTF8 string
 	vector< vector<string> > UTF8ss;
 
 
-	TVCF_Field_Format() { type = 0; data_obj = len_obj = NULL; number = 0; used = false; }
+	TVCF_Field_Format()
+	{
+		type = 0;
+		data_obj = len_obj = NULL;
+		number = 0;
+		used = false;
+	}
 
 	// FORMAT field
 
-	template<typename TYPE>
-		void Check(vector<TYPE> &array, string &name, int num_allele, const TYPE &missing)
+	template<typename TYPE> void Check(vector<TYPE> &array, string &name,
+		int num_allele, const TYPE &missing)
 	{
 		switch (number)
 		{
@@ -331,10 +341,10 @@ struct TVCF_Field_Format
 		switch (type)
 		{
 			case FIELD_TYPE_INT:
-				for (vector< vector<CoreArray::Int32> >::iterator it = I32ss.begin();
+				for (vector< vector<C_Int32> >::iterator it = I32ss.begin();
 					it != I32ss.end(); it ++)
 				{
-					CHECK(gds_AppendData(data_obj, number, &((*it)[0]), svInt32));
+					GDS_Seq_AppendData(data_obj, number, &((*it)[0]), svInt32);
 				}
 				break;
 
@@ -342,7 +352,7 @@ struct TVCF_Field_Format
 				for (vector< vector<float> >::iterator it = F32ss.begin();
 					it != F32ss.end(); it ++)
 				{
-					CHECK(gds_AppendData(data_obj, number, &((*it)[0]), svFloat32));
+					GDS_Seq_AppendData(data_obj, number, &((*it)[0]), svFloat32);
 				}
 				break;
 
@@ -351,7 +361,7 @@ struct TVCF_Field_Format
 					it != UTF8ss.end(); it ++)
 				{
 					for (int j=0; j < (int)(*it).size(); j ++)
-						CHECK(gds_AppendString(data_obj, (*it)[j].c_str()));
+						GDS_Seq_AppendString(data_obj, (*it)[j].c_str());
 				}
 				break;
 
@@ -360,7 +370,7 @@ struct TVCF_Field_Format
 		}
 	}
 
-	int WriteVariableLength(int nTotalSample, vector<CoreArray::Int32> &I32s,
+	int WriteVariableLength(int nTotalSample, vector<C_Int32> &I32s,
 		vector<float> &F32s)
 	{
 		if (number >= 0)
@@ -380,10 +390,11 @@ struct TVCF_Field_Format
 				{
 					for (int j=0; j < nTotalSample; j++)
 					{
-						vector<CoreArray::Int32> &B = I32ss[j];
+						vector<C_Int32> &B = I32ss[j];
 						I32s[j] = (i < (int)B.size()) ? B[i] : NA_INTEGER;
 					}
-					CHECK(gds_AppendData(data_obj, nTotalSample, &(I32s[0]), svInt32));
+					GDS_Seq_AppendData(data_obj, nTotalSample,
+						&(I32s[0]), svInt32);
 				}
 				break;
 
@@ -401,7 +412,8 @@ struct TVCF_Field_Format
 						vector<float> &B = F32ss[j];
 						F32s[j] = (i < (int)B.size()) ? B[i] : (float)R_NaN;
 					}
-					CHECK(gds_AppendData(data_obj, nTotalSample, &(F32s[0]), svFloat32));
+					GDS_Seq_AppendData(data_obj, nTotalSample,
+						&(F32s[0]), svFloat32);
 				}
 				break;
 
@@ -416,8 +428,8 @@ struct TVCF_Field_Format
 					for (int j=0; j < nTotalSample; j++)
 					{
 						vector<string> &B = UTF8ss[j];
-						CHECK(gds_AppendString(data_obj,
-							(i < (int)B.size()) ? B[i].c_str() : ""));
+						GDS_Seq_AppendString(data_obj,
+							(i < (int)B.size()) ? B[i].c_str() : "");
 					}
 				}
 				break;
@@ -449,7 +461,7 @@ static void _Trim_(string &val)
 }
 
 /// get an integer from a string
-static CoreArray::Int32 getInt32(const string &txt, bool RaiseError)
+static C_Int32 getInt32(const string &txt, bool RaiseError)
 {
 	const char *p = SKIP(txt.c_str());
 	char *endptr = (char*)p;
@@ -488,7 +500,7 @@ static CoreArray::Int32 getInt32(const string &txt, bool RaiseError)
 }
 
 /// get multiple integers from a string
-static void getInt32Array(const string &txt, vector<CoreArray::Int32> &I32,
+static void getInt32Array(const string &txt, vector<C_Int32> &I32,
 	bool RaiseError)
 {
 	const char *p = SKIP(txt.c_str());
@@ -632,11 +644,10 @@ extern "C"
 // ###########################################################
 
 /// VCF4 --> GDS
-DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
-	SEXP param, SEXP ReadLineFun, SEXP ReadLine_Param, SEXP rho)
+COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
+	SEXP gds_root, SEXP param, SEXP ReadLineFun, SEXP ReadLine_Param,
+	SEXP rho)
 {
-	SEXP rv_ans = R_NilValue;
-	bool has_error = false;
 	const char *fn = CHAR(STRING_ELT(vcf_fn, 0));
 
 	// define a variable for reading lines
@@ -646,7 +657,7 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 	string cell;
 	cell.reserve(4096);
 
-	CORETRY
+	COREARRAY_TRY
 
 		// the number of calling PROTECT
 		int nProtected = 0;
@@ -674,23 +685,23 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 		PdSequenceX Root;
 		memcpy(&Root, INTEGER(gds_root), sizeof(Root));
 
-		PdSequenceX varIdx = gds_NodePath(Root, "variant.id");
-		PdSequenceX varChr = gds_NodePath(Root, "chromosome");
-		PdSequenceX varPos = gds_NodePath(Root, "position");
-		PdSequenceX varRSID = gds_NodePath(Root, "annotation/id");
-		PdSequenceX varAllele = gds_NodePath(Root, "allele");
+		PdSequenceX varIdx = GDS_Node_Path(Root, "variant.id", TRUE);
+		PdSequenceX varChr = GDS_Node_Path(Root, "chromosome", TRUE);
+		PdSequenceX varPos = GDS_Node_Path(Root, "position", TRUE);
+		PdSequenceX varRSID = GDS_Node_Path(Root, "annotation/id", TRUE);
+		PdSequenceX varAllele = GDS_Node_Path(Root, "allele", TRUE);
 
-		PdSequenceX varQual = gds_NodePath(Root, "annotation/qual");
-		PdSequenceX varFilter = gds_NodePath(Root, "annotation/filter");
+		PdSequenceX varQual = GDS_Node_Path(Root, "annotation/qual", TRUE);
+		PdSequenceX varFilter = GDS_Node_Path(Root, "annotation/filter", TRUE);
 
-		PdSequenceX varGeno = gds_NodePath(Root, "genotype/data");
-		PdSequenceX varGenoLen = gds_NodePath(Root, "genotype/@data");
-		PdSequenceX varGenoExtraIdx = gds_NodePath(Root, "genotype/extra.index");
-		PdSequenceX varGenoExtra = gds_NodePath(Root, "genotype/extra");
+		PdSequenceX varGeno = GDS_Node_Path(Root, "genotype/data", TRUE);
+		PdSequenceX varGenoLen = GDS_Node_Path(Root, "genotype/@data", TRUE);
+		PdSequenceX varGenoExtraIdx = GDS_Node_Path(Root, "genotype/extra.index", TRUE);
+		PdSequenceX varGenoExtra = GDS_Node_Path(Root, "genotype/extra", TRUE);
 
-		PdSequenceX varPhase = gds_NodePath(Root, "phase/data");
-		PdSequenceX varPhaseExtraIdx = gds_NodePath(Root, "phase/extra.index");
-		PdSequenceX varPhaseExtra = gds_NodePath(Root, "phase/extra");
+		PdSequenceX varPhase = GDS_Node_Path(Root, "phase/data", TRUE);
+		PdSequenceX varPhaseExtraIdx = GDS_Node_Path(Root, "phase/extra.index", TRUE);
+		PdSequenceX varPhaseExtra = GDS_Node_Path(Root, "phase/extra", TRUE);
 
 
 		// getListElement: info
@@ -709,10 +720,10 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 				val.type = INTEGER(info_inttype)[i];
 				val.import_flag = (LOGICAL(info_flag)[i] == TRUE);
 				val.number = INTEGER(info_intnum)[i];
-				val.data_obj = gds_NodePath(Root,
-					(string("annotation/info/") + val.name).c_str());
-				val.len_obj = gds_NodePath(Root,
-					(string("annotation/info/@") + val.name).c_str());
+				val.data_obj = GDS_Node_Path(Root,
+					(string("annotation/info/") + val.name).c_str(), FALSE);
+				val.len_obj = GDS_Node_Path(Root,
+					(string("annotation/info/@") + val.name).c_str(), FALSE);
 
 				info_list.push_back(val);
 			}
@@ -734,10 +745,10 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 				val.type = INTEGER(fmt_inttype)[i];
 				val.import_flag = (LOGICAL(fmt_flag)[i] == TRUE);
 				val.number = INTEGER(fmt_intnum)[i];
-				val.data_obj = gds_NodePath(Root,
-					(string("annotation/format/") + val.name + "/data").c_str());
-				val.len_obj = gds_NodePath(Root,
-					(string("annotation/format/") + val.name + "/@data").c_str());
+				val.data_obj = GDS_Node_Path(Root,
+					(string("annotation/format/") + val.name + "/data").c_str(), FALSE);
+				val.len_obj = GDS_Node_Path(Root,
+					(string("annotation/format/") + val.name + "/@data").c_str(), FALSE);
 				format_list.push_back(val);
 
 				switch (val.type)
@@ -757,11 +768,11 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 			}
 		}
 
-		// filter string list
+		// filter level list
 		vector<string> filter_list;
 
 		// variant id (integer)
-		CoreArray::Int32 variant_index = 1;
+		C_Int32 variant_index = 1;
 
 		// the string buffer
 		string name, value;
@@ -769,12 +780,12 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 		value.reserve(4096);
 
 		// the numeric buffer
-		CoreArray::Int32 I32;
-		vector<CoreArray::Int32> I32s;
+		C_Int32 I32;
+		vector<C_Int32> I32s;
 		I32s.reserve(nTotalSamp);
 
-		CoreArray::Float32 F32;
-		vector<CoreArray::Float32> F32s;
+		C_Float32 F32;
+		vector<C_Float32> F32s;
 		F32s.reserve(nTotalSamp);
 
 		// the string buffer
@@ -782,9 +793,9 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 		StrList.reserve(nTotalSamp);
 
 		// genotypes
-		vector< vector<Int16> > Geno;
+		vector< vector<C_Int16> > Geno;
 		Geno.resize(nTotalSamp);
-		vector<Int8> I8s;
+		vector<C_Int8> I8s;
 		I8s.reserve(nTotalSamp * num_ploidy);
 
 		const char *pCh;
@@ -827,28 +838,28 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 
 			// #####################################################
 			// variant id
-			CHECK(gds_AppendData(varIdx, 1, &variant_index, svInt32));
+			GDS_Seq_AppendData(varIdx, 1, &variant_index, svInt32);
 			variant_index ++;
 
 
 			// #####################################################
 			// column 1: CHROM
 			RL.GetCell(cell, false);
-			CHECK(gds_AppendString(varChr, cell.c_str()));
+			GDS_Seq_AppendString(varChr, cell.c_str());
 
 
 			// #####################################################
 			// column 2: POS
 			RL.GetCell(cell, false);
 			I32 = getInt32(cell, RaiseError);
-			CHECK(gds_AppendData(varPos, 1, &I32, svInt32));
+			GDS_Seq_AppendData(varPos, 1, &I32, svInt32);
 
 
 			// #####################################################
 			// column 3: ID
 			RL.GetCell(cell, false);
 			if (cell == ".") cell.clear();
-			CHECK(gds_AppendString(varRSID, cell.c_str()));
+			GDS_Seq_AppendString(varRSID, cell.c_str());
 
 
 			// #####################################################
@@ -860,7 +871,7 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 				value.push_back(',');
 				value.append(cell);
 			}
-			CHECK(gds_AppendString(varAllele, value.c_str()));
+			GDS_Seq_AppendString(varAllele, value.c_str());
 			// determine how many alleles
 			num_allele = 0;
 			pCh = value.c_str();
@@ -876,7 +887,7 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 			// column 6: QUAL
 			RL.GetCell(cell, false);
 			F32 = getFloat(cell, RaiseError);
-			CHECK(gds_AppendData(varQual, 1, &F32, svFloat32));
+			GDS_Seq_AppendData(varQual, 1, &F32, svFloat32);
 
 
 			// #####################################################
@@ -894,7 +905,7 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 					I32 = p - filter_list.begin() + 1;
 			} else
 				I32 = NA_INTEGER;
-			CHECK(gds_AppendData(varFilter, 1, &I32, svInt32));
+			GDS_Seq_AppendData(varFilter, 1, &I32, svInt32);
 
 
 			// #####################################################
@@ -928,15 +939,15 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 						case FIELD_TYPE_INT:
 							getInt32Array(value, I32s, RaiseError);
 							pInfo->Check(I32s, name, num_allele);
-							CHECK(gds_AppendData(pInfo->data_obj, I32s.size(),
-								&(I32s[0]), svInt32));
+							GDS_Seq_AppendData(pInfo->data_obj, I32s.size(),
+								&(I32s[0]), svInt32);
 							break;
 
 						case FIELD_TYPE_FLOAT:
 							getFloatArray(value, F32s, RaiseError);
 							pInfo->Check(F32s, name, num_allele);
-							CHECK(gds_AppendData(pInfo->data_obj, F32s.size(),
-								&(F32s[0]), svFloat32));
+							GDS_Seq_AppendData(pInfo->data_obj, F32s.size(),
+								&(F32s[0]), svFloat32);
 							break;
 
 						case FIELD_TYPE_FLAG:
@@ -946,7 +957,8 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 									name.c_str());
 							}
 							I32 = 1;
-							CHECK(gds_AppendData(pInfo->data_obj, 1, &I32, svInt32));
+							GDS_Seq_AppendData(pInfo->data_obj, 1,
+								&I32, svInt32);
 							break;
 
 						case FIELD_TYPE_STRING:
@@ -954,8 +966,8 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 							pInfo->Check(StrList, name, num_allele);
 							for (int k=0; k < (int)StrList.size(); k++)
 							{
-								CHECK(gds_AppendString(pInfo->data_obj,
-									StrList[k].c_str()));
+								GDS_Seq_AppendString(pInfo->data_obj,
+									StrList[k].c_str());
 							}
 							break;
 
@@ -991,7 +1003,7 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 						break;
 					case FIELD_TYPE_FLAG:
 						I32 = 0;
-						CHECK(gds_AppendData(pInfo->data_obj, 1, &I32, svInt32));
+						GDS_Seq_AppendData(pInfo->data_obj, 1, &I32, svInt32);
 						break;
 					case FIELD_TYPE_STRING:
 						pInfo->Fill(StrList, string());
@@ -1081,14 +1093,14 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 				pCh = (*p == ':') ? (p + 1) : p;
 
 				I32s.clear();
-				vector<Int16> &pAllele = Geno[samp_idx];
+				vector<C_Int16> &pAllele = Geno[samp_idx];
 				pAllele.clear();
 
 				p = SKIP(value.c_str());
 				while (*p)
 				{
 					char *endptr = (char*)p;
-					CoreArray::Int32 val = strtol(p, &endptr, 10);
+					C_Int32 val = strtol(p, &endptr, 10);
 
 					if (endptr == p)
 					{
@@ -1129,18 +1141,18 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 				// write phasing information
 				if ((int)I32s.size() < (num_ploidy-1))
 					I32s.resize(num_ploidy-1, 0);
-				CHECK(gds_AppendData(varPhase, num_ploidy-1, &(I32s[0]), svInt32));
+				GDS_Seq_AppendData(varPhase, num_ploidy-1, &(I32s[0]), svInt32);
 				if ((int)I32s.size() > (num_ploidy-1))
 				{
 					// E.g., triploid call: 0/0/1
 					int Len = num_ploidy - (int)I32s.size() - 1;
-					CHECK(gds_AppendData(varPhaseExtra, Len, &(I32s[num_ploidy-1]), svInt32));
+					GDS_Seq_AppendData(varPhaseExtra, Len, &(I32s[num_ploidy-1]), svInt32);
 					I32 = samp_idx + 1;
-					CHECK(gds_AppendData(varPhaseExtraIdx, 1, &I32, svInt32));
+					GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
 					I32 = variant_index;
-					CHECK(gds_AppendData(varPhaseExtraIdx, 1, &I32, svInt32));
+					GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
 					I32 = Len;
-					CHECK(gds_AppendData(varPhaseExtraIdx, 1, &I32, svInt32));
+					GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
 				}
 
 				// #################################################
@@ -1192,7 +1204,7 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 			while ((num_allele + 1) > (1 << num_bits))
 				num_bits += 2;
 			I32 = num_bits / 2;
-			CHECK(gds_AppendData(varGenoLen, 1, &I32, svInt32));
+			GDS_Seq_AppendData(varGenoLen, 1, &I32, svInt32);
 
 			// write to the variable "genotype"
 			for (int bits=0; bits < num_bits; bits += 2)
@@ -1200,28 +1212,29 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 				I8s.clear();
 				for (int i=0; i < nTotalSamp; i++)
 				{
-					vector<Int16> &pAllele = Geno[i];
+					vector<C_Int16> &pAllele = Geno[i];
 					for (int j=0; j < num_ploidy; j++)
 						I8s.push_back((pAllele[j] >> bits) & 0x03);
 				}
-				CHECK(gds_AppendData(varGeno, nTotalSamp*num_ploidy, &(I8s[0]), svInt8));
+				GDS_Seq_AppendData(varGeno, nTotalSamp*num_ploidy,
+					&(I8s[0]), svInt8);
 			}
 
 			// write to "genotype/extra"
 			for (int i=0; i < nTotalSamp; i++)
 			{
-				vector<Int16> &pGeno = Geno[i];
+				vector<C_Int16> &pGeno = Geno[i];
 				if ((int)pGeno.size() > num_ploidy)
 				{
 					// E.g., triploid call: 0/0/1
 					int Len = num_ploidy - (int)pGeno.size() - 1;
-					CHECK(gds_AppendData(varGenoExtra, Len, &(pGeno[num_ploidy-1]), svInt32));
+					GDS_Seq_AppendData(varGenoExtra, Len, &(pGeno[num_ploidy-1]), svInt32);
 					I32 = i + 1;
-					CHECK(gds_AppendData(varGenoExtraIdx, 1, &I32, svInt32));
+					GDS_Seq_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
 					I32 = variant_index;
-					CHECK(gds_AppendData(varGenoExtraIdx, 1, &I32, svInt32));
+					GDS_Seq_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
 					I32 = Len;
-					CHECK(gds_AppendData(varGenoExtraIdx, 1, &I32, svInt32));
+					GDS_Seq_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
 				}
 			}
 
@@ -1246,10 +1259,10 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 							I32 = it->WriteVariableLength(nTotalSamp, I32s, F32s);
 						} else
 							throw ErrSeqArray("Invalid FORMAT Number.");
-						CHECK(gds_AppendData(it->len_obj, 1, &I32, svInt32));
+						GDS_Seq_AppendData(it->len_obj, 1, &I32, svInt32);
 					} else {
 						I32 = 0;
-						CHECK(gds_AppendData(it->len_obj, 1, &I32, svInt32));
+						GDS_Seq_AppendData(it->len_obj, 1, &I32, svInt32);
 					}
 				}
 			}
@@ -1264,21 +1277,22 @@ DLLEXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header, SEXP gds_root,
 
 		UNPROTECT(nProtected);
 
-	CORECATCH({
+	CORE_CATCH({
 		char buf[4096];
 		if (RL.ColumnNo() > 0)
 		{
-			snprintf(buf, sizeof(buf), "\tFILE: %s\n\tLINE: %d, COLUMN: %d, %s\n\t%s",
-				fn, RL.LineNo(), RL.ColumnNo(), cell.c_str(), gds_LastError().c_str());
+			snprintf(buf, sizeof(buf),
+				"\nFILE: %s\n\tLINE: %d, COLUMN: %d, %s\n\t%s",
+				fn, RL.LineNo(), RL.ColumnNo(), cell.c_str(),
+				GDS_GetError());
 		} else {
-			snprintf(buf, sizeof(buf), "\tFILE: %s\n\tLINE: %d\n\t%s",
-				fn, RL.LineNo(), gds_LastError().c_str());
+			snprintf(buf, sizeof(buf), "\nFILE: %s\n\tLINE: %d\n\t%s",
+				fn, RL.LineNo(), GDS_GetError());
 		}
-		gds_LastError() = buf;
+		GDS_SetError(buf);
 		has_error = true;
 	});
-	if (has_error)
-		error(gds_LastError().c_str());
+	if (has_error) error(GDS_GetError());
 
 	// output
 	return(rv_ans);

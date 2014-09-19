@@ -25,70 +25,24 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include <dType.h>
-#include <dString.h>
-#include <CoreGDSLink.h>
+
+#include <R_GDS_CPP.h>
+#include <dTrait.h>
 
 #include <string>
 #include <vector>
 #include <list>
 #include <map>
 
-#include <ctype.h>
-#include <string.h>
-#include <R.h>
-#include <Rdefines.h>
-
-// R_XLEN_T_MAX is defined, R >= v3.0
-#ifndef R_XLEN_T_MAX
-#  define R_xlen_t    R_len_t
-#  define XLENGTH     Rf_length
-#endif
+#include <cctype>
+#include <cstring>
 
 
 using namespace std;
 using namespace CoreArray;
-using namespace GDSInterface;
 
 
 #define LongBool int
-
-
-#ifdef COREARRAY_GNUG
-#  ifdef COREARRAY_WINDOWS
-#    define DLLEXPORT __attribute__((dllexport))
-#  else
-#    define DLLEXPORT
-#  endif
-#else
-#  define DLLEXPORT __declspec(dllexport)
-#endif
-
-
-
-// ###########################################################
-// defined macro
-// ###########################################################
-
-#define CORETRY			try {
-#define CORETRY_CALL	bool has_error = false; CORETRY
-
-#define CORECATCH(cmd)	} \
-	catch (exception &E) { \
-		gds_LastError() = E.what(); \
-		cmd; \
-	} \
-	catch (const char *E) { \
-		gds_LastError() = E; \
-		cmd; \
-	} \
-	catch (...) { \
-		gds_LastError() = "unknown error!"; \
-		cmd; \
-	}
-#define CORECATCH_CALL	CORECATCH(has_error = true); \
-	if (has_error) error(gds_LastError().c_str());
-
 
 
 
@@ -97,13 +51,13 @@ using namespace GDSInterface;
 // ###########################################################
 
 /// the initial data
-class TInitObject
+class COREARRAY_DLL_LOCAL TInitObject
 {
 public:
 	struct TSelection
 	{
-		vector<CBOOL> Sample;
-		vector<CBOOL> Variant;
+		vector<C_BOOL> Sample;
+		vector<C_BOOL> Variant;
 	};
 
 	typedef list<TSelection> TSelList;
@@ -113,8 +67,8 @@ public:
 	TSelection &Selection(SEXP gds);
 	void Check_TrueArray(int Cnt);
 
-	vector<CBOOL> TRUE_ARRAY;
-	vector<UInt8> GENO_BUFFER;
+	vector<C_BOOL> TRUE_ARRAY;
+	vector<C_UInt8> GENO_BUFFER;
 	map<int, TSelList> _Map;
 };
 
@@ -148,7 +102,7 @@ COREARRAY_INLINE static SEXP getListElement(SEXP list, const char *str)
 {
 	SEXP elmt = R_NilValue;
 	SEXP names = getAttrib(list, R_NamesSymbol);
-	for (R_len_t i = 0; i < length(list); i++)
+	for (R_len_t i = 0; i < XLENGTH(list); i++)
 	{
 		if (strcmp(CHAR(STRING_ELT(names, i)), str) == 0)
 		{
@@ -157,34 +111,6 @@ COREARRAY_INLINE static SEXP getListElement(SEXP list, const char *str)
 		}
 	}
 	return elmt;
-}
-
-/// check CoreArray function
-COREARRAY_INLINE static void CHECK(bool retval)
-{
-	if (!retval)
-		throw ErrSeqArray(gds_LastError());
-}
-/// check CoreArray function
-COREARRAY_INLINE static void* CHECK(void* retval)
-{
-	if (retval == NULL)
-		throw ErrSeqArray(gds_LastError());
-	return retval;
-}
-/// check CoreArray function
-COREARRAY_INLINE static Int64 CHECK(Int64 retval)
-{
-	if (retval < 0)
-		throw ErrSeqArray(gds_LastError());
-	return retval;
-}
-/// check CoreArray function
-COREARRAY_INLINE static size_t CHECK_SIZE(size_t retval)
-{
-	if (retval == ((size_t)-1))
-		throw ErrSeqArray(gds_LastError());
-	return retval;
 }
 
 /// check CoreArray function
@@ -201,15 +127,6 @@ COREARRAY_INLINE static string SHORT_TEXT(const char *p, int MaxNum=16)
 		return string(p);
 	else
 		return string(p, MaxNum) + "...";
-}
-
-
-/// get PdGDSObj from a SEXP object
-COREARRAY_INLINE static PdGDSObj GDS_OBJECT(SEXP obj)
-{
-	PdGDSObj N;
-	memcpy(&N, INTEGER(obj), sizeof(N));
-	return N;
 }
 
 /// get PdGDSObj from a SEXP object
@@ -261,15 +178,4 @@ COREARRAY_INLINE static string GDS_UP_PATH(const char *path)
 	const char *p = path + strlen(path) - 1;
 	while ((p!=path) && (*p != '/')) p --;
 	return string(path, p);
-}
-
-/// convert _SEXP to SEXP
-COREARRAY_INLINE static SEXP _(_SEXP_ v)
-{
-	union {
-		_SEXP_ f;
-		SEXP t;
-	} u;
-	u.f = v;
-	return u.t;
 }

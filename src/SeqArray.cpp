@@ -65,35 +65,10 @@ extern "C"
 // ###########################################################
 
 /// initialize the package
-DLLEXPORT SEXP seq_Init(SEXP lib_fn)
+COREARRAY_DLL_EXPORT SEXP seq_Init()
 {
-	SEXP ans = R_NilValue;
-
-	try {
-		// the file name
-		const char *fn = CHAR(STRING_ELT(lib_fn, 0));
-		// initialize the GDS interface
-		GDSInterface::InitGDSInterface(fn);
-	}
-	catch (exception &E) {
-		ans = mkString(E.what());
-	}
-	catch (const char *E) {
-		ans = mkString(E);
-	}
-	catch (...) {
-		ans = mkString("unknown error!");
-	}
-
-	return ans;
-}
-
-/// finalize the package
-DLLEXPORT void seq_Done()
-{
-	try {
-		GDSInterface::DoneGDSInterface();
-	} catch (...) {};
+	Init_GDS_Routines();
+	return R_NilValue;
 }
 
 
@@ -103,27 +78,25 @@ DLLEXPORT void seq_Done()
 // ###########################################################
 
 /// initialize a SeqArray file
-DLLEXPORT SEXP seq_Open_Init(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP seq_Open_Init(SEXP gdsfile)
 {
-	CORETRY_CALL
+	COREARRAY_TRY
 		TInitObject::TSelection &s = Init.Selection(gdsfile);
 		s.Sample.clear();
 		s.Variant.clear();
-	CORECATCH_CALL
-	return R_NilValue;
+	COREARRAY_CATCH
 }
 
 /// finalize a SeqArray file
-DLLEXPORT SEXP seq_File_Done(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP seq_File_Done(SEXP gdsfile)
 {
-	CORETRY_CALL
+	COREARRAY_TRY
 		int gds_file_id = INTEGER(getListElement(gdsfile, "id"))[0];
 		map<int, TInitObject::TSelList>::iterator it =
 			Init._Map.find(gds_file_id);
 		if (it != Init._Map.end())
 			Init._Map.erase(it);
-	CORECATCH_CALL
-	return R_NilValue;
+	COREARRAY_CATCH
 }
 
 
@@ -133,9 +106,9 @@ DLLEXPORT SEXP seq_File_Done(SEXP gdsfile)
 // ###########################################################
 
 /// push the current filter to the stack
-DLLEXPORT SEXP seq_FilterPush(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP seq_FilterPush(SEXP gdsfile)
 {
-	CORETRY_CALL
+	COREARRAY_TRY
 		int id = INTEGER(getListElement(gdsfile, "id"))[0];
 		map<int, TInitObject::TSelList>::iterator it =
 			Init._Map.find(id);
@@ -144,14 +117,13 @@ DLLEXPORT SEXP seq_FilterPush(SEXP gdsfile)
 			it->second.push_back(TInitObject::TSelection());
 		} else
 			throw ErrSeqArray("The GDS file is closed or invalid.");
-	CORECATCH_CALL
-	return R_NilValue;
+	COREARRAY_CATCH
 }
 
 /// pop up the previous filter from the stack
-DLLEXPORT SEXP seq_FilterPop(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP seq_FilterPop(SEXP gdsfile)
 {
-	CORETRY_CALL
+	COREARRAY_TRY
 		int id = INTEGER(getListElement(gdsfile, "id"))[0];
 		map<int, TInitObject::TSelList>::iterator it =
 			Init._Map.find(id);
@@ -162,27 +134,26 @@ DLLEXPORT SEXP seq_FilterPop(SEXP gdsfile)
 			it->second.pop_back();
 		} else
 			throw ErrSeqArray("The GDS file is closed or invalid.");
-	CORECATCH_CALL
-	return R_NilValue;
+	COREARRAY_CATCH
 }
 
 /// set a working space with selected sample id
-DLLEXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel, SEXP verbose)
+COREARRAY_DLL_EXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel,
+	SEXP verbose)
 {
-	CORETRY_CALL
+	COREARRAY_TRY
 
 		TInitObject::TSelection &s = Init.Selection(gds);
 
 		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gds, "root"));
-		PdSequenceX varSamp = CHECK(gds_NodePath(Root, "sample.id"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gds, "root"));
+		PdSequenceX varSamp = GDS_Node_Path(Root, "sample.id", TRUE);
 
-		if (gds_SeqDimCnt(varSamp) != 1)
+		if (GDS_Seq_DimCnt(varSamp) != 1)
 			throw ErrSeqArray("Invalid dimension of 'sample.id'!");
-		int Count = 0;
-		CHECK(gds_SeqGetDim(varSamp, &Count));
+		int Count = GDS_Seq_GetTotalCount(varSamp);
 
-		vector<CBOOL> flag_array(Count);
+		vector<C_BOOL> flag_array(Count);
 
 		if (IS_LOGICAL(samp_sel))
 		{
@@ -201,8 +172,8 @@ DLLEXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel, SEXP verbose)
 			set_id.insert(INTEGER(samp_sel), &INTEGER(samp_sel)[Rf_length(samp_sel)]);
 			// sample id
 			vector<int> sample_id(Count);
-			CoreArray::Int32 _st=0, _cnt=Count;
-			CHECK(gds_rData(varSamp, &_st, &_cnt, &sample_id[0], svInt32));
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Seq_rData(varSamp, &_st, &_cnt, &sample_id[0], svInt32);
 			// set selection
 			for (int i=0; i < Count; i++)
 			{
@@ -217,8 +188,8 @@ DLLEXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel, SEXP verbose)
 			set_id.insert(REAL(samp_sel), &REAL(samp_sel)[Rf_length(samp_sel)]);
 			// sample id
 			vector<double> sample_id(Count);
-			CoreArray::Int32 _st=0, _cnt=Count;
-			CHECK(gds_rData(varSamp, &_st, &_cnt, &sample_id[0], svFloat64));
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Seq_rData(varSamp, &_st, &_cnt, &sample_id[0], svFloat64);
 			// set selection
 			for (int i=0; i < Count; i++)
 			{
@@ -234,8 +205,8 @@ DLLEXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel, SEXP verbose)
 				set_id.insert(string(CHAR(STRING_ELT(samp_sel, i))));
 			// sample id
 			vector<string> sample_id(Count);
-			CoreArray::Int32 _st=0, _cnt=Count;
-			CHECK(gds_rData(varSamp, &_st, &_cnt, &sample_id[0], svStrUTF8));
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Seq_rData(varSamp, &_st, &_cnt, &sample_id[0], svStrUTF8);
 			// set selection
 			for (int i=0; i < Count; i++)
 			{
@@ -250,7 +221,7 @@ DLLEXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel, SEXP verbose)
 			throw ErrSeqArray("Invalid type of 'samp_sel'.");
 
 		int n = 0;
-		for (vector<CBOOL>::iterator it=flag_array.begin();
+		for (vector<C_BOOL>::iterator it=flag_array.begin();
 			it != flag_array.end(); it ++)
 		{
 			if (*it != 0) n ++;
@@ -264,30 +235,27 @@ DLLEXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel, SEXP verbose)
 		} else
 			throw ErrSeqArray("No sample selected!");
 
-	CORECATCH_CALL
-
-	// output
-	return(R_NilValue);
+	COREARRAY_CATCH
 }
 
 
 /// set a working space with selected variant id
-DLLEXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel, SEXP verbose)
+COREARRAY_DLL_EXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel,
+	SEXP verbose)
 {
-	CORETRY_CALL
+	COREARRAY_TRY
 
 		TInitObject::TSelection &s = Init.Selection(gds);
 
 		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gds, "root"));
-		PdSequenceX varVariant = CHECK(gds_NodePath(Root, "variant.id"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gds, "root"));
+		PdSequenceX varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 
-		if (gds_SeqDimCnt(varVariant) != 1)
+		if (GDS_Seq_DimCnt(varVariant) != 1)
 			throw ErrSeqArray("Invalid dimension of 'variant.id'!");
-		int Count = 0;
-		CHECK(gds_SeqGetDim(varVariant, &Count));
+		int Count = GDS_Seq_GetTotalCount(varVariant);
 
-		vector<CBOOL> flag_array(Count);
+		vector<C_BOOL> flag_array(Count);
 
 		if (IS_LOGICAL(var_sel))
 		{
@@ -306,8 +274,8 @@ DLLEXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel, SEXP verbose)
 			set_id.insert(INTEGER(var_sel), &INTEGER(var_sel)[Rf_length(var_sel)]);
 			// sample id
 			vector<int> var_id(Count);
-			CoreArray::Int32 _st=0, _cnt=Count;
-			CHECK(gds_rData(varVariant, &_st, &_cnt, &var_id[0], svInt32));
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Seq_rData(varVariant, &_st, &_cnt, &var_id[0], svInt32);
 			// set selection
 			for (int i=0; i < Count; i++)
 			{
@@ -322,8 +290,8 @@ DLLEXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel, SEXP verbose)
 			set_id.insert(REAL(var_sel), &REAL(var_sel)[Rf_length(var_sel)]);
 			// variant id
 			vector<double> variant_id(Count);
-			CoreArray::Int32 _st=0, _cnt=Count;
-			CHECK(gds_rData(varVariant, &_st, &_cnt, &variant_id[0], svFloat64));
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Seq_rData(varVariant, &_st, &_cnt, &variant_id[0], svFloat64);
 			// set selection
 			for (int i=0; i < Count; i++)
 			{
@@ -339,8 +307,8 @@ DLLEXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel, SEXP verbose)
 				set_id.insert(string(CHAR(STRING_ELT(var_sel, i))));
 			// sample id
 			vector<string> variant_id(Count);
-			CoreArray::Int32 _st=0, _cnt=Count;
-			CHECK(gds_rData(varVariant, &_st, &_cnt, &variant_id[0], svStrUTF8));
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Seq_rData(varVariant, &_st, &_cnt, &variant_id[0], svStrUTF8);
 			// set selection
 			for (int i=0; i < Count; i++)
 			{
@@ -355,7 +323,7 @@ DLLEXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel, SEXP verbose)
 			throw ErrSeqArray("Invalid type of 'samp_sel'.");
 
 		int n = 0;
-		for (vector<CBOOL>::iterator it=flag_array.begin();
+		for (vector<C_BOOL>::iterator it=flag_array.begin();
 			it != flag_array.end(); it ++)
 		{
 			if (*it != 0) n ++;
@@ -369,14 +337,11 @@ DLLEXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel, SEXP verbose)
 		} else
 			throw ErrSeqArray("No variant selected!");
 
-	CORECATCH_CALL
-
-	// output
-	return(R_NilValue);
+	COREARRAY_CATCH
 }
 
 
-static void CLEAR_SEL_VALUE(int num, vector<CBOOL>::iterator &it)
+static void CLEAR_SEL_VALUE(int num, vector<C_BOOL>::iterator &it)
 {
 	while (num > 0)
 	{
@@ -384,7 +349,7 @@ static void CLEAR_SEL_VALUE(int num, vector<CBOOL>::iterator &it)
 		it ++;
 	}
 }
-static void SKIP_SEL(int num, vector<CBOOL>::iterator &it)
+static void SKIP_SEL(int num, vector<C_BOOL>::iterator &it)
 {
 	while (num > 0)
 	{
@@ -394,133 +359,132 @@ static void SKIP_SEL(int num, vector<CBOOL>::iterator &it)
 }
 
 /// split the selected variants according to multiple processes
-DLLEXPORT SEXP seq_SplitSelectedVariant(SEXP gdsfile, SEXP Index, SEXP n_process)
+COREARRAY_DLL_EXPORT SEXP seq_SplitSelectedVariant(SEXP gdsfile, SEXP Index,
+	SEXP n_process)
 {
-	// selection object
-	TInitObject::TSelection &s = Init.Selection(gdsfile);
+	COREARRAY_TRY
 
-	// the index process starting from 1
-	int Process_Index = INTEGER(AS_INTEGER(Index))[0] - 1;
-	int Num_Process = INTEGER(AS_INTEGER(n_process))[0];
+		// selection object
+		TInitObject::TSelection &s = Init.Selection(gdsfile);
 
-	// the total number of selected variants
-	vector<CBOOL>::iterator it;
-	int N_Variant = 0;
-	for (it=s.Variant.begin(); it != s.Variant.end();)
-	{
-		if (*it != 0) N_Variant ++;
-		it ++;
-	}
-	if (N_Variant <= 0) error("No variant!");
+		// the index process starting from 1
+		int Process_Index = INTEGER(AS_INTEGER(Index))[0] - 1;
+		int Num_Process = INTEGER(AS_INTEGER(n_process))[0];
 
-	// split a list
-	vector<int> split(Num_Process);
-	double avg = (double)N_Variant / Num_Process;
-	double start = 0;
-	for (int i=0; i < Num_Process; i++)
-	{
-		start += avg;
-		split[i] = (int)(start + 0.5);
-	}
+		// the total number of selected variants
+		vector<C_BOOL>::iterator it;
+		int N_Variant = 0;
+		for (it=s.Variant.begin(); it != s.Variant.end();)
+		{
+			if (*it != 0) N_Variant ++;
+			it ++;
+		}
+		if (N_Variant <= 0) error("No variant!");
 
-	// ***************************************************
-	it = s.Variant.begin();
-	int st = 0;
-	for (int i=0; i < Process_Index; i++)
-	{
-		CLEAR_SEL_VALUE(split[i] - st, it);
-		st = split[i];
-	}
-	int ans_n = split[Process_Index] - st;
-	SKIP_SEL(ans_n, it);
-	st = split[Process_Index];
-	for (int i=Process_Index+1; i < Num_Process; i++)
-	{
-		CLEAR_SEL_VALUE(split[i] - st, it);
-		st = split[i];
-	}
+		// split a list
+		vector<int> split(Num_Process);
+		double avg = (double)N_Variant / Num_Process;
+		double start = 0;
+		for (int i=0; i < Num_Process; i++)
+		{
+			start += avg;
+			split[i] = (int)(start + 0.5);
+		}
 
-	// ***************************************************
-	// output
-	SEXP rv = NEW_INTEGER(1);
-	PROTECT(rv);
-	INTEGER(rv)[0] = ans_n;
-	UNPROTECT(1);
+		// ---------------------------------------------------
+		it = s.Variant.begin();
+		int st = 0;
+		for (int i=0; i < Process_Index; i++)
+		{
+			CLEAR_SEL_VALUE(split[i] - st, it);
+			st = split[i];
+		}
+		int ans_n = split[Process_Index] - st;
+		SKIP_SEL(ans_n, it);
+		st = split[Process_Index];
+		for (int i=Process_Index+1; i < Num_Process; i++)
+		{
+			CLEAR_SEL_VALUE(split[i] - st, it);
+			st = split[i];
+		}
 
-	return(rv);
+		// ---------------------------------------------------
+		// output
+		rv_ans = ScalarInteger(ans_n);
+
+	COREARRAY_CATCH
 }
 
 
 /// split the selected samples according to multiple processes
-DLLEXPORT SEXP seq_SplitSelectedSample(SEXP gdsfile, SEXP Index, SEXP n_process)
+COREARRAY_DLL_EXPORT SEXP seq_SplitSelectedSample(SEXP gdsfile, SEXP Index,
+	SEXP n_process)
 {
-	// selection object
-	TInitObject::TSelection &s = Init.Selection(gdsfile);
+	COREARRAY_TRY
 
-	// the index process starting from 1
-	int Process_Index = INTEGER(AS_INTEGER(Index))[0] - 1;
-	int Num_Process = INTEGER(AS_INTEGER(n_process))[0];
+		// selection object
+		TInitObject::TSelection &s = Init.Selection(gdsfile);
 
-	// the total number of selected samples
-	vector<CBOOL>::iterator it;
-	int N_Sample = 0;
-	for (it=s.Sample.begin(); it != s.Sample.end();)
-	{
-		if (*it != 0) N_Sample ++;
-		it ++;
-	}
-	if (N_Sample <= 0) error("No sample!");
+		// the index process starting from 1
+		int Process_Index = INTEGER(AS_INTEGER(Index))[0] - 1;
+		int Num_Process = INTEGER(AS_INTEGER(n_process))[0];
 
-	// split a list
-	vector<int> split(Num_Process);
-	double avg = (double)N_Sample / Num_Process;
-	double start = 0;
-	for (int i=0; i < Num_Process; i++)
-	{
-		start += avg;
-		split[i] = (int)(start + 0.5);
-	}
+		// the total number of selected samples
+		vector<C_BOOL>::iterator it;
+		int N_Sample = 0;
+		for (it=s.Sample.begin(); it != s.Sample.end();)
+		{
+			if (*it != 0) N_Sample ++;
+			it ++;
+		}
+		if (N_Sample <= 0) error("No sample!");
 
-	// ***************************************************
-	it = s.Sample.begin();
-	int st = 0;
-	for (int i=0; i < Process_Index; i++)
-	{
-		CLEAR_SEL_VALUE(split[i] - st, it);
-		st = split[i];
-	}
-	int ans_n = split[Process_Index] - st;
-	SKIP_SEL(ans_n, it);
-	st = split[Process_Index];
-	for (int i=Process_Index+1; i < Num_Process; i++)
-	{
-		CLEAR_SEL_VALUE(split[i] - st, it);
-		st = split[i];
-	}
+		// split a list
+		vector<int> split(Num_Process);
+		double avg = (double)N_Sample / Num_Process;
+		double start = 0;
+		for (int i=0; i < Num_Process; i++)
+		{
+			start += avg;
+			split[i] = (int)(start + 0.5);
+		}
 
-	// ***************************************************
-	// output
-	SEXP rv = NEW_INTEGER(1);
-	PROTECT(rv);
-	INTEGER(rv)[0] = ans_n;
-	UNPROTECT(1);
+		// ---------------------------------------------------
+		it = s.Sample.begin();
+		int st = 0;
+		for (int i=0; i < Process_Index; i++)
+		{
+			CLEAR_SEL_VALUE(split[i] - st, it);
+			st = split[i];
+		}
+		int ans_n = split[Process_Index] - st;
+		SKIP_SEL(ans_n, it);
+		st = split[Process_Index];
+		for (int i=Process_Index+1; i < Num_Process; i++)
+		{
+			CLEAR_SEL_VALUE(split[i] - st, it);
+			st = split[i];
+		}
 
-	return(rv);
+		// ---------------------------------------------------
+		// output
+		rv_ans = ScalarInteger(ans_n);
+
+	COREARRAY_CATCH
 }
 
 
 /// set a working space flag with selected variant id
-DLLEXPORT SEXP seq_GetSpace(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP seq_GetSpace(SEXP gdsfile)
 {
-	SEXP rv_ans = R_NilValue;
-	CORETRY_CALL
+	COREARRAY_TRY
 
 		TInitObject::TSelection &s = Init.Selection(gdsfile);
 
 		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gdsfile, "root"));
-		PdSequenceX varSample = CHECK(gds_NodePath(Root, "sample.id"));
-		PdSequenceX varVariant = CHECK(gds_NodePath(Root, "variant.id"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
+		PdSequenceX varSample = GDS_Node_Path(Root, "sample.id", TRUE);
+		PdSequenceX varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 
 		int nProtected = 0;
 		SEXP tmp;
@@ -530,7 +494,7 @@ DLLEXPORT SEXP seq_GetSpace(SEXP gdsfile)
 
 		if (s.Sample.empty())
 		{
-			int L = CHECK(gds_SeqGetCount(varSample));
+			int L = GDS_Seq_GetTotalCount(varSample);
 			PROTECT(tmp = NEW_LOGICAL(L));
 			nProtected ++;
 			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
@@ -544,7 +508,7 @@ DLLEXPORT SEXP seq_GetSpace(SEXP gdsfile)
 
 		if (s.Variant.empty())
 		{
-			int L = CHECK(gds_SeqGetCount(varVariant));
+			int L = GDS_Seq_GetTotalCount(varVariant);
 			PROTECT(tmp = NEW_LOGICAL(L));
 			nProtected ++;
 			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
@@ -564,35 +528,30 @@ DLLEXPORT SEXP seq_GetSpace(SEXP gdsfile)
 
 		UNPROTECT(nProtected);
 
-	CORECATCH_CALL
-
-	// output
-	return(rv_ans);
+	COREARRAY_CATCH
 }
 
 
 /// set a working space with selected variant id
-DLLEXPORT SEXP seq_VarSummary(SEXP gdsfile, SEXP varname)
+COREARRAY_DLL_EXPORT SEXP seq_VarSummary(SEXP gdsfile, SEXP varname)
 {
-	SEXP rv_ans = R_NilValue;
-
-	CORETRY_CALL
+	COREARRAY_TRY
 
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
 		// the variable name
 		string vn = CHAR(STRING_ELT(varname, 0));
 
 		if ((vn=="genotype") || (vn=="phase"))
 		{
-			PdGDSObj vSample  = CHECK(gds_NodePath(Root, "sample.id"));
-			PdGDSObj vVariant = CHECK(gds_NodePath(Root, "variant.id"));
-			PdGDSObj vGeno = gds_NodePath(Root, "genotype/data");
+			PdGDSObj vSample  = GDS_Node_Path(Root, "sample.id", TRUE);
+			PdGDSObj vVariant = GDS_Node_Path(Root, "variant.id", TRUE);
+			PdGDSObj vGeno = GDS_Node_Path(Root, "genotype/data", TRUE);
 			if (vGeno == NULL)
 			{
-				vGeno = gds_NodePath(Root, "genotype/~data");
+				vGeno = GDS_Node_Path(Root, "genotype/~data", FALSE);
 				if (vGeno == NULL)
 				{
 					throw ErrSeqArray(
@@ -606,17 +565,17 @@ DLLEXPORT SEXP seq_VarSummary(SEXP gdsfile, SEXP varname)
 				PROTECT(I32 = NEW_INTEGER(3));
 				SET_ELEMENT(rv_ans, 0, I32);
 				int Buf[256];
-				CHECK(gds_SeqGetDim(vGeno, Buf));
+				GDS_Seq_GetDim(vGeno, Buf, 3);
 				INTEGER(I32)[0] = Buf[2];
-				INTEGER(I32)[1] = gds_SeqGetCount(vSample);
-				INTEGER(I32)[2] = gds_SeqGetCount(vVariant);
+				INTEGER(I32)[1] = GDS_Seq_GetTotalCount(vSample);
+				INTEGER(I32)[2] = GDS_Seq_GetTotalCount(vVariant);
 
 				PROTECT(S32 = NEW_INTEGER(2));
 				SET_ELEMENT(rv_ans, 1, S32);
 				if (!Sel.Sample.empty())
 				{
 					int &n = INTEGER(S32)[0]; n = 0;
-					vector<CBOOL>::iterator it;
+					vector<C_BOOL>::iterator it;
 					for (it=Sel.Sample.begin(); it != Sel.Sample.end(); it ++)
 						if (*it) n ++;
 				} else
@@ -624,7 +583,7 @@ DLLEXPORT SEXP seq_VarSummary(SEXP gdsfile, SEXP varname)
 				if (!Sel.Variant.empty())
 				{
 					int &n = INTEGER(S32)[1]; n = 0;
-					vector<CBOOL>::iterator it;
+					vector<C_BOOL>::iterator it;
 					for (it=Sel.Variant.begin(); it != Sel.Variant.end(); it ++)
 						if (*it) n ++;
 				} else
@@ -638,70 +597,7 @@ DLLEXPORT SEXP seq_VarSummary(SEXP gdsfile, SEXP varname)
 			UNPROTECT(4);
 		}
 
-	CORECATCH_CALL
-
-	// output
-	return(rv_ans);
-}
-
-
-/// delete the variables
-DLLEXPORT SEXP seq_Delete(SEXP gds, SEXP info, SEXP format)
-{
-	CORETRY_CALL
-
-		// the GDS root node
-		PdGDSObj Root = GDS_OBJECT(getListElement(gds, "root"));
-
-		// check 
-		for (int i=0; i < Rf_length(info); i++)
-		{
-			const char *n = CHAR(STRING_ELT(info, i));
-			GDS_VARIABLE_NAME_CHECK(n);
-		}
-		for (int i=0; i < Rf_length(format); i++)
-		{
-			const char *n = CHAR(STRING_ELT(format, i));
-			GDS_VARIABLE_NAME_CHECK(n);
-		}
-
-		// delete
-		for (int i=0; i < Rf_length(info); i++)
-		{
-			const char *nm = CHAR(STRING_ELT(info, i));
-			PdGDSObj N;
-			N = CHECK(gds_NodePath(Root,
-				(string("annotation/info/") + nm).c_str()));
-			CHECK(gds_NodeDelete(N));
-			N = gds_NodePath(Root,
-				(string("annotation/info/@") + nm).c_str());
-			if (N != NULL)
-				CHECK(gds_NodeDelete(N));
-		}
-		for (int i=0; i < Rf_length(format); i++)
-		{
-			const char *nm = CHAR(STRING_ELT(format, i));
-			PdGDSObj N;
-
-			N = CHECK(gds_NodePath(Root,
-				(string("annotation/format/") + nm + "/data").c_str()));
-			CHECK(gds_NodeDelete(N));
-			N = CHECK(gds_NodePath(Root,
-				(string("annotation/format/") + nm + "/@data").c_str()));
-			CHECK(gds_NodeDelete(N));
-			N = gds_NodePath(Root,
-				(string("annotation/format/") + nm + "/~data").c_str());
-			if (N != NULL)
-				CHECK(gds_NodeDelete(N));
-			N = CHECK(gds_NodePath(Root,
-				(string("annotation/format/") + nm).c_str()));
-			CHECK(gds_NodeDelete(N));
-		}
-
-	CORECATCH_CALL
-
-	// output
-	return(R_NilValue);
+	COREARRAY_CATCH
 }
 
 
@@ -711,21 +607,17 @@ DLLEXPORT SEXP seq_Delete(SEXP gds, SEXP info, SEXP format)
 // ###########################################################
 
 /// the number of alleles per site
-DLLEXPORT SEXP seq_NumOfAllele(SEXP allele_node)
+COREARRAY_DLL_EXPORT SEXP seq_NumOfAllele(SEXP allele_node)
 {
-	SEXP rv_ans = R_NilValue;
-	bool has_error = false;
-
-	CORETRY
+	COREARRAY_TRY
 
 		// GDS nodes
 		PdSequenceX N;
 		memcpy(&N, INTEGER(allele_node), sizeof(N));
 
-		if (gds_SeqDimCnt(N) != 1)
+		if (GDS_Seq_DimCnt(N) != 1)
 			throw ErrSeqArray("Invalid dimension!");
-		int Count = 0;
-		gds_SeqGetDim(N, &Count);
+		int Count = GDS_Seq_GetTotalCount(N);
 
 		// allocate integers
 		PROTECT(rv_ans = NEW_INTEGER(Count));
@@ -735,9 +627,9 @@ DLLEXPORT SEXP seq_NumOfAllele(SEXP allele_node)
 
 		for (int i=0; i < Count; i ++)
 		{
-			CoreArray::Int32 _st = i;
-			CoreArray::Int32 _cnt = 1;
-			CHECK(gds_rData(N, &_st, &_cnt, &s, svStrUTF8));
+			C_Int32 _st = i;
+			C_Int32 _cnt = 1;
+			GDS_Seq_rData(N, &_st, &_cnt, &s, svStrUTF8);
 
 			// determine how many alleles
 			int num_allele = 0;
@@ -753,12 +645,7 @@ DLLEXPORT SEXP seq_NumOfAllele(SEXP allele_node)
 
 		UNPROTECT(1);
 
-	CORECATCH(has_error = true);
-	if (has_error)
-		error(gds_LastError().c_str());
-
-	// output
-	return(rv_ans);
+	COREARRAY_CATCH
 }
 
 
@@ -768,13 +655,13 @@ DLLEXPORT SEXP seq_NumOfAllele(SEXP allele_node)
 // analysis
 // ###########################################################
 
-DLLEXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
+COREARRAY_DLL_EXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
 {
 /*
 	// GDS nodes
 	PdSequenceX Root;
 	memcpy(&Root, INTEGER(outgds_root), sizeof(Root));
-	PdSequenceX varPos = gds_NodePath(Root, "position");
+	PdSequenceX varPos = GDS_Node_Path(Root, "position");
 
 	// for - loop
 	for (int i=0; i < Rf_length(opfile); i++)
@@ -782,7 +669,7 @@ DLLEXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
 		// get variable
 		PdSequenceX _R_;
 		memcpy(&_R_, INTEGER(VECTOR_ELT(opfile, i)), sizeof(_R_));
-		PdSequenceX sPos = gds_NodePath(_R_, "position");
+		PdSequenceX sPos = GDS_Node_Path(_R_, "position");
 
 		// read and write
 		
@@ -793,7 +680,7 @@ DLLEXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
 
 
 
-DLLEXPORT SEXP seq_missing_snp(SEXP geno)
+COREARRAY_DLL_EXPORT SEXP seq_missing_snp(SEXP geno)
 {
 	SEXP dim = getAttrib(geno, R_DimSymbol);
 	int num_ploidy = INTEGER(dim)[0];
@@ -806,7 +693,7 @@ DLLEXPORT SEXP seq_missing_snp(SEXP geno)
 		int *pp = p;
 		for (int j=0; j < num_ploidy; j++, pp++)
 		{
-			if (UInt32(*pp) > 2)
+			if (C_UInt32(*pp) > 2)
 				{ miss_cnt ++; break; }
 		}
 		p += num_ploidy;
@@ -821,7 +708,7 @@ DLLEXPORT SEXP seq_missing_snp(SEXP geno)
 }
 
 
-DLLEXPORT SEXP seq_missing_samp(SEXP geno, SEXP miss_cnt)
+COREARRAY_DLL_EXPORT SEXP seq_missing_samp(SEXP geno, SEXP miss_cnt)
 {
 	SEXP dim = getAttrib(geno, R_DimSymbol);
 	int num_ploidy = INTEGER(dim)[0];
@@ -834,7 +721,7 @@ DLLEXPORT SEXP seq_missing_samp(SEXP geno, SEXP miss_cnt)
 		int *pp = p;
 		for (int j=0; j < num_ploidy; j++, pp++)
 		{
-			if (UInt32(*pp) > 2)
+			if (C_UInt32(*pp) > 2)
 				{ miss[i] ++; break; }
 		}
 		p += num_ploidy;
@@ -844,7 +731,7 @@ DLLEXPORT SEXP seq_missing_samp(SEXP geno, SEXP miss_cnt)
 }
 
 
-DLLEXPORT SEXP seq_allele_freq(SEXP geno)
+COREARRAY_DLL_EXPORT SEXP seq_allele_freq(SEXP geno)
 {
 	SEXP dim = getAttrib(geno, R_DimSymbol);
 	int num_ploidy = INTEGER(dim)[0];
@@ -857,8 +744,8 @@ DLLEXPORT SEXP seq_allele_freq(SEXP geno)
 		int *pp = p;
 		for (int j=0; j < num_ploidy; j++, pp++)
 		{
-			if (UInt32(*pp) == 0) ref_cnt ++;
-			if (UInt32(*pp) <= 2) valid_cnt ++;
+			if (C_UInt32(*pp) == 0) ref_cnt ++;
+			if (C_UInt32(*pp) <= 2) valid_cnt ++;
 		}
 		p += num_ploidy;
 	}

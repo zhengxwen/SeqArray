@@ -1,6 +1,0 @@
-##################################################################
-###                     CoreArray Codes                        ###
-###                                                            ###
-
-# additional preprocessor options
-PKG_CPPFLAGS = -I. -DCOREARRAY_NO_FORCEINLINE

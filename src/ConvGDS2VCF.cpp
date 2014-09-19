@@ -151,7 +151,7 @@ extern "C"
 // ###########################################################
 
 /// double quote text if needed
-DLLEXPORT SEXP seq_Quote(SEXP text, SEXP dQuote)
+COREARRAY_DLL_EXPORT SEXP seq_Quote(SEXP text, SEXP dQuote)
 {
 	SEXP NewText, ans;
 	PROTECT(NewText = AS_CHARACTER(text));
@@ -177,7 +177,7 @@ DLLEXPORT SEXP seq_Quote(SEXP text, SEXP dQuote)
 
 
 /// convert to VCF4
-DLLEXPORT SEXP seq_InitOutVCF4(SEXP Info, SEXP Format)
+COREARRAY_DLL_EXPORT SEXP seq_InitOutVCF4(SEXP Info, SEXP Format)
 {
 	int *pInfo = INTEGER(Info);
 	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
@@ -188,7 +188,7 @@ DLLEXPORT SEXP seq_InitOutVCF4(SEXP Info, SEXP Format)
 }
 
 /// convert to VCF4
-DLLEXPORT SEXP seq_OutVCF4(SEXP X)
+COREARRAY_DLL_EXPORT SEXP seq_OutVCF4(SEXP X)
 {
 	const char *p, *s;
 	string txt, tmp;

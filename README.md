@@ -21,7 +21,7 @@ BiocInstaller::useDevel()
 biocLite("SeqArray")
 ```
 
-* Development version from Github (v0.99.1):
+* Development version from Github:
 ```
 library("devtools")
 install_github("zhengxwen/gdsfmt")

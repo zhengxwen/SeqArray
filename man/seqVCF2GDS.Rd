@@ -26,7 +26,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
 	\item{verbose}{if TRUE, show information}
 }
 \value{
-	Return the file name with an absolute path.
+	Return the file name of GDS format with an absolute path.
 }
 \details{
 	GDS -- Genomic Data Structures used for storing genetic array-oriented data,
