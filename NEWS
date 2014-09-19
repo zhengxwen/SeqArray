@@ -1,6 +1,7 @@
 Changes in 1.5.1:
 
 	* fix a bug in 'seqVCF2GDS' when the values in the FILTER column are all missing
+	* enhance 'seqVCF.Header'
 	* support the LinkingTo mechanism
 
 
