@@ -83,7 +83,7 @@
                 } else {
                     if (.stopcluster)
                     {
-                        stopCluster(cl[d$node])
+                        parallel::stopCluster(cl[d$node])
                         cl <- cl[-d$node]
                         stopflag <- TRUE
                     }
@@ -93,7 +93,7 @@
                 if (inherits(dv, "try-error"))
                 {
                     if (.stopcluster)
-                        stopCluster(cl)
+                        parallel::stopCluster(cl)
                     stop("One node produced an error: ", as.character(dv))
                 }
 
