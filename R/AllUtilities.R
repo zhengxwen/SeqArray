@@ -824,7 +824,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
     # add sample id
 
     nSamp <- length(samp.id)
-    add.gdsn(gfile, "sample.id", samp.id, compress=compress("sample.id"), closezip=TRUE)
+    add.gdsn(gfile, "sample.id", samp.id, compress=compress("sample.id"),
+        closezip=TRUE)
 
 
     ##################################################

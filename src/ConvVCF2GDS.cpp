@@ -699,10 +699,15 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		PdSequenceX varGenoExtraIdx = GDS_Node_Path(Root, "genotype/extra.index", TRUE);
 		PdSequenceX varGenoExtra = GDS_Node_Path(Root, "genotype/extra", TRUE);
 
-		PdSequenceX varPhase = GDS_Node_Path(Root, "phase/data", TRUE);
-		PdSequenceX varPhaseExtraIdx = GDS_Node_Path(Root, "phase/extra.index", TRUE);
-		PdSequenceX varPhaseExtra = GDS_Node_Path(Root, "phase/extra", TRUE);
-
+		PdSequenceX varPhase, varPhaseExtraIdx, varPhaseExtra;
+		if (num_ploidy > 1)
+		{
+			varPhase = GDS_Node_Path(Root, "phase/data", TRUE);
+			varPhaseExtraIdx = GDS_Node_Path(Root, "phase/extra.index", TRUE);
+			varPhaseExtra = GDS_Node_Path(Root, "phase/extra", TRUE);
+		} else {
+			varPhase = varPhaseExtraIdx = varPhaseExtra = NULL;
+		}
 
 		// getListElement: info
 		vector<TVCF_Field_Info> info_list;
@@ -1105,19 +1110,31 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 					if (endptr == p)
 					{
 						if ((*p != '.') && RaiseError)
-							throw ErrSeqArray("Invalid integer conversion \"%s\".", SHORT_TEXT(p).c_str());
+						{
+							throw ErrSeqArray(
+								"Invalid integer conversion \"%s\".",
+								SHORT_TEXT(p).c_str());
+						}
 						val = -1;
 					} else {
 						if (val < 0)
 						{
 							val = -1;
 							if (RaiseError)
-								throw ErrSeqArray("Genotype code should be non-negative \"%s\".", SHORT_TEXT(p).c_str());
+							{
+								throw ErrSeqArray(
+									"Genotype code should be non-negative \"%s\".",
+									SHORT_TEXT(p).c_str());
+							}
 						} else if (val >= num_allele)
 						{
 							val = -1;
 							if (RaiseError)
-								throw ErrSeqArray("Genotype code is out of range \"%s\".", SHORT_TEXT(p).c_str());
+							{
+								throw ErrSeqArray(
+									"Genotype code is out of range \"%s\".",
+									SHORT_TEXT(p).c_str());
+							}
 						}
 						p = endptr;
 					}
@@ -1138,21 +1155,24 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 				if ((int)pAllele.size() < num_ploidy)
 					pAllele.resize(num_ploidy, -1);
 
-				// write phasing information
-				if ((int)I32s.size() < (num_ploidy-1))
-					I32s.resize(num_ploidy-1, 0);
-				GDS_Seq_AppendData(varPhase, num_ploidy-1, &(I32s[0]), svInt32);
-				if ((int)I32s.size() > (num_ploidy-1))
+				if (varPhase)
 				{
-					// E.g., triploid call: 0/0/1
-					int Len = num_ploidy - (int)I32s.size() - 1;
-					GDS_Seq_AppendData(varPhaseExtra, Len, &(I32s[num_ploidy-1]), svInt32);
-					I32 = samp_idx + 1;
-					GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-					I32 = variant_index;
-					GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-					I32 = Len;
-					GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+					// write phasing information
+					if ((int)I32s.size() < (num_ploidy-1))
+						I32s.resize(num_ploidy-1, 0);
+					GDS_Seq_AppendData(varPhase, num_ploidy-1, &(I32s[0]), svInt32);
+					if ((int)I32s.size() > (num_ploidy-1))
+					{
+						// E.g., triploid call: 0/0/1
+						int Len = num_ploidy - (int)I32s.size() - 1;
+						GDS_Seq_AppendData(varPhaseExtra, Len, &(I32s[num_ploidy-1]), svInt32);
+						I32 = samp_idx + 1;
+						GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+						I32 = variant_index;
+						GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+						I32 = Len;
+						GDS_Seq_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+					}
 				}
 
 				// #################################################

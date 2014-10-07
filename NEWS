@@ -1,3 +1,8 @@
+Changes in 1.5.2:
+
+	* fix the error in haploid genotypes (Y chromosome)
+
+
 Changes in 1.5.1:
 
 	* fix a bug in 'seqVCF2GDS' when the values in the FILTER column are all missing
