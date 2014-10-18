@@ -2,27 +2,28 @@
 \alias{seqVCF.SampID}
 \title{Get the sample IDs of a VCF file}
 \description{
-	Return the sample IDs of a VCF file
+    Return the sample IDs of a VCF file
 }
 \usage{
 seqVCF.SampID(vcf.fn)
 }
 \arguments{
-	\item{vcf.fn}{the file name of VCF}
+    \item{vcf.fn}{the file name of VCF}
 }
 
 \references{
-	\url{http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41}
+    \url{http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41}
 
-	The variant call format and VCFtools.
-	Danecek P, Auton A, Abecasis G, Albers CA, Banks E, DePristo MA, Handsaker RE,
-	Lunter G, Marth GT, Sherry ST, McVean G, Durbin R; 1000 Genomes Project Analysis Group.
-	Bioinformatics. 2011 Aug 1;27(15):2156-8. Epub 2011 Jun 7.
+    The variant call format and VCFtools.
+    Danecek P, Auton A, Abecasis G, Albers CA, Banks E, DePristo MA,
+    Handsaker RE, Lunter G, Marth GT, Sherry ST, McVean G, Durbin R;
+    1000 Genomes Project Analysis Group.
+    Bioinformatics. 2011 Aug 1;27(15):2156-8. Epub 2011 Jun 7.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqVCF.Header}}, \code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF.Header}}, \code{\link{seqVCF2GDS}}
 }
 
 \examples{

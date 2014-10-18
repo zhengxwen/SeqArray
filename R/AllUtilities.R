@@ -793,8 +793,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
     gfile <- createfn.gds(out.fn)
     on.exit(closefn.gds(gfile))
 
+    put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
     n <- add.gdsn(gfile, name="description", storage="folder")
     put.attr.gdsn(n, "sequence.variant.format", "v1.0")
+
     put.attr.gdsn(n, "vcf.fileformat", header$fileformat)
     if (!is.null(header$assembly))
         put.attr.gdsn(n, "vcf.assembly", header$assembly)

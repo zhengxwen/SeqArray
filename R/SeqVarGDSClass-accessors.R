@@ -18,6 +18,19 @@ seqOpen <- function(gds.fn, readonly=TRUE)
     # open the file
     ans <- openfn.gds(gds.fn, readonly=readonly)
 
+    # FileFormat
+    at <- get.attr.gdsn(ans$root)
+    if ("FileFormat" %in% names(at))
+    {
+        # it does not throw any warning or error if FileFormat does not exist,
+        # but it is encouraged to add this attribute
+        if (!identical(at$FileFormat, "SEQ_ARRAY"))
+        {
+            stop(sprintf("'%s' is not a sequencing-variant GDS file (%s).",
+                gds.fn, "'FileFormat' should be 'SEQ_ARRAY'"))
+        }
+    }
+
     # check header
     n <- index.gdsn(ans, "description", silent=TRUE)
     if (is.null(n))
@@ -26,8 +39,8 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
     }
 
-    tmp <- get.attr.gdsn(n)
-    if (!("sequence.variant.format" %in% names(tmp)))
+    at <- get.attr.gdsn(n)
+    if (!("sequence.variant.format" %in% names(at)))
     {
         closefn.gds(ans)
         stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
@@ -43,8 +56,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
 #######################################################################
 # Close a sequencing-variant GDS file
 #
-setMethod("seqClose", "SeqVarGDSClass",
-    function(object)
+setMethod("seqClose", "SeqVarGDSClass", function(object)
     {
         .Call("seq_File_Done", object, PACKAGE="SeqArray")
         closefn.gds(object)
