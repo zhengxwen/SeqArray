@@ -1,33 +1,17 @@
-Changes in 1.5.2:
-
-	* fix the error in haploid genotypes (Y chromosome)
-
-
-Changes in 1.5.1:
+Changes in 1.5.1 - 1.5.2:
 
 	* fix a bug in 'seqVCF2GDS' when the values in the FILTER column are all missing
 	* enhance 'seqVCF.Header'
 	* support the LinkingTo mechanism
+	* fix the error in haploid genotypes (Y chromosome)
 
 
-Changes in 1.3.4:
-
-	* modify to new biocViews to DESCRIPTION file
-
-
-Changes in 1.3.3:
-
-	* bumped version as all packages that depend on Rcpp must be rebuilt
-
-
-Changes in 1.3.2:
-
-	* update test codes to avoid the conflict
-
-
-Changes in 1.3.1:
+Changes in 1.3.1 - 1.3.4:
 
 	* update according to the new version of VariantAnnotation
+	* update test codes to avoid the conflict
+	* bumped version as all packages that depend on Rcpp must be rebuilt
+	* modify to new biocViews to DESCRIPTION file
 
 
 Changes in 1.1.5:
