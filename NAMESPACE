@@ -6,6 +6,7 @@ import(gdsfmt)
 
 import(methods)
 import(Biostrings)
+import(S4Vectors)
 import(IRanges)
 import(GenomicRanges)
 
