@@ -22,9 +22,11 @@
 
 .test_header <- function(hdv, hdg) {
   checkIdentical(samples(hdv), samples(hdg))
+  ## The meta(VCFHeader) getter now returns a DataFrameList, not DataFrame.
+  ## The META DataFrame is now one element of the DataFrameList.
   ## tags with non-alphanumeric characters get ignored by scanBcfHeader
-  meta.hdg <- meta(hdg)[grep("^[[:alnum:]]+$", row.names(meta(hdg))),,drop=FALSE]
-  checkIdentical(meta(hdv), meta.hdg)
+  meta.hdg <- meta(hdg)$META[grep("^[[:alnum:]]+$", row.names(meta(hdg)$META)),,drop=FALSE]
+  checkIdentical(meta(hdv)$META, meta.hdg)
   checkIdentical(fixed(hdv), fixed(hdg))
   checkIdentical(info(hdv), info(hdg))
   checkIdentical(geno(hdv), geno(hdg))
@@ -71,7 +73,7 @@
   .test_fixed(fixed(vcf), fixed(vcfg))
   .test_info(info(vcf), info(vcfg))
   .test_geno(geno(vcf), geno(vcfg))
-  
+
   seqClose(gdsobj)
 }
 
@@ -113,7 +115,7 @@ test_info_geno <- function() {
 
   info <- c("AN", "VT")
   geno <- "DS"
-  
+
   vcf <- readVcf(vcffile, genome="hg19",
                  param=ScanVcfParam(info=info, geno=geno))
   gdsobj <- seqOpen(gdsfile)
@@ -122,7 +124,7 @@ test_info_geno <- function() {
   .test_header(header(vcf), header(vcfg))
   .test_info(info(vcf), info(vcfg))
   .test_geno(geno(vcf), geno(vcfg))
-  
+
   seqClose(gdsobj)
   unlink(gdsfile)
 }
@@ -140,10 +142,10 @@ test_info_geno_na <- function() {
   .test_header(header(vcf), header(vcfg))
   .test_info(info(vcf), info(vcfg))
   .test_geno(geno(vcf), geno(vcfg))
-  
+
   seqClose(gdsobj)
 }
-  
+
 test_filters <- function() {
   vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
   gdsfile <- tempfile()
@@ -153,21 +155,21 @@ test_filters <- function() {
   samples <- seqGetData(gdsobj, "sample.id")[1:5]
   variants <- seqGetData(gdsobj, "variant.id")[1:10]
   seqSetFilter(gdsobj, sample.id=samples, variant.id=variants)
-  
+
   info <- c("AA", "AN")
   geno <- "GT"
   vcf <- readVcf(vcffile, genome="hg19",
                  param=ScanVcfParam(info=info, geno=geno,
                    samples=samples, which=granges(gdsobj)))
   vcfg <- asVCF(gdsobj, info=info, geno=geno)
-  
+
   .test_rowData(rowData(vcf), rowData(vcfg))
   .test_colData(colData(vcf), colData(vcfg))
   .test_header(header(vcf), header(vcfg))
   .test_fixed(fixed(vcf), fixed(vcfg))
   .test_info(info(vcf), info(vcfg))
   .test_geno(geno(vcf), geno(vcfg))
-  
+
   seqClose(gdsobj)
   unlink(gdsfile)
 }
