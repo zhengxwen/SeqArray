@@ -567,13 +567,13 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 				throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 			if (Sel.Sample.empty())
 			{
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
+				rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, NULL);
 			} else {
 				GDS_Seq_GetDim(N, DLen, 1);
 				if ((int)Sel.Sample.size() != DLen[0])
 					throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 				SelPtr[0] = &Sel.Sample[0];
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
+				rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, &SelPtr[0]);
 			}
 
 		} else if ( (strcmp(s, "variant.id")==0) || (strcmp(s, "position")==0) ||
@@ -591,13 +591,13 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 			if (Sel.Variant.empty())
 			{
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
+				rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, NULL);
 			} else {
 				GDS_Seq_GetDim(N, DLen, 1);
 				if ((int)Sel.Variant.size() != DLen[0])
 					throw ErrSeqArray("Invalid dimension of '%s'.", s);
 				SelPtr[0] = &Sel.Variant[0];
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
+				rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, &SelPtr[0]);
 			}
 
 		} else if (strcmp(s, "phase") == 0)
@@ -631,9 +631,9 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 					SelPtr[2] = &Init.TRUE_ARRAY[0];
 				}
 
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
+				rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, &SelPtr[0]);
 			} else {
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
+				rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, NULL);
 			}
 
 		} else if (strcmp(s, "genotype") == 0)
@@ -722,9 +722,9 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 						SelPtr[1] = &Init.TRUE_ARRAY[0];
 					}
 	
-					rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0]);
+					rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, &SelPtr[0]);
 				} else
-					rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL);
+					rv_ans = GDS_R_ARRAY_READ(N, NULL, NULL, NULL);
 
 				rv_ans = VAR_LOGICAL(N, rv_ans);
 
@@ -754,7 +754,7 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 							base[i] = len[i];
 						SET_ELEMENT(rv_ans, 0, I32);
 						SET_ELEMENT(rv_ans, 1,
-							VAR_LOGICAL(N, GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0])));
+							VAR_LOGICAL(N, GDS_R_ARRAY_READ(N, DStart, DLen, &SelPtr[0])));
 					PROTECT(tmp = NEW_CHARACTER(2));
 						SET_STRING_ELT(tmp, 0, mkChar("length"));
 						SET_STRING_ELT(tmp, 1, mkChar("data"));
@@ -764,9 +764,9 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 				} else {
 					PROTECT(rv_ans = NEW_LIST(2));
 						SET_ELEMENT(rv_ans, 0,
-							GDS_R_Array_Read(N_idx, NULL, NULL, NULL));
+							GDS_R_ARRAY_READ(N_idx, NULL, NULL, NULL));
 						SET_ELEMENT(rv_ans, 1,
-							VAR_LOGICAL(N, GDS_R_Array_Read(N, NULL, NULL, NULL)));
+							VAR_LOGICAL(N, GDS_R_ARRAY_READ(N, NULL, NULL, NULL)));
 					PROTECT(tmp = NEW_CHARACTER(2));
 						SET_STRING_ELT(tmp, 0, mkChar("length"));
 						SET_STRING_ELT(tmp, 1, mkChar("data"));
@@ -813,7 +813,7 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 				for (int i=0; i < (int)len.size(); i++)
 					base[i] = len[i];
 				SET_ELEMENT(rv_ans, 0, I32);
-				SEXP DAT = GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0]);
+				SEXP DAT = GDS_R_ARRAY_READ(N, DStart, DLen, &SelPtr[0]);
 				SET_ELEMENT(rv_ans, 1, DAT);
 			PROTECT(tmp = NEW_CHARACTER(2));
 				SET_STRING_ELT(tmp, 0, mkChar("length"));
