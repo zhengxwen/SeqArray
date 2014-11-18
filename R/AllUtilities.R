@@ -828,6 +828,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
     nSamp <- length(samp.id)
     add.gdsn(gfile, "sample.id", samp.id, compress=compress("sample.id"),
         closezip=TRUE)
+    if (verbose)
+        cat(sprintf("\tthe number of samples: %d\n", nSamp))
 
 
     ##################################################
@@ -1017,7 +1019,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
     else
         import.flag <- header$format$ID %in% fmt.import
 
-    for (i in 1:nrow(header$format))
+    for (i in seq_len(nrow(header$format)))
     {
         # FORMAT Type
         switch(tolower(header$format$Type[i]),
