@@ -858,12 +858,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
     # add data to the folder of genotype
     if (header$num.ploidy > 1)
     {
-        add.gdsn(varGeno, "data", storage="bit2",
+        geno.node <- add.gdsn(varGeno, "data", storage="bit2",
             valdim=c(header$num.ploidy, nSamp, 0),
             compress=compress("genotype"))
     } else {
-        add.gdsn(varGeno, "data", storage="bit2", valdim=c(nSamp, 0),
-            compress=compress("genotype"))
+        geno.node <- add.gdsn(varGeno, "data", storage="bit2",
+            valdim=c(nSamp, 0), compress=compress("genotype"))
     }
     node <- add.gdsn(varGeno, "@data", storage="int32", valdim=c(0),
         compress=compress("genotype"))
@@ -1112,7 +1112,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
         }
 
         if (verbose)
+        {
             cat("\tdone.\n")
+            print(geno.node)
+        }
 
         on.exit()
         close(opfile)
