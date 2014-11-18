@@ -676,7 +676,7 @@ seqVCF.SampID <- function(vcf.fn)
 
 
 #######################################################################
-# Convert a VCF (sequence) file to a GDS file
+# Convert a VCF (sequencing) file to a GDS file
 #
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
@@ -853,7 +853,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
     # add a folder for genotypes
     varGeno <- add.gdsn(gfile, name="genotype", storage="folder")
     put.attr.gdsn(varGeno, "VariableName", genotype.var.name[1])
-    put.attr.gdsn(varGeno, "Description", geno_format$Description[i])
+    put.attr.gdsn(varGeno, "Description", geno_format$Description[1])
 
     # add data to the folder of genotype
     if (header$num.ploidy > 1)
@@ -1138,7 +1138,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
 
 
 #######################################################################
-# Convert a GDS file to a VCF (sequence) file
+# Convert a GDS file to a VCF (sequencing) file
 #
 
 seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
