@@ -45,8 +45,9 @@ using namespace CoreArray;
 #define LongBool int
 
 
-#ifdef GDSFMT_R_VERSION
-#   define GDS_R_ARRAY_READ(Obj, Start, Length, Selection)  GDS_R_Array_Read(Obj, Start, Length, Selection, 0)
+#if (defined(GDSFMT_R_VERSION) && (GDSFMT_R_VERSION >= 0x010103))
+#   define GDS_R_ARRAY_READ(Obj, Start, Length, Selection)  \
+           GDS_R_Array_Read(Obj, Start, Length, Selection, 0)
 #else
 #   define GDS_R_ARRAY_READ    GDS_R_Array_Read
 #endif
