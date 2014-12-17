@@ -681,7 +681,8 @@ seqVCF.SampID <- function(vcf.fn)
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
     genotype.var.name = "GT", compress.option = seqCompress.Option(),
-    info.import=NULL, fmt.import=NULL, raise.error = TRUE, verbose = TRUE)
+    info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
+    raise.error=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(vcf.fn) & is.vector(vcf.fn))
@@ -700,6 +701,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
         (is.character(info.import) & is.vector(info.import)))
     stopifnot(is.null(fmt.import) |
         (is.character(fmt.import) & is.vector(fmt.import)))
+
+    stopifnot(is.character(ignore.chr.prefix))
 
     stopifnot(is.logical(raise.error) & is.vector(raise.error))
     stopifnot(length(raise.error) == 1)
@@ -1082,16 +1085,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
 
 
     ##################################################
-    # define wrapping R function for the C code 'seq_Parse_VCF4'
-    #   because 'getConnection' in Rconnections.h is still hidden
-    # see https://stat.ethz.ch/pipermail/r-devel/2007-April/045264.html
-    readline <- function(infile)
-    {
-        readLines(infile, n=512)
-    }
-
-
-    ##################################################
     # for-loop each file
     for (i in 1:length(vcf.fn))
     {
@@ -1101,12 +1094,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
         if (verbose)
             cat("Parsing \"", vcf.fn[i], "\" ...\n", sep="")
 
+        ##################################################
+        # define wrapping R function for the C code 'seq_Parse_VCF4'
+        #   because 'getConnection' in Rconnections.h is still hidden
+        # see https://stat.ethz.ch/pipermail/r-devel/2007-April/045264.html
+
         # call C function
         v <- .Call("seq_Parse_VCF4", vcf.fn[i], header, gfile$root,
             list(sample.num = as.integer(length(samp.id)),
                 genotype.var.name = genotype.var.name,
                 raise.error = raise.error, verbose = verbose),
-            readline, opfile, new.env())
+            readLines, opfile, 512L,  # 'readLines(opfile, 512L)'
+            ignore.chr.prefix, new.env())
         if (length(v) > 0)
         {
             put.attr.gdsn(varFilter, "R.class", "factor")
@@ -1143,7 +1142,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
 # Convert a GDS file to a VCF (sequencing) file
 #
 
-seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
+seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
+    verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))

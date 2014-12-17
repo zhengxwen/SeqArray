@@ -31,16 +31,16 @@
 
 
 
-// ###########################################################
+// ===========================================================
 // define 
-// ###########################################################
+// ===========================================================
 
 static const string BlackString;
 
 
-// ###########################################################
+// ===========================================================
 // the structure of read line
-// ###########################################################
+// ===========================================================
 
 /// a class of parsing text
 class CReadLine
@@ -173,9 +173,9 @@ protected:
 
 
 
-// ###########################################################
+// ===========================================================
 // VCF strcture
-// ###########################################################
+// ===========================================================
 
 const static int FIELD_TYPE_INT      = 1;
 const static int FIELD_TYPE_FLOAT    = 2;
@@ -639,14 +639,26 @@ static const char *_GetNameValue(const char *p, string &name, string &val)
 
 extern "C"
 {
-// ###########################################################
+// ===========================================================
 // Convert from VCF4: VCF4 -> GDS
-// ###########################################################
+// ===========================================================
+
+/// return true, if matching
+inline static bool StrCaseCmp(const char *prefix, const char *txt)
+{
+	while (*prefix && *txt)
+	{
+		if (toupper(*prefix) != toupper(*txt))
+			return false;
+		prefix ++; txt ++;
+	}
+	return (*prefix == 0);
+}
 
 /// VCF4 --> GDS
 COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 	SEXP gds_root, SEXP param, SEXP ReadLineFun, SEXP ReadLine_Param,
-	SEXP rho)
+	SEXP ReadLine_N, SEXP ChrPrefix, SEXP rho)
 {
 	const char *fn = CHAR(STRING_ELT(vcf_fn, 0));
 
@@ -663,7 +675,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		int nProtected = 0;
 
 
-		// *********************************************************
+		// =========================================================
 		// initialize variables		
 
 		// the total number of samples
@@ -809,20 +821,22 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		vector< TVCF_Field_Format* > fmt_ptr;
 		fmt_ptr.reserve(format_list.size());
 
-		// the number of alleles in total at a specified site
-		int num_allele;
+		// chr prefix
+		vector<string> ChrPref;
+		for (size_t i=0; i < XLENGTH(ChrPrefix); i++)
+			ChrPref.push_back(CHAR(STRING_ELT(ChrPrefix, i)));
 
-
-		// *********************************************************
+		// =========================================================
 		// initialize calling
 		SEXP R_Read_Call;
 		PROTECT(R_Read_Call =
-			LCONS(ReadLineFun, LCONS(ReadLine_Param, R_NilValue)));
+			LCONS(ReadLineFun, LCONS(ReadLine_Param,
+			LCONS(ReadLine_N, R_NilValue))));
 		nProtected ++;
 		RL.Init(R_Read_Call, rho);
 
 
-		// *********************************************************
+		// =========================================================
 		// skip the header
 
 		while (!RL.IfEnd())
@@ -833,41 +847,56 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		}
 
 
-		// *********************************************************
+		// the number of alleles in total at a specified site
+		int num_allele;
+
+		// =========================================================
 		// parse the context
 
 		while (!RL.IfEnd())
 		{
-			// *****************************************************
+			// =====================================================
 			// scan line by line
 
-			// #####################################################
+			// -----------------------------------------------------
 			// variant id
 			GDS_Seq_AppendData(varIdx, 1, &variant_index, svInt32);
 			variant_index ++;
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 1: CHROM
 			RL.GetCell(cell, false);
+			{
+				const char *s = cell.c_str();
+				vector<string>::iterator it = ChrPref.begin();
+				for (; it != ChrPref.end(); it++)
+				{
+					if (StrCaseCmp(it->c_str(), s))
+					{
+						cell.erase(0, it->size());
+						break;
+					}
+				}
+			}
 			GDS_Seq_AppendString(varChr, cell.c_str());
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 2: POS
 			RL.GetCell(cell, false);
 			I32 = getInt32(cell, RaiseError);
 			GDS_Seq_AppendData(varPos, 1, &I32, svInt32);
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 3: ID
 			RL.GetCell(cell, false);
 			if (cell == ".") cell.clear();
 			GDS_Seq_AppendString(varRSID, cell.c_str());
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 4 & 5: REF + ALT 
 			RL.GetCell(value, false);
 			RL.GetCell(cell, false);
@@ -888,14 +917,14 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			}
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 6: QUAL
 			RL.GetCell(cell, false);
 			F32 = getFloat(cell, RaiseError);
 			GDS_Seq_AppendData(varQual, 1, &F32, svFloat32);
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 7: FILTER
 			RL.GetCell(cell, false);
 			if (!cell.empty() && (cell != "."))
@@ -913,7 +942,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			GDS_Seq_AppendData(varFilter, 1, &I32, svInt32);
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 8: INFO
 
 			// initialize
@@ -1021,7 +1050,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			}
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// column 9: FORMAT
 
 			// initialize
@@ -1079,7 +1108,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			}
 
 
-			// #####################################################
+			// -----------------------------------------------------
 			// columns for samples
 
 			// for-loop
@@ -1090,7 +1119,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 				// read
 				RL.GetCell(cell, samp_idx >= (nTotalSamp-1));
 
-				// #################################################
+				// -------------------------------------------------
 				// the first field -- genotypes
 				pCh = p = cell.c_str();
 				while ((*p != 0) && (*p != ':')) p ++;
@@ -1175,7 +1204,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 					}
 				}
 
-				// #################################################
+				// -------------------------------------------------
 				// the other field -- format id
 				for (int i=0; i < (int)fmt_ptr.size(); i++)
 				{
@@ -1215,7 +1244,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 				}
 			}
 
-			// #################################################
+			// -------------------------------------------------
 			// write genotypes
 
 			// determine how many bits
@@ -1259,7 +1288,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			}
 
 
-			// #################################################
+			// -------------------------------------------------
 			// for-loop all format IDs: write
 			for (vector<TVCF_Field_Format>::iterator it = format_list.begin();
 				it != format_list.end(); it++)

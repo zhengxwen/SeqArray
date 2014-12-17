@@ -181,7 +181,8 @@ public:
 				IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
 				if (IndexNode == NULL)
 					throw ErrSeqArray("'%s' is missing!", Path2.c_str());
-				if ((GDS_Seq_DimCnt(IndexNode) != 1) || (GDS_Seq_GetTotalCount(IndexNode) != nVariant))
+				if ((GDS_Seq_DimCnt(IndexNode) != 1) ||
+						(GDS_Seq_GetTotalCount(IndexNode) != nVariant))
 					throw ErrSeqArray(ErrDim, Path2.c_str());
 
 				SelPtr[1] = SampleSel;
@@ -308,11 +309,11 @@ public:
 	void ReadGenoData(int *Base)
 	{
 		// the size of Init.GENO_BUFFER has been check in 'Init()'
-		int SlideCnt = DLen[1]*DLen[2];
+		ssize_t SlideCnt = DLen[1]*DLen[2];
 
 		TdIterator it;
 		GDS_Iter_GetStart(Node, &it);
-		GDS_Iter_Offset(&it, IndexCellVariant*SlideCnt);
+		GDS_Iter_Offset(&it, C_Int64(IndexCellVariant)*SlideCnt);
 		GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
 		C_UInt8 *s = &Init.GENO_BUFFER[0];
 		int *p = Base;
@@ -333,7 +334,7 @@ public:
 		for (int idx=1; idx < NumCellVariant; idx ++)
 		{
 			GDS_Iter_GetStart(Node, &it);
-			GDS_Iter_Offset(&it, (IndexCellVariant + idx)*SlideCnt);
+			GDS_Iter_Offset(&it, (C_Int64(IndexCellVariant) + idx)*SlideCnt);
 			GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
 
 			int shift = idx*2;

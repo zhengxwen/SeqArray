@@ -5,9 +5,9 @@
     Reformat Variant Call Format (VCF) files.
 }
 \usage{
-seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
-    compress.option = seqCompress.Option(),
-    info.import=NULL, fmt.import=NULL, raise.error=TRUE, verbose=TRUE)
+seqVCF2GDS(vcf.fn, out.fn, header = NULL, genotype.var.name = "GT",
+    compress.option = seqCompress.Option(), info.import=NULL, fmt.import=NULL,
+    ignore.chr.prefix="chr", raise.error=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -22,6 +22,9 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
         for import}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
         for import}
+    \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
+        chromosome which should be ignored, like "chr"; it is not
+        case-sensitive}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
         \code{FALSE}: get missing value if numeric conversion fails}
     \item{verbose}{if TRUE, show information}
