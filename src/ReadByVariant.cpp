@@ -540,7 +540,7 @@ static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 }
 
 /// Get data from a working space
-COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
+COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 {
 	COREARRAY_TRY
 
@@ -852,7 +852,7 @@ COREARRAY_DLL_EXPORT SEXP seq_GetData(SEXP gdsfile, SEXP var_name)
 // ###########################################################
 
 /// Apply functions over margins on a working space
-COREARRAY_DLL_EXPORT SEXP seq_Apply_Variant(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho)
 {
 	COREARRAY_TRY
@@ -1111,7 +1111,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Apply_Variant(SEXP gdsfile, SEXP var_name,
 // ###########################################################
 
 /// Apply functions via a sliding window over variants
-COREARRAY_DLL_EXPORT SEXP seq_SlidingWindow(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
 	SEXP win_size, SEXP shift_size, SEXP FUN, SEXP as_is, SEXP var_index,
 	SEXP rho)
 {
@@ -1313,7 +1313,7 @@ COREARRAY_DLL_EXPORT SEXP seq_SlidingWindow(SEXP gdsfile, SEXP var_name,
 			for (it=NodeList.begin(); it != NodeList.end(); it ++)
 			{
 				if (!it->NextCell())
-					throw ErrSeqArray("internal error in 'seq_SlidingWindow'");
+					throw ErrSeqArray("internal error in 'sqa_SlidingWindow'");
 			}
 		}
 

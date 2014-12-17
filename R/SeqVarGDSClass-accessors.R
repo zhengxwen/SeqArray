@@ -46,7 +46,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
     }
 
-    .Call("seq_Open_Init", ans, PACKAGE="SeqArray")
+    .Call(sqa_Open_Init, ans)
 
     new("SeqVarGDSClass", ans)
 }
@@ -58,7 +58,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
 #
 setMethod("seqClose", "SeqVarGDSClass", function(object)
     {
-        .Call("seq_File_Done", object, PACKAGE="SeqArray")
+        .Call(sqa_File_Done, object)
         closefn.gds(object)
         invisible()
     }
@@ -80,10 +80,10 @@ seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
 
     if (action == "push")
     {
-        .Call("seq_FilterPush", gdsfile, PACKAGE="SeqArray")
+        .Call(sqa_FilterPush, gdsfile)
     } else if (action == "pop")
     {
-        .Call("seq_FilterPop", gdsfile, PACKAGE="SeqArray")
+        .Call(sqa_FilterPop, gdsfile)
         return(invisible())
     }
 
@@ -91,33 +91,27 @@ seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
     {
         stopifnot(is.vector(sample.id))
         stopifnot(is.numeric(sample.id) | is.character(sample.id))
-        .Call("seq_SetSpaceSample", gdsfile, sample.id, verbose,
-            PACKAGE="SeqArray")
+        .Call(sqa_SetSpaceSample, gdsfile, sample.id, verbose)
     } else if (!is.null(samp.sel))
     {
         stopifnot(is.vector(samp.sel) & is.logical(samp.sel))
-        .Call("seq_SetSpaceSample", gdsfile, samp.sel, verbose,
-            PACKAGE="SeqArray")
+        .Call(sqa_SetSpaceSample, gdsfile, samp.sel, verbose)
     }
 
     if (!is.null(variant.id))
     {
         stopifnot(is.vector(variant.id))
         stopifnot(is.numeric(variant.id) | is.character(variant.id))
-        .Call("seq_SetSpaceVariant", gdsfile, variant.id, verbose,
-            PACKAGE="SeqArray")
+        .Call(sqa_SetSpaceVariant, gdsfile, variant.id, verbose)
     } else if (!is.null(variant.sel))
     {
         stopifnot(is.vector(variant.sel) & is.logical(variant.sel))
-        .Call("seq_SetSpaceVariant", gdsfile, variant.sel, verbose,
-            PACKAGE="SeqArray")
+        .Call(sqa_SetSpaceVariant, gdsfile, variant.sel, verbose)
     } else {
         if (is.null(sample.id) & is.null(samp.sel))
         {
-            .Call("seq_SetSpaceSample", gdsfile, NULL, verbose,
-                PACKAGE="SeqArray")
-            .Call("seq_SetSpaceVariant", gdsfile, NULL, verbose,
-                PACKAGE="SeqArray")
+            .Call(sqa_SetSpaceSample, gdsfile, NULL, verbose)
+            .Call(sqa_SetSpaceVariant, gdsfile, NULL, verbose)
         }
     }
 
@@ -134,7 +128,7 @@ seqGetFilter <- function(gdsfile)
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
 
-    .Call("seq_GetSpace", gdsfile, PACKAGE="SeqArray")
+    .Call(sqa_GetSpace, gdsfile)
 }
 
 
@@ -148,7 +142,7 @@ seqGetData <- function(gdsfile, var.name)
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(var.name) & (length(var.name)==1))
 
-    .Call("seq_GetData", gdsfile, var.name, PACKAGE="SeqArray")
+    .Call(sqa_GetData, gdsfile, var.name)
 }
 
 
@@ -174,8 +168,8 @@ seqApply <- function(gdsfile, var.name, FUN,
     if (margin == "by.variant")
     {
         # C call
-        rv <- .Call("seq_Apply_Variant", gdsfile, var.name, FUN, as.is,
-            var.index, new.env(), PACKAGE="SeqArray")
+        rv <- .Call(sqa_Apply_Variant, gdsfile, var.name, FUN, as.is,
+            var.index, new.env())
         if (as.is == "none") return(invisible())
     }
     rv
@@ -213,8 +207,8 @@ seqSlidingWindow <- function(gdsfile, var.name, win.size, shift=1, FUN,
     FUN <- match.fun(FUN)
 
     # C call
-    rv <- .Call("seq_SlidingWindow", gdsfile, var.name, win.size, shift,
-    	FUN, as.is, var.index, new.env(), PACKAGE="SeqArray")
+    rv <- .Call(sqa_SlidingWindow, gdsfile, var.name, win.size, shift,
+    	FUN, as.is, var.index, new.env())
 
     if (as.is == "none") return(invisible())
     rv
@@ -337,7 +331,7 @@ seqSummary <- function(gdsfile, varname=NULL,
         if (dm != n.variant)
             stop("Error: the length of the 'allele' variable.")
         if ((check != "") | verbose)
-            nallele <- .Call("seq_NumOfAllele", n, PACKAGE="SeqArray")
+            nallele <- .Call(sqa_NumOfAllele, n)
         if (verbose)
         {
             tab <- table(nallele)
@@ -474,8 +468,7 @@ seqSummary <- function(gdsfile, varname=NULL,
     } else {
 
         # get a description of variable
-        ans <- .Call("seq_VarSummary", gds, varname, PACKAGE="SeqArray")
-        ans
+        .Call(sqa_VarSummary, gds, varname)
     }
 }
 

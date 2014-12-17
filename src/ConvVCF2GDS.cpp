@@ -656,7 +656,7 @@ inline static bool StrCaseCmp(const char *prefix, const char *txt)
 }
 
 /// VCF4 --> GDS
-COREARRAY_DLL_EXPORT SEXP seq_Parse_VCF4(SEXP vcf_fn, SEXP header,
+COREARRAY_DLL_EXPORT SEXP sqa_Parse_VCF4(SEXP vcf_fn, SEXP header,
 	SEXP gds_root, SEXP param, SEXP ReadLineFun, SEXP ReadLine_Param,
 	SEXP ReadLine_N, SEXP ChrPrefix, SEXP rho)
 {

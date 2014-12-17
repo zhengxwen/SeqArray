@@ -65,7 +65,7 @@ extern "C"
 // ###########################################################
 
 /// initialize the package
-COREARRAY_DLL_EXPORT SEXP seq_Init()
+COREARRAY_DLL_EXPORT SEXP sqa_Init()
 {
 	Init_GDS_Routines();
 	return R_NilValue;
@@ -78,7 +78,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Init()
 // ###########################################################
 
 /// initialize a SeqArray file
-COREARRAY_DLL_EXPORT SEXP seq_Open_Init(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP sqa_Open_Init(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		TInitObject::TSelection &s = Init.Selection(gdsfile);
@@ -88,7 +88,7 @@ COREARRAY_DLL_EXPORT SEXP seq_Open_Init(SEXP gdsfile)
 }
 
 /// finalize a SeqArray file
-COREARRAY_DLL_EXPORT SEXP seq_File_Done(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP sqa_File_Done(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int gds_file_id = INTEGER(getListElement(gdsfile, "id"))[0];
@@ -106,7 +106,7 @@ COREARRAY_DLL_EXPORT SEXP seq_File_Done(SEXP gdsfile)
 // ###########################################################
 
 /// push the current filter to the stack
-COREARRAY_DLL_EXPORT SEXP seq_FilterPush(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP sqa_FilterPush(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = INTEGER(getListElement(gdsfile, "id"))[0];
@@ -121,7 +121,7 @@ COREARRAY_DLL_EXPORT SEXP seq_FilterPush(SEXP gdsfile)
 }
 
 /// pop up the previous filter from the stack
-COREARRAY_DLL_EXPORT SEXP seq_FilterPop(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP sqa_FilterPop(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = INTEGER(getListElement(gdsfile, "id"))[0];
@@ -138,7 +138,7 @@ COREARRAY_DLL_EXPORT SEXP seq_FilterPop(SEXP gdsfile)
 }
 
 /// set a working space with selected sample id
-COREARRAY_DLL_EXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel,
+COREARRAY_DLL_EXPORT SEXP sqa_SetSpaceSample(SEXP gds, SEXP samp_sel,
 	SEXP verbose)
 {
 	COREARRAY_TRY
@@ -240,7 +240,7 @@ COREARRAY_DLL_EXPORT SEXP seq_SetSpaceSample(SEXP gds, SEXP samp_sel,
 
 
 /// set a working space with selected variant id
-COREARRAY_DLL_EXPORT SEXP seq_SetSpaceVariant(SEXP gds, SEXP var_sel,
+COREARRAY_DLL_EXPORT SEXP sqa_SetSpaceVariant(SEXP gds, SEXP var_sel,
 	SEXP verbose)
 {
 	COREARRAY_TRY
@@ -359,7 +359,7 @@ static void SKIP_SEL(int num, vector<C_BOOL>::iterator &it)
 }
 
 /// split the selected variants according to multiple processes
-COREARRAY_DLL_EXPORT SEXP seq_SplitSelectedVariant(SEXP gdsfile, SEXP Index,
+COREARRAY_DLL_EXPORT SEXP sqa_SplitSelectedVariant(SEXP gdsfile, SEXP Index,
 	SEXP n_process)
 {
 	COREARRAY_TRY
@@ -417,7 +417,7 @@ COREARRAY_DLL_EXPORT SEXP seq_SplitSelectedVariant(SEXP gdsfile, SEXP Index,
 
 
 /// split the selected samples according to multiple processes
-COREARRAY_DLL_EXPORT SEXP seq_SplitSelectedSample(SEXP gdsfile, SEXP Index,
+COREARRAY_DLL_EXPORT SEXP sqa_SplitSelectedSample(SEXP gdsfile, SEXP Index,
 	SEXP n_process)
 {
 	COREARRAY_TRY
@@ -475,7 +475,7 @@ COREARRAY_DLL_EXPORT SEXP seq_SplitSelectedSample(SEXP gdsfile, SEXP Index,
 
 
 /// set a working space flag with selected variant id
-COREARRAY_DLL_EXPORT SEXP seq_GetSpace(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP sqa_GetSpace(SEXP gdsfile)
 {
 	COREARRAY_TRY
 
@@ -533,7 +533,7 @@ COREARRAY_DLL_EXPORT SEXP seq_GetSpace(SEXP gdsfile)
 
 
 /// set a working space with selected variant id
-COREARRAY_DLL_EXPORT SEXP seq_VarSummary(SEXP gdsfile, SEXP varname)
+COREARRAY_DLL_EXPORT SEXP sqa_VarSummary(SEXP gdsfile, SEXP varname)
 {
 	COREARRAY_TRY
 
@@ -607,7 +607,7 @@ COREARRAY_DLL_EXPORT SEXP seq_VarSummary(SEXP gdsfile, SEXP varname)
 // ###########################################################
 
 /// the number of alleles per site
-COREARRAY_DLL_EXPORT SEXP seq_NumOfAllele(SEXP allele_node)
+COREARRAY_DLL_EXPORT SEXP sqa_NumOfAllele(SEXP allele_node)
 {
 	COREARRAY_TRY
 

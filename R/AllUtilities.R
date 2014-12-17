@@ -1095,12 +1095,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
             cat("Parsing \"", vcf.fn[i], "\" ...\n", sep="")
 
         ##################################################
-        # define wrapping R function for the C code 'seq_Parse_VCF4'
+        # define wrapping R function for the C code 'sqa_Parse_VCF4'
         #   because 'getConnection' in Rconnections.h is still hidden
         # see https://stat.ethz.ch/pipermail/r-devel/2007-April/045264.html
 
         # call C function
-        v <- .Call("seq_Parse_VCF4", vcf.fn[i], header, gfile$root,
+        v <- .Call(sqa_Parse_VCF4, vcf.fn[i], header, gfile$root,
             list(sample.num = as.integer(length(samp.id)),
                 genotype.var.name = genotype.var.name,
                 raise.error = raise.error, verbose = verbose),
@@ -1184,7 +1184,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ## double quote text if needed
     dq <- function(s, text=FALSE)
     {
-        .Call("seq_Quote", s, text, PACKAGE="SeqArray")
+        .Call(sqa_Quote, s, text)
     }
 
 
@@ -1355,7 +1355,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
     # call C function
-    .Call("seq_InitOutVCF4", len.info, len.fmt, PACKAGE="SeqArray")
+    .Call(sqa_InitOutVCF4, len.info, len.fmt)
 
 
     # variable names
@@ -1376,7 +1376,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # output lines variant by variant
     seqApply(gdsfile, nm, margin="by.variant", as.is="none",
         FUN = function(x) {
-            s <- .Call("seq_OutVCF4", x, PACKAGE="SeqArray")
+            s <- .Call(sqa_OutVCF4, x)
             cat(s, file=ofile)
     })
 
@@ -1451,12 +1451,10 @@ seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
 
             if (.split == "by.variant")
             {
-                if (.Call("seq_SplitSelectedVariant", gfile, .idx, .n_process,
-                        PACKAGE="SeqArray") <= 0)
+                if (.Call(sqa_SplitSelectedVariant, gfile, .idx, .n_process) <= 0)
                     return(NULL)
             } else if (.split == "by.sample") {
-                if (.Call("seq_SplitSelectedSample", gfile, .idx, .n_process,
-                        PACKAGE="SeqArray") <= 0)
+                if (.Call(sqa_SplitSelectedSample, gfile, .idx, .n_process) <= 0)
                     return(NULL)
             }
 
@@ -1490,7 +1488,7 @@ seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
 .onAttach <- function(lib, pkg)
 {
     # initialize SeqArray
-    .Call("seq_Init", PACKAGE="SeqArray")
+    .Call(sqa_Init)
 
     TRUE
 }

@@ -1,5 +1,12 @@
 # Load the shared object
-useDynLib(SeqArray)
+useDynLib(SeqArray,
+    sqa_Parse_VCF4, sqa_Quote, sqa_InitOutVCF4, sqa_OutVCF4,
+    sqa_SplitSelectedVariant, sqa_SplitSelectedSample, sqa_Init,
+    sqa_Open_Init, sqa_File_Done, sqa_FilterPush, sqa_FilterPop,
+    sqa_SetSpaceSample, sqa_SetSpaceVariant, sqa_GetSpace,
+    sqa_GetData, sqa_Apply_Variant, sqa_SlidingWindow, sqa_NumOfAllele,
+    sqa_VarSummary
+)
 
 # Import all packages listed as Imports or Depends
 import(gdsfmt)
