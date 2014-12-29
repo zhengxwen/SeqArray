@@ -679,8 +679,8 @@ seqVCF.SampID <- function(vcf.fn)
 # Convert a VCF (sequencing) file to a GDS file
 #
 
-seqVCF2GDS <- function(vcf.fn, out.fn, header = NULL,
-    genotype.var.name = "GT", compress.option = seqCompress.Option(),
+seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
+    genotype.var.name = "GT", compress.option=seqCompress.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     raise.error=TRUE, verbose=TRUE)
 {

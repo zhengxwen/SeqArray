@@ -2,12 +2,12 @@ Package: SeqArray
 Type: Package
 Title: Big Data Management of Genome-wide Sequencing Variants
 Version: 1.7.2
-Date: 2014-12-16
+Date: 2014-12-28
 Depends: gdsfmt (>= 1.1.0)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation
 LinkingTo: gdsfmt
-Suggests: parallel, BiocGenerics, RUnit, Rcpp
+Suggests: parallel, BiocStyle, BiocGenerics, RUnit, Rcpp
 Author: Xiuwen Zheng, Stephanie M. Gogarten, Cathy Laurie
 Maintainer: Xiuwen Zheng <zhengx@u.washington.edu>
 Description: Big data management of genome-wide variants using the
