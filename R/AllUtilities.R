@@ -393,6 +393,7 @@ seqVCF.Header <- function(vcf.fn)
     # parse and determine how many copies of genomes: haploid, diploid or others
     geno.text <- NULL
 
+    n <- 0L
     for (i in 1:length(vcf.fn))
     {
         opfile <- file(vcf.fn[i], open="rt")
@@ -402,6 +403,7 @@ seqVCF.Header <- function(vcf.fn)
         ans <- NULL
         while (length(s <- readLines(opfile, n=1)) > 0)
         {
+            n <- n + 1L
             if (substr(s, 1, 6) != "#CHROM")
             {
                 s <- substring(s, 3)
@@ -414,6 +416,14 @@ seqVCF.Header <- function(vcf.fn)
                     geno.text <- c(geno.text, ss[-(1:9)])
                 }
                 break
+            }
+            if ((n %% 10000L) == 0)
+            {
+                warning(sprintf(
+                "There are too many lines in the header (>= %d). ", n),
+                "In order not to slow down the conversion, please consider ",
+                "deleting unnecessary annotations (like contig).",
+                immediate.=TRUE)
             }
         }
 
