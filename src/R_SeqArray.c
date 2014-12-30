@@ -8,7 +8,7 @@
 //
 // R_SeqArray.c: link to R_GDS2.h
 //
-// Copyright (C) 2014	Xiuwen Zheng
+// Copyright (C) 2014-2015    Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //

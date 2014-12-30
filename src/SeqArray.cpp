@@ -8,7 +8,7 @@
 //
 // SeqArray.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2013 - 2014	Xiuwen Zheng [zhengx@u.washington.edu]
+// Copyright (C) 2013-2015    Xiuwen Zheng [zhengx@u.washington.edu]
 //
 // This file is part of SeqArray.
 //
@@ -42,7 +42,7 @@ TInitObject::TInitObject(): TRUE_ARRAY(256, TRUE), GENO_BUFFER(1024)
 TInitObject::TSelection &TInitObject::Selection(SEXP gds)
 {
 	// TODO: check whether handle is valid
-	int id = INTEGER(getListElement(gds, "id"))[0];
+	int id = INTEGER(GetListElement(gds, "id"))[0];
 	TSelList &m = _Map[id];
 	if (m.empty()) m.push_back(TSelection());
 	return m.back();
@@ -91,7 +91,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_Open_Init(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP sqa_File_Done(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int gds_file_id = INTEGER(getListElement(gdsfile, "id"))[0];
+		int gds_file_id = INTEGER(GetListElement(gdsfile, "id"))[0];
 		map<int, TInitObject::TSelList>::iterator it =
 			Init._Map.find(gds_file_id);
 		if (it != Init._Map.end())
@@ -109,7 +109,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_File_Done(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP sqa_FilterPush(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int id = INTEGER(getListElement(gdsfile, "id"))[0];
+		int id = INTEGER(GetListElement(gdsfile, "id"))[0];
 		map<int, TInitObject::TSelList>::iterator it =
 			Init._Map.find(id);
 		if (it != Init._Map.end())
@@ -124,7 +124,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_FilterPush(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP sqa_FilterPop(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int id = INTEGER(getListElement(gdsfile, "id"))[0];
+		int id = INTEGER(GetListElement(gdsfile, "id"))[0];
 		map<int, TInitObject::TSelList>::iterator it =
 			Init._Map.find(id);
 		if (it != Init._Map.end())
@@ -146,7 +146,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_SetSpaceSample(SEXP gds, SEXP samp_sel,
 		TInitObject::TSelection &s = Init.Selection(gds);
 
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gds, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gds, "root"));
 		PdSequenceX varSamp = GDS_Node_Path(Root, "sample.id", TRUE);
 
 		if (GDS_Seq_DimCnt(varSamp) != 1)
@@ -248,7 +248,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_SetSpaceVariant(SEXP gds, SEXP var_sel,
 		TInitObject::TSelection &s = Init.Selection(gds);
 
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gds, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gds, "root"));
 		PdSequenceX varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 
 		if (GDS_Seq_DimCnt(varVariant) != 1)
@@ -482,7 +482,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetSpace(SEXP gdsfile)
 		TInitObject::TSelection &s = Init.Selection(gdsfile);
 
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
 		PdSequenceX varSample = GDS_Node_Path(Root, "sample.id", TRUE);
 		PdSequenceX varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 
@@ -540,7 +540,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_VarSummary(SEXP gdsfile, SEXP varname)
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
 		// the variable name
 		string vn = CHAR(STRING_ELT(varname, 0));
 

@@ -6,9 +6,9 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// Common.h: the header file of SeqArray C/C++ codes
+// Common.h: the C++ header file of SeqArray
 //
-// Copyright (C) 2013 - 2014	Xiuwen Zheng [zhengx@u.washington.edu]
+// Copyright (C) 2013-2015    Xiuwen Zheng [zhengx@u.washington.edu]
 //
 // This file is part of SeqArray.
 //
@@ -106,7 +106,7 @@ public:
 // ###########################################################
 
 /// get the list element named str, or return NULL
-COREARRAY_INLINE static SEXP getListElement(SEXP list, const char *str)
+COREARRAY_INLINE static SEXP GetListElement(SEXP list, const char *str)
 {
 	SEXP elmt = R_NilValue;
 	SEXP names = getAttrib(list, R_NamesSymbol);
@@ -120,6 +120,17 @@ COREARRAY_INLINE static SEXP getListElement(SEXP list, const char *str)
 	}
 	return elmt;
 }
+
+
+/// get the list element named str, or return NULL
+COREARRAY_INLINE static ssize_t GetLength(SEXP val)
+{
+	if (!Rf_isNull(val))
+		return Rf_length(val);
+	else
+		return 0;
+}
+
 
 /// check CoreArray function
 COREARRAY_INLINE static const char *SKIP(const char *p)

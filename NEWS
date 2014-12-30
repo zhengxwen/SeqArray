@@ -1,7 +1,8 @@
-Changes in 1.7.1 - 1.7.2:
+Changes in 1.7.1 - 1.7.3:
 
 	* bug fix in getting genotypes if position > 2^31
 	* add an option 'ignore.chr.prefix' to the function 'seqVCF2GDS'
+	* 'seqVCF2GDS' ignores the INFO or FORMAT variables if they are not defined ahead
 
 
 Changes in 1.5.1 - 1.5.2:

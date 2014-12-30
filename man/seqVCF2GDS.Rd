@@ -19,9 +19,9 @@ seqVCF2GDS(vcf.fn, out.fn, header = NULL, genotype.var.name = "GT",
     \item{compress.option}{specify the compression options, by default
         \code{\link{seqCompress.Option}}}
     \item{info.import}{characters, the variable name(s) in the INFO field
-        for import}
+        for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
-        for import}
+        for import; or \code{NULL} for all variables}
     \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
         chromosome which should be ignored, like "chr"; it is not
         case-sensitive}
@@ -41,8 +41,8 @@ seqVCF2GDS(vcf.fn, out.fn, header = NULL, genotype.var.name = "GT",
         structural variants, together with rich annotations.
 
     If there are more than one files in \code{vcf.fn}, \code{seqVCF2GDS} will
-merge all dataset together once they all contain the same samples. It is useful
-to combine genetic data if VCF data are divided by chromosomes.
+merge all dataset together if they contain the same samples. It is useful
+to merge genomic variants if VCF data are divided by chromosomes.
 }
 \references{
     The variant call format and VCFtools.

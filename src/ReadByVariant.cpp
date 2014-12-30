@@ -8,7 +8,7 @@
 //
 // ReadByVariant.cpp: Read data variant by variant
 //
-// Copyright (C) 2013 - 2014	Xiuwen Zheng [zhengx@u.washington.edu]
+// Copyright (C) 2013-2015    Xiuwen Zheng [zhengx@u.washington.edu]
 //
 // This file is part of SeqArray.
 //
@@ -549,7 +549,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
 
 		// 
 		C_BOOL *SelPtr[256];
@@ -860,7 +860,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
 
 		// init selection
 		if (Sel.Sample.empty())
@@ -1120,7 +1120,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(getListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
 
 		// initialize selection
 		if (Sel.Sample.empty())
