@@ -1,43 +1,84 @@
-%\VignetteIndexEntry{SeqArray}
+%\VignetteIndexEntry{SeqArray Tutorial}
 %\VignetteDepends{gdsfmt}
-%\VignetteKeywords{GWAS, SNP, Sequencing Variants}
+%\VignetteKeywords{GWAS, SNP, Variants}
 %\VignettePackage{SeqArray}
+%\VignetteEngine{knitr::knitr}
 
 \documentclass[12pt]{article}
 
-<<style-Sweave, eval=TRUE, echo=FALSE, results=tex>>=
+<<style, eval=TRUE, echo=FALSE, results="asis">>=
 BiocStyle::latex()
-@
-
-\usepackage{amsmath}
-\usepackage{graphicx}
-\usepackage{Sweave}
-
+@ 
 
 \begin{document}
 
-\title{SeqArray: an R/Bioconductor Package for Big Data Management of Genome-Wide Sequencing Variants}
+\bioctitle[SeqArray]{
+    SeqArray: an R/Bioconductor Package for Big Data Management of
+              Genome-Wide Sequencing Variants
+}
 \author{Xiuwen Zheng \\
     Department of Biostatistics \\
     University of Washington -- Seattle}
-\date{Dec 28, 2014}
+\date{Jan 14, 2015}
 
 
 \maketitle
 \tableofcontents
 
-% \SweaveOpts{keep.source=TRUE, eps=FALSE}
-
 % ---- Overview ----
 \section{Overview}
 
-In the era of big data, thousands of gigabyte-size data sets are challenging scientists for data management, even on well-equipped hardware. Currently, next-generation sequencing techniques are being adopted to investigate common and rare variants, making the analyses of large-scale genotypic data challenging. For example, the 1000 Genomes Project has identified approximately 38 million single nucleotide polymorphisms (SNPs), 1.4 million short insertions and deletions, and more than 14,000 larger deletions from whole-genome sequencing technologies [1]. In the near future, new technologies, like third-generation whole-genome sequencing, will be enabling data to be generated at an unprecedented scale [2]. The Variant Call Format (VCF) was developed for the 1000 Genomes Project, which is a generic text format for storing DNA polymorphism data such as SNPs, insertions, deletions and structural variants, together with rich annotations [3]. However, this format is less efficient for large-scale analyses since numeric data have to be parsed from a text VCF file before further analyses. The computational burden associated with sequencing variants is especially evident with large sample and variant sizes, and it requires efficient numerical implementation and data management.
+In the era of big data, thousands of gigabyte-size data sets are challenging
+scientists for data management, even on well-equipped hardware. Currently,
+next-generation sequencing techniques are being adopted to investigate common
+and rare variants, making the analyses of large-scale genotypic data
+challenging. For example, the 1000 Genomes Project has identified approximately
+38 million single nucleotide polymorphisms (SNPs), 1.4 million short insertions
+and deletions, and more than 14,000 larger deletions from whole-genome
+sequencing technologies [1]. In the near future, new technologies, like
+third-generation whole-genome sequencing, will be enabling data to be generated
+at an unprecedented scale [2]. The Variant Call Format (VCF) was developed for
+the 1000 Genomes Project, which is a generic text format for storing DNA
+polymorphism data such as SNPs, insertions, deletions and structural variants,
+together with rich annotations [3]. However, this format is less efficient for
+large-scale analyses since numeric data have to be parsed from a text VCF file
+before further analyses. The computational burden associated with sequencing
+variants is especially evident with large sample and variant sizes, and it
+requires efficient numerical implementation and data management.
 
-Here I introduce a high-performance C/C++ computing library CoreArray (\url{http://corearray.sourceforge.net}) for big-data management of genome-wide variants [4]. CoreArray was designed for developing portable and scalable storage technologies for bioinformatics data, allowing parallel computing at the multicore and cluster levels. It provides the genomic data structure (GDS) file format for array-oriented data: this is a universal data format to store multiple data variables in a single file. The CoreArray library modules are demonstrated in Figure~\ref{fig:CoreArray-Modules}. A hierarchical data structure is used to store multiple extensible data variables in the GDS format, and all datasets are stored in a single file with chunked storage layout. A document about CoreArray can be found: \url{http://cran.r-project.org/web/packages/gdsfmt/vignettes/CoreArrayTutorial.pdf}.
+Here I introduce a high-performance C++ computing library CoreArray
+(\url{http://corearray.sourceforge.net}) for big-data management of genome-wide
+variants [4]. CoreArray was designed for developing portable and scalable
+storage technologies for bioinformatics data, allowing parallel computing at
+the multicore and cluster levels. It provides the genomic data structure (GDS)
+file format for array-oriented data: this is a universal data format to store
+multiple data variables in a single file. The CoreArray library modules are
+demonstrated in Figure~\ref{fig:CoreArray-Modules}. A hierarchical data
+structure is used to store multiple extensible data variables in the GDS
+format, and all datasets are stored in a single file with chunked storage
+layout. A document about CoreArray can be found: \url{http://
+cran.r-project.org/web/packages/gdsfmt/vignettes/CoreArrayTutorial.pdf}.
 
-Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages gdsfmt and SeqArray to address or reduce the computational burden associated with data management of sequencing variants. Gdsfmt provides a general R interface for the CoreArray library, and SeqArray is specifically designed for data management of sequencing variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are six key functions in SeqArray (Table~\ref{tab:KeyFun}), and most of data analyses could be done using these six functions. The 1000 Genomes Project released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequencing variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
+Here, I focus on the application of CoreArray for statisticians working in
+the R environment, and developed R packages gdsfmt and SeqArray to address or
+reduce the computational burden associated with data management of sequencing
+variants. Gdsfmt provides a general R interface for the CoreArray library, and
+SeqArray is specifically designed for data management of sequencing variants.
+The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized.
+Genotypic data and annotations are stored in a binary and array-oriented
+manner, offering efficient access of genetic variants using the R language.
+There are six key functions in SeqArray (Table~\ref{tab:KeyFun}), and most of
+data analyses could be done using these six functions. The 1000 Genomes Project
+released 39 million genetic variants for 1092 individuals, and a 26G data file
+was created by SeqArray to store sequencing variants with phasing information,
+where 2 bits were used as a primitive data type. The file size can be further
+reduced to 1.5G by compression algorithms without sacrificing access
+efficiency, since it has a large proportion of rare variants.
 
-SeqArray will be of great interest to scientists involved in data analyses of large-scale genomic sequencing data using R environment, particularly those with limited experience of low-level C programming and parallel computing.
+SeqArray will be of great interest to scientists involved in data analyses
+of large-scale genomic sequencing data using R environment, particularly
+those with limited experience of low-level C programming and parallel
+computing.
 
 
 % -------- BEGIN FIGURE --------
@@ -59,9 +100,12 @@ SeqArray will be of great interest to scientists involved in data analyses of la
     Function     & Description \\
     \hline\hline
     seqVCF2GDS   & Imports VCF files \\
-    seqSummary   & Gets the summary of a sequencing GDS file (\# of samples, \# of variants, INFO/FORMAT variables, etc) \\
-    seqSetFilter & Sets a filter to sample or variant (define a subset of data) \\
-    seqGetData   & Gets data from a sequencing GDS file (from a subset of data) \\
+    seqSummary   & Gets the summary of a sequencing GDS file
+        (\# of samples, \# of variants, INFO/FORMAT variables, etc) \\
+    seqSetFilter & Sets a filter to sample or variant
+        (define a subset of data) \\
+    seqGetData   & Gets data from a sequencing GDS file
+        (from a subset of data) \\
     seqApply     & Applies a user-defined function over array margins \\
     seqParallel  & Applies functions in parallel \\
     \hline
@@ -77,7 +121,12 @@ SeqArray will be of great interest to scientists involved in data analyses of la
 % -------- Data formats used in SeqArray --------
 \subsection{Data formats used in SeqArray}
 
-To support efficient memory management for genome-wide numerical data, the \Githubpkg{zhengxwen/gdsfmt} package provides the genomic data structure (GDS) file format for array-oriented bioinformatic data based on the CoreArray library, which is a container for storing genotypic and annotation data. The GDS format supports data blocking so that only the subset of data that is being processed needs to reside in memory.
+To support efficient memory management for genome-wide numerical data, the
+\Biocpkg{gdsfmt} package provides the genomic data structure (GDS) file
+format for array-oriented bioinformatic data based on the CoreArray library,
+which is a container for storing genotypic and annotation data. The GDS format
+supports data blocking so that only the subset of data that is being processed
+needs to reside in memory.
 
 <<>>=
 # load the R package SeqArray
@@ -92,7 +141,10 @@ gds.fn
 
 seqSummary(gds.fn)
 @
-\Rfunction{seqExampleFileName} returns the file name of a GDS file used as an example in \Biocpkg{SeqArray}, and it is a subset of data from the 1000 Genomes Project. \Rfunction{seqSummary} summarizes the genotypes and annotations stored in the GDS file.
+\Rfunction{seqExampleFileName} returns the file name of a GDS file used as
+an example in \Biocpkg{SeqArray}, and it is a subset of data from the 1000
+Genomes Project. \Rfunction{seqSummary} summarizes the genotypes and
+annotations stored in the GDS file.
 
 <<>>=
 # open a GDS file
@@ -102,7 +154,10 @@ genofile <- seqOpen(gds.fn)
 genofile
 @
 
-For those who would like to know how variable-length genotypic data and annotations are stored in an array-oriented manner, \Rfunction{print(, all=TRUE)} displays all contents including hidden structures:
+For those who would like to know how variable-length genotypic data and
+annotations are stored in an array-oriented manner,
+\Rfunction{print(, all=TRUE)} displays all contents including hidden
+structures:
 <<>>=
 # display all contents of the GDS file
 print(genofile, all=TRUE)
@@ -111,46 +166,114 @@ print(genofile, all=TRUE)
 seqClose(genofile)
 @
 
-The output lists all variables stored in the GDS file. At the first level, it stores variables \Robject{sample.id}, \Robject{variant.id}, etc. The additional information are displayed in the square brackets indicating data type, size, compressed or not + compression ratio, where ``Bit2'' indicates that each byte encodes up to four alleles since one byte consists of eight bits, and ``VStr8'' indicates variable-length character. The annotations are stored in the directory \Robject{annotation}, which includes the fields of ID, QUAL, FILTER, INFO and FORMAT corresponding to the original VCF file(s). All of the functions in \Biocpkg{SeqArray} require a minimum set of variables in the annotation data:
+The output lists all variables stored in the GDS file. At the first level,
+it stores variables \Robject{sample.id}, \Robject{variant.id}, etc.
+The additional information are displayed in the square brackets indicating
+data type, size, compressed or not + compression ratio, where ``Bit2''
+indicates that each byte encodes up to four alleles since one byte consists
+of eight bits, and ``VStr8'' indicates variable-length character. The
+annotations are stored in the directory \Robject{annotation}, which includes
+the fields of ID, QUAL, FILTER, INFO and FORMAT corresponding to the original
+VCF file(s). All of the functions in \Biocpkg{SeqArray} require a minimum set
+of variables in the annotation data:
+
 \begin{itemize}
     \item \Robject{sample.id}, a unique identifier for each sample.
     \item \Robject{variant.id}, a unique identifier for each variant.
-    \item \Robject{position}, integer, the base position of each variant on the chromosome, and 0 or NA for unknown position.
-    \item \Robject{chromosome}, character, the chromosome code, e.g., 1-22 for autosomes, X, Y, XY (the pseudoautosomal region), M (the mitochondrial probes), and ``'' (a blank string) for probes with unknown chromosome.
-    \item \Robject{allele}, character, reference and alternative alleles using comma as a separator.
+    \item \Robject{position}, integer, the base position of each variant on
+        the chromosome, and 0 or NA for unknown position.
+    \item \Robject{chromosome}, character, the chromosome code, e.g., 1-22 for
+        autosomes, X, Y, XY (the pseudoautosomal region), M (the mitochondrial
+        probes), and ``'' (a blank string) for probes with unknown chromosome.
+    \item \Robject{allele}, character, reference and alternative alleles using
+        comma as a separator.
     \item {\Robject{genotype}, a folder,
         \begin{itemize}
-            \item \Robject{data}, a 3-dimensional array for genotypic data, the first dimension refers to the number of ploidy, the second is sample and the third is variant.
-            \item \Robject{@data}, the index for the variable \Robject{data}, and the prefix \Robject{@} is used to indicate the index. It should be equal-size as \Robject{variant.id}, which is used to specify the data size of each variant.
-            \item \Robject{extra.index}, an index (3-by-$*$) matrix for triploid call (look like ``0/0/1'' in the VCF file). E.g., for ``0/0/1'', the first two alleles are stored in \Robject{data}, and the last allele is saved in the variable \Robject{extra}. For each column of \Robject{extra.index}, the first value is the index of sample (starting from 1), the second value is the index of variant (starting from 1), and the last value is how many alleles remain (usually it is 1 since the first two alleles are stored in \Robject{data}) that indicates how many alleles stored in \Robject{extra} contiguously.
-            \item \Robject{extra}, one-dimensional array, the additional data for triploid call, each allele block corresponds to each column in \Robject{extra.index}.
+            \item \Robject{data}, a 3-dimensional array for genotypic data,
+                the first dimension refers to the number of ploidy, the second
+                is sample and the third is variant.
+            \item \Robject{@data}, the index for the variable \Robject{data},
+                and the prefix \Robject{@} is used to indicate the index. It
+                should be equal-size as \Robject{variant.id}, which is used to
+                specify the data size of each variant.
+            \item \Robject{extra.index}, an index (3-by-$*$) matrix for
+                triploid call (look like ``0/0/1'' in the VCF file). E.g.,
+                for ``0/0/1'', the first two alleles are stored in
+                \Robject{data}, and the last allele is saved in the variable
+                \Robject{extra}. For each column of \Robject{extra.index}, the
+                first value is the index of sample (starting from 1), the
+                second value is the index of variant (starting from 1), and
+                the last value is how many alleles remain (usually it is 1
+                since the first two alleles are stored in \Robject{data}) that
+                indicates how many alleles stored in \Robject{extra}
+                contiguously.
+            \item \Robject{extra}, one-dimensional array, the additional data
+                for triploid call, each allele block corresponds to each column
+                in \Robject{extra.index}.
         \end{itemize}}
 \end{itemize}
 
-The optional variables include \Robject{phase} (phasing information) and \Robject{annotation}. The variable \Robject{phase} includes:
+The optional variables include \Robject{phase} (phasing information) and
+\Robject{annotation}. The variable \Robject{phase} includes:
 \begin{itemize}
-    \item \Robject{data}, a matrix or 3-dimensional array for phasing information. ``0'' for unphased status and ``1'' for phased status. If it is a matrix, the first dimension is sample and the second is variant, corresponding to diploid genotypic data. If it is a 3-dimensional array, the first dimension refers to the number of ploidy minus one. More details about ``/'' and ``|'' in a VCF file can be founded: \url{http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41}.
-    \item \Robject{extra.index}, an index (3-by-$*$) matrix for triploid call (look like ``0/0/1'' in the VCF file). E.g., for ``0/0/1'', the first separator (``/'' here) is stored in \Robject{data}, and the last separator is saved in the variable \Robject{extra}. For each column of \Robject{extra.index}, the first value is the index of sample (starting from 1), the second value is the index of variant (starting from 1), and the last value is how many separators remain (usually it is 1 since the first separator is stored in \Robject{data}) that indicates how many separator stored in \Robject{extra} contiguously.
-    \item \Robject{extra}, one-dimensional array, the additional data of separator indicator for triploid call, each separator block corresponds to each column in \Robject{extra.index}.
+    \item \Robject{data}, a matrix or 3-dimensional array for phasing
+        information. ``0'' for unphased status and ``1'' for phased status.
+        If it is a matrix, the first dimension is sample and the second is
+        variant, corresponding to diploid genotypic data. If it is a
+        3-dimensional array, the first dimension refers to the number of
+        ploidy minus one. More details about ``/'' and ``|'' in a VCF file
+        can be founded:
+        \url{http://www.1000genomes.org/wiki/Analysis/
+        Variant Call Format/vcf-variant-call-format-version-41}.
+    \item \Robject{extra.index}, an index (3-by-$*$) matrix for triploid call
+        (look like ``0/0/1'' in the VCF file). E.g., for ``0/0/1'', the first
+        separator (``/'' here) is stored in \Robject{data}, and the last
+        separator is saved in the variable \Robject{extra}. For each column
+        of \Robject{extra.index}, the first value is the index of sample
+        (starting from 1), the second value is the index of variant (starting
+        from 1), and the last value is how many separators remain (usually it
+        is 1 since the first separator is stored in \Robject{data}) that
+        indicates how many separator stored in \Robject{extra} contiguously.
+    \item \Robject{extra}, one-dimensional array, the additional data of
+        separator indicator for triploid call, each separator block corresponds
+        to each column in \Robject{extra.index}.
 \end{itemize}
 
 The variable \Robject{annotation} includes:
 \begin{itemize}
-    \item \Robject{id}, ID semi-colon separated list of unique identifiers where available. If this is a dbSNP variant it is encouraged to use the rs number(s). No identifier should be present in more than one data record. If there is no identifier available, then a blank string is used.
-    \item \Robject{qual}, phred-scaled quality score for the assertion made in ALT.
-    \item \Robject{filter}, PASS if this position has passed all filters, i.e. a call is made at this position.
-    \item {\Robject{info}, additional information for each variant, according to the INFO field in a VCF file,
+    \item \Robject{id}, ID semi-colon separated list of unique identifiers
+        where available. If this is a dbSNP variant it is encouraged to use
+        the rs number(s). No identifier should be present in more than one
+        data record. If there is no identifier available, then a blank string
+        is used.
+    \item \Robject{qual}, phred-scaled quality score for the assertion made
+        in ALT.
+    \item \Robject{filter}, PASS if this position has passed all filters,
+        i.e. a call is made at this position.
+    \item {\Robject{info}, additional information for each variant, according
+        to the INFO field in a VCF file,
         \begin{itemize}
-            \item \Robject{VARIABLE\_NAME}, variable. If it is fixed-length, missing value indicates that there is no entry for that variant in the VCF file.
-            \item \Robject{@VARIABLE\_NAME}, \underline{optional} if \Robject{VARIABLE\_NAME} is variable-length, one-dimensional array. The prefix \Robject{@} is used to indicate the index data. It should be equal-size as \Robject{variant.id}, which is used to specify the data size of each variant.
+            \item \Robject{VARIABLE\_NAME}, variable. If it is fixed-length,
+                missing value indicates that there is no entry for that variant
+                in the VCF file.
+            \item \Robject{@VARIABLE\_NAME}, \underline{optional} if
+                \Robject{VARIABLE\_NAME} is variable-length, one-dimensional
+                array. The prefix \Robject{@} is used to indicate the index
+                data. It should be equal-size as \Robject{variant.id}, which
+                is used to specify the data size of each variant.
             \item \Robject{OTHER\_VARIABLES, ...}
         \end{itemize}}
-    \item {\Robject{format}, additional information for each variant and sample, according to the FORMAT field in a VCF file,
+    \item {\Robject{format}, additional information for each variant and
+        sample, according to the FORMAT field in a VCF file,
         \begin{itemize}
             \item {\Robject{VARIABLE\_NAME}, a folder,
                 \begin{itemize}
                     \item \Robject{data}, a $n_{samp}$-by-$*$ matrix.
-                    \item \Robject{@data}, one-dimensional array, the index data for the variable \Robject{data}, and the prefix \Robject{@} is used to indicate the index data. It should be equal-size as \Robject{variant.id}, which is used to specify the data size of each variant.
+                    \item \Robject{@data}, one-dimensional array, the index
+                        data for the variable \Robject{data}, and the prefix
+                        \Robject{@} is used to indicate the index data. It
+                        should be equal-size as \Robject{variant.id}, which
+                        is used to specify the data size of each variant.
                 \end{itemize}}
             \item \Robject{OTHER\_VARIABLES, ...}
         \end{itemize}}
@@ -160,7 +283,10 @@ The variable \Robject{annotation} includes:
 % -------- Format conversion from VCF files --------
 \subsection{Format conversion from VCF files}
 
-The \Biocpkg{SeqArray} package provides a function \Rfunction{seqVCF2GDS} to reformat a VCF file, and it allows merging multiple VCF files during format conversion. The genotypic and annotation data are stored in a compressed manner.
+The \Biocpkg{SeqArray} package provides a function \Rfunction{seqVCF2GDS} to
+reformat a VCF file, and it allows merging multiple VCF files during format
+conversion. The genotypic and annotation data are stored in a compressed
+manner.
 
 <<>>=
 # the VCF file, using the example in the SeqArray package
@@ -171,7 +297,20 @@ vcf.fn
 # parse the header
 seqVCF.Header(vcf.fn)
 @
-The columns ``Number'', ``Type'' and ``Description'' are defined by the 1000 Genomes Project: \url{http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41}. Briefly, the Number entry is an Integer that describes the number of values that can be included with the INFO field. For example, if the INFO field contains a single number, then this value should be 1; if the INFO field describes a pair of numbers, then this value should be 2 and so on. If the field has one value per alternate allele then this value should be `A'; if the field has one value for each possible genotype then this value should be `G'.  If the number of possible values varies, is unknown, or is unbounded, then this value should be `.'. The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number should be 0 in this case. Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field).
+The columns ``Number'', ``Type'' and ``Description'' are defined by the 1000
+Genomes Project: \url{http://www.1000genomes.org/wiki/Analysis/
+Variant Call Format/vcf-variant-call-format-version-41}. Briefly, the Number
+entry is an Integer that describes the number of values that can be included
+with the INFO field. For example, if the INFO field contains a single number,
+then this value should be 1; if the INFO field describes a pair of numbers,
+then this value should be 2 and so on. If the field has one value per
+alternate allele then this value should be `A'; if the field has one value
+for each possible genotype then this value should be `G'.  If the number of
+possible values varies, is unknown, or is unbounded, then this value should
+be `.'. The `Flag' type indicates that the INFO field does not contain a Value
+entry, and hence the Number should be 0 in this case. Possible Types for
+FORMAT fields are: Integer, Float, Character, and String (this field is
+otherwise defined precisely as the INFO field).
 
 <<>>=
 # convert, save in "tmp.gds"
@@ -187,7 +326,12 @@ unlink("tmp.gds")
 % -------- Export to a VCF File --------
 \subsection{Export to a VCF File}
 
-The \Biocpkg{SeqArray} package provides a function \Rfunction{seqGDS2VCF} to export data to a VCF file. The arguments \Robject{info.var} and \Robject{fmt.var} in \Rfunction{seqGDS2VCF} allow users to specify the variables listed in the INFO and FORMAT fields of VCF format, or remove the INFO and FORMAT information. \Rfunction{seqSetFilter} can be used to define a subset of data for the export.
+The \Biocpkg{SeqArray} package provides a function \Rfunction{seqGDS2VCF} to
+export data to a VCF file. The arguments \Robject{info.var} and
+\Robject{fmt.var} in \Rfunction{seqGDS2VCF} allow users to specify the
+variables listed in the INFO and FORMAT fields of VCF format, or remove the
+INFO and FORMAT information. \Rfunction{seqSetFilter} can be used to define a
+subset of data for the export.
 
 <<>>=
 # the file of GDS
@@ -204,7 +348,8 @@ z <- readLines("tmp.vcf.gz", n=20)
 for (i in z) cat(substr(i, 1, 76), " ...\n", sep="")
 
 # output BN,GP,AA,HM2 in INFO (the variables are in this order), no FORMAT
-seqGDS2VCF(genofile, "tmp2.vcf.gz", info.var=c("BN","GP","AA","HM2"), fmt.var=character(0))
+seqGDS2VCF(genofile, "tmp2.vcf.gz", info.var=c("BN","GP","AA","HM2"),
+    fmt.var=character(0))
 # read
 z <- readLines("tmp2.vcf.gz", n=15)
 for (i in z) cat(substr(i, 1, 56), " ...\n", sep="")
@@ -213,24 +358,23 @@ for (i in z) cat(substr(i, 1, 56), " ...\n", sep="")
 seqClose(genofile)
 @
 
-Users can use \Rfunction{diff}, a command line tool in Unix-like systems, to compare files line by line, in order to confirm data consistency. 
-\begin{Schunk}
-\begin{Sinput}
+Users can use \Rfunction{diff}, a command line tool in Unix-like systems,
+to compare files line by line, in order to confirm data consistency. 
+\begin{verbatim}
 # assuming the original VCF file is old.vcf.gz,
 # call "seqVCF2GDS" for the import and "seqGDS2VCF" for the export to create a new VCF file new.vcf.gz
 $ diff <(zcat old.vcf.gz) <(zcat new.vcf.gz)
 # OR
 $ diff <(gunzip -c old.vcf.gz) <(gunzip -c new.vcf.gz)
-\end{Sinput}
+\end{verbatim}
 
-\begin{Soutput}
+\begin{verbatim}
 1a2,3
 > ##fileDate=20130309
 > ##source=SeqArray_RPackage_v1.0
 
 # LOOK GOOD! There are only two lines different, and both are in the header.
-\end{Soutput}
-\end{Schunk}
+\end{verbatim}
 
 <<>>=
 # delete temporary files
@@ -241,7 +385,10 @@ unlink(c("tmp.vcf.gz", "tmp1.vcf.gz", "tmp2.vcf.gz"))
 % -------- Modification --------
 \subsection{Modification}
 
-The \Biocpkg{SeqArray} package provides a function \Rfunction{seqDelete} to remove data annotations in the INFO and FORMAT fields. It is suggested to use \Rfunction{cleanup.gds} in the \Githubpkg{zhengxwen/gdsfmt} package after calling \Rfunction{seqDelete} to reduce the file size. For example,
+The \Biocpkg{SeqArray} package provides a function \Rfunction{seqDelete} to
+remove data annotations in the INFO and FORMAT fields. It is suggested to use
+\Rfunction{cleanup.gds} in the \Biocpkg{gdsfmt} package after calling
+\Rfunction{seqDelete} to reduce the file size. For example,
 
 <<>>=
 # the file of VCF
@@ -258,7 +405,8 @@ genofile <- seqOpen("tmp.gds", readonly=FALSE)
 genofile
 
 # delete "HM2", "HM3", "AA", "OR" and "DP"
-seqDelete(genofile, info.varname=c("HM2", "HM3", "AA", "OR"), format.varname="DP")
+seqDelete(genofile, info.varname=c("HM2", "HM3", "AA", "OR"),
+    format.varname="DP")
 
 # display
 genofile
@@ -290,7 +438,10 @@ gds.fn <- seqExampleFileName("gds")
 genofile <- seqOpen(gds.fn)
 @
 
-It is suggested to use \Rfunction{seqGetData} to take out data from the GDS file since this function can take care of variable-length data and multi-allelic genotypes, although users could also use \Rfunction{read.gdsn} in the \Githubpkg{zhengxwen/gdsfmt} package to read data.
+It is suggested to use \Rfunction{seqGetData} to take out data from the GDS
+file since this function can take care of variable-length data and
+multi-allelic genotypes, although users could also use \Rfunction{read.gdsn}
+in the \Biocpkg{gdsfmt} package to read data.
 <<>>=
 # take out sample id
 head(samp.id <- seqGetData(genofile, "sample.id"))
@@ -308,7 +459,9 @@ head(seqGetData(genofile, "allele"))
 head(seqGetData(genofile, "annotation/info/GP"))
 @
 
-Users can set a filter to sample and/or variant by \Rfunction{seqSetFilter}. For example, we consider a data subset consisting of three samples and four variants:
+Users can set a filter to sample and/or variant by \Rfunction{seqSetFilter}.
+For example, we consider a data subset consisting of three samples and four
+variants:
 <<>>=
 # set sample and variant filters
 seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)])
@@ -319,18 +472,29 @@ seqSetFilter(genofile, variant.id=sample(variant.id, 4))
 seqGetData(genofile, "allele")
 @
 
-Get genotypic data, it is a 3-dimensional array with respect to allele, sample and variant. ``0'' refers to the reference allele (or the first allele in the variable \Robject{allele}), ``1'' for the second allele, and so on, while NA is missing allele.
+Get genotypic data, it is a 3-dimensional array with respect to allele, sample
+and variant. ``0'' refers to the reference allele (or the first allele in the
+variable \Robject{allele}), ``1'' for the second allele, and so on, while NA
+is missing allele.
 <<>>=
 # get genotypic data
 seqGetData(genofile, "genotype")
 @
 
-{\bf Now} let us take a look at a variable-length dataset \Robject{annotation/info/AA}, which corresponds to the INFO column in the original VCF file. There are four variants, each variant has data with size ONE (\Robject{\$length}), and data are saved in \Robject{\$data} contiguously. \Robject{\$length} could be ZERO indicating no data for that variant.
+{\bf Now} let us take a look at a variable-length dataset
+\Robject{annotation/info/AA}, which corresponds to the INFO column in the
+original VCF file. There are four variants, each variant has data with size
+ONE (\Robject{\$length}), and data are saved in \Robject{\$data} contiguously.
+\Robject{\$length} could be ZERO indicating no data for that variant.
 <<>>=
 # get "annotation/info/AA", a variable-length dataset
 seqGetData(genofile, "annotation/info/AA")
 @
-Another variable-length dataset is \Robject{annotation/format/DP} corresponding to the FORMAT column in the original VCF file. Again, \Robject{\$length} refers to the size of each variant, and data are saved in \Robject{\$data} contiguously with respect to the dimension \Robject{variant}. \Robject{\$length} could be ZERO indicating no data for that variant.
+Another variable-length dataset is \Robject{annotation/format/DP} corresponding
+to the FORMAT column in the original VCF file. Again, \Robject{\$length} refers
+to the size of each variant, and data are saved in \Robject{\$data}
+contiguously with respect to the dimension \Robject{variant}.
+\Robject{\$length} could be ZERO indicating no data for that variant.
 <<>>=
 # get "annotation/format/DP", a variable-length dataset
 seqGetData(genofile, "annotation/format/DP")
@@ -340,11 +504,17 @@ seqGetData(genofile, "annotation/format/DP")
 % -------- Apply Functions Over Array Margins --------
 \subsection{Apply Functions Over Array Margins}
 
-\Biocpkg{SeqArray} provides \Rfunction{seqApply} to apply a user-defined function over array margins, which is coded in C/C++. It is suggested to use \Rfunction{seqApply} instead of \Rfunction{apply.gdsn} in the \Githubpkg{zhengxwen/gdsfmt} package, since this function can take care of variable-length data and multi-allelic genotypes. For example, read two variables \Robject{genotype} and \Robject{annotation/id} variant by variant:
+\Biocpkg{SeqArray} provides \Rfunction{seqApply} to apply a user-defined
+function over array margins, which is coded in C/C++. It is suggested to use
+\Rfunction{seqApply} instead of \Rfunction{apply.gdsn} in the \Biocpkg{gdsfmt}
+package, since this function can take care of variable-length data and
+multi-allelic genotypes. For example, read two variables \Robject{genotype}
+and \Robject{annotation/id} variant by variant:
 <<>>=
 # set sample and variant filters
 set.seed(100)
-seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)], variant.id=sample(variant.id, 4))
+seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)],
+    variant.id=sample(variant.id, 4))
 @
 <<>>=
 # read multiple variables variant by variant
@@ -362,7 +532,10 @@ z <- seqApply(genofile, "allele",
 table(z)
 @
 
-Another example is to use the argument \Robject{var.index} in the function \Rfunction{seqApply} to include external information in the analysis, where the variable \Robject{index} in the user-defined \Robject{FUN} is an index of the specified dimension starting from 1 (e.g., variant).
+Another example is to use the argument \Robject{var.index} in the function
+\Rfunction{seqApply} to include external information in the analysis, where
+the variable \Robject{index} in the user-defined \Robject{FUN} is an index of
+the specified dimension starting from 1 (e.g., variant).
 <<>>=
 HM3 <- seqGetData(genofile, "annotation/info/HM3")
 @
@@ -380,7 +553,9 @@ seqApply(genofile, c(geno="genotype", id="annotation/id"),
 % -------- Apply Functions in Parallel --------
 \subsection{Apply Functions in Parallel}
 
-Now, let us consider an example of calculating the frequency of reference allele, and this calculation can be done using \Rfunction{seqApply} and \Rfunction{seqParallel}. Let's try the uniprocessor implementation first.
+Now, let us consider an example of calculating the frequency of reference
+allele, and this calculation can be done using \Rfunction{seqApply} and
+\Rfunction{seqParallel}. Let's try the uniprocessor implementation first.
 <<>>=
 # calculate the frequency of reference allele,
 afreq <- seqApply(genofile, "genotype", FUN=function(x) mean(x==0, na.rm=TRUE),
@@ -421,7 +596,9 @@ seqClose(genofile)
 % -------- Integration with Other Packages in Bioconductor --------
 \subsection{Integration with Other Packages in Bioconductor}
 
-An R/Bioconductor package \Biocpkg{SeqVarTools} is available on Bioconductor, which defines S4 classes and methods for other common operations and analyses on SeqArray datasets.
+An R/Bioconductor package \Biocpkg{SeqVarTools} is available on Bioconductor,
+which defines S4 classes and methods for other common operations and analyses
+on SeqArray datasets.
 
 
 
@@ -438,11 +615,16 @@ genofile <- seqOpen(gds.fn)
 % -------- The performance of seqApply --------
 \subsection{The performance of seqApply}
 
-Let us try three approaches to export unphased genotypes: 1) the for loop in R; 2) vectorize the function in R; 3) the for loop in \Rfunction{seqApply}. The function \Rfunction{seqApply} has been highly optimized by blocking the computations to exploit the high-speed memory instead of disk. The results of running times (listed as follows) indicate that \Rfunction{seqApply} works well and is comparable with vectorization in R.
+Let us try three approaches to export unphased genotypes:
+1) the for loop in R; 2) vectorize the function in R; 3) the for loop in
+\Rfunction{seqApply}. The function \Rfunction{seqApply} has been highly
+optimized by blocking the computations to exploit the high-speed memory
+instead of disk. The results of running times (listed as follows) indicate
+that \Rfunction{seqApply} works well and is comparable with vectorization
+in R.
 
 {\bf 1) the for loop in R:}
-\begin{Schunk}
-\begin{Sinput}
+\begin{verbatim}
 > system.time({
 >     geno <- seqGetData(genofile, "genotype")
 >     gc <- matrix("", nrow=dim(geno)[2], ncol=dim(geno)[3])
@@ -454,61 +636,58 @@ Let us try three approaches to export unphased genotypes: 1) the for loop in R; 
 >     gc[gc == "NA/NA"] <- NA
 >     gc
 > })
-\end{Sinput}
-\begin{Soutput}
+\end{verbatim}
+\begin{verbatim}
    user  system elapsed 
   2.185   0.019   2.386       <- the function takes 2.4 seconds
-\end{Soutput}
+\end{verbatim}
 
-\begin{Sinput}
+\begin{verbatim}
 > dim(gc)
-\end{Sinput}
-\begin{Soutput}
+\end{verbatim}
+\begin{verbatim}
 [1]   90 1348
-\end{Soutput}
-\begin{Sinput}
+\end{verbatim}
+\begin{verbatim}
 > table(c(gc))
-\end{Sinput}
-\begin{Soutput}
+\end{verbatim}
+\begin{verbatim}
   0/0   0/1   1/0   1/1  <NA> 
 88350  7783  8258  8321  8608 
-\end{Soutput}
-\end{Schunk}
+\end{verbatim}
 
 
 {\bf 2) Vectorize the function in R:}
-\begin{Schunk}
-\begin{Sinput}
+\begin{verbatim}
 > system.time({
 >     geno <- seqGetData(genofile, "genotype")
->     gc <- matrix(paste(geno[1,,], geno[2,,], sep="/"), nrow=dim(geno)[2], ncol=dim(geno)[3])
+>     gc <- matrix(paste(geno[1,,], geno[2,,], sep="/"),
+>         nrow=dim(geno)[2], ncol=dim(geno)[3])
 >     gc[gc == "NA/NA"] <- NA
 >     gc
 > })
-\end{Sinput}
-\begin{Soutput}
+\end{verbatim}
+\begin{verbatim}
    user  system elapsed 
   0.134   0.002   0.147       <- the function takes 0.15 seconds
-\end{Soutput}
-\end{Schunk}
+\end{verbatim}
 
 
 {\bf 3) the for loop in \Rfunction{seqApply}:}
-\begin{Schunk}
-\begin{Sinput}
+\begin{verbatim}
 > system.time({
->     gc <- seqApply(genofile, "genotype", function(x) { paste(x[1,], x[2,], sep="/") },
+>     gc <- seqApply(genofile, "genotype",
+>         function(x) { paste(x[1,], x[2,], sep="/") },
 >         margin="by.variant", as.is="list")
 >     gc2 <- matrix(unlist(gc), ncol=length(gc))
 >     gc2[gc2 == "NA/NA"] <- NA
 >     gc2
 > })
-\end{Sinput}
-\begin{Soutput}
+\end{verbatim}
+\begin{verbatim}
    user  system elapsed 
   0.157   0.002   0.168       <- the function takes 0.17 seconds
-\end{Soutput}
-\end{Schunk}
+\end{verbatim}
 
 
 % -------- Missing Rates --------
@@ -684,11 +863,16 @@ stopCluster(cl)
 % -------- Principal Component Analysis --------
 \subsection{Principal Component Analysis}
 
-In the principal component analysis, we employ the dosage of reference alleles to avoid confusion of multiple alleles. The genetic correlation matrix is defined as $M = [ m_{j,j'} ]$:
+In the principal component analysis, we employ the dosage of reference alleles
+to avoid confusion of multiple alleles. The genetic correlation matrix is
+defined as $M = [ m_{j,j'} ]$:
 \[
-    m_{j,j'} = \frac{1}{L} \sum_{l=1}^L \frac{(g_{j,l} - 2p_l)(g_{j',l} - 2p_l)}{p_l (1 - p_l)}
+    m_{j,j'} = \frac{1}{L} \sum_{l=1}^L
+    	\frac{(g_{j,l} - 2p_l)(g_{j',l} - 2p_l)}{p_l (1 - p_l)}
 \]
-where $g_{j,l}$ is a genotype of individual $j$ at locus $l$ ($\in \{0,1,2\}$, \# of reference allele), $p_l$ is the frequency of reference allele and there are $L$ loci in total.
+where $g_{j,l}$ is a genotype of individual $j$ at locus $l$ ($\in \{0,1,2\}$,
+\# of reference allele), $p_l$ is the frequency of reference allele and there
+are $L$ loci in total.
 
 <<>>=
 # genetic correlation matrix
@@ -721,7 +905,7 @@ eig <- eigen(genmat)
 # eigenvalues
 head(eig$value)
 @
-<<fig=TRUE, pdf=FALSE, png=TRUE, resolution=100>>=
+<<fig.width=5, fig.height=5, fig.align='center'>>=
 # eigenvectors
 plot(eig$vectors[,1], eig$vectors[,2], xlab="PC 1", ylab="PC 2")
 @
@@ -784,11 +968,17 @@ stopCluster(cl)
 % -------- Individual Inbreeding Coefficient --------
 \subsection{Individual Inbreeding Coefficient}
 
-To calculate an individual inbreeding coefficient using SNP genotype data, I demonstrate how to use \Rfunction{seqApply} to calculate Visscher's estimator described in Yang {\it et al.} (2010) [5]. The estimator of individual inbreeding coefficient is defined as
+To calculate an individual inbreeding coefficient using SNP genotype data,
+I demonstrate how to use \Rfunction{seqApply} to calculate Visscher's estimator
+described in Yang {\it et al.} (2010) [5]. The estimator of individual
+inbreeding coefficient is defined as
 \[
-    \hat{\theta} = \frac{1}{L} \sum_{l=1}^L \frac{g_l^2 - g_l (1 + 2p_l) + 2p_l^2}{2 p_l (1 - p_l)}
+    \hat{\theta} = \frac{1}{L} \sum_{l=1}^L
+        \frac{g_l^2 - g_l (1 + 2p_l) + 2p_l^2}{2 p_l (1 - p_l)}
 \]
-where $g_l$ is a SNP genotype at locus $l$ ($\in \{0,1,2\}$, \# of reference allele), $p_l$ is the frequency of reference allele and there are $L$ loci in total.
+where $g_l$ is a SNP genotype at locus $l$ ($\in \{0,1,2\}$, \# of reference
+allele), $p_l$ is the frequency of reference allele and there are $L$ loci
+in total.
 
 <<>>=
 coeff <- local({
@@ -873,7 +1063,8 @@ stopCluster(cl)
 % -------- Seamless R and C++ Integration --------
 \subsection{Seamless R and C++ Integration}
 
-The Rcpp package provides R functions as well as a C++ library which facilitate the integration of R and C++.
+The Rcpp package provides R functions as well as a C++ library which
+facilitate the integration of R and C++.
 <<eval=FALSE>>=
 library(Rcpp)
 @
@@ -924,11 +1115,9 @@ seqClose(genofile)
 The 1000 Genomes Project datasets consist of 39,706,715 variants and 1,092 study samples. The original VCF data files for the 1000 Genomes Project were downloaded from \url{http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/integrated_call_sets/}, and all compressed VCF files are $\sim$ 180G in total. The function ``seqVCF2GDS'' in the R package SeqArray was used to convert and merge all VCF files, and all $\sim$39M variants and annotations were extracted from the VCF files without losing any information. A single GDS file of $\sim$140G was created, and all data variables were stored in a compressed manner.
 
 The detailed information are listed here:
-\begin{Schunk}
-\begin{Sinput}
+\begin{verbatim}
 > seqSummary("G1000-Release.gds")
-\end{Sinput}
-\begin{Soutput}
+
 Sequence Variant Format: v1.0
 The number of samples: 1092
 The number of variants: 39706715
@@ -968,11 +1157,9 @@ Annotation, information variables:
 Annotation, format variables:
     DS, 1, Float, Genotype dosage from MaCH/Thunder
     GL, ., Float, Genotype Likelihoods
-\end{Soutput}
-\end{Schunk}
+\end{verbatim}
 
-\begin{Schunk}
-\begin{Soutput}
+\begin{verbatim}
 +   [   ]
 |--+ description    [   ] *
 |--+ sample.id  [ VStr8 1092 ZIP(26.02%) ]
@@ -1020,8 +1207,7 @@ Annotation, format variables:
 |  |  |  |--+ data  [ Float32 1092x39706715 ZIP(2.88%) ]
 |  |  |--+ GL   [   ] *
 |  |  |  |--+ data  [ Float32 1092x119120145 ZIP(27.61%) ]
-\end{Soutput}
-\end{Schunk}
+\end{verbatim}
 
 
 
@@ -1030,15 +1216,18 @@ Annotation, format variables:
 \section{Resources}
 
 \begin{enumerate}
-    \item CoreArray project: \url{http://corearray.sourceforge.net/}
-    \item \Githubpkg{zhengxwen/gdsfmt} R package: \url{https://github.com/zhengxwen/gdsfmt}
-    \item \Biocpkg{SeqArray} an R/Bioconductor package: \url{http://corearray.sourceforge.net/tutorials/SeqArray/}
+    \item CoreArray project:
+        \url{http://corearray.sourceforge.net/}
+    \item \Biocpkg{gdsfmt} R package:
+        \url{https://github.com/zhengxwen/gdsfmt}
+    \item \Biocpkg{SeqArray} an R/Bioconductor package:
+        \url{https://github.com/zhengxwen/SeqArray}
 \end{enumerate}
 
 
 % ---- Session Info ----
 \section{Session Info}
-<<sessioninfo, results=tex, print=TRUE>>=
+<<sessioninfo, results="asis">>=
 toLatex(sessionInfo())
 @
 
@@ -1048,12 +1237,30 @@ toLatex(sessionInfo())
 \section*{References}
 
 \begin{enumerate}
-    \item [1] 1000 Genomes Project Consortium, Abecasis, G. R., Auton, A., Brooks, L. D., DePristo, M. A., Durbin, R. M., Handsaker, R. E., Kang, H. M., Marth, G. T., and McVean, G. A. An integrated map of genetic variation from 1,092 human genomes. {\it Nature} 491, 7422 (Nov 2012), 56--65.
-    \item [2] Schadt, E. E., Linderman, M. D., Sorenson, J., Lee, L., and Nolan, G. P. Computational solutions to large-scale data management and analysis. {\it Nat Rev Genet} 11, 9 (Sep 2010), 647--657.
-    \item [3] Danecek, P., Auton, A., Abecasis, G., Albers, C. A., Banks, E., DePristo, M. A., Handsaker, R. E., Lunter, G., Marth, G. T., Sherry, S. T., McVean, G., Durbin, R., and 1000 Genomes Project Analysis Group. The variant call format and vcftools. {\it Bioinformatics} 27, 15 (Aug 2011), 2156--2158.
-    \item [4] Zheng X, Levine D, Shen J, Gogarten SM, Laurie C, Weir BS. A High-performance Computing Toolset for Relatedness and Principal Component Analysis of SNP Data. {\it Bioinformatics}. 2012 Oct 11.
-    \item [5] Yang J, Benyamin B, McEvoy BP, Gordon S, Henders AK, Nyholt DR, Madden PA, Heath AC, Martin NG, Montgomery GW, Goddard ME, Visscher PM. 2010. Common SNPs explain a large proportion of the heritability for human height. Nat Genet. 42(7):565-9. Epub 2010 Jun 20.
+    \item [1] 1000 Genomes Project Consortium, Abecasis, G. R., Auton, A.,
+        Brooks, L. D., DePristo, M. A., Durbin, R. M., Handsaker, R. E.,
+        Kang, H. M., Marth, G. T., and McVean, G. A.
+        An integrated map of genetic variation from 1,092 human genomes.
+        {\it Nature} 491, 7422 (Nov 2012), 56--65.
+    \item [2] Schadt, E. E., Linderman, M. D., Sorenson, J., Lee, L., and
+        Nolan, G. P.
+        Computational solutions to large-scale data management and analysis.
+        {\it Nat Rev Genet} 11, 9 (Sep 2010), 647--657.
+    \item [3] Danecek, P., Auton, A., Abecasis, G., Albers, C. A., Banks,
+        E., DePristo, M. A., Handsaker, R. E., Lunter, G., Marth, G. T.,
+        Sherry, S. T., McVean, G., Durbin, R., and 1000 Genomes Project
+        Analysis Group.
+        The variant call format and vcftools.
+        {\it Bioinformatics} 27, 15 (Aug 2011), 2156--2158.
+    \item [4] Zheng X, Levine D, Shen J, Gogarten SM, Laurie C, Weir BS.
+        A High-performance Computing Toolset for Relatedness and Principal
+        Component Analysis of SNP Data.
+        {\it Bioinformatics}. 2012 Oct 11.
+    \item [5] Yang J, Benyamin B, McEvoy BP, Gordon S, Henders AK, Nyholt DR,
+        Madden PA, Heath AC, Martin NG, Montgomery GW, Goddard ME,
+        Visscher PM. 2010.
+        Common SNPs explain a large proportion of the heritability for human
+        height. Nat Genet. 42(7):565-9. Epub 2010 Jun 20.
 \end{enumerate}
  
-
 \end{document}
