@@ -1,4 +1,4 @@
-SeqArray: Big Data Management of Genome-wide Sequencing Variants
+SeqArray: Big Data Management of Genome-Wide Sequencing Variants
 ===
 
 
@@ -14,7 +14,7 @@ offering efficient access of genetic variants using the S programming language.
 
 ## Bioconductor:
 
-Development Version: v1.7.3
+Development Version: v1.7.4
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
@@ -22,16 +22,13 @@ Development Version: v1.7.3
 ## Installation
 
 * Bioconductor repository:
-```
+```R
 source("http://bioconductor.org/biocLite.R")
-library(BiocInstaller)
-BiocInstaller::useDevel()
-
 biocLite("SeqArray")
 ```
 
 * Development version from Github:
-```
+```R
 library("devtools")
 install_github("zhengxwen/gdsfmt")
 install_github("zhengxwen/SeqArray")
@@ -41,14 +38,14 @@ The `install_github()` approach requires that you build from source, i.e. `make`
 * Install the package from the source code:
 [gdsfmt](https://github.com/zhengxwen/gdsfmt/tarball/master),
 [SeqArray](https://github.com/zhengxwen/SeqArray/tarball/master)
-```
+```sh
 wget --no-check-certificate https://github.com/zhengxwen/gdsfmt/tarball/master -O gdsfmt_latest.tar.gz
 wget --no-check-certificate https://github.com/zhengxwen/SeqArray/tarball/master -O SeqArray_latest.tar.gz
-** Or **
+## Or
 curl -L https://github.com/zhengxwen/gdsfmt/tarball/master/ -o gdsfmt_latest.tar.gz
 curl -L https://github.com/zhengxwen/SeqArray/tarball/master/ -o SeqArray_latest.tar.gz
 
-** Install **
+## Install
 R CMD INSTALL gdsfmt_latest.tar.gz
 R CMD INSTALL SeqArray_latest.tar.gz
 ```

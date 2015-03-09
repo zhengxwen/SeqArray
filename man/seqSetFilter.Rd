@@ -6,7 +6,7 @@
 }
 \usage{
 seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,
-    samp.sel=NULL, variant.sel=NULL, action=c("set", "push", "pop"),
+    samp.sel=NULL, variant.sel=NULL, action=c("set", "push", "push+set", "pop"),
     verbose=TRUE)
 }
 \arguments{
@@ -16,7 +16,8 @@ seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,
 	\item{samp.sel}{a logical vector indicating the selected samples}
 	\item{variant.sel}{a logical vector indicating the selected variants}
 	\item{action}{\code{"set"} -- set the current filter;
-		\code{"push"} -- save the current filter and set the filter;
+		\code{"push"} -- save the current filter;
+		\code{"push+set"} -- save the current filter and set the filter;
 		\code{"pop"} -- pop up the last filter}
 	\item{verbose}{if TRUE, show information}
 }

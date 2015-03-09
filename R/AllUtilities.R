@@ -1466,7 +1466,7 @@ seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
         # multiple processes
 
         # library
-        if (!require(parallel))
+        if (!requireNamespace("parallel"))
             stop("the `parallel' package should be installed.")
 
         # the selected variants
@@ -1519,18 +1519,4 @@ seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
             return(invisible())
     }
     return(ans)
-}
-
-
-
-#######################################################################
-# Internal R library functions
-#######################################################################
-
-.onAttach <- function(lib, pkg)
-{
-    # initialize SeqArray
-    .Call(sqa_Init)
-
-    TRUE
 }

@@ -70,22 +70,39 @@ setMethod("seqClose", "SeqVarGDSClass", function(object)
 # To set a working space with selected samples and variants
 #
 seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
-    samp.sel=NULL, variant.sel=NULL, action=c("set", "push", "pop"),
+    samp.sel=NULL, variant.sel=NULL, action=c("set", "push", "push+set", "pop"),
     verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(verbose))
-    action <- match.arg(action)
 
-    if (action == "push")
-    {
-        .Call(sqa_FilterPush, gdsfile)
-    } else if (action == "pop")
-    {
-        .Call(sqa_FilterPop, gdsfile)
-        return(invisible())
-    }
+    action <- match.arg(action)
+    switch(action,
+        "set" = NULL,
+        "push" = {
+            if (!all(is.null(sample.id), is.null(variant.id),
+                    is.null(samp.sel), is.null(variant.sel)))
+            {
+                stop("The arguments 'sample.id', 'variant.id', ",
+                    "'samp.sel' and 'variant.sel' should be NULL.")
+            }
+            .Call(sqa_FilterPushLast, gdsfile)
+        },
+        "push+set" = {
+            .Call(sqa_FilterPushEmpty, gdsfile)
+        },
+        "pop" = {
+            if (!all(is.null(sample.id), is.null(variant.id),
+                    is.null(samp.sel), is.null(variant.sel)))
+            {
+                stop("The arguments 'sample.id', 'variant.id', ",
+                    "'samp.sel' and 'variant.sel' should be NULL.")
+            }
+            .Call(sqa_FilterPop, gdsfile)
+            return(invisible())
+        }
+    )
 
     if (!is.null(sample.id))
     {
@@ -117,6 +134,19 @@ seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
 
     invisible()
 }
+
+
+
+#######################################################################
+# To set a working space with selected variants
+#
+# seqSetFilterVariant <- function(gdsfile, autosome.only=TRUE,
+#     remove.monosnp=TRUE, maf=NaN, missing.rate=NaN, verbose=TRUE)
+# {
+#    # check
+#    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+#    stopifnot(is.logical(verbose))
+# }
 
 
 
@@ -208,7 +238,7 @@ seqSlidingWindow <- function(gdsfile, var.name, win.size, shift=1, FUN,
 
     # C call
     rv <- .Call(sqa_SlidingWindow, gdsfile, var.name, win.size, shift,
-    	FUN, as.is, var.index, new.env())
+        FUN, as.is, var.index, new.env())
 
     if (as.is == "none") return(invisible())
     rv
@@ -491,7 +521,7 @@ seqDelete <- function(gdsfile, info.varname=NULL, format.varname=NULL)
 
     # call C function
     # .Call("seq_Delete", gdsfile, info.varname, format.varname,
-    #	PACKAGE="SeqArray")
+    #   PACKAGE="SeqArray")
 
     # return
     invisible()

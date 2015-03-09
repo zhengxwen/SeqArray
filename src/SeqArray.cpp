@@ -26,14 +26,18 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "Common.h"
+
+#include <Rinternals.h>
+#include <R_ext/Rdynload.h>
+
 #include <set>
 #include <algorithm>
 
 
 
-// ###########################################################
+// ===========================================================
 // The initialized object
-// ###########################################################
+// ===========================================================
 
 /// the initial data
 TInitObject::TInitObject(): TRUE_ARRAY(256, TRUE), GENO_BUFFER(1024)
@@ -60,22 +64,21 @@ TInitObject Init;
 
 extern "C"
 {
-// ###########################################################
+// ===========================================================
 // the initial and final functions
-// ###########################################################
+// ===========================================================
 
 /// initialize the package
-COREARRAY_DLL_EXPORT SEXP sqa_Init()
+COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 {
 	Init_GDS_Routines();
-	return R_NilValue;
 }
 
 
 
-// ###########################################################
+// ===========================================================
 // Open a GDS file
-// ###########################################################
+// ===========================================================
 
 /// initialize a SeqArray file
 COREARRAY_DLL_EXPORT SEXP sqa_Open_Init(SEXP gdsfile)
@@ -101,12 +104,12 @@ COREARRAY_DLL_EXPORT SEXP sqa_File_Done(SEXP gdsfile)
 
 
 
-// ###########################################################
+// ===========================================================
 // Set a working space
-// ###########################################################
+// ===========================================================
 
 /// push the current filter to the stack
-COREARRAY_DLL_EXPORT SEXP sqa_FilterPush(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP sqa_FilterPushEmpty(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = INTEGER(GetListElement(gdsfile, "id"))[0];
@@ -115,6 +118,24 @@ COREARRAY_DLL_EXPORT SEXP sqa_FilterPush(SEXP gdsfile)
 		if (it != Init._Map.end())
 		{
 			it->second.push_back(TInitObject::TSelection());
+		} else
+			throw ErrSeqArray("The GDS file is closed or invalid.");
+	COREARRAY_CATCH
+}
+
+/// push the current filter to the stack
+COREARRAY_DLL_EXPORT SEXP sqa_FilterPushLast(SEXP gdsfile)
+{
+	COREARRAY_TRY
+		int id = INTEGER(GetListElement(gdsfile, "id"))[0];
+		map<int, TInitObject::TSelList>::iterator it =
+			Init._Map.find(id);
+		if (it != Init._Map.end())
+		{
+			if (!it->second.empty())
+				it->second.push_back(it->second.back());
+			else
+				it->second.push_back(TInitObject::TSelection());
 		} else
 			throw ErrSeqArray("The GDS file is closed or invalid.");
 	COREARRAY_CATCH
@@ -602,9 +623,9 @@ COREARRAY_DLL_EXPORT SEXP sqa_VarSummary(SEXP gdsfile, SEXP varname)
 
 
 
-// ###########################################################
+// ===========================================================
 // analysis
-// ###########################################################
+// ===========================================================
 
 /// the number of alleles per site
 COREARRAY_DLL_EXPORT SEXP sqa_NumOfAllele(SEXP allele_node)
@@ -651,9 +672,9 @@ COREARRAY_DLL_EXPORT SEXP sqa_NumOfAllele(SEXP allele_node)
 
 
 
-// ###########################################################
+// ===========================================================
 // analysis
-// ###########################################################
+// ===========================================================
 
 COREARRAY_DLL_EXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
 {

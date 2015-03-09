@@ -1,59 +1,82 @@
-Changes in 1.7.1 - 1.7.3:
+CHANGES IN VERSION 1.7.1-1.7.4
+-------------------------
 
-	* bug fix in getting genotypes if position > 2^31
-	* add an option 'ignore.chr.prefix' to the function 'seqVCF2GDS'
-	* 'seqVCF2GDS' ignores the INFO or FORMAT variables if they are not defined ahead
+    o bug fix in getting genotypes if position > 2^31
 
+    o add an option 'ignore.chr.prefix' to the function 'seqVCF2GDS'
 
-Changes in 1.5.1 - 1.5.2:
+    o 'seqVCF2GDS' ignores the INFO or FORMAT variables if they are not
+      defined ahead
 
-	* fix a bug in 'seqVCF2GDS' when the values in the FILTER column are all missing
-	* enhance 'seqVCF.Header'
-	* support the LinkingTo mechanism
-	* fix the error in haploid genotypes (Y chromosome)
+	o a new action 'push+set' in the function 'seqSetFilter'
 
-
-Changes in 1.3.1 - 1.3.4:
-
-	* update according to the new version of VariantAnnotation
-	* update test codes to avoid the conflict
-	* bumped version as all packages that depend on Rcpp must be rebuilt
-	* modify to new biocViews to DESCRIPTION file
+    o bug fix if 'requireNamespace("SeqArray")' is called from other packages
 
 
-Changes in 1.1.5:
+CHANGES IN VERSION 1.5.1-1.5.2
+-------------------------
 
-	* minor bug fix in asVCF
-	* update man page "SeqVarGDSClass-class.Rd" with new methods
-	* in DESCRIPTION, BiocGenerics listed in "Suggests" instead of "Imports" as suggested by R CMD check
-	* bug fix in seqDelete
-	* revise the function 'seqTranspose' according to the update of gdsfmt (v1.0.0)
+    o fix a bug in 'seqVCF2GDS' when the values in the FILTER column are
+      all missing
 
+    o enhance 'seqVCF.Header'
 
-Changes in 1.1.4:
+    o support the LinkingTo mechanism
 
-	* add a new argument "action" to the function 'seqSetFilter'
-	* add a new function 'seqInfoNewVar' which allows adding new variables to the INFO fields
+    o fix the error in haploid genotypes (Y chromosome)
 
 
-Changes in 1.1.3:
+CHANGES IN VERSION 1.3.1-1.3.4
+-------------------------
 
-	* minor bug fix to avoid 'seqGetData' crashing when no value returned from a variable-length variable
-	* update documents
+    o update according to the new version of VariantAnnotation
 
+    o update test codes to avoid the conflict
 
-Changes in 1.1.2:
+    o bumped version as all packages that depend on Rcpp must be rebuilt
 
-	* added methods 'qual', 'filt', 'asVCF'
-	* 'granges' method uses length of reference allele to set width
-
-
-Changes in 1.1.1:
-
-	* revise the argument 'var.index' in the function 'seqApply'
-	* basic supports of 'GRanges' and 'DNAStringSetList'
+    o modify to new biocViews to DESCRIPTION file
 
 
-Version 0.99.1:
+CHANGES IN VERSION 1.1.4-1.1.5
+-------------------------
 
-	* first submission
+    o add a new argument "action" to the function 'seqSetFilter'
+
+    o add a new function 'seqInfoNewVar' which allows adding new variables
+      to the INFO fields
+
+    o minor bug fix in asVCF
+
+    o update man page "SeqVarGDSClass-class.Rd" with new methods
+
+    o in DESCRIPTION, BiocGenerics listed in "Suggests" instead of "Imports"
+      as suggested by R CMD check
+
+    o bug fix in seqDelete
+
+    o revise the function 'seqTranspose' according to the update of
+      gdsfmt (v1.0.0)
+
+
+CHANGES IN VERSION 1.1.1-1.1.3
+-------------------------
+
+    o revise the argument 'var.index' in the function 'seqApply'
+
+    o basic supports of 'GRanges' and 'DNAStringSetList'
+
+    o added methods 'qual', 'filt', 'asVCF'
+
+    o 'granges' method uses length of reference allele to set width
+
+    o minor bug fix to avoid 'seqGetData' crashing when no value returned
+      from a variable-length variable
+
+    o update documents
+
+
+CHANGES IN VERSION 0.99.0
+-------------------------
+
+    o first submission
