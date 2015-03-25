@@ -2,7 +2,7 @@
 \alias{seqSetFilter}
 \title{Set a filter to sample or variant}
 \description{
-	Set a filter to sample and/or variant
+    Set a filter to sample and/or variant
 }
 \usage{
 seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,
@@ -10,25 +10,30 @@ seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,
     verbose=TRUE)
 }
 \arguments{
-	\item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-	\item{sample.id}{IDs of selected samples}
-	\item{variant.id}{IDs of selected variants}
-	\item{samp.sel}{a logical vector indicating the selected samples}
-	\item{variant.sel}{a logical vector indicating the selected variants}
-	\item{action}{\code{"set"} -- set the current filter;
-		\code{"push"} -- save the current filter;
-		\code{"push+set"} -- save the current filter and set the filter;
-		\code{"pop"} -- pop up the last filter}
-	\item{verbose}{if TRUE, show information}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{sample.id}{IDs of selected samples}
+    \item{variant.id}{IDs of selected variants}
+    \item{samp.sel}{a logical vector indicating the selected samples}
+    \item{variant.sel}{a logical vector indicating the selected variants}
+    \item{action}{\code{"set"} -- set the current filter via \code{sample.id},
+            \code{variant.id}, \code{samp.sel} or \code{variant.sel};
+        \code{"push"} -- push the current filter to the stack, and it could
+            be recovered by \code{"pop"} later, no change on the current
+            filter;
+        \code{"push+set"} -- push the current filter to the stack, and changes
+            the current filter via \code{sample.id}, \code{variant.id},
+            \code{samp.sel} or \code{variant.sel};
+        \code{"pop"} -- pop up the last filter}
+    \item{verbose}{if TRUE, show information}
 }
 \value{
-	None.
+    None.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqGetFilter}},
-	\code{\link{seqGetData}}, \code{\link{seqApply}}
+    \code{\link{seqGetFilter}},
+    \code{\link{seqGetData}}, \code{\link{seqApply}}
 }
 
 \examples{

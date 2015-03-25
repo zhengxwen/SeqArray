@@ -13,6 +13,12 @@ CHANGES IN VERSION 1.7.1-1.7.4
     o bug fix if 'requireNamespace("SeqArray")' is called from other packages
 
 
+CHANGES IN VERSION 1.6.0
+-------------------------
+
+    o The version number was bumped for the Bioconductor release version
+
+
 CHANGES IN VERSION 1.5.1-1.5.2
 -------------------------
 
@@ -26,6 +32,12 @@ CHANGES IN VERSION 1.5.1-1.5.2
     o fix the error in haploid genotypes (Y chromosome)
 
 
+CHANGES IN VERSION 1.4.0
+-------------------------
+
+    o The version number was bumped for the Bioconductor release version
+
+
 CHANGES IN VERSION 1.3.1-1.3.4
 -------------------------
 
@@ -36,6 +48,12 @@ CHANGES IN VERSION 1.3.1-1.3.4
     o bumped version as all packages that depend on Rcpp must be rebuilt
 
     o modify to new biocViews to DESCRIPTION file
+
+
+CHANGES IN VERSION 1.2.0
+-------------------------
+
+    o The version number was bumped for the Bioconductor release version
 
 
 CHANGES IN VERSION 1.1.4-1.1.5
@@ -74,6 +92,12 @@ CHANGES IN VERSION 1.1.1-1.1.3
       from a variable-length variable
 
     o update documents
+
+
+CHANGES IN VERSION 1.0.0
+-------------------------
+
+    o The version number was bumped for the Bioconductor release version
 
 
 CHANGES IN VERSION 0.99.0

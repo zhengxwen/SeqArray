@@ -1,10 +1,4 @@
 // ===========================================================
-//     _/_/_/   _/_/_/  _/_/_/_/    _/_/_/_/  _/_/_/   _/_/_/
-//      _/    _/       _/             _/    _/    _/   _/   _/
-//     _/    _/       _/_/_/_/       _/    _/    _/   _/_/_/
-//    _/    _/       _/             _/    _/    _/   _/
-// _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
-// ===========================================================
 //
 // Common.h: the C++ header file of SeqArray
 //
@@ -123,7 +117,7 @@ COREARRAY_INLINE static SEXP GetListElement(SEXP list, const char *str)
 
 
 /// get the list element named str, or return NULL
-COREARRAY_INLINE static ssize_t GetLength(SEXP val)
+COREARRAY_INLINE static size_t GetLength(SEXP val)
 {
 	if (!Rf_isNull(val))
 		return Rf_length(val);
