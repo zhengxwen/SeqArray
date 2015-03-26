@@ -7,7 +7,7 @@
   checkIdentical(fv$FILTER, fg$FILTER)
 }
 
-.test_rowData <- function(rdv, rdg) {
+.test_rowRanges <- function(rdv, rdg) {
   checkIdentical(seqnames(rdv), seqnames(rdg))
   checkIdentical(start(rdv), start(rdg))
   checkIdentical(width(rdv), width(rdg))
@@ -60,14 +60,14 @@
   vcf <- readVcf(vcffile, genome="hg19")
   gdsobj <- seqOpen(gdsfile)
 
-##   .test_rowData(rowData(vcf), .rowData(gdsobj))
+##   .test_rowRanges(rowRanges(vcf), .rowRanges(gdsobj))
 ##   .test_colData(colData(vcf), .colData(gdsobj))
 ##   .test_header(header(vcf), .header(gdsobj))
 ##   .test_info(info(vcf), .info(gdsobj))
 ##   .test_geno(geno(vcf), .geno(gdsobj))
 
   vcfg <- asVCF(gdsobj)
-  .test_rowData(rowData(vcf), rowData(vcfg))
+  .test_rowRanges(rowRanges(vcf), rowRanges(vcfg))
   .test_colData(colData(vcf), colData(vcfg))
   .test_header(header(vcf), header(vcfg))
   .test_fixed(fixed(vcf), fixed(vcfg))
@@ -86,7 +86,7 @@ test_asVCF <- function() {
 test_asVCF_filterInHead <- function() {
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile)
+  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
   .test_asVCF(vcffile, gdsfile)
   unlink(gdsfile)
 }
@@ -94,7 +94,7 @@ test_asVCF_filterInHead <- function() {
 test_asVCF_altInHead <- function() {
   vcffile <- system.file("extdata", "gl_chr1.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile)
+  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
   .test_asVCF(vcffile, gdsfile)
   unlink(gdsfile)
 }
@@ -103,7 +103,7 @@ test_asVCF_altInHead <- function() {
 ## test_asVCF_c22 <- function() {
 ##   vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
 ##   gdsfile <- tempfile()
-##   seqVCF2GDS(vcffile, gdsfile)
+##   seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
 ##   .test_asVCF(vcffile, gdsfile)
 ##   unlink(gdsfile)
 ## }
@@ -111,7 +111,7 @@ test_asVCF_altInHead <- function() {
 test_info_geno <- function() {
   vcffile <- system.file("extdata", "gl_chr1.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile)
+  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
 
   info <- c("AN", "VT")
   geno <- "DS"
@@ -149,7 +149,7 @@ test_info_geno_na <- function() {
 test_filters <- function() {
   vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile)
+  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
 
   gdsobj <- seqOpen(gdsfile)
   samples <- seqGetData(gdsobj, "sample.id")[1:5]
@@ -163,7 +163,7 @@ test_filters <- function() {
                    samples=samples, which=granges(gdsobj)))
   vcfg <- asVCF(gdsobj, info=info, geno=geno)
 
-  .test_rowData(rowData(vcf), rowData(vcfg))
+  .test_rowRanges(rowRanges(vcf), rowRanges(vcfg))
   .test_colData(colData(vcf), colData(vcfg))
   .test_header(header(vcf), header(vcfg))
   .test_fixed(fixed(vcf), fixed(vcfg))
