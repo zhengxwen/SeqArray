@@ -87,7 +87,7 @@ setMethod("asVCF",
                 geno <- intersect(geno, validGeno)
               }
             }
-            VCF(rowData=.rowData(x),
+            VCF(rowRanges=.rowRanges(x),
                 colData=.colData(x),
                 exptData=SimpleList(header=.header(x)),
                 fixed=.fixed(x),
@@ -95,7 +95,7 @@ setMethod("asVCF",
                 geno=.geno(x, geno))
           })
 
-.rowData <- function(gdsobj) {
+.rowRanges <- function(gdsobj) {
   granges(gdsobj,
           ID=seqGetData(gdsobj, "annotation/id"),
           REF=ref(gdsobj),
