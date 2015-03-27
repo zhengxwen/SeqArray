@@ -14,7 +14,7 @@ offering efficient access of genetic variants using the S programming language.
 
 ## Bioconductor:
 
-Development Version: v1.7.4
+Development Version: v1.7.5
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
