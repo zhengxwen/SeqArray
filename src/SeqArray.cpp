@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2015    Xiuwen Zheng [zhengx@u.washington.edu]
+// Copyright (C) 2013-2015    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -59,7 +59,7 @@ TInitObject Init;
 extern "C"
 {
 // ===========================================================
-// the initial and final functions
+// the initial functions when the package is loaded
 // ===========================================================
 
 /// initialize the package

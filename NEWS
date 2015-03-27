@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.7.1-1.7.4
+CHANGES IN VERSION 1.7.1-1.7.5
 -------------------------
 
     o bug fix in getting genotypes if position > 2^31

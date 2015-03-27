@@ -2,7 +2,7 @@
 //
 // Common.h: the C++ header file of SeqArray
 //
-// Copyright (C) 2013-2015    Xiuwen Zheng [zhengx@u.washington.edu]
+// Copyright (C) 2013-2015    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

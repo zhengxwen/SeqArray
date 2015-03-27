@@ -1,4 +1,4 @@
 library(GenomicRanges)
 library(VariantAnnotation)
 
-BiocGenerics:::testPackage("SeqArray")
+# BiocGenerics:::testPackage("SeqArray")
