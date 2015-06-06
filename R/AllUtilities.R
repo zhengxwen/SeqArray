@@ -1520,3 +1520,87 @@ seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
     }
     return(ans)
 }
+
+
+
+#######################################################################
+# Convert a Sequencing GDS file to a SNP GDS file
+#
+
+seqGDS2SNP <- function(gdsfile, out.gdsfn,
+    compress.annotation="ZIP_RA.max", compress.geno="ZIP_RA.max",
+    verbose=TRUE)
+{
+    # check
+    stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.character(out.gdsfn))
+    stopifnot(is.vector(out.gdsfn) & (length(out.gdsfn)==1L))
+    stopifnot(is.logical(verbose))
+
+    if (verbose)
+        cat("Sequencing GDS to SNP GDS Format:\n")
+
+    # if it is a file name
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile)
+        on.exit({ seqClose(gdsfile) })
+    }
+
+    # create GDS file
+    gfile <- createfn.gds(out.gdsfn)
+    # close the file at the end
+    on.exit({ closefn.gds(gfile) }, add=TRUE)
+
+    # add a flag
+    put.attr.gdsn(gfile$root, "FileFormat", "SNP_ARRAY")
+
+    # add "sample.id"
+    sampid <- seqGetData(gdsfile, "sample.id")
+    add.gdsn(gfile, "sample.id", sampid,
+        compress=compress.annotation, closezip=TRUE)
+
+    # add "snp.id"
+    add.gdsn(gfile, "snp.id", seqGetData(gdsfile, "variant.id"),
+        compress=compress.annotation, closezip=TRUE)
+
+    # add "snp.rs.id"
+    if (!is.null(index.gdsn(gdsfile, "annotation/id", silent=TRUE)))
+    {
+        add.gdsn(gfile, "snp.rs.id", seqGetData(gdsfile, "annotation/id"),
+            compress=compress.annotation, closezip=TRUE)
+    }
+
+    # add "snp.position"
+    add.gdsn(gfile, "snp.position", seqGetData(gdsfile, "position"),
+        compress=compress.annotation, closezip=TRUE)
+
+    # add "snp.chromosome"
+    add.gdsn(gfile, "snp.chromosome", seqGetData(gdsfile, "chromosome"),
+        compress=compress.annotation, closezip=TRUE)
+
+    # add "snp.allele"
+    add.gdsn(gfile, "snp.allele",
+        .Call(sqa_cvt_allele, seqGetData(gdsfile, "allele")),
+        compress=compress.annotation, closezip=TRUE)
+
+    # add "genotype"
+    gGeno <- add.gdsn(gfile, "genotype", storage="bit2",
+        valdim=c(length(sampid), 0), compress=compress.geno)
+    put.attr.gdsn(gGeno, "sample.order")
+
+    seqApply(gdsfile, "genotype", margin="by.variant", as.is="none",
+        FUN = function(x) {
+            g <- colSums(x==0)
+            g[is.na(g)] <- 3L
+            append.gdsn(gGeno, g)
+    })
+
+    readmode.gdsn(gGeno)
+
+    if (verbose)
+        cat("Done.\n")
+
+    # output
+    invisible(normalizePath(out.gdsfn))
+}

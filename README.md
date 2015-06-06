@@ -9,12 +9,16 @@ SeqArray: Big Data Management of Genome-Wide Sequencing Variants
 
 Big data management of genome-wide variants using the CoreArray C++ library:
 genotypic data and annotations are stored in an array-oriented manner,
-offering efficient access of genetic variants using the S programming language.
+offering efficient access of genetic variants using the R programming language.
 
 
 ## Bioconductor:
 
-Development Version: v1.7.5
+Release Version: v1.8.0
+
+[http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
+
+Development Version: v1.9.1
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 

@@ -773,4 +773,27 @@ COREARRAY_DLL_EXPORT SEXP seq_allele_freq(SEXP geno)
 	return rv;
 }
 
+
+
+
+// ===========================================================
+// seqGDS2SNP: Convert a Sequencing GDS file to a SNP GDS file
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP sqa_cvt_allele(SEXP allele)
+{
+	const R_xlen_t n = Rf_length(allele);
+	for (R_xlen_t i=0; i < n; i++)
+	{
+		char *s = (char*)CHAR(STRING_ELT(allele, i));
+		while (*s)
+		{
+			if (*s == ',')
+				{ *s = '/'; break; }
+			s ++;
+		}
+	}
+	return allele;
+}
+
 } // extern "C"

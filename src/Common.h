@@ -39,18 +39,9 @@ using namespace CoreArray;
 #define LongBool int
 
 
-#if (defined(GDSFMT_R_VERSION) && (GDSFMT_R_VERSION >= 0x010103))
-#   define GDS_R_ARRAY_READ(Obj, Start, Length, Selection)  \
-           GDS_R_Array_Read(Obj, Start, Length, Selection, 0)
-#else
-#   define GDS_R_ARRAY_READ    GDS_R_Array_Read
-#endif
-
-
-
-// ###########################################################
+// ===========================================================
 // The initialized object
-// ###########################################################
+// ===========================================================
 
 /// the initial data
 class COREARRAY_DLL_LOCAL TInitObject
@@ -78,9 +69,23 @@ extern TInitObject Init;
 
 
 
-// ###########################################################
+// ===========================================================
+// GDS variable type
+// ===========================================================
+
+class COREARRAY_DLL_LOCAL TVariable_Apply
+{
+public:
+	enum TType {
+		ctNone, ctBasic, ctGenotype, ctPhase, ctInfo, ctFormat
+	};
+};
+
+
+
+// ===========================================================
 // define exception
-// ###########################################################
+// ===========================================================
 
 class ErrSeqArray: public ErrCoreArray
 {
@@ -95,9 +100,9 @@ public:
 
 
 
-// ###########################################################
+// ===========================================================
 // private functions
-// ###########################################################
+// ===========================================================
 
 /// get the list element named str, or return NULL
 COREARRAY_INLINE static SEXP GetListElement(SEXP list, const char *str)
@@ -177,11 +182,19 @@ COREARRAY_INLINE static string GDS_PATH_PREFIX(const string &path, char prefix)
 	{
 		if (s[i] == '/')
 		{
-			s.insert(i+1, &prefix, 1);
+			if (((int)s.size() > i+1) && (s[i+1] == '~'))
+				s[i+1] = prefix;
+			else
+				s.insert(i+1, &prefix, 1);
 			return s;
 		}
 	}
-	s.insert(s.begin(), prefix);
+
+	if ((s.size() > 0) && (s[0] == '~'))
+		s[0] = prefix;
+	else
+		s.insert(s.begin(), prefix);
+
 	return s;
 }
 

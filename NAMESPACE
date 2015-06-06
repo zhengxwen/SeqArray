@@ -6,7 +6,8 @@ useDynLib(SeqArray,
     sqa_FilterPushEmpty, sqa_FilterPushLast, sqa_FilterPop,
     sqa_SetSpaceSample, sqa_SetSpaceVariant, sqa_GetSpace,
     sqa_GetData, sqa_Apply_Variant, sqa_SlidingWindow, sqa_NumOfAllele,
-    sqa_VarSummary
+    sqa_VarSummary,
+    sqa_cvt_allele
 )
 
 # Import all packages listed as Imports or Depends
