@@ -20,6 +20,9 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 
+#ifndef _HEADER_SEQ_COMMON_
+#define _HEADER_SEQ_COMMON_
+
 #include <R_GDS_CPP.h>
 #include <dTrait.h>
 
@@ -205,3 +208,5 @@ COREARRAY_INLINE static string GDS_UP_PATH(const char *path)
 	while ((p!=path) && (*p != '/')) p --;
 	return string(path, p);
 }
+
+#endif /* _HEADER_SEQ_COMMON_ */

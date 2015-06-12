@@ -65,7 +65,10 @@ extern "C"
 /// initialize the package
 COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 {
+	extern void Register_SNPRelate_Functions();
+
 	Init_GDS_Routines();
+	Register_SNPRelate_Functions();
 }
 
 

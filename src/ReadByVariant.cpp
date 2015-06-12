@@ -19,7 +19,7 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Common.h"
+#include "ReadByVariant.h"
 
 
 /// 
@@ -116,396 +116,378 @@ static void MAP_INDEX(PdSequenceX Node, const vector<C_BOOL> &sel,
 
 
 /// 
-class COREARRAY_DLL_LOCAL TVariable_ApplyByVariant: public TVariable_Apply
+TVariable_ApplyByVariant::TVariable_ApplyByVariant()
 {
-protected:
-	int IndexCellVariant;  //< 
-	int NumCellVariant;    //< 
-	int CellCount;         //< 
+	Node = IndexNode = NULL;
+	VariantSelection = NULL;
+}
 
-public:
-	map<int, SEXP> VarBuffer;
+void TVariable_ApplyByVariant::InitObject(TType Type, const char *Path,
+	PdGDSObj Root, int nVariant, C_BOOL *VariantSel, int nSample,
+	C_BOOL *SampleSel)
+{
+	static const char *ErrDim = "Invalid dimension of '%s'.";
 
-	TType VarType;         //< 
-	PdSequenceX Node;
-	PdSequenceX IndexNode;
+	// initialize
+	GDS_PATH_PREFIX_CHECK(Path);
+	VarType = Type;
+	Node = GDS_Node_Path(Root, Path, TRUE);
+	SVType = GDS_Array_GetSVType(Node);
+	DimCnt = GDS_Array_DimCnt(Node);
 
-	C_Int32 _Index;        //< the index of variant, starting from ZERO
-	C_SVType SVType;       //< Data Type
-	int DimCnt;            //< the number of dimensions
-	C_Int32 DLen[4];       //< the dimension size
+	TotalNum_Variant = nVariant;
+	VariantSelection = VariantSel;
 
-	int Num_Variant;       //< the total number of variants
-	int Num_Sample;        //< the number of selected samples
-
-	C_BOOL *SelPtr[3];
-	C_BOOL *VariantSelection;
-
-
-	TVariable_ApplyByVariant()
+	Num_Sample = 0;
+	for (int i=0; i < nSample; i ++)
 	{
-		Node = IndexNode = NULL;
-		VariantSelection = NULL;
+		if (SampleSel[i])
+			Num_Sample ++;
 	}
 
-	void InitObject(TType Type, const char *Path, PdGDSObj Root,
-		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel)
+	string Path2; // the path with '@'
+
+	switch (Type)
 	{
-		static const char *ErrDim = "Invalid dimension of '%s'.";
+		case ctBasic:
+			// VARIABLE: variant.id, position, allele
+			if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nVariant))
+				throw ErrSeqArray(ErrDim, Path);
+			break;
 
-		// initialize
-		GDS_PATH_PREFIX_CHECK(Path);
-		VarType = Type;
-		Node = GDS_Node_Path(Root, Path, TRUE);
-		SVType = GDS_Array_GetSVType(Node);
-		DimCnt = GDS_Array_DimCnt(Node);
+		case ctGenotype:
+			// VARIABLE: genotype/data, genotype/@data
+			if (DimCnt != 3)
+				throw ErrSeqArray(ErrDim, Path);
+			GDS_Array_GetDim(Node, DLen, 3);
+			if ((DLen[0] < nVariant) || (DLen[1] != nSample))
+				throw ErrSeqArray(ErrDim, Path);
 
-		Num_Variant = nVariant;
-		VariantSelection = VariantSel;
+			Path2 = GDS_PATH_PREFIX(Path, '@');
+			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
+			if (IndexNode == NULL)
+				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
+			if ((GDS_Array_DimCnt(IndexNode) != 1) ||
+					(GDS_Array_GetTotalCount(IndexNode) != nVariant))
+				throw ErrSeqArray(ErrDim, Path2.c_str());
 
-		Num_Sample = 0;
-		for (int i=0; i < nSample; i ++)
-		{
-			if (SampleSel[i])
-				Num_Sample ++;
-		}
+			SelPtr[1] = SampleSel;
+			Init.Check_TrueArray(DLen[2]);
+			SelPtr[2] = &Init.TRUE_ARRAY[0];
+			break;
 
-		string Path2; // the path with '@'
+		case ctPhase:
+			// VARIABLE: phase/data
+			if ((DimCnt != 2) && (DimCnt != 3))
+				throw ErrSeqArray(ErrDim, Path);
+			GDS_Array_GetDim(Node, DLen, 3);
+			if ((DLen[0] != nVariant) || (DLen[1] != nSample))
+				throw ErrSeqArray(ErrDim, Path);
 
-		switch (Type)
-		{
-			case ctBasic:
-				// VARIABLE: variant.id, position, allele
-				if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nVariant))
-					throw ErrSeqArray(ErrDim, Path);
-				break;
+			SelPtr[1] = SampleSel;
+			if (DimCnt > 2)
+			{
+				Init.Check_TrueArray(DLen[2]);
+				SelPtr[2] = &Init.TRUE_ARRAY[0];  //< ToDo: check
+			}
+			break;
 
-			case ctGenotype:
-				// VARIABLE: genotype/data, genotype/@data
-				if (DimCnt != 3)
-					throw ErrSeqArray(ErrDim, Path);
-				GDS_Array_GetDim(Node, DLen, 3);
-				if ((DLen[0] < nVariant) || (DLen[1] != nSample))
-					throw ErrSeqArray(ErrDim, Path);
+		case ctInfo:
+			// VARIABLE: info/...
+			if ((DimCnt!=1) && (DimCnt!=2))
+				throw ErrSeqArray(ErrDim, Path);
+			GDS_Array_GetDim(Node, DLen, 2);
 
-				Path2 = GDS_PATH_PREFIX(Path, '@');
-				IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
-				if (IndexNode == NULL)
-					throw ErrSeqArray("'%s' is missing!", Path2.c_str());
-				if ((GDS_Array_DimCnt(IndexNode) != 1) ||
-						(GDS_Array_GetTotalCount(IndexNode) != nVariant))
+			Path2 = GDS_PATH_PREFIX(Path, '@');
+			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
+			if (IndexNode != NULL)
+			{
+				if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
 					throw ErrSeqArray(ErrDim, Path2.c_str());
+			} else {
+				if (DLen[0] != nVariant)
+					throw ErrSeqArray(ErrDim, Path);
+			}
 
-				SelPtr[1] = SampleSel;
+			if (DimCnt > 1)
+			{
+				Init.Check_TrueArray(DLen[1]);
+				SelPtr[1] = &Init.TRUE_ARRAY[0];
+			}
+			break;
+
+		case ctFormat:
+			// VARIABLE: format/...
+			if ((DimCnt!=2) && (DimCnt!=3))
+				throw ErrSeqArray(ErrDim, Path);
+			GDS_Array_GetDim(Node, DLen, 3);
+
+			Path2 = GDS_PATH_PREFIX(Path, '@');
+			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
+			if (IndexNode != NULL)
+			{
+				if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
+					throw ErrSeqArray(ErrDim, Path2.c_str());
+			} else
+				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
+
+			SelPtr[1] = SampleSel;
+			if (DimCnt > 2)
+			{
 				Init.Check_TrueArray(DLen[2]);
 				SelPtr[2] = &Init.TRUE_ARRAY[0];
-				break;
-
-			case ctPhase:
-				// VARIABLE: phase/data
-				if ((DimCnt != 2) && (DimCnt != 3))
-					throw ErrSeqArray(ErrDim, Path);
-				GDS_Array_GetDim(Node, DLen, 3);
-				if ((DLen[0] != nVariant) || (DLen[1] != nSample))
-					throw ErrSeqArray(ErrDim, Path);
-
-				SelPtr[1] = SampleSel;
-				if (DimCnt > 2)
-				{
-					Init.Check_TrueArray(DLen[2]);
-					SelPtr[2] = &Init.TRUE_ARRAY[0];  //< ToDo: check
-				}
-				break;
-
-			case ctInfo:
-				// VARIABLE: info/...
-				if ((DimCnt!=1) && (DimCnt!=2))
-					throw ErrSeqArray(ErrDim, Path);
-				GDS_Array_GetDim(Node, DLen, 2);
-
-				Path2 = GDS_PATH_PREFIX(Path, '@');
-				IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
-				if (IndexNode != NULL)
-				{
-					if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
-						throw ErrSeqArray(ErrDim, Path2.c_str());
-				} else {
-					if (DLen[0] != nVariant)
-						throw ErrSeqArray(ErrDim, Path);
-				}
-
-				if (DimCnt > 1)
-				{
-					Init.Check_TrueArray(DLen[1]);
-					SelPtr[1] = &Init.TRUE_ARRAY[0];
-				}
-				break;
-
-			case ctFormat:
-				// VARIABLE: format/...
-				if ((DimCnt!=2) && (DimCnt!=3))
-					throw ErrSeqArray(ErrDim, Path);
-				GDS_Array_GetDim(Node, DLen, 3);
-
-				Path2 = GDS_PATH_PREFIX(Path, '@');
-				IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
-				if (IndexNode != NULL)
-				{
-					if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
-						throw ErrSeqArray(ErrDim, Path2.c_str());
-				} else
-					throw ErrSeqArray("'%s' is missing!", Path2.c_str());
-
-				SelPtr[1] = SampleSel;
-				if (DimCnt > 2)
-				{
-					Init.Check_TrueArray(DLen[2]);
-					SelPtr[2] = &Init.TRUE_ARRAY[0];
-				}
-				break;
-
-			default:
-				throw ErrSeqArray("Internal Error in 'TVariable_ApplyByVariant::InitObject'.");
-		}
-
-		_Index = 0;
-		IndexCellVariant = 0;
-		if (IndexNode)
-		{
-			C_Int32 Cnt=1;
-			GDS_Array_ReadData(IndexNode, &_Index, &Cnt, &NumCellVariant, svInt32);
-			if (NumCellVariant < 0) NumCellVariant = 0;
-		} else
-			NumCellVariant = 1;
-		if (!VariantSelection[0]) NextCell();
-
-		if (Type == ctGenotype)
-		{
-			CellCount = Num_Sample * DLen[2];
-			int SlideCnt = DLen[1] * DLen[2];
-			if (SlideCnt > (int)Init.GENO_BUFFER.size())
-				Init.GENO_BUFFER.resize(SlideCnt);
-		}
-	}
-
-	bool NextCell()
-	{
-		_Index ++;
-		IndexCellVariant += NumCellVariant;
-		if (IndexNode)
-		{
-			C_Int32 Cnt=1, L;
-			while ((_Index<Num_Variant) && !VariantSelection[_Index])
-			{
-				GDS_Array_ReadData(IndexNode, &_Index, &Cnt, &L, svInt32);
-				if (L > 0) IndexCellVariant += L;
-				_Index ++;
 			}
-			if (_Index < Num_Variant)
-			{
-				GDS_Array_ReadData(IndexNode, &_Index, &Cnt,
-					&NumCellVariant, svInt32);
-				if (NumCellVariant < 0) NumCellVariant = 0;
-			} else
-				NumCellVariant = 0;
-		} else {
-			while ((_Index<Num_Variant) && !VariantSelection[_Index])
-				_Index ++;
-			IndexCellVariant = _Index;
-			NumCellVariant = 1;
-		}
-		return (_Index < Num_Variant);
+			break;
+
+		default:
+			throw ErrSeqArray("Internal Error in 'TVariable_ApplyByVariant::InitObject'.");
 	}
 
-	void ReadGenoData(int *Base)
+	if (Type == ctGenotype)
 	{
-		// the size of Init.GENO_BUFFER has been check in 'Init()'
-		ssize_t SlideCnt = DLen[1]*DLen[2];
+		CellCount = Num_Sample * DLen[2];
+		int SlideCnt = DLen[1] * DLen[2];
+		if (SlideCnt > (int)Init.GENO_BUFFER.size())
+			Init.GENO_BUFFER.resize(SlideCnt);
+	}
 
-		TdIterator it;
+	ResetObject();
+}
+
+void TVariable_ApplyByVariant::ResetObject()
+{
+	_Index = 0;
+	IndexCellVariant = 0;
+	if (IndexNode)
+	{
+		C_Int32 Cnt=1;
+		GDS_Array_ReadData(IndexNode, &_Index, &Cnt, &NumCellVariant, svInt32);
+		if (NumCellVariant < 0) NumCellVariant = 0;
+	} else
+		NumCellVariant = 1;
+	if (!VariantSelection[0]) NextCell();
+}
+
+bool TVariable_ApplyByVariant::NextCell()
+{
+	_Index ++;
+	IndexCellVariant += NumCellVariant;
+
+	if (IndexNode)
+	{
+		C_Int32 Cnt=1, L;
+		while ((_Index<TotalNum_Variant) && !VariantSelection[_Index])
+		{
+			GDS_Array_ReadData(IndexNode, &_Index, &Cnt, &L, svInt32);
+			if (L > 0)
+				IndexCellVariant += L;
+			_Index ++;
+		}
+		if (_Index < TotalNum_Variant)
+		{
+			GDS_Array_ReadData(IndexNode, &_Index, &Cnt, &NumCellVariant,
+				svInt32);
+			if (NumCellVariant < 0)
+				NumCellVariant = 0;
+		} else
+			NumCellVariant = 0;
+	} else {
+		while ((_Index<TotalNum_Variant) && !VariantSelection[_Index])
+			_Index ++;
+		IndexCellVariant = _Index;
+		NumCellVariant = 1;
+	}
+
+	return (_Index < TotalNum_Variant);
+}
+
+void TVariable_ApplyByVariant::ReadGenoData(int *Base)
+{
+	// the size of Init.GENO_BUFFER has been check in 'Init()'
+	ssize_t SlideCnt = DLen[1]*DLen[2];
+
+	TdIterator it;
+	GDS_Iter_GetStart(Node, &it);
+	GDS_Iter_Offset(&it, C_Int64(IndexCellVariant)*SlideCnt);
+	GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
+	C_UInt8 *s = &Init.GENO_BUFFER[0];
+	int *p = Base;
+	for (int i=0; i < DLen[1]; i++)
+	{
+		if (SelPtr[1][i])
+		{
+			for (int j=0; j < DLen[2]; j++)
+				*p++ = *s++;
+		} else {
+			s += DLen[2];
+		}
+	}
+
+	int missing = 3;
+
+	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
+	for (int idx=1; idx < NumCellVariant; idx ++)
+	{
 		GDS_Iter_GetStart(Node, &it);
-		GDS_Iter_Offset(&it, C_Int64(IndexCellVariant)*SlideCnt);
+		GDS_Iter_Offset(&it, (C_Int64(IndexCellVariant) + idx)*SlideCnt);
 		GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
-		C_UInt8 *s = &Init.GENO_BUFFER[0];
-		int *p = Base;
+
+		int shift = idx*2;
+		s = &Init.GENO_BUFFER[0];
+		p = Base;
 		for (int i=0; i < DLen[1]; i++)
 		{
 			if (SelPtr[1][i])
 			{
 				for (int j=0; j < DLen[2]; j++)
-					*p++ = *s++;
+				{
+					*p |= int(*s) << shift;
+					p ++; s ++;
+				}
 			} else {
 				s += DLen[2];
 			}
 		}
 
-		int missing = 3;
-
-		// CellCount = Num_Sample * DLen[2] in 'NeedRData'
-		for (int idx=1; idx < NumCellVariant; idx ++)
-		{
-			GDS_Iter_GetStart(Node, &it);
-			GDS_Iter_Offset(&it, (C_Int64(IndexCellVariant) + idx)*SlideCnt);
-			GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
-
-			int shift = idx*2;
-			s = &Init.GENO_BUFFER[0];
-			p = Base;
-			for (int i=0; i < DLen[1]; i++)
-			{
-				if (SelPtr[1][i])
-				{
-					for (int j=0; j < DLen[2]; j++)
-					{
-						*p |= int(*s) << shift;
-						p ++; s ++;
-					}
-				} else {
-					s += DLen[2];
-				}
-			}
-
-			missing = (missing << 2) | 0x03;
-		}
-		for (int n=CellCount; n > 0; n--)
-		{
-			if (*Base == missing) *Base = NA_INTEGER;
-			Base ++;
-		}	
+		missing = (missing << 2) | 0x03;
 	}
-
-	void ReadData(SEXP Val)
+	for (int n=CellCount; n > 0; n--)
 	{
-		if (NumCellVariant <= 0) return;
-		if (VarType == ctGenotype)
+		if (*Base == missing) *Base = NA_INTEGER;
+		Base ++;
+	}	
+}
+
+void TVariable_ApplyByVariant::ReadData(SEXP Val)
+{
+	if (NumCellVariant <= 0) return;
+	if (VarType == ctGenotype)
+	{
+		ReadGenoData(INTEGER(Val));
+	} else {
+		int st[3] = { IndexCellVariant, 0, 0 };
+		DLen[0] = NumCellVariant;
+		if (NumCellVariant > (int)Init.TRUE_ARRAY.size())
+			Init.TRUE_ARRAY.resize(NumCellVariant);
+		SelPtr[0] = &Init.TRUE_ARRAY[0];
+		if (COREARRAY_SV_INTEGER(SVType))
 		{
-			ReadGenoData(INTEGER(Val));
-		} else {
-			int st[3] = { IndexCellVariant, 0, 0 };
-			DLen[0] = NumCellVariant;
-			if (NumCellVariant > (int)Init.TRUE_ARRAY.size())
-				Init.TRUE_ARRAY.resize(NumCellVariant);
-			SelPtr[0] = &Init.TRUE_ARRAY[0];
-			if (COREARRAY_SV_INTEGER(SVType))
-			{
-				GDS_Seq_rDataEx(Node, st, DLen, SelPtr, INTEGER(Val), svInt32);
-			} else if (COREARRAY_SV_FLOAT(SVType))
-			{
-				GDS_Seq_rDataEx(Node, st, DLen, SelPtr, REAL(Val), svFloat64);
-			} else if (COREARRAY_SV_STRING(SVType))
-			{
-				vector<string> buffer(CellCount);
-				GDS_Seq_rDataEx(Node, st, DLen, SelPtr, &buffer[0], svStrUTF8);
-				for (int i=0; i < (int)buffer.size(); i++)
-					SET_STRING_ELT(Val, i, mkChar(buffer[i].c_str()));
-			}
+			GDS_Seq_rDataEx(Node, st, DLen, SelPtr, INTEGER(Val), svInt32);
+		} else if (COREARRAY_SV_FLOAT(SVType))
+		{
+			GDS_Seq_rDataEx(Node, st, DLen, SelPtr, REAL(Val), svFloat64);
+		} else if (COREARRAY_SV_STRING(SVType))
+		{
+			vector<string> buffer(CellCount);
+			GDS_Seq_rDataEx(Node, st, DLen, SelPtr, &buffer[0], svStrUTF8);
+			for (int i=0; i < (int)buffer.size(); i++)
+				SET_STRING_ELT(Val, i, mkChar(buffer[i].c_str()));
 		}
 	}
+}
 
-	SEXP NeedRData(int &nProtected)
+SEXP TVariable_ApplyByVariant::NeedRData(int &nProtected)
+{
+	if (NumCellVariant <= 0) return R_NilValue;
+
+	map<int, SEXP>::iterator it = VarBuffer.find(NumCellVariant);
+	if (it == VarBuffer.end())
 	{
-		if (NumCellVariant <= 0) return R_NilValue;
-
-		map<int, SEXP>::iterator it = VarBuffer.find(NumCellVariant);
-		if (it == VarBuffer.end())
+		switch (VarType)
 		{
-			switch (VarType)
-			{
-			case ctBasic:
-				CellCount = 1; break;
-			case ctGenotype:
-				CellCount = Num_Sample * DLen[2]; break;
-			case ctPhase:
-				CellCount = (DimCnt>2) ? Num_Sample*DLen[2] : Num_Sample;
-				break;
-			case ctInfo:
-				CellCount = ((DimCnt>1) ? DLen[1] : 1) * NumCellVariant;
-				break;
-			case ctFormat:
-				CellCount = ((DimCnt>2) ? Num_Sample*DLen[2] : Num_Sample) * NumCellVariant;
-				break;
-			default:
-				CellCount = 0;
-			}
+		case ctBasic:
+			CellCount = 1; break;
+		case ctGenotype:
+			CellCount = Num_Sample * DLen[2]; break;
+		case ctPhase:
+			CellCount = (DimCnt>2) ? Num_Sample*DLen[2] : Num_Sample;
+			break;
+		case ctInfo:
+			CellCount = ((DimCnt>1) ? DLen[1] : 1) * NumCellVariant;
+			break;
+		case ctFormat:
+			CellCount = ((DimCnt>2) ? Num_Sample*DLen[2] : Num_Sample) * NumCellVariant;
+			break;
+		default:
+			CellCount = 0;
+		}
 
-			SEXP ans = R_NilValue, dim;
-			if (COREARRAY_SV_INTEGER(SVType))
+		SEXP ans = R_NilValue, dim;
+		if (COREARRAY_SV_INTEGER(SVType))
+		{
+			char classname[32];
+			classname[0] = 0;
+			GDS_Node_GetClassName(Node, classname, sizeof(classname));
+			if (strcmp(classname, "dBit1") == 0)
 			{
-				char classname[32];
-				classname[0] = 0;
-				GDS_Node_GetClassName(Node, classname, sizeof(classname));
-				if (strcmp(classname, "dBit1") == 0)
-				{
-					PROTECT(ans = NEW_LOGICAL(CellCount));
-				} else if (GDS_R_Is_Logical(Node))
-				{
-					PROTECT(ans = NEW_LOGICAL(CellCount));
-				} else {
-					PROTECT(ans = NEW_INTEGER(CellCount));
-					nProtected += GDS_R_Set_IfFactor(Node, ans);
-				}
-				nProtected ++;
-			} else if (COREARRAY_SV_FLOAT(SVType))
+				PROTECT(ans = NEW_LOGICAL(CellCount));
+			} else if (GDS_R_Is_Logical(Node))
 			{
-				PROTECT(ans = NEW_NUMERIC(CellCount));
-				nProtected ++;
-			} else if (COREARRAY_SV_STRING(SVType))
-			{
-				PROTECT(ans = NEW_CHARACTER(CellCount));
-				nProtected ++;
+				PROTECT(ans = NEW_LOGICAL(CellCount));
+			} else {
+				PROTECT(ans = NEW_INTEGER(CellCount));
+				nProtected += GDS_R_Set_IfFactor(Node, ans);
 			}
+			nProtected ++;
+		} else if (COREARRAY_SV_FLOAT(SVType))
+		{
+			PROTECT(ans = NEW_NUMERIC(CellCount));
+			nProtected ++;
+		} else if (COREARRAY_SV_STRING(SVType))
+		{
+			PROTECT(ans = NEW_CHARACTER(CellCount));
+			nProtected ++;
+		}
 
-			SEXP name_list, tmp;
-			switch (VarType)
+		SEXP name_list, tmp;
+		switch (VarType)
+		{
+		case ctGenotype:
+			PROTECT(dim = NEW_INTEGER(2));
+			INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
+			SET_DIM(ans, dim);
+			PROTECT(name_list = NEW_LIST(2));
+			PROTECT(tmp = NEW_CHARACTER(2));
+				SET_STRING_ELT(tmp, 0, mkChar("allele"));
+				SET_STRING_ELT(tmp, 1, mkChar("sample"));
+				SET_NAMES(name_list, tmp);
+			SET_DIMNAMES(ans, name_list);
+			nProtected += 3;
+			break;
+
+		case ctPhase:
+			if (DimCnt > 2)
 			{
-			case ctGenotype:
-				PROTECT(dim = NEW_INTEGER(2));
+				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
 				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
 				SET_DIM(ans, dim);
-				PROTECT(name_list = NEW_LIST(2));
-				PROTECT(tmp = NEW_CHARACTER(2));
-					SET_STRING_ELT(tmp, 0, mkChar("allele"));
-					SET_STRING_ELT(tmp, 1, mkChar("sample"));
-					SET_NAMES(name_list, tmp);
-				SET_DIMNAMES(ans, name_list);
-				nProtected += 3;
-				break;
-
-			case ctPhase:
-				if (DimCnt > 2)
-				{
-					PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-					INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
-					SET_DIM(ans, dim);
-				}
-				break;
-
-			case ctFormat:
-				if (DimCnt == 2)
-				{
-					PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-					INTEGER(dim)[0] = Num_Sample; INTEGER(dim)[1] = NumCellVariant;
-					SET_DIM(ans, dim);
-				} else if (DimCnt > 2)
-				{
-					PROTECT(dim = NEW_INTEGER(3)); nProtected ++;
-					INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
-					INTEGER(dim)[2] = NumCellVariant;
-					SET_DIM(ans, dim);
-				}
-				break;
-
-			default:
-				break;
 			}
+			break;
 
-			VarBuffer.insert(pair<int, SEXP>(NumCellVariant, ans));
-			return ans;
-		} else
-			return it->second;
-	}
-};
+		case ctFormat:
+			if (DimCnt == 2)
+			{
+				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
+				INTEGER(dim)[0] = Num_Sample; INTEGER(dim)[1] = NumCellVariant;
+				SET_DIM(ans, dim);
+			} else if (DimCnt > 2)
+			{
+				PROTECT(dim = NEW_INTEGER(3)); nProtected ++;
+				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
+				INTEGER(dim)[2] = NumCellVariant;
+				SET_DIM(ans, dim);
+			}
+			break;
 
+		default:
+			break;
+		}
+
+		VarBuffer.insert(pair<int, SEXP>(NumCellVariant, ans));
+		return ans;
+	} else
+		return it->second;
+}
 
 
 
@@ -659,7 +641,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 			{
 				// initialize the GDS Node list
 				TVariable_ApplyByVariant NodeVar;
-				NodeVar.InitObject(TVariable_ApplyByVariant::ctGenotype,
+				NodeVar.InitObject(TVariable_Apply::ctGenotype,
 					"genotype/data", Root, Sel.Variant.size(),
 					&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
 
@@ -1055,13 +1037,11 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			{
 			case 0:    // integer
 				val = AS_INTEGER(val);
-				INTEGER(rv_ans)[ans_index] = (LENGTH(val) > 0) ?
-					INTEGER(val)[0] : NA_INTEGER;
+				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val);
 				break;
 			case 1:    // double
 				val = AS_NUMERIC(val);
-				REAL(rv_ans)[ans_index] = (LENGTH(val) > 0) ?
-					REAL(val)[0] : R_NaN;
+				REAL(rv_ans)[ans_index] = Rf_asReal(val);
 				break;
 			case 2:    // character
 				val = AS_CHARACTER(val);

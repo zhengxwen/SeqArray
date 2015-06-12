@@ -319,7 +319,7 @@ seqMerge <- function(gds.fn, out.fn, compress.option = seqCompress.Option(),
 #######################################################################
 # Read the header of a VCF file
 #
-seqCompress.Option <- function(default="ZIP.MAX", ...)
+seqCompress.Option <- function(default="ZIP_RA.MAX", ...)
 {
     rv <- list(...)
     n <- names(rv)
