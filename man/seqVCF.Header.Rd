@@ -31,8 +31,6 @@ seqVCF.Header(vcf.fn)
 }
 
 \references{
-    \url{http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41}
-
     The variant call format and VCFtools.
     Danecek P, Auton A, Abecasis G, Albers CA, Banks E, DePristo MA, Handsaker RE,
     Lunter G, Marth GT, Sherry ST, McVean G, Durbin R; 1000 Genomes Project Analysis Group.

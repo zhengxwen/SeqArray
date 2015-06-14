@@ -66,11 +66,10 @@ SeqArray will be of great interest to scientists involved in data analyses of
 large-scale genomic sequencing data using R environment, particularly those
 with limited experience of low-level C programming and parallel computing.
 
-	Webpage: \url{http://corearray.sourceforge.net/}
+	Webpage: \url{http://corearray.sourceforge.net/},
+	    \url{http://github.com/zhengxwen/SeqArray}
 
 	Tutorial: \url{http://corearray.sourceforge.net/tutorials/SeqArray/}
-
-	Forums:	\url{http://sourceforge.net/projects/corearray/forums}
 }
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 

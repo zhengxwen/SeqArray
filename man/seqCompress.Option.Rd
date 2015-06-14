@@ -5,10 +5,11 @@
 	Get compression options for importing VCF file(s)
 }
 \usage{
-seqCompress.Option(default="ZIP.MAX", ...)
+seqCompress.Option(default="ZIP_RA.MAX", ...)
 }
 \arguments{
-	\item{default}{the default compression level}
+	\item{default}{the default compression level, see \link{add.gdsn} for
+	    more options}
 	\item{...}{optional arguments}
 }
 \value{

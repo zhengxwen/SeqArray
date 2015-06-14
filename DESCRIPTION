@@ -7,7 +7,7 @@ Depends: gdsfmt (>= 1.4.0)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation
 LinkingTo: gdsfmt
-Suggests: parallel, BiocStyle, BiocGenerics, knitr, RUnit, Rcpp
+Suggests: parallel, BiocGenerics, knitr, RUnit, Rcpp
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu"),
         person("Stephanie", "Gogarten", role="aut"),
