@@ -146,12 +146,15 @@
 #######################################################################
 # Get the file name of an example
 #
-seqExampleFileName <- function(type=c("gds", "vcf"))
+seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
 {
     type <- match.arg(type)
     switch(type,
-        gds = { system.file("extdata", "CEU_Exon.gds", package="SeqArray") },
-        vcf = { system.file("extdata", "CEU_Exon.vcf.gz", package="SeqArray") }
+        gds = system.file("extdata", "CEU_Exon.gds", package="SeqArray"),
+        vcf = system.file("extdata", "CEU_Exon.vcf.gz", package="SeqArray"),
+        KG_Phase1 =
+            system.file("extdata", "1KG_phase1_release_v3_chr22.gds",
+            package="SeqArray")
     )
 }
 
@@ -558,7 +561,7 @@ seqVCF.Header <- function(vcf.fn)
 
 
     #########################################################
-    # INFO=<ID=ID,Number=number,Type=type,Description=”description”>
+    # INFO=<ID=ID,Number=number,Type=type,Description="description">
 
     INFO <- NULL
     s <- ans$value[ans$id == "INFO"]
@@ -579,7 +582,7 @@ seqVCF.Header <- function(vcf.fn)
 
 
     #########################################################
-    # FILTER=<ID=ID,Description=”description”>
+    # FILTER=<ID=ID,Description="description">
 
     FILTER <- NULL
     s <- ans$value[ans$id == "FILTER"]
@@ -595,7 +598,7 @@ seqVCF.Header <- function(vcf.fn)
 
 
     #########################################################
-    # FORMAT=<ID=ID,Number=number,Type=type,Description=”description”>
+    # FORMAT=<ID=ID,Number=number,Type=type,Description="description">
 
     FORMAT <- NULL
     s <- ans$value[ans$id == "FORMAT"]
