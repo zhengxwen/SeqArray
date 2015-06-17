@@ -1,8 +1,8 @@
 // ===========================================================
 //
-// ReadByVariant.h: Read data variant by variant
+// ReadBySample.h: Read data sample by sample
 //
-// Copyright (C) 2013-2015    Xiuwen Zheng
+// Copyright (C) 2015    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -22,34 +22,35 @@
 #include "Common.h"
 
 
-// ===================================================================== //
-
-/// Object for reading a variable variant by variant
-class COREARRAY_DLL_LOCAL CVarApplyByVariant: public CVarApply
+/// 
+class COREARRAY_DLL_LOCAL CVarApplyBySample: public CVarApply
 {
 protected:
 	PdSequenceX Node;       ///< the GDS variable
-	PdSequenceX IndexNode;  ///< the corresponding index variable
 
-	C_Int32 IndexRaw;          ///< the index according to the raw data set
-	C_Int32 NumIndexRaw;       ///< the increment of raw index
-	size_t CellCount;          ///< the number of entries for the current variant
-	map<size_t, SEXP> VarList; ///< a list of SEXP variables
+	C_Int32 VariantStart;   ///< start index according to the variants
+	C_Int32 VariantCount;   ///< the length according to the variants
+	size_t CellCount;       ///< the number of entries for the current sample
+	vector<C_UInt8> VariantCellCnt;  ///< 
+	map<size_t, SEXP> VarList;       ///< a list of SEXP variables
 
 	C_SVType SVType;        ///< data type for GDS reading
 	C_BOOL *SelPtr[3];      ///< pointers to selection
-	C_BOOL *VariantSelect;  ///< pointer to variant selection
+	C_BOOL *SampleSelect;   ///< pointer to sample selection
+
+	vector<C_BOOL> VariantSelectBuffer;  ///< the buffer of selection
 
 public:
 	TType VarType;          ///< VCF data type
-	int TotalNum_Variant;   ///< the total number of variants
-	int Num_Sample;         ///< the number of selected samples
+	int TotalNum_Sample;    ///< the total number of samples
+	int Num_Variant;        ///< the number of selected variants
 
 	int DimCnt;             ///< the number of dimensions
 	C_Int32 DLen[4];        ///< the dimension size
 	C_Int32 CurIndex;       ///< the index of variant, starting from ZERO
 
-	CVarApplyByVariant();
+
+	CVarApplyBySample();
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
 		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel);
@@ -68,16 +69,8 @@ public:
 
 extern "C"
 {
-/// Get data from a working space
-COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name);
-
 /// Apply functions over margins on a working space
-COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho);
-
-/// Apply functions via a sliding window over variants
-COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
-	SEXP win_size, SEXP shift_size, SEXP FUN, SEXP as_is, SEXP var_index,
-	SEXP rho);
 
 } // extern "C"

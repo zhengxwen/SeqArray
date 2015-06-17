@@ -34,8 +34,10 @@
 // ===========================================================
 
 /// the initial data
-TInitObject::TInitObject(): TRUE_ARRAY(256, TRUE), GENO_BUFFER(1024)
-{ }
+TInitObject::TInitObject(): GENO_BUFFER(1024)
+{
+	memset(TRUE_ARRAY, TRUE, sizeof(TRUE_ARRAY));
+}
 
 TInitObject::TSelection &TInitObject::Selection(SEXP gds)
 {
@@ -46,33 +48,35 @@ TInitObject::TSelection &TInitObject::Selection(SEXP gds)
 	return m.back();
 }
 
-void TInitObject::Check_TrueArray(int Cnt)
+void TInitObject::Need_GenoBuffer(size_t size)
 {
-	if (Cnt > (int)TRUE_ARRAY.size())
-		TRUE_ARRAY.resize(Cnt, TRUE);
+	if (size > GENO_BUFFER.size())
+		GENO_BUFFER.resize(size);
 }
 
 TInitObject Init;
 
 
 
-extern "C"
-{
 // ===========================================================
-// the initial functions when the package is loaded
+// GDS variable type
 // ===========================================================
 
-/// initialize the package
-COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
+C_BOOL *CVarApply::NeedTRUE(size_t size)
 {
-	extern void Register_SNPRelate_Functions();
-
-	Init_GDS_Routines();
-	Register_SNPRelate_Functions();
+	if (size <= sizeof(Init.TRUE_ARRAY))
+	{
+		return Init.TRUE_ARRAY;
+	} else {
+		_TRUE.resize(size, TRUE);
+		return &_TRUE[0];
+	}
 }
 
 
 
+extern "C"
+{
 // ===========================================================
 // Open a GDS file
 // ===========================================================
@@ -797,6 +801,37 @@ COREARRAY_DLL_EXPORT SEXP sqa_cvt_allele(SEXP allele)
 		}
 	}
 	return allele;
+}
+
+
+
+
+
+// ===========================================================
+// the initial function when the package is loaded
+// ===========================================================
+
+/// initialize the package
+COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
+{
+	#define CALL(name, num)	   { #name, (DL_FUNC)&name, num }
+
+	extern void Register_SNPRelate_Functions();
+
+	extern SEXP sqa_GetData(SEXP, SEXP);
+	extern SEXP sqa_Apply_Sample(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP sqa_Apply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+
+	static R_CallMethodDef callMethods[] =
+	{
+		CALL(sqa_GetData, 2),
+		CALL(sqa_Apply_Sample, 6),          CALL(sqa_Apply_Variant, 6),
+		{ NULL, NULL, 0 }
+	};
+
+	R_registerRoutines(info, NULL, callMethods, NULL, NULL);
+	Register_SNPRelate_Functions();
+	Init_GDS_Routines();
 }
 
 } // extern "C"

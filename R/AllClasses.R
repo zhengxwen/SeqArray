@@ -26,8 +26,10 @@ setValidity("SeqVarGDSClass",
 
         var.names <- ls.gdsn(object)
         if (!all(c("sample.id", "variant.id", "position",
-                "chromosome", "allele", "genotype") %in% var.names))
+            "chromosome", "allele", "genotype") %in% var.names))
+        {
             return("sample.id, variant.id, position, chromosome, allele, and genotype are required variables.")
+        }
         TRUE
     }
 )

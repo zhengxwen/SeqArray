@@ -59,12 +59,16 @@ public:
 	typedef list<TSelection> TSelList;
 
 	TInitObject();
-
 	TSelection &Selection(SEXP gds);
-	void Check_TrueArray(int Cnt);
 
-	vector<C_BOOL> TRUE_ARRAY;
+	/// a vector of TRUE
+	C_BOOL TRUE_ARRAY[1024];
+
+	/// the buffer of genotypes
 	vector<C_UInt8> GENO_BUFFER;
+	/// allocator buffer according to size at least
+	void Need_GenoBuffer(size_t size);
+
 	map<int, TSelList> _Map;
 };
 
@@ -72,16 +76,27 @@ extern TInitObject Init;
 
 
 
+
 // ===========================================================
 // GDS variable type
 // ===========================================================
 
-class COREARRAY_DLL_LOCAL TVariable_Apply
+class COREARRAY_DLL_LOCAL CVariable
 {
 public:
 	enum TType {
 		ctNone, ctBasic, ctGenotype, ctPhase, ctInfo, ctFormat
 	};
+};
+
+
+class COREARRAY_DLL_LOCAL CVarApply: public CVariable
+{
+public:
+	C_BOOL *NeedTRUE(size_t size);
+
+private:
+	vector<C_BOOL> _TRUE;
 };
 
 
@@ -108,7 +123,7 @@ public:
 // ===========================================================
 
 /// get the list element named str, or return NULL
-COREARRAY_INLINE static SEXP GetListElement(SEXP list, const char *str)
+inline static SEXP GetListElement(SEXP list, const char *str)
 {
 	SEXP elmt = R_NilValue;
 	SEXP names = getAttrib(list, R_NamesSymbol);
@@ -125,7 +140,7 @@ COREARRAY_INLINE static SEXP GetListElement(SEXP list, const char *str)
 
 
 /// get the list element named str, or return NULL
-COREARRAY_INLINE static size_t GetLength(SEXP val)
+inline static size_t GetLength(SEXP val)
 {
 	if (!Rf_isNull(val))
 		return Rf_length(val);
@@ -135,14 +150,14 @@ COREARRAY_INLINE static size_t GetLength(SEXP val)
 
 
 /// check CoreArray function
-COREARRAY_INLINE static const char *SKIP(const char *p)
+inline static const char *SKIP(const char *p)
 {
 	while (isspace(*p)) p ++;
 	return p;
 }
 
 /// check CoreArray function
-COREARRAY_INLINE static string SHORT_TEXT(const char *p, int MaxNum=16)
+inline static string SHORT_TEXT(const char *p, int MaxNum=16)
 {
 	if ((int)strlen(p) <= MaxNum)
 		return string(p);
@@ -151,7 +166,7 @@ COREARRAY_INLINE static string SHORT_TEXT(const char *p, int MaxNum=16)
 }
 
 /// get PdGDSObj from a SEXP object
-COREARRAY_INLINE static void GDS_PATH_PREFIX_CHECK(const char *path)
+inline static void GDS_PATH_PREFIX_CHECK(const char *path)
 {
 	for (; *path != 0; path++)
 	{
@@ -165,7 +180,7 @@ COREARRAY_INLINE static void GDS_PATH_PREFIX_CHECK(const char *path)
 }
 
 /// check variable name
-COREARRAY_INLINE static void GDS_VARIABLE_NAME_CHECK(const char *p)
+inline static void GDS_VARIABLE_NAME_CHECK(const char *p)
 {
 	for (; *p != 0; p++)
 	{
@@ -178,7 +193,7 @@ COREARRAY_INLINE static void GDS_VARIABLE_NAME_CHECK(const char *p)
 }
 
 /// get PdGDSObj from a SEXP object
-COREARRAY_INLINE static string GDS_PATH_PREFIX(const string &path, char prefix)
+inline static string GDS_PATH_PREFIX(const string &path, char prefix)
 {
 	string s = path;
 	for (int i=s.size()-1; i >= 0; i--)
@@ -202,11 +217,21 @@ COREARRAY_INLINE static string GDS_PATH_PREFIX(const string &path, char prefix)
 }
 
 /// get PdGDSObj from a SEXP object
-COREARRAY_INLINE static string GDS_UP_PATH(const char *path)
+inline static string GDS_UP_PATH(const char *path)
 {
 	const char *p = path + strlen(path) - 1;
 	while ((p!=path) && (*p != '/')) p --;
 	return string(path, p);
+}
+
+
+/// get the number of TRUEs
+inline static size_t NUM_OF_TRUE(C_BOOL *array, size_t n)
+{
+	size_t ans = 0;
+	for (; n > 0; n--)
+		if (*array++) ans ++;
+	return ans;
 }
 
 #endif /* _HEADER_SEQ_COMMON_ */

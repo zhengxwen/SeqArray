@@ -875,7 +875,7 @@ set.seed(1000)
 # Try different LD thresholds for sensitivity analysis
 snpset <- snpgdsLDpruning(genofile, ld.threshold=0.2)
 names(snpset)
-head(snpset$chr1)  # snp.id
+head(snpset$chr22)  # snp.id
 
 # Get all selected snp id
 snpset.id <- unlist(snpset)
@@ -946,10 +946,10 @@ Here is the population information we have known:
 # Determine groups of individuals by population information
 rv <- snpgdsCutTree(ibs.hc, samp.group=as.factor(colors[pop.code]))
 
-plot(rv$dendrogram, leaflab="none", main="1KG Phase 1, chromosome 22")
+plot(rv$dendrogram, leaflab="none", main="1KG Phase 1, chromosome 22",
+    edgePar=list(col=rgb(0.5,0.5,0.5, 0.75), t.col="black"))
 legend("bottomleft", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75, ncol=4)
 ```
-
 
 
 ```{r}

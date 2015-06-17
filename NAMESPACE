@@ -5,7 +5,8 @@ useDynLib(SeqArray,
     sqa_Open_Init, sqa_File_Done,
     sqa_FilterPushEmpty, sqa_FilterPushLast, sqa_FilterPop,
     sqa_SetSpaceSample, sqa_SetSpaceVariant, sqa_GetSpace,
-    sqa_GetData, sqa_Apply_Variant, sqa_SlidingWindow, sqa_NumOfAllele,
+    sqa_GetData, sqa_Apply_Variant, sqa_Apply_Sample,
+    sqa_SlidingWindow, sqa_NumOfAllele,
     sqa_VarSummary,
     sqa_cvt_allele
 )

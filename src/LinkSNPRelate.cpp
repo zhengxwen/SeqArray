@@ -51,7 +51,7 @@ inline static void Done_Object(TParam *Param)
 {
 	if (Param->Object)
 	{
-		delete (TVariable_ApplyByVariant*)(Param->Object);
+		delete (CVarApplyByVariant*)(Param->Object);
 		Param->Object = NULL;
 	}
 	if (Param->GenoBuffer)
@@ -116,18 +116,18 @@ static void SNPRelate_InitSelSNPOnly(C_BOOL *Sel, TParam *Param)
 static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 	C_UInt8 *OutBuf, TTypeGenoDim OutDim, TParam *Param)
 {
-	TVariable_ApplyByVariant *Obj =
-		(TVariable_ApplyByVariant*)(Param->Object);
+	CVarApplyByVariant *Obj =
+		(CVarApplyByVariant*)(Param->Object);
 
 	if (!Obj)
 	{
-		Obj = new TVariable_ApplyByVariant;
+		Obj = new CVarApplyByVariant;
 		Param->Object = Obj;
 
 		PdGDSObj Root = GDS_R_SEXP2Obj(
 			GetListElement(Param->SeqGDSFile, "root"));
 		TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
-		Obj->InitObject(TVariable_Apply::ctGenotype,
+		Obj->InitObject(CVariable::ctGenotype,
 			"genotype/data", Root, Sel.Variant.size(),
 			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
 
@@ -253,8 +253,8 @@ static void SNPRelate_SetSampSelection(C_BOOL *sel, TParam *Param)
 COREARRAY_DLL_LOCAL void Register_SNPRelate_Functions()
 {
 	static const char *pkg_name = "SeqArray";
-	#define REG(nm)    \
-		R_RegisterCCallable(pkg_name, #nm, (DL_FUNC)&nm)
+
+	#define REG(nm)    R_RegisterCCallable(pkg_name, #nm, (DL_FUNC)&nm)
 
 	REG(SNPRelate_InitSeqArray);
 	REG(SNPRelate_DoneSeqArray);
