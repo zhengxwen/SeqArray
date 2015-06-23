@@ -47,7 +47,7 @@ public:
 
 	int DimCnt;             ///< the number of dimensions
 	C_Int32 DLen[4];        ///< the dimension size
-	C_Int32 CurIndex;       ///< the index of variant, starting from ZERO
+	C_Int32 CurIndex;       ///< the index of sample, starting from ZERO
 
 
 	CVarApplyBySample();

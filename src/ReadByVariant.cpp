@@ -1107,7 +1107,6 @@ COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
 				s=="allele" || s=="annotation/id" || s=="annotation/qual" ||
 				s=="annotation/filter" )
 			{
-				// =======================================================
 				// variant.id, position, chromosome, allele, annotation/id
 				// annotation/qual, annotation/filter
 				VarType = CVarApplyByVariant::ctBasic;
@@ -1117,8 +1116,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
 				s.append("/data");
 			} else if (s == "phase")
 			{
-				// =======================================================
-				// phase/
+				// phase
 				VarType = CVarApplyByVariant::ctPhase;
 				s.append("/data");
 			} else if (strncmp(s.c_str(), "annotation/info/", 16) == 0)

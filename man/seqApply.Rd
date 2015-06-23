@@ -116,6 +116,8 @@ seqApply(f, "genotype", FUN=print, margin="by.variant", as.is="none")
 
 seqApply(f, "genotype", FUN=print, margin="by.sample", as.is="none")
 
+seqApply(f, c(sample.id="sample.id", genotype="genotype"), FUN=print,
+    margin="by.sample", as.is="none")
 
 
 # close the GDS file

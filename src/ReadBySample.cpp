@@ -50,17 +50,22 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	// initialize
 	GDS_PATH_PREFIX_CHECK(Path);
 
-	string Path1 = GDS_PATH_PREFIX(Path, '~'); // the path with '~'
-	string Path2; // the path with '@'
+	if (Type == ctBasic)
+	{
+		Node = GDS_Node_Path(Root, Path, TRUE);
+	} else {
+		string s = GDS_PATH_PREFIX(Path, '~'); // the path with '~'
+		Node = GDS_Node_Path(Root, s.c_str(), FALSE);
+		if (Node == NULL)
+		{
+			throw ErrSeqArray(
+				"'%s' is missing! "
+				"Please call 'seqOptimize(..., target=\"SeqVarTools\")'.",
+				s.c_str());
+		}
+	}
 
 	VarType = Type;
-	Node = GDS_Node_Path(Root, Path1.c_str(), FALSE);
-	if (Node == NULL)
-	{
-		throw ErrSeqArray(
-			"'%s' is missing! Please call 'seqOptimize(..., target=\"SeqVarTools\")'",
-			Path1.c_str());
-	}
 	SVType = GDS_Array_GetSVType(Node);
 	DimCnt = GDS_Array_DimCnt(Node);
 
@@ -68,15 +73,17 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	SampleSelect = SampleSel;
 	Num_Variant = NUM_OF_TRUE(VariantSel, nVariant);
 
-	PdSequenceX IndexNode;  // the corresponding index variable
+	string Path2; // the path with '@'
+	PdSequenceX IndexNode = NULL;  // the corresponding index variable
 
 	switch (Type)
 	{
 		case ctBasic:
 			// VARIABLE: sample.id
-			// TODO
-			if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nVariant))
+			if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nSample))
 				throw ErrSeqArray(ErrDim, Path);
+			CellCount = 1;
+			SelPtr[0] = NeedTRUE(1);
 			break;
 
 		case ctGenotype:
@@ -141,47 +148,26 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			SelPtr[2] = NeedTRUE(DLen[2]);
 			break;
 
-/*		case ctPhase:
-			// VARIABLE: phase/data
+		case ctPhase:
+			// VARIABLE: phase/~data
 			if ((DimCnt != 2) && (DimCnt != 3))
 				throw ErrSeqArray(ErrDim, Path);
 			GDS_Array_GetDim(Node, DLen, 3);
-			if ((DLen[0] != nVariant) || (DLen[1] != nSample))
+			if ((DLen[0] != nSample) || (DLen[1] != nVariant))
 				throw ErrSeqArray(ErrDim, Path);
 
-			SelPtr[1] = SampleSel;
+			CellCount = Num_Variant;
+			SelPtr[0] = NeedTRUE(1);
+			GetFirstAndLength(VariantSel, nVariant, VariantStart, VariantCount);
+			SelPtr[1] = VariantSel + VariantStart;
 			if (DimCnt > 2)
 			{
-				Check_TRUE_ARRAY(DLen[2]);
-				SelPtr[2] = &Init.TRUE_ARRAY[0];  //< ToDo: check
+				CellCount *= DLen[2];
+				SelPtr[2] = NeedTRUE(DLen[2]);
 			}
 			break;
 
-		case ctInfo:
-			// VARIABLE: info/...
-			if ((DimCnt!=1) && (DimCnt!=2))
-				throw ErrSeqArray(ErrDim, Path);
-			GDS_Array_GetDim(Node, DLen, 2);
-
-			Path2 = GDS_PATH_PREFIX(Path, '@');
-			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
-			if (IndexNode != NULL)
-			{
-				if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
-					throw ErrSeqArray(ErrDim, Path2.c_str());
-			} else {
-				if (DLen[0] != nVariant)
-					throw ErrSeqArray(ErrDim, Path);
-			}
-
-			if (DimCnt > 1)
-			{
-				Check_TRUE_ARRAY(DLen[1]);
-				SelPtr[1] = &Init.TRUE_ARRAY[0];
-			}
-			break;
-
-		case ctFormat:
+/*		case ctFormat:
 			// VARIABLE: format/...
 			if ((DimCnt!=2) && (DimCnt!=3))
 				throw ErrSeqArray(ErrDim, Path);
@@ -271,24 +257,23 @@ void CVarApplyBySample::ReadData(SEXP Val)
 	{
 		ReadGenoData(INTEGER(Val));
 	} else {
-/*		C_Int32 st[3] = { IndexRaw, 0, 0 };
-		DLen[0] = NumIndexRaw;
-		SelPtr[0] = NeedTRUE(NumIndexRaw);
+		C_Int32 st[3] = { CurIndex, VariantStart, 0 };
+		C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
 
 		if (COREARRAY_SV_INTEGER(SVType))
 		{
-			GDS_Array_ReadDataEx(Node, st, DLen, SelPtr, INTEGER(Val), svInt32);
+			GDS_Array_ReadDataEx(Node, st, cn, SelPtr, INTEGER(Val), svInt32);
 		} else if (COREARRAY_SV_FLOAT(SVType))
 		{
-			GDS_Array_ReadDataEx(Node, st, DLen, SelPtr, REAL(Val), svFloat64);
+			GDS_Array_ReadDataEx(Node, st, cn, SelPtr, REAL(Val), svFloat64);
 		} else if (COREARRAY_SV_STRING(SVType))
 		{
 			vector<string> buffer(CellCount);
-			GDS_Array_ReadDataEx(Node, st, DLen, SelPtr, &buffer[0], svStrUTF8);
-			for (int i=0; i < (int)buffer.size(); i++)
+			GDS_Array_ReadDataEx(Node, st, cn, SelPtr, &buffer[0], svStrUTF8);
+			for (size_t i=0; i < buffer.size(); i++)
 				SET_STRING_ELT(Val, i, mkChar(buffer[i].c_str()));
 		}
-*/	}
+	}
 }
 
 SEXP CVarApplyBySample::NeedRData(int &nProtected)
@@ -339,16 +324,16 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 			nProtected += 3;
 			break;
 
-/*		case ctPhase:
+		case ctPhase:
 			if (DimCnt > 2)
 			{
 				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
+				INTEGER(dim)[0] = Num_Variant; INTEGER(dim)[1] = DLen[2];
 				SET_DIM(ans, dim);
 			}
 			break;
 
-		case ctFormat:
+/*		case ctFormat:
 			if (DimCnt == 2)
 			{
 				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
@@ -451,9 +436,6 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 
 			if (s == "sample.id")
 			{
-				// =======================================================
-				// sample.id
-				// annotation/qual, annotation/filter
 				VarType = CVarApplyBySample::ctBasic;
 			} else if (s == "genotype")
 			{
@@ -461,8 +443,6 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 				s.append("/data");
 			} else if (s == "phase")
 			{
-				// =======================================================
-				// phase/
 				VarType = CVarApplyBySample::ctPhase;
 				s.append("/data");
 			} else if (strncmp(s.c_str(), "annotation/format/", 18) == 0)

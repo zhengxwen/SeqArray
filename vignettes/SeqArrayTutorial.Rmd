@@ -313,11 +313,14 @@ seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)],
 
 # read multiple variables variant by variant
 seqApply(genofile, c(geno="genotype", id="annotation/id"),
-    FUN=function(x) print(x), margin="by.variant", as.is="none")
+    FUN=print, margin="by.variant", as.is="none")
 
 # read genotypes sample by sample
 seqApply(genofile, "genotype",
-    FUN=function(x) print(x), margin="by.sample", as.is="none")
+    FUN=print, margin="by.sample", as.is="none")
+
+seqApply(genofile, c(sample.id="sample.id", genotype="genotype"),
+    FUN=print, margin="by.sample", as.is="none")
 ```
 
 ```{r}
