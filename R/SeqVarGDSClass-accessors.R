@@ -181,24 +181,30 @@ seqGetData <- function(gdsfile, var.name)
 # Apply functions over margins on a working space with selected samples and variants
 #
 seqApply <- function(gdsfile, var.name, FUN,
-    margin = c("by.variant"),
+    margin = c("by.variant", "by.sample"),
     as.is = c("list", "integer", "double", "character", "none"),
     var.index = c("none", "relative", "absolute"), ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(var.name) & (length(var.name) > 0))
-    var.index <- match.arg(var.index)
-    var.index <- match(var.index, c("none", "relative", "absolute"))
 
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
     as.is <- match.arg(as.is)
+    var.index <- match.arg(var.index)
+    var.index <- match(var.index, c("none", "relative", "absolute"))
 
     if (margin == "by.variant")
     {
         # C call
         rv <- .Call(sqa_Apply_Variant, gdsfile, var.name, FUN, as.is,
+            var.index, new.env())
+        if (as.is == "none") return(invisible())
+    } else if (margin == "by.sample")
+    {
+        # C call
+        rv <- .Call(sqa_Apply_Sample, gdsfile, var.name, FUN, as.is,
             var.index, new.env())
         if (as.is == "none") return(invisible())
     }
@@ -583,6 +589,49 @@ seqDelete <- function(gdsfile, info.varname=NULL, format.varname=NULL)
 # Transpose data variable(s)
 #
 
+.Transpose <- function(gdsfile, src.fn, prefix, compress=NULL)
+{
+    dst.fn <- .var_path(src.fn, prefix)
+    if (is.null(index.gdsn(gdsfile, dst.fn, silent=TRUE)))
+    {
+        node <- index.gdsn(gdsfile, src.fn)
+        desp <- objdesp.gdsn(node)
+        dm <- desp$dim
+        if (length(dm) > 1L)
+        {
+            # dimension
+            dm <- c(dm[-(length(dm)-1L)], 0L)
+            # folder
+            nm <- unlist(strsplit(src.fn, "/"))
+            if (length(nm) <= 1)
+                folder <- gdsfile$root
+            else
+                folder <- index.gdsn(gdsfile, index=nm[-length(nm)])
+            # compress
+            if (is.null(compress))
+                compress <- desp$compress
+
+            pm <- list(node = folder,
+                name = paste(prefix, nm[length(nm)], sep=""),
+                val = NULL, storage = desp$storage,
+                valdim = dm, compress = compress)
+            if (!is.null(desp$param))
+                pm <- c(pm, desp$param)
+
+            newnode <- do.call(add.gdsn, pm)
+            moveto.gdsn(newnode, node, relpos="after")
+
+            # write data
+            apply.gdsn(node, margin=length(dm)-1L, as.is="gdsnode",
+                FUN=`c`, target.node=newnode)
+
+            readmode.gdsn(newnode)
+        }
+    }
+    invisible()
+}
+
+
 seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
 {
     # check
@@ -619,6 +668,71 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
         readmode.gdsn(newnode)
     } else
         warning("It is a vector.")
+
+    invisible()
+}
+
+
+
+#######################################################################
+# Transpose data variable(s)
+#
+
+seqOptimize <- function(gdsfn, target=c("SeqVarTools"),
+    format.var=TRUE, cleanup=TRUE, verbose=TRUE)
+{
+    # check
+    stopifnot(is.character(gdsfn) & is.vector(gdsfn))
+    target <- match.arg(target)
+    stopifnot(is.logical(format.var) || is.character(format.var))
+    stopifnot(is.logical(cleanup))
+    stopifnot(is.logical(verbose))
+
+    gdsfile <- seqOpen(gdsfn, FALSE)
+    on.exit({ seqClose(gdsfile) })
+
+    if (target == "SeqVarTools")
+    {
+        # genotype
+        if (verbose) cat("Working on 'genotype' ...\n")
+        .Transpose(gdsfile, "genotype/data", "~")
+
+        # phase
+        if (verbose) cat("Working on 'phase' ...\n")
+        .Transpose(gdsfile, "phase/data", "~")
+
+        # annotation - format
+        if (identical(format.var, TRUE) || is.character(format.var))
+        {
+            n <- index.gdsn(gdsfile, "annotation/format", silent=TRUE)
+            if (!is.null(n))
+            {
+                nm <- ls.gdsn(n)
+                if (identical(format.var, TRUE))
+                    format.var <- nm
+                for (i in nm)
+                {
+                    if (i %in% format.var)
+                    {
+                        if (verbose)
+                        {
+                            cat("Working on 'annotation/format/", i,
+                                "' ...\n", sep="")
+                        }
+                        .Transpose(gdsfile,
+                            paste("annotation/format", i, "data", sep="/"), "~")
+                    }
+                }
+            }
+        }
+    }
+
+    if (cleanup)
+    {
+        on.exit()
+        seqClose(gdsfile)
+        cleanup.gds(gdsfn, verbose=verbose)
+    }
 
     invisible()
 }

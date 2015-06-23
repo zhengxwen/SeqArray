@@ -1,8 +1,8 @@
 Package: SeqArray
 Type: Package
 Title: Big Data Management of Genome-wide Sequencing Variants
-Version: 1.9.3
-Date: 2015-06-16
+Version: 1.9.4
+Date: 2015-06-23
 Depends: gdsfmt (>= 1.4.0)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation
@@ -10,7 +10,8 @@ LinkingTo: gdsfmt
 Suggests: parallel, RUnit, BiocGenerics, knitr, Rcpp, SNPRelate
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu"),
-        person("Stephanie", "Gogarten", role="aut"),
+        person("Stephanie", "Gogarten", role="aut",
+        email="sdmorris@u.washington.edu"),
         person("Cathy", "Laurie", role="ctb"))
 Description: Big data management of genome-wide variants using the
         CoreArray C++ library: genotypic data and annotations are stored in

@@ -1,7 +1,7 @@
 ---
 title: "SeqArray: an R/Bioconductor Package for Big Data Management of Genome-Wide Sequencing Variants"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
-date: "Jun 15, 2015"
+date: "Jun 23, 2015"
 output:
   html_document:
     theme: spacelab
@@ -23,9 +23,9 @@ In the era of big data, thousands of gigabyte-size data sets are challenging sci
 
 Here I introduce a high-performance C++ computing library CoreArray ([http://corearray.sourceforge.net](http://corearray.sourceforge.net)) for big-data management of genome-wide variants [4]. CoreArray was designed for developing portable and scalable storage technologies for bioinformatics data, allowing parallel computing at the multicore and cluster levels. It provides the genomic data structure (GDS) file format for array-oriented data: this is a universal data format to store multiple data variables in a single file. The CoreArray library modules are demonstrated in Figure 1. A hierarchical data structure is used to store multiple extensible data variables in the GDS format, and all datasets are stored in a single file with chunked storage layout. The C++ CoreArray library is implemented in the R/Bioconductor package [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) with a tutorial [http://corearray.sourceforge.net/tutorials/gdsfmt/](http://corearray.sourceforge.net/tutorials/gdsfmt/).
 
-Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages gdsfmt and SeqArray to address or reduce the computational burden associated with data management of sequencing variants. Gdsfmt provides a general R interface for the CoreArray library, and SeqArray is specifically designed for data management of sequencing variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are six key functions in SeqArray (Table 1), and most of data analyses could be done using these six functions. The 1000 Genomes Project released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequencing variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
+Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) to address or reduce the computational burden associated with data management of sequencing variants. Gdsfmt provides a general R interface for the CoreArray library, and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) is specifically designed for data management of sequencing variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are six key functions in SeqArray (Table 1), and most of data analyses could be done using these six functions. The 1000 Genomes Project released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequencing variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
 
-SeqArray will be of great interest to scientists involved in data analyses of large-scale genomic sequencing data using R environment, particularly those with limited experience of low-level C programming and parallel computing.
+[SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) will be of great interest to scientists involved in data analyses of large-scale genomic sequencing data using R environment, particularly those with limited experience of low-level C programming and parallel computing.
 
 
 ![Flowchart](CoreArray-Module.png)
@@ -314,6 +314,10 @@ seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)],
 # read multiple variables variant by variant
 seqApply(genofile, c(geno="genotype", id="annotation/id"),
     FUN=function(x) print(x), margin="by.variant", as.is="none")
+
+# read genotypes sample by sample
+seqApply(genofile, "genotype",
+    FUN=function(x) print(x), margin="by.sample", as.is="none")
 ```
 
 ```{r}
@@ -872,12 +876,12 @@ It is suggested to use a pruned set of SNPs which are in approximate linkage equ
 ```{r}
 set.seed(1000)
 
-# Try different LD thresholds for sensitivity analysis
+# may try different LD thresholds for sensitivity analysis
 snpset <- snpgdsLDpruning(genofile, ld.threshold=0.2)
 names(snpset)
 head(snpset$chr22)  # snp.id
 
-# Get all selected snp id
+# get all selected snp id
 snpset.id <- unlist(snpset)
 ```
 
@@ -922,12 +926,13 @@ legend.text
 tab <- data.frame(sample.id = pca$sample.id,
     EV1 = pca$eigenvect[,1],    # the first eigenvector
     EV2 = pca$eigenvect[,2],    # the second eigenvector
+    Population = pop.code,
     stringsAsFactors = FALSE)
 head(tab)
 
-# Draw
+# draw
 plot(tab$EV2, tab$EV1, pch=20, cex=0.75, main="1KG Phase 1, chromosome 22",
-    xlab="eigenvector 2", ylab="eigenvector 1", col=colors[pop.code])
+    xlab="eigenvector 2", ylab="eigenvector 1", col=colors[tab$Population])
 legend("topleft", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75)
 ```
 
@@ -947,7 +952,7 @@ Here is the population information we have known:
 rv <- snpgdsCutTree(ibs.hc, samp.group=as.factor(colors[pop.code]))
 
 plot(rv$dendrogram, leaflab="none", main="1KG Phase 1, chromosome 22",
-    edgePar=list(col=rgb(0.5,0.5,0.5, 0.75), t.col="black"))
+    edgePar=list(col=rgb(0.5,0.5,0.5,0.75), t.col="black"))
 legend("bottomleft", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75, ncol=4)
 ```
 

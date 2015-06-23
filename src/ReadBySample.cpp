@@ -29,7 +29,7 @@ static void GetFirstAndLength(C_BOOL *sel, size_t n, C_Int32 &st, C_Int32 &len)
 	{
 		if (sel[i]) { st = i; break; }
 	}
-	for (ssize_t i=n-1; i >= 0; i++)
+	for (ssize_t i=n-1; i >= 0; i--)
 	{
 		if (sel[i]) { len = i - st + 1; break; }
 	}
@@ -49,8 +49,18 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 
 	// initialize
 	GDS_PATH_PREFIX_CHECK(Path);
+
+	string Path1 = GDS_PATH_PREFIX(Path, '~'); // the path with '~'
+	string Path2; // the path with '@'
+
 	VarType = Type;
-	Node = GDS_Node_Path(Root, Path, TRUE);
+	Node = GDS_Node_Path(Root, Path1.c_str(), FALSE);
+	if (Node == NULL)
+	{
+		throw ErrSeqArray(
+			"'%s' is missing! Please call 'seqOptimize(..., target=\"SeqVarTools\")'",
+			Path1.c_str());
+	}
 	SVType = GDS_Array_GetSVType(Node);
 	DimCnt = GDS_Array_DimCnt(Node);
 
@@ -58,7 +68,6 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	SampleSelect = SampleSel;
 	Num_Variant = NUM_OF_TRUE(VariantSel, nVariant);
 
-	string Path2; // the path with '@'
 	PdSequenceX IndexNode;  // the corresponding index variable
 
 	switch (Type)
@@ -220,8 +229,8 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 {
 	C_Int32 st[3] = { CurIndex, VariantStart, 0 };
 	C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
-
 	C_UInt8 *s = &Init.GENO_BUFFER[0];
+
 	GDS_Array_ReadDataEx(Node, st, cn, SelPtr, s, svUInt8);
 
 	for (int i=0; i < Num_Variant; i++)
@@ -449,17 +458,17 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			} else if (s == "genotype")
 			{
 				VarType = CVarApplyBySample::ctGenotype;
-				s.append("/~data");
+				s.append("/data");
 			} else if (s == "phase")
 			{
 				// =======================================================
 				// phase/
 				VarType = CVarApplyBySample::ctPhase;
-				s.append("/~data");
+				s.append("/data");
 			} else if (strncmp(s.c_str(), "annotation/format/", 18) == 0)
 			{
 				VarType = CVarApplyBySample::ctFormat;
-				s.append("/~data");
+				s.append("/data");
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"

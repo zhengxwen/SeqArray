@@ -6,10 +6,9 @@
 of arrays or matrices
 }
 \usage{
-seqApply(gdsfile, var.name, FUN,
-	margin = c("by.variant"),
-	as.is = c("list", "integer", "double", "character", "none"),
-	var.index = c("none", "relative", "absolute"), ...)
+seqApply(gdsfile, var.name, FUN, margin = c("by.variant", "by.sample"),
+    as.is = c("list", "integer", "double", "character", "none"),
+    var.index = c("none", "relative", "absolute"), ...)
 }
 \arguments{
 	\item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -69,7 +68,7 @@ seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)],
 
 # read multiple variables variant by variant
 seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id"),
-	FUN=function(x) print(x), as.is="none")
+	FUN=print, as.is="none")
 
 # get the numbers of alleles per variant
 seqApply(f, "allele",
@@ -97,6 +96,26 @@ af <- seqApply(f, "genotype", FUN=function(x) mean(x==0, na.rm=TRUE),
 	as.is="double")
 length(af)
 summary(af)
+
+
+
+################################################################
+# apply the user-defined function sample by sample
+
+# reset sample and variant filters
+seqSetFilter(f)
+summary(seqApply(f, "genotype", FUN=function(x) { mean(is.na(x)) },
+    margin="by.sample", as.is="double"))
+
+# set sample and variant filters
+set.seed(100)
+seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)],
+	variant.id=sample(variant.id, 10))
+
+seqApply(f, "genotype", FUN=print, margin="by.variant", as.is="none")
+
+seqApply(f, "genotype", FUN=print, margin="by.sample", as.is="none")
+
 
 
 # close the GDS file
