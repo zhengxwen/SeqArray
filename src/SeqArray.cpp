@@ -30,7 +30,7 @@
 
 
 // ===========================================================
-// The initialized object
+// The Initialized Object
 // ===========================================================
 
 /// the initial data
@@ -59,7 +59,7 @@ TInitObject Init;
 
 
 // ===========================================================
-// GDS variable type
+// GDS Variable Type
 // ===========================================================
 
 C_BOOL *CVarApply::NeedTRUE(size_t size)
@@ -71,6 +71,41 @@ C_BOOL *CVarApply::NeedTRUE(size_t size)
 		_TRUE.resize(size, TRUE);
 		return &_TRUE[0];
 	}
+}
+
+
+
+// ===========================================================
+// Library Functions
+// ===========================================================
+
+/// Get the list element named str, or return NULL
+COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str)
+{
+	SEXP elmt = R_NilValue;
+	SEXP names = getAttrib(list, R_NamesSymbol);
+	for (R_len_t i = 0; i < XLENGTH(list); i++)
+	{
+		if (strcmp(CHAR(STRING_ELT(names, i)), str) == 0)
+		{
+			elmt = VECTOR_ELT(list, i);
+			break;
+		}
+	}
+	return elmt;
+}
+
+/// Get the list element named str, or return NULL
+COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
+	size_t nlist)
+{
+	for (size_t i=0; i < nlist; i++)
+	{
+		if (strcmp(txt, *list) == 0)
+			return i;
+		list ++;
+	}
+	return -1;
 }
 
 

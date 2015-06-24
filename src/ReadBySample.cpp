@@ -79,6 +79,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	switch (Type)
 	{
 		case ctBasic:
+			// ===========================================================
 			// VARIABLE: sample.id
 			if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nSample))
 				throw ErrSeqArray(ErrDim, Path);
@@ -87,6 +88,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			break;
 
 		case ctGenotype:
+			// ===========================================================
 			// VARIABLE: genotype/~data, genotype/@data
 			if (DimCnt != 3)
 				throw ErrSeqArray(ErrDim, Path);
@@ -105,7 +107,6 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			{
 				C_Int32 I, Cnt;
 				GetFirstAndLength(VariantSel, nVariant, I, Cnt);
-
 				C_Int32 II=0, ICnt=I+Cnt;
 				vector<C_Int32> ILen(ICnt);
 
@@ -149,6 +150,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			break;
 
 		case ctPhase:
+			// ===========================================================
 			// VARIABLE: phase/~data
 			if ((DimCnt != 2) && (DimCnt != 3))
 				throw ErrSeqArray(ErrDim, Path);
@@ -167,7 +169,8 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			}
 			break;
 
-/*		case ctFormat:
+		case ctFormat:
+			// ===========================================================
 			// VARIABLE: format/...
 			if ((DimCnt!=2) && (DimCnt!=3))
 				throw ErrSeqArray(ErrDim, Path);
@@ -175,21 +178,58 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 
 			Path2 = GDS_PATH_PREFIX(Path, '@');
 			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
-			if (IndexNode != NULL)
-			{
-				if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
-					throw ErrSeqArray(ErrDim, Path2.c_str());
-			} else
+			if (IndexNode == NULL)
 				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
+			if ((GDS_Array_DimCnt(IndexNode) != 1) ||
+					(GDS_Array_GetTotalCount(IndexNode) != nVariant))
+				throw ErrSeqArray(ErrDim, Path2.c_str());
 
-			SelPtr[1] = SampleSel;
+			{
+				C_Int32 I, Cnt;
+				GetFirstAndLength(VariantSel, nVariant, I, Cnt);
+				C_Int32 II=0, ICnt=I+Cnt;
+				vector<C_Int32> ILen(ICnt);
+
+				GDS_Array_ReadData(IndexNode, &II, &ICnt, &ILen[0], svInt32);
+
+				VariantStart = 0;
+				for (int i=0; i < I; i++) VariantStart += ILen[i];
+				VariantCount = 0;
+				for (int i=I; i < ICnt; i++) VariantCount += ILen[i];
+
+				VariantSelectBuffer.resize(VariantCount);
+				VariantCellCnt.resize(Num_Variant);
+
+				C_BOOL *p = &VariantSelectBuffer[0];
+				C_UInt8 *p8 = &VariantCellCnt[0];
+				CellCount = 0;
+				for (int i=I; i < ICnt; i++)
+				{
+					C_BOOL flag = VariantSel[i];
+					int m = ILen[i];
+					if (flag)
+					{
+						if (m < 0)
+						{
+							throw ErrSeqArray("Invalid '%s': should be 1..255.",
+								Path2.c_str());
+						}
+						CellCount += m;
+						*p8 ++ = m;
+					}
+					for (; m > 0; m--) *p++ = flag;
+				}
+			}
+
+			SelPtr[0] = NeedTRUE(1);
+			SelPtr[1] = &VariantSelectBuffer[0];
 			if (DimCnt > 2)
 			{
-				Check_TRUE_ARRAY(DLen[2]);
-				SelPtr[2] = &Init.TRUE_ARRAY[0];
+				SelPtr[2] = NeedTRUE(DLen[2]);
+				CellCount *= DLen[2];
 			}
 			break;
-*/
+
 		default:
 			throw ErrSeqArray("Internal Error in 'CVarApplyBySample::InitObject'.");
 	}
@@ -462,38 +502,27 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 
 		// ===============================================================
 		// as.is
-		//     0: integer, 1: double, 2: character, 3: list, other: NULL
-		int DatType;
-		const char *as = CHAR(STRING_ELT(as_is, 0));
-		if (strcmp(as, "integer") == 0)
-			DatType = 0;
-		else if (strcmp(as, "double") == 0)
-			DatType = 1;
-		else if (strcmp(as, "character") == 0)
-			DatType = 2;
-		else if (strcmp(as, "list") == 0)
-			DatType = 3;
-		else if (strcmp(as, "none") == 0)
-			DatType = -1;
-		else
+		static const char *AsList[] =
+		{
+			"none", "list", "integer", "double", "character", "logical", "raw"
+		};
+		int DatType = MatchElement(CHAR(STRING_ELT(as_is, 0)), AsList, 7);
+		if (DatType < 0)
 			throw ErrSeqArray("'as.is' is not valid!");
-
-		// init return values
-		// int DatType;  //< 0: integer, 1: double, 2: character, 3: list, other: NULL
 		switch (DatType)
 		{
-		case 0:
-			PROTECT(rv_ans = NEW_INTEGER(nSample)); nProtected ++;
-			break;
 		case 1:
-			PROTECT(rv_ans = NEW_NUMERIC(nSample)); nProtected ++;
-			break;
+			PROTECT(rv_ans = NEW_LIST(nSample)); nProtected ++; break;
 		case 2:
-			PROTECT(rv_ans = NEW_CHARACTER(nSample)); nProtected ++;
-			break;
+			PROTECT(rv_ans = NEW_INTEGER(nSample)); nProtected ++; break;
 		case 3:
-			PROTECT(rv_ans = NEW_LIST(nSample)); nProtected ++;
-			break;
+			PROTECT(rv_ans = NEW_NUMERIC(nSample)); nProtected ++; break;
+		case 4:
+			PROTECT(rv_ans = NEW_CHARACTER(nSample)); nProtected ++; break;
+		case 5:
+			PROTECT(rv_ans = NEW_LOGICAL(nSample)); nProtected ++; break;
+		case 6:
+			PROTECT(rv_ans = NEW_RAW(nSample)); nProtected ++; break;
 		default:
 			rv_ans = R_NilValue;
 		}
@@ -582,20 +611,18 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			SEXP val = eval(R_fcall, rho);
 			switch (DatType)
 			{
-			case 0:    // integer
-				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val);
-				break;
-			case 1:    // double
-				REAL(rv_ans)[ans_index] = Rf_asReal(val);
-				break;
-			case 2:    // character
-				val = AS_CHARACTER(val);
-				SET_STRING_ELT(rv_ans, ans_index,
-					(LENGTH(val) > 0) ? STRING_ELT(val, 0) : NA_STRING);
-				break;
-			case 3:    // others
-				SET_ELEMENT(rv_ans, ans_index, duplicate(val));
-				break;
+			case 1:
+				SET_ELEMENT(rv_ans, ans_index, duplicate(val)); break;
+			case 2:
+				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val); break;
+			case 3:
+				REAL(rv_ans)[ans_index] = Rf_asReal(val); break;
+			case 4:
+				SET_STRING_ELT(rv_ans, ans_index, Rf_asChar(val)); break;
+			case 5:
+				LOGICAL(rv_ans)[ans_index] = Rf_asLogical(val); break;
+			case 6:
+				RAW(rv_ans)[ans_index] = Rf_asInteger(val); break;
 			}
 			ans_index ++;
 

@@ -145,12 +145,14 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 	switch (Type)
 	{
 		case ctBasic:
+			// ===========================================================
 			// VARIABLE: variant.id, position, allele
 			if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nVariant))
 				throw ErrSeqArray(ErrDim, Path);
 			break;
 
 		case ctGenotype:
+			// ===========================================================
 			// VARIABLE: genotype/data, genotype/@data
 			if (DimCnt != 3)
 				throw ErrSeqArray(ErrDim, Path);
@@ -174,6 +176,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			break;
 
 		case ctPhase:
+			// ===========================================================
 			// VARIABLE: phase/data
 			if ((DimCnt != 2) && (DimCnt != 3))
 				throw ErrSeqArray(ErrDim, Path);
@@ -187,6 +190,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			break;
 
 		case ctInfo:
+			// ===========================================================
 			// VARIABLE: info/...
 			if ((DimCnt!=1) && (DimCnt!=2))
 				throw ErrSeqArray(ErrDim, Path);
@@ -208,6 +212,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			break;
 
 		case ctFormat:
+			// ===========================================================
 			// VARIABLE: format/...
 			if ((DimCnt!=2) && (DimCnt!=3))
 				throw ErrSeqArray(ErrDim, Path);
@@ -886,38 +891,27 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 
 		// ===========================================================
 		// as.is
-		//     0: integer, 1: double, 2: character, 3: list, other: NULL
-		int DatType;
-		const char *as = CHAR(STRING_ELT(as_is, 0));
-		if (strcmp(as, "integer") == 0)
-			DatType = 0;
-		else if (strcmp(as, "double") == 0)
-			DatType = 1;
-		else if (strcmp(as, "character") == 0)
-			DatType = 2;
-		else if (strcmp(as, "list") == 0)
-			DatType = 3;
-		else if (strcmp(as, "none") == 0)
-			DatType = -1;
-		else
+		static const char *AsList[] =
+		{
+			"none", "list", "integer", "double", "character", "logical", "raw"
+		};
+		int DatType = MatchElement(CHAR(STRING_ELT(as_is, 0)), AsList, 7);
+		if (DatType < 0)
 			throw ErrSeqArray("'as.is' is not valid!");
-
-		// init return values
-		// int DatType;  //< 0: integer, 1: double, 2: character, 3: list, other: NULL
 		switch (DatType)
 		{
-		case 0:
-			PROTECT(rv_ans = NEW_INTEGER(nVariant)); nProtected ++;
-			break;
 		case 1:
-			PROTECT(rv_ans = NEW_NUMERIC(nVariant)); nProtected ++;
-			break;
+			PROTECT(rv_ans = NEW_LIST(nVariant)); nProtected ++; break;
 		case 2:
-			PROTECT(rv_ans = NEW_CHARACTER(nVariant)); nProtected ++;
-			break;
+			PROTECT(rv_ans = NEW_INTEGER(nVariant)); nProtected ++; break;
 		case 3:
-			PROTECT(rv_ans = NEW_LIST(nVariant)); nProtected ++;
-			break;
+			PROTECT(rv_ans = NEW_NUMERIC(nVariant)); nProtected ++; break;
+		case 4:
+			PROTECT(rv_ans = NEW_CHARACTER(nVariant)); nProtected ++; break;
+		case 5:
+			PROTECT(rv_ans = NEW_LOGICAL(nVariant)); nProtected ++; break;
+		case 6:
+			PROTECT(rv_ans = NEW_RAW(nVariant)); nProtected ++; break;
 		default:
 			rv_ans = R_NilValue;
 		}
@@ -1006,20 +1000,18 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			SEXP val = eval(R_fcall, rho);
 			switch (DatType)
 			{
-			case 0:    // integer
-				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val);
-				break;
-			case 1:    // double
-				REAL(rv_ans)[ans_index] = Rf_asReal(val);
-				break;
-			case 2:    // character
-				val = AS_CHARACTER(val);
-				SET_STRING_ELT(rv_ans, ans_index,
-					(LENGTH(val) > 0) ? STRING_ELT(val, 0) : NA_STRING);
-				break;
-			case 3:    // others
-				SET_ELEMENT(rv_ans, ans_index, duplicate(val));
-				break;
+			case 1:
+				SET_ELEMENT(rv_ans, ans_index, duplicate(val)); break;
+			case 2:
+				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val); break;
+			case 3:
+				REAL(rv_ans)[ans_index] = Rf_asReal(val); break;
+			case 4:
+				SET_STRING_ELT(rv_ans, ans_index, Rf_asChar(val)); break;
+			case 5:
+				LOGICAL(rv_ans)[ans_index] = Rf_asLogical(val); break;
+			case 6:
+				RAW(rv_ans)[ans_index] = Rf_asInteger(val); break;
 			}
 			ans_index ++;
 

@@ -181,8 +181,8 @@ seqGetData <- function(gdsfile, var.name)
 # Apply functions over margins on a working space with selected samples and variants
 #
 seqApply <- function(gdsfile, var.name, FUN,
-    margin = c("by.variant", "by.sample"),
-    as.is = c("list", "integer", "double", "character", "none"),
+    margin = c("by.variant", "by.sample"), as.is = c("none", "list",
+    "integer", "double", "character", "logical", "raw"),
     var.index = c("none", "relative", "absolute"), ...)
 {
     # check
@@ -623,7 +623,7 @@ seqDelete <- function(gdsfile, info.varname=NULL, format.varname=NULL)
 
             # write data
             apply.gdsn(node, margin=length(dm)-1L, as.is="gdsnode",
-                FUN=`c`, target.node=newnode)
+                FUN=`c`, target.node=newnode, .useraw=TRUE)
 
             readmode.gdsn(newnode)
         }
@@ -663,7 +663,7 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
         # write data
         apply.gdsn(node, margin=length(dm)-1, as.is="none", FUN=function(g) {
             append.gdsn(newnode, g)
-        })
+        }, .useraw=TRUE)
 
         readmode.gdsn(newnode)
     } else
