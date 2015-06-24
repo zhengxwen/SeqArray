@@ -46,7 +46,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
     }
 
-    .Call(sqa_Open_Init, ans)
+    .Call(sqa_File_Init, ans)
 
     new("SeqVarGDSClass", ans)
 }
@@ -504,35 +504,9 @@ seqSummary <- function(gdsfile, varname=NULL,
     } else {
 
         # get a description of variable
-        .Call(sqa_VarSummary, gds, varname)
+        .Call(sqa_Summary, gds, varname)
     }
 }
-
-
-
-#######################################################################
-# Delete data variables
-#
-
-seqDelete <- function(gdsfile, info.varname=NULL, format.varname=NULL)
-{
-    # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    if (gdsfile$readonly)
-        stop("The GDS file is read-only.")
-    stopifnot(is.character(info.varname) | is.null(info.varname))
-    stopifnot(is.character(format.varname) | is.null(format.varname))
-    if (is.null(info.varname) & is.null(format.varname))
-        stop("There is no variable.")
-
-    # call C function
-    # .Call("seq_Delete", gdsfile, info.varname, format.varname,
-    #   PACKAGE="SeqArray")
-
-    # return
-    invisible()
-}
-
 
 
 
@@ -577,162 +551,3 @@ seqDelete <- function(gdsfile, info.varname=NULL, format.varname=NULL)
 #       margin=3, as.is = "double", FUN = function(g)
 #           { .Call("seq_allele_freq", g, PACKAGE="SeqArray") })
 # }
-
-
-
-
-#######################################################################
-# Modify the SeqArray object
-#######################################################################
-
-#######################################################################
-# Transpose data variable(s)
-#
-
-.Transpose <- function(gdsfile, src.fn, prefix, compress=NULL)
-{
-    dst.fn <- .var_path(src.fn, prefix)
-    if (is.null(index.gdsn(gdsfile, dst.fn, silent=TRUE)))
-    {
-        node <- index.gdsn(gdsfile, src.fn)
-        desp <- objdesp.gdsn(node)
-        dm <- desp$dim
-        if (length(dm) > 1L)
-        {
-            # dimension
-            dm <- c(dm[-(length(dm)-1L)], 0L)
-            # folder
-            nm <- unlist(strsplit(src.fn, "/"))
-            if (length(nm) <= 1)
-                folder <- gdsfile$root
-            else
-                folder <- index.gdsn(gdsfile, index=nm[-length(nm)])
-            # compress
-            if (is.null(compress))
-                compress <- desp$compress
-
-            pm <- list(node = folder,
-                name = paste(prefix, nm[length(nm)], sep=""),
-                val = NULL, storage = desp$storage,
-                valdim = dm, compress = compress)
-            if (!is.null(desp$param))
-                pm <- c(pm, desp$param)
-
-            newnode <- do.call(add.gdsn, pm)
-            moveto.gdsn(newnode, node, relpos="after")
-
-            # write data
-            apply.gdsn(node, margin=length(dm)-1L, as.is="gdsnode",
-                FUN=`c`, target.node=newnode, .useraw=TRUE)
-
-            readmode.gdsn(newnode)
-        }
-    }
-    invisible()
-}
-
-
-seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
-{
-    # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(var.name) & is.vector(var.name))
-    stopifnot(length(var.name) == 1)
-
-    node <- index.gdsn(gdsfile, var.name)
-    desp <- objdesp.gdsn(node)
-    dm <- desp$dim
-    if (length(dm) > 1)
-    {
-        # dimension
-        dm <- c(dm[-(length(dm)-1)], 0)
-        # folder
-        index <- unlist(strsplit(var.name, "/"))
-        if (length(index) <= 1)
-            folder <- gdsfile$root
-        else
-            folder <- index.gdsn(gdsfile, index=index[-length(index)])
-        # compress
-        if (is.null(compress))
-            compress <- desp$compress
-
-        name <- paste("~", index[length(index)], sep="")
-        newnode <- add.gdsn(folder, name, val=NULL, storage=desp$storage,
-            valdim=dm, compress=compress)
-
-        # write data
-        apply.gdsn(node, margin=length(dm)-1, as.is="none", FUN=function(g) {
-            append.gdsn(newnode, g)
-        }, .useraw=TRUE)
-
-        readmode.gdsn(newnode)
-    } else
-        warning("It is a vector.")
-
-    invisible()
-}
-
-
-
-#######################################################################
-# Transpose data variable(s)
-#
-
-seqOptimize <- function(gdsfn, target=c("SeqVarTools"),
-    format.var=TRUE, cleanup=TRUE, verbose=TRUE)
-{
-    # check
-    stopifnot(is.character(gdsfn) & is.vector(gdsfn))
-    target <- match.arg(target)
-    stopifnot(is.logical(format.var) || is.character(format.var))
-    stopifnot(is.logical(cleanup))
-    stopifnot(is.logical(verbose))
-
-    gdsfile <- seqOpen(gdsfn, FALSE)
-    on.exit({ seqClose(gdsfile) })
-
-    if (target == "SeqVarTools")
-    {
-        # genotype
-        if (verbose) cat("Working on 'genotype' ...\n")
-        .Transpose(gdsfile, "genotype/data", "~")
-
-        # phase
-        if (verbose) cat("Working on 'phase' ...\n")
-        .Transpose(gdsfile, "phase/data", "~")
-
-        # annotation - format
-        if (identical(format.var, TRUE) || is.character(format.var))
-        {
-            n <- index.gdsn(gdsfile, "annotation/format", silent=TRUE)
-            if (!is.null(n))
-            {
-                nm <- ls.gdsn(n)
-                if (identical(format.var, TRUE))
-                    format.var <- nm
-                for (i in nm)
-                {
-                    if (i %in% format.var)
-                    {
-                        if (verbose)
-                        {
-                            cat("Working on 'annotation/format/", i,
-                                "' ...\n", sep="")
-                        }
-                        .Transpose(gdsfile,
-                            paste("annotation/format", i, "data", sep="/"), "~")
-                    }
-                }
-            }
-        }
-    }
-
-    if (cleanup)
-    {
-        on.exit()
-        seqClose(gdsfile)
-        cleanup.gds(gdsfn, verbose=verbose)
-    }
-
-    invisible()
-}

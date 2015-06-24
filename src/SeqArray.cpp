@@ -117,7 +117,7 @@ extern "C"
 // ===========================================================
 
 /// initialize a SeqArray file
-COREARRAY_DLL_EXPORT SEXP sqa_Open_Init(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP sqa_File_Init(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		TInitObject::TSelection &s = Init.Selection(gdsfile);
@@ -398,6 +398,64 @@ COREARRAY_DLL_EXPORT SEXP sqa_SetSpaceVariant(SEXP gds, SEXP var_sel,
 }
 
 
+/// set a working space flag with selected variant id
+COREARRAY_DLL_EXPORT SEXP sqa_GetSpace(SEXP gdsfile)
+{
+	COREARRAY_TRY
+
+		TInitObject::TSelection &s = Init.Selection(gdsfile);
+
+		// the GDS root node
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
+		PdSequenceX varSample = GDS_Node_Path(Root, "sample.id", TRUE);
+		PdSequenceX varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
+
+		int nProtected = 0;
+		SEXP tmp;
+
+		PROTECT(rv_ans = NEW_LIST(2));
+		nProtected ++;
+
+		if (s.Sample.empty())
+		{
+			int L = GDS_Seq_GetTotalCount(varSample);
+			PROTECT(tmp = NEW_LOGICAL(L));
+			nProtected ++;
+			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
+		} else {
+			PROTECT(tmp = NEW_LOGICAL(s.Sample.size()));
+			nProtected ++;
+			for (int i=0; i < (int)s.Sample.size(); i++)
+				LOGICAL(tmp)[i] = (s.Sample[i] != 0);
+		}
+		SET_ELEMENT(rv_ans, 0, tmp);
+
+		if (s.Variant.empty())
+		{
+			int L = GDS_Seq_GetTotalCount(varVariant);
+			PROTECT(tmp = NEW_LOGICAL(L));
+			nProtected ++;
+			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
+		} else {
+			PROTECT(tmp = NEW_LOGICAL(s.Variant.size()));
+			nProtected ++;
+			for (int i=0; i < (int)s.Variant.size(); i++)
+				LOGICAL(tmp)[i] = (s.Variant[i] != 0);
+		}
+		SET_ELEMENT(rv_ans, 1, tmp);
+
+		PROTECT(tmp = NEW_CHARACTER(2));
+		nProtected ++;
+			SET_STRING_ELT(tmp, 0, mkChar("sample.sel"));
+			SET_STRING_ELT(tmp, 1, mkChar("variant.sel"));
+		SET_NAMES(rv_ans, tmp);
+
+		UNPROTECT(nProtected);
+
+	COREARRAY_CATCH
+}
+
+
 static void CLEAR_SEL_VALUE(int num, vector<C_BOOL>::iterator &it)
 {
 	while (num > 0)
@@ -531,66 +589,8 @@ COREARRAY_DLL_EXPORT SEXP sqa_SplitSelectedSample(SEXP gdsfile, SEXP Index,
 }
 
 
-/// set a working space flag with selected variant id
-COREARRAY_DLL_EXPORT SEXP sqa_GetSpace(SEXP gdsfile)
-{
-	COREARRAY_TRY
-
-		TInitObject::TSelection &s = Init.Selection(gdsfile);
-
-		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
-		PdSequenceX varSample = GDS_Node_Path(Root, "sample.id", TRUE);
-		PdSequenceX varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
-
-		int nProtected = 0;
-		SEXP tmp;
-
-		PROTECT(rv_ans = NEW_LIST(2));
-		nProtected ++;
-
-		if (s.Sample.empty())
-		{
-			int L = GDS_Seq_GetTotalCount(varSample);
-			PROTECT(tmp = NEW_LOGICAL(L));
-			nProtected ++;
-			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
-		} else {
-			PROTECT(tmp = NEW_LOGICAL(s.Sample.size()));
-			nProtected ++;
-			for (int i=0; i < (int)s.Sample.size(); i++)
-				LOGICAL(tmp)[i] = (s.Sample[i] != 0);
-		}
-		SET_ELEMENT(rv_ans, 0, tmp);
-
-		if (s.Variant.empty())
-		{
-			int L = GDS_Seq_GetTotalCount(varVariant);
-			PROTECT(tmp = NEW_LOGICAL(L));
-			nProtected ++;
-			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
-		} else {
-			PROTECT(tmp = NEW_LOGICAL(s.Variant.size()));
-			nProtected ++;
-			for (int i=0; i < (int)s.Variant.size(); i++)
-				LOGICAL(tmp)[i] = (s.Variant[i] != 0);
-		}
-		SET_ELEMENT(rv_ans, 1, tmp);
-
-		PROTECT(tmp = NEW_CHARACTER(2));
-		nProtected ++;
-			SET_STRING_ELT(tmp, 0, mkChar("sample.sel"));
-			SET_STRING_ELT(tmp, 1, mkChar("variant.sel"));
-		SET_NAMES(rv_ans, tmp);
-
-		UNPROTECT(nProtected);
-
-	COREARRAY_CATCH
-}
-
-
 /// set a working space with selected variant id
-COREARRAY_DLL_EXPORT SEXP sqa_VarSummary(SEXP gdsfile, SEXP varname)
+COREARRAY_DLL_EXPORT SEXP sqa_Summary(SEXP gdsfile, SEXP varname)
 {
 	COREARRAY_TRY
 
@@ -817,7 +817,6 @@ COREARRAY_DLL_EXPORT SEXP seq_allele_freq(SEXP geno)
 
 
 
-
 // ===========================================================
 // seqGDS2SNP: Convert a Sequencing GDS file to a SNP GDS file
 // ===========================================================
@@ -840,8 +839,6 @@ COREARRAY_DLL_EXPORT SEXP sqa_cvt_allele(SEXP allele)
 
 
 
-
-
 // ===========================================================
 // the initial function when the package is loaded
 // ===========================================================
@@ -859,8 +856,18 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
+		CALL(sqa_File_Init, 1),             CALL(sqa_File_Done, 1),
+
+		CALL(sqa_FilterPushEmpty, 1),       CALL(sqa_FilterPushLast, 1),
+		CALL(sqa_FilterPop, 1),             CALL(sqa_GetSpace, 1),
+		CALL(sqa_SetSpaceSample, 3),        CALL(sqa_SetSpaceVariant, 3),
+
+		CALL(sqa_SplitSelectedVariant, 3),  CALL(sqa_SplitSelectedSample, 3),
+		CALL(sqa_Summary, 2),
+
 		CALL(sqa_GetData, 2),
 		CALL(sqa_Apply_Sample, 6),          CALL(sqa_Apply_Variant, 6),
+
 		{ NULL, NULL, 0 }
 	};
 

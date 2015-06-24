@@ -5,7 +5,8 @@
 	Delete variables in a sequencing GDS file
 }
 \usage{
-seqDelete(gdsfile, info.varname=NULL, format.varname=NULL)
+seqDelete(gdsfile, info.varname=character(), format.varname=character(),
+    verbose=TRUE)
 }
 \arguments{
 	\item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -13,6 +14,7 @@ seqDelete(gdsfile, info.varname=NULL, format.varname=NULL)
 		"annotation/info/VARIABLE_NAME"}
 	\item{format.varname}{the variables in the FORMAT field, i.e.,
 		"annotation/format/VARIABLE_NAME"}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
 	None.
@@ -35,12 +37,17 @@ seqVCF2GDS(vcf.fn, "tmp.gds")
 (f <- seqOpen("tmp.gds", FALSE))
 
 seqDelete(f, info.varname=c("HM2", "AA"), format.varname="DP")
+f
 
 # close the GDS file
 seqClose(f)
 
 # clean up the fragments, reduce the file size
 cleanup.gds("tmp.gds")
+
+
+# remove the temporary file
+unlink("tmp", force=TRUE)
 }
 
 \keyword{gds}
