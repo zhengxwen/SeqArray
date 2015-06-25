@@ -84,8 +84,15 @@ extern TInitObject Init;
 class COREARRAY_DLL_LOCAL CVariable
 {
 public:
-	enum TType {
-		ctNone, ctBasic, ctGenotype, ctPhase, ctInfo, ctFormat
+	enum TType
+	{
+		ctNone,
+		ctBasic,       ///< sample.id, variant.id, etc
+		ctGenotype,    ///< genotypes or alleles
+		ctPhase,       ///< phase information
+		ctInfo,        ///< variant annotation info field
+		ctFormat,      ///< variant annotation format field
+		ctSampleAnnot  ///< sample annotation
 	};
 };
 

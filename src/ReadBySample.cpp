@@ -50,7 +50,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	// initialize
 	GDS_PATH_PREFIX_CHECK(Path);
 
-	if (Type == ctBasic)
+	if ((Type == ctBasic) || (Type == ctSampleAnnot))
 	{
 		Node = GDS_Node_Path(Root, Path, TRUE);
 	} else {
@@ -227,6 +227,26 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			{
 				SelPtr[2] = NeedTRUE(DLen[2]);
 				CellCount *= DLen[2];
+			}
+			break;
+
+		case ctSampleAnnot:
+			// ===========================================================
+			// VARIABLE: sample.annotation/
+			if ((DimCnt != 1) && (DimCnt != 2))
+				throw ErrSeqArray(ErrDim, Path);
+			DLen[0] = DLen[1] = DLen[2] = 0;
+			GDS_Array_GetDim(Node, DLen, 2);
+			if (DLen[0] != nSample)
+				throw ErrSeqArray(ErrDim, Path);
+
+			VariantStart = 0; VariantCount = DLen[1];
+			CellCount = 1;
+			SelPtr[0] = NeedTRUE(1);
+			if (DimCnt > 1)
+			{
+				CellCount *= DLen[1];
+				SelPtr[1] = NeedTRUE(DLen[1]);
 			}
 			break;
 
@@ -489,10 +509,14 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			{
 				VarType = CVarApplyBySample::ctFormat;
 				s.append("/data");
+			} else if (strncmp(s.c_str(), "sample.annotation/", 18) == 0)
+			{
+				VarType = CVarApplyBySample::ctSampleAnnot;
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"
-					"\tsample.id, annotation/format/VARIABLE_NAME",
+					"\tsample.id, annotation/format/VARIABLE_NAME\n"
+					"\tsample.annotation/VARIABLE_NAME",
 					s.c_str());
 			}
 
