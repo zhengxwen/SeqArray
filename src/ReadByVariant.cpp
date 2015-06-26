@@ -350,7 +350,7 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 			break;
 
 		case ctPhase:
-			if (DimCnt > 2)
+			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
 				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
 				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
@@ -359,12 +359,7 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 			break;
 
 		case ctFormat:
-			if (DimCnt == 2)
-			{
-				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				INTEGER(dim)[0] = Num_Sample; INTEGER(dim)[1] = NumIndexRaw;
-				SET_DIM(ans, dim);
-			} else if (DimCnt > 2)
+			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
 				PROTECT(dim = NEW_INTEGER(3)); nProtected ++;
 				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;

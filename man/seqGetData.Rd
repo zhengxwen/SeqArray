@@ -2,28 +2,29 @@
 \alias{seqGetData}
 \title{Get Data from a Sequencing GDS file}
 \description{
-	Get data from a sequencing GDS file
+    Get data from a sequencing GDS file
 }
 \usage{
 seqGetData(gdsfile, var.name)
 }
 \arguments{
-	\item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-	\item{var.name}{the variable name, see details}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{var.name}{the variable name, see details}
 }
 \value{
-	Return vectors or lists.
+    Return vectors or lists.
 }
 \details{
-	The variable name should be \code{"sample.id"}, \code{"variant.id"},
+    The variable name should be \code{"sample.id"}, \code{"variant.id"},
 \code{"position"}, \code{"chromosome"}, \code{"allele"}, \code{"annotation/id"},
 \code{"annotation/qual"}, \code{"annotation/filter"},
-\code{"annotation/info/VARIABLE_NAME"}, or \code{"annotation/format/VARIABLE_NAME"}.
+\code{"annotation/info/VARIABLE_NAME"}, or
+\code{"annotation/format/VARIABLE_NAME"}.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqSetFilter}}, \code{\link{seqApply}}
+    \code{\link{seqSetFilter}}, \code{\link{seqApply}}
 }
 
 \examples{

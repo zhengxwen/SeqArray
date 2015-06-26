@@ -102,14 +102,16 @@ The output lists all variables stored in the GDS file. At the first level, it st
     4. `extra.index`, an index (3-by-$*$) matrix for triploid call (look like `0/0/1` in the VCF file). E.g., for `0/0/1`, the first two alleles are stored in `data`, and the last allele is saved in the variable `extra`. For each column of `extra.index`, the first value is the index of sample (starting from 1), the second value is the index of variant (starting from 1), and the last value is how many alleles remain (usually it is 1 since the first two alleles are stored in `data`) that indicates how many alleles stored in `extra` contiguously.
     5. `extra`, one-dimensional array, the additional data for triploid call, each allele block corresponds to each column in `extra.index`.
 
-The optional variables include `phase` (phasing information) and `annotation`. The variable `phase` includes:
+The optional folders include `phase` (phasing information), `annotation`, and `sample.annotation`.
+
+* The folder `phase` includes:
 
 1. `data`, a matrix or 3-dimensional array for phasing information. `0` for unphased status and `1` for phased status. If it is a matrix, the first dimension is sample and the second is variant, corresponding to diploid genotypic data. If it is a 3-dimensional array, the first dimension refers to the number of ploidy minus one. More details about `/` and `|` in a VCF file can be founded: [VCF format](http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41).
 2. `~data`, an optional variable, the transposed array according to `data`, the second dimension is variant and the third is sample.
 3. `extra.index`, an index (3-by-$*$) matrix for triploid call (look like `0/0/1` in the VCF file). E.g., for `0/0/1`, the first separator (`/` here) is stored in `data`, and the last separator is saved in the variable `extra`. For each column of `extra.index`, the first value is the index of sample (starting from 1), the second value is the index of variant (starting from 1), and the last value is how many separators remain (usually it is 1 since the first separator is stored in `data`) that indicates how many separator stored in `extra` contiguously.
 4. `extra`, one-dimensional array, the additional data of separator indicator for triploid call, each separator block corresponds to each column in `extra.index`.
 
-The variable `annotation` includes:
+* The folder `annotation` includes:
 
 1. `id`, ID semi-colon separated list of unique identifiers where available. If this is a dbSNP variant it is encouraged to use the rs number(s). No identifier should be present in more than one data record. If there is no identifier available, then a blank string is used.
 2. `qual`, phred-scaled quality score for the assertion made in ALT.
@@ -124,6 +126,8 @@ The variable `annotation` includes:
         2. `~data`, an optional variable, the transposed array according to `data`.
         3. `@data`, one-dimensional array, the index data for the variable `data`, and the prefix `@` is used to indicate the index data. It should be equal-size as `variant.id`, which is used to specify the data size of each variant.
     2. `OTHER_VARIABLES`, ...
+
+* The folder `sample.annotation` contains variables of vector or matrix according to `sample.id`.
 
 
 ## Format conversion from VCF files

@@ -2,23 +2,23 @@
 \alias{seqCompress.Option}
 \title{Compression Options for Importing VCF File(s)}
 \description{
-	Get compression options for importing VCF file(s)
+    Get compression options for importing VCF file(s)
 }
 \usage{
 seqCompress.Option(default="ZIP_RA.MAX", ...)
 }
 \arguments{
-	\item{default}{the default compression level, see \link{add.gdsn} for
-	    more options}
-	\item{...}{optional arguments}
+    \item{default}{the default compression level, see \link{add.gdsn} for
+        more options}
+    \item{...}{optional arguments}
 }
 \value{
-	Return a list with a class name "seqCompress.class".
+    Return a list with a class name "seqCompress.class".
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF2GDS}}
 }
 
 \examples{

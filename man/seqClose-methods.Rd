@@ -9,21 +9,21 @@
 \S4method{seqClose}{SeqVarGDSClass}(object)
 }
 \arguments{
-	\item{object}{a SeqArray object}
+    \item{object}{a SeqArray object}
 }
 \value{
-	None.
+    None.
 }
 \details{
-	If \code{object} is
-	\itemize{
-		\item{\code{\link{SeqVarGDSClass}}, close the sequencing GDS file.}
-	}
+    If \code{object} is
+    \itemize{
+        \item{\code{\link{SeqVarGDSClass}}, close the sequencing GDS file.}
+    }
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqOpen}}
+    \code{\link{seqOpen}}
 }
 
 \keyword{gds}

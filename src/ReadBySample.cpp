@@ -108,9 +108,9 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				C_Int32 I, Cnt;
 				GetFirstAndLength(VariantSel, nVariant, I, Cnt);
 				C_Int32 II=0, ICnt=I+Cnt;
-				vector<C_Int32> ILen(ICnt);
+				vector<C_UInt8> ILen(ICnt);
 
-				GDS_Array_ReadData(IndexNode, &II, &ICnt, &ILen[0], svInt32);
+				GDS_Array_ReadData(IndexNode, &II, &ICnt, &ILen[0], svUInt8);
 
 				VariantStart = 0;
 				for (int i=0; i < I; i++) VariantStart += ILen[i];
@@ -118,10 +118,10 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				for (int i=I; i < ICnt; i++) VariantCount += ILen[i];
 
 				VariantSelectBuffer.resize(VariantCount);
-				VariantCellCnt.resize(Num_Variant);
+				GenoCellCnt.resize(Num_Variant);
 
 				C_BOOL *p = &VariantSelectBuffer[0];
-				C_UInt8 *p8 = &VariantCellCnt[0];
+				C_UInt8 *p8 = &GenoCellCnt[0];
 				CellCount = 0;
 				for (int i=I; i < ICnt; i++)
 				{
@@ -129,7 +129,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 					int m = ILen[i];
 					if (flag)
 					{
-						if ((m <= 0) || (m >255))
+						if ((m <= 0) || (m > 255))
 						{
 							throw ErrSeqArray("Invalid '%s': should be 1..255.",
 								Path2.c_str());
@@ -198,10 +198,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				for (int i=I; i < ICnt; i++) VariantCount += ILen[i];
 
 				VariantSelectBuffer.resize(VariantCount);
-				VariantCellCnt.resize(Num_Variant);
-
 				C_BOOL *p = &VariantSelectBuffer[0];
-				C_UInt8 *p8 = &VariantCellCnt[0];
 				CellCount = 0;
 				for (int i=I; i < ICnt; i++)
 				{
@@ -211,11 +208,10 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 					{
 						if (m < 0)
 						{
-							throw ErrSeqArray("Invalid '%s': should be 1..255.",
+							throw ErrSeqArray("Invalid '%s': should be >= 0.",
 								Path2.c_str());
 						}
 						CellCount += m;
-						*p8 ++ = m;
 					}
 					for (; m > 0; m--) *p++ = flag;
 				}
@@ -291,7 +287,7 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 
 		/// the left bits
 		C_UInt8 shift = 2;
-		for (int m=VariantCellCnt[i]; m > 1; m--)
+		for (int m=GenoCellCnt[i]; m > 1; m--)
 		{
 			p = Base;
 			for (int j=DLen[2]; j > 0; j--)
@@ -385,29 +381,24 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 			break;
 
 		case ctPhase:
-			if (DimCnt > 2)
+			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
 				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				INTEGER(dim)[0] = Num_Variant; INTEGER(dim)[1] = DLen[2];
+				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Variant;
 				SET_DIM(ans, dim);
 			}
 			break;
 
-/*		case ctFormat:
-			if (DimCnt == 2)
+		case ctFormat:
+			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
 				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				INTEGER(dim)[0] = Num_Sample; INTEGER(dim)[1] = NumIndexRaw;
-				SET_DIM(ans, dim);
-			} else if (DimCnt > 2)
-			{
-				PROTECT(dim = NEW_INTEGER(3)); nProtected ++;
-				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
-				INTEGER(dim)[2] = NumIndexRaw;
+				INTEGER(dim)[0] = DLen[2];
+				INTEGER(dim)[1] = CellCount / DLen[2];
 				SET_DIM(ans, dim);
 			}
 			break;
-*/
+
 		default:
 			break;
 		}
@@ -422,25 +413,6 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 
 extern "C"
 {
-// ===========================================================
-// Get data from a working space
-// ===========================================================
-
-static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
-{
-	char classname[32];
-	classname[0] = 0;
-	GDS_Node_GetClassName(Node, classname, sizeof(classname));
-	if (strcmp(classname, "dBit1") == 0)
-	{
-		PROTECT(Array);
-		Array = AS_LOGICAL(Array);
-		UNPROTECT(1);
-	}
-	return Array;
-}
-
-
 // ===========================================================
 // Apply functions over margins on a working space
 // ===========================================================

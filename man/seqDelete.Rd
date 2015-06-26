@@ -2,27 +2,27 @@
 \alias{seqDelete}
 \title{Delete variables in a Sequencing GDS File}
 \description{
-	Delete variables in a sequencing GDS file
+    Delete variables in a sequencing GDS file
 }
 \usage{
 seqDelete(gdsfile, info.varname=character(), format.varname=character(),
     verbose=TRUE)
 }
 \arguments{
-	\item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-	\item{info.varname}{the variables in the INFO field, i.e.,
-		"annotation/info/VARIABLE_NAME"}
-	\item{format.varname}{the variables in the FORMAT field, i.e.,
-		"annotation/format/VARIABLE_NAME"}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{info.varname}{the variables in the INFO field, i.e.,
+        "annotation/info/VARIABLE_NAME"}
+    \item{format.varname}{the variables in the FORMAT field, i.e.,
+        "annotation/format/VARIABLE_NAME"}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
-	None.
+    None.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqOpen}}, \code{\link{seqClose}}
+    \code{\link{seqOpen}}, \code{\link{seqClose}}
 }
 
 \examples{

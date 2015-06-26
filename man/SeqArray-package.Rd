@@ -4,10 +4,10 @@
 \docType{package}
 \title{Big Data Management of Genome-wide Sequencing Variants}
 \description{
-	Big-Data Management of Genome-Wide Sequencing Variants
+    Big-Data Management of Genome-Wide Sequencing Variants
 }
 \details{
-	In the era of big data, thousands of gigabyte-size data sets are
+    In the era of big data, thousands of gigabyte-size data sets are
 challenging scientists for data management, even on well-equipped hardware.
 Currently, next-generation sequencing techniques are being adopted to
 investigate common and rare variants, making the analyses of large-scale
@@ -26,7 +26,7 @@ associated with sequencing variants is especially evident with large sample
 and variant sizes, and it requires efficient numerical implementation and
 data management.
 
-	Here I introduce a high-performance C/C++ computing library CoreArray
+    Here I introduce a high-performance C/C++ computing library CoreArray
 (\url{http://corearray.sourceforge.net}) for big-data management of genome-wide
 variants. CoreArray was designed for developing portable and scalable storage
 technologies for bioinformatics data, allowing parallel computing at the
@@ -43,16 +43,16 @@ data and annotations are stored in an array-oriented manner, offering efficient
 access of genetic variants using the R language. There are five key functions
 in SeqArray, and most of data analyses could be done using these 6 functions:
 \tabular{ll}{
-	\bold{Function} \tab \bold{Description} \cr
-	seqVCF2GDS \tab Imports VCF files \cr
-	seqSummary \tab Gets the summary of a sequencing GDS file (# of samples,
-		# of variants, INFO/FORMAT variables, etc) \cr
-	seqSetFilter \tab Sets a filter to sample or variant (define a subset
-		of data) \cr
-	seqGetData \tab Gets data from a sequencing GDS file (from a subset
-		of data) \cr
-	seqApply \tab Applies a user-defined function over array margins \cr
-	seqParallel \tab Applies functions in parallel \cr
+    \bold{Function} \tab \bold{Description} \cr
+    seqVCF2GDS \tab Imports VCF files \cr
+    seqSummary \tab Gets the summary of a sequencing GDS file (# of samples,
+        # of variants, INFO/FORMAT variables, etc) \cr
+    seqSetFilter \tab Sets a filter to sample or variant (define a subset
+        of data) \cr
+    seqGetData \tab Gets data from a sequencing GDS file (from a subset
+        of data) \cr
+    seqApply \tab Applies a user-defined function over array margins \cr
+    seqParallel \tab Applies functions in parallel \cr
 }
 
 The 1000 Genomes Project released 39 million genetic variants for 1092
@@ -66,10 +66,10 @@ SeqArray will be of great interest to scientists involved in data analyses of
 large-scale genomic sequencing data using R environment, particularly those
 with limited experience of low-level C programming and parallel computing.
 
-	Webpage: \url{http://corearray.sourceforge.net/},
-	    \url{http://github.com/zhengxwen/SeqArray}
+    Webpage: \url{http://corearray.sourceforge.net/},
+        \url{http://github.com/zhengxwen/SeqArray}
 
-	Tutorial: \url{http://corearray.sourceforge.net/tutorials/SeqArray/}
+    Tutorial: \url{http://corearray.sourceforge.net/tutorials/SeqArray/}
 }
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 
@@ -151,11 +151,11 @@ seqGetData(f, "annotation/format/DP")
 
 # read multiple variables variant by variant
 seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id"),
-	FUN=function(x) print(x), as.is="none")
+    FUN=function(x) print(x), as.is="none")
 
 # get the numbers of alleles per variant
 seqApply(f, "allele",
-	FUN=function(x) length(unlist(strsplit(x,","))), as.is="integer")
+    FUN=function(x) length(unlist(strsplit(x,","))), as.is="integer")
 
 
 ################################################################
@@ -180,9 +180,9 @@ cl <- makeCluster(getOption("cl.cores", 2))
 
 # run in parallel
 afreq <- seqParallel(cl, f, FUN = function(gdsfile) {
-		seqApply(gdsfile, "genotype", as.is="double",
-			FUN=function(x) mean(x==0, na.rm=TRUE))
-	}, split = "by.variant")
+        seqApply(gdsfile, "genotype", as.is="double",
+            FUN=function(x) mean(x==0, na.rm=TRUE))
+    }, split = "by.variant")
 
 length(afreq)
 summary(afreq)

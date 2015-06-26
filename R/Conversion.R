@@ -465,7 +465,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     on.exit(closefn.gds(gfile))
 
     put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
-    n <- add.gdsn(gfile, name="description", storage="folder")
+    n <- addfolder.gdsn(gfile, "description")
     put.attr.gdsn(n, "sequence.variant.format", "v1.0")
 
     put.attr.gdsn(n, "vcf.fileformat", header$fileformat)
@@ -522,7 +522,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         compress=compress("allele"))
 
     # add a folder for genotypes
-    varGeno <- add.gdsn(gfile, name="genotype", storage="folder")
+    varGeno <- addfolder.gdsn(gfile, "genotype")
     put.attr.gdsn(varGeno, "VariableName", genotype.var.name[1])
     put.attr.gdsn(varGeno, "Description", geno_format$Description[1])
 
@@ -536,7 +536,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         geno.node <- add.gdsn(varGeno, "data", storage="bit2",
             valdim=c(nSamp, 0), compress=compress("genotype"))
     }
-    node <- add.gdsn(varGeno, "@data", storage="int32", valdim=c(0),
+    node <- add.gdsn(varGeno, "@data", storage="uint8", valdim=c(0),
         compress=compress("genotype"))
     put.attr.gdsn(node, "R.invisible")
 
@@ -550,7 +550,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # add phase folder
     if (header$num.ploidy > 1)
     {
-        varPhase <- add.gdsn(gfile, name="phase", storage="folder")
+        varPhase <- addfolder.gdsn(gfile, "phase")
         # add data
         if (header$num.ploidy > 2)
         {
@@ -574,7 +574,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     ##################################################
 
     # add annotation folder
-    varAnnot <- add.gdsn(gfile, name="annotation", storage="folder")
+    varAnnot <- addfolder.gdsn(gfile, "annotation")
 
     # add id
     add.gdsn(varAnnot, "id", storage="string", valdim=c(0),
@@ -592,7 +592,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     ##################################################
     # VCF INFO
 
-    varInfo <- add.gdsn(varAnnot, "info", storage="folder")
+    varInfo <- addfolder.gdsn(varAnnot, "info")
 
     if (!is.null(header$info))
     {
@@ -662,8 +662,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
                     if (s %in% c(".", "A", "G"))
                     {
-                        node <- add.gdsn(varInfo, paste("@", header$info$ID[i], sep=""),
-                            storage="int32", valdim=c(0), compress=compress("info"))
+                        node <- add.gdsn(varInfo,
+                            paste("@", header$info$ID[i], sep=""),
+                            storage="int32", valdim=c(0),
+                            compress=compress("info"))
                         put.attr.gdsn(node, "R.invisible")
                     }
                 }
@@ -680,7 +682,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # VCF Variants
 
     # add the FORMAT field
-    varFormat <- add.gdsn(varAnnot, "format", storage="folder")
+    varFormat <- addfolder.gdsn(varAnnot, "format")
 
     if (!is.null(header$format))
     {
@@ -735,7 +737,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         # add
         if (import.flag[i])
         {
-            node <- add.gdsn(varFormat, header$format$ID[i], storage="folder")
+            node <- addfolder.gdsn(varFormat, header$format$ID[i])
             put.attr.gdsn(node, "Number", header$format$Number[i])
             put.attr.gdsn(node, "Type", header$format$Type[i])
             put.attr.gdsn(node, "Description", header$format$Description[i])
@@ -754,6 +756,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         header$format$int_num  <- as.integer(int_num)
         header$format$import.flag <- import.flag
     }
+
+
+    ##################################################
+    # add annotation folder
+
+    addfolder.gdsn(gfile, "sample.annotation")
 
 
     ##################################################

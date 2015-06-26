@@ -2,28 +2,28 @@
 \alias{seqGetFilter}
 \title{Get the Filter of Samples and Variants}
 \description{
-	Get the filter of samples and variants
+    Get the filter of samples and variants
 }
 \usage{
 seqGetFilter(gdsfile)
 }
 \arguments{
-	\item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
 }
 \value{
-	Return a list:
-	\item{sample.sel}{a logical vector for selected samples}
-	\item{variant.sel}{a logical vector for selected variants}
+    Return a list:
+    \item{sample.sel}{a logical vector for selected samples}
+    \item{variant.sel}{a logical vector for selected variants}
 }
 \details{
-	It is strongly suggested to call \code{seqOpen} instead of
+    It is strongly suggested to call \code{seqOpen} instead of
 \code{\link[gdsfmt]{openfn.gds}}, since \code{seqOpen} will initialize the
 internal data for \code{seqGetData}, \code{seqApply}, etc.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqGetData}}, \code{\link{seqApply}}
+    \code{\link{seqGetData}}, \code{\link{seqApply}}
 }
 
 \examples{

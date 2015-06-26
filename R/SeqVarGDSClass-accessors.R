@@ -498,6 +498,19 @@ seqSummary <- function(gdsfile, varname=NULL,
             ans$format <- dat
         }
 
+
+        ########################################################
+        # sample.annotation/format
+        n <- index.gdsn(gds, "sample.annotation", silent=TRUE)
+        if (!is.null(n))
+        {
+            vars <- ls.gdsn(n)
+            dat <- data.frame(var.name=vars, stringsAsFactors=FALSE)
+            if (verbose)
+                cat("Sample Annotation:", vars, "\n")
+            ans$sample.annot <- dat
+        }
+
         # output
         return(invisible(ans))
 

@@ -2,29 +2,30 @@
 \alias{seqTranspose}
 \title{Transpose Data Array}
 \description{
-	Transpose data array or matrix for possibly higher-speed access
+    Transpose data array or matrix for possibly higher-speed access
 }
 \usage{
 seqTranspose(gdsfile, var.name, compress=NULL, verbose=TRUE)
 }
 \arguments{
-	\item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-	\item{var.name}{the variable name with '/' as a separator}
-	\item{compress}{the compression option used in \code{\link[gdsfmt]{add.gdsn}}; or
-		determine automatically if \code{NULL}}
-	\item{verbose}{if TRUE, show information}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{var.name}{the variable name with '/' as a separator}
+    \item{compress}{the compression option used in
+        \code{\link[gdsfmt]{add.gdsn}}; or determine automatically
+        if \code{NULL}}
+    \item{verbose}{if TRUE, show information}
 }
 \value{
-	None.
+    None.
 }
 \details{
-	It is designed for possibly higher-speed access. More details will be provided
-in the future version.
+    It is designed for possibly higher-speed access. More details will be
+provided in the future version.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link{seqGetData}}, \code{\link{seqApply}}
+    \code{\link{seqGetData}}, \code{\link{seqApply}}
 }
 
 \examples{

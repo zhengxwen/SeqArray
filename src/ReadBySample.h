@@ -31,8 +31,8 @@ protected:
 	C_Int32 VariantStart;   ///< start index according to the variants
 	C_Int32 VariantCount;   ///< the length according to the variants
 	size_t CellCount;       ///< the number of entries for the current sample
-	vector<C_UInt8> VariantCellCnt;  ///< 
-	map<size_t, SEXP> VarList;       ///< a list of SEXP variables
+	vector<C_UInt8> GenoCellCnt;  ///< 
+	map<size_t, SEXP> VarList;    ///< a list of SEXP variables
 
 	C_SVType SVType;        ///< data type for GDS reading
 	C_BOOL *SelPtr[3];      ///< pointers to selection
