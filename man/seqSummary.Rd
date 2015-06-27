@@ -19,7 +19,7 @@ seqSummary(gdsfile, varname=NULL, check=c("check", "full.check", "none"),
 \value{
     If \code{varname = NULL}, then return a list:
         \item{filename}{the file name}
-        \item{sequence.variant.format}{the sequencing format in GDS}
+        \item{format.version}{the sequencing format in GDS}
         \item{num.of.sample}{the number of samples}
         \item{num.of.variant}{the number of variants}
         \item{info}{the description of the INFO field: \code{var.name},

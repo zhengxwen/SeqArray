@@ -177,7 +177,7 @@ for (i in z) cat(substr(i, 1, 76), " ...\n", sep="")
 
 # output BN,GP,AA,HM2 in INFO (the variables are in this order), no FORMAT
 seqGDS2VCF(genofile, "tmp2.vcf.gz", info.var=c("BN","GP","AA","HM2"),
-    fmt.var=character(0))
+    fmt.var=character())
 # read
 z <- readLines("tmp2.vcf.gz", n=15)
 for (i in z) cat(substr(i, 1, 56), " ...\n", sep="")
@@ -276,6 +276,9 @@ head(seqGetData(genofile, "allele"))
 
 # get "annotation/info/GP"
 head(seqGetData(genofile, "annotation/info/GP"))
+
+# get "sample.annotation/family"
+head(seqGetData(genofile, "sample.annotation/family"))
 ```
 
 Users can set a filter to sample and/or variant by `seqSetFilter()`. For example, we consider a data subset consisting of three samples and four variants:
@@ -482,6 +485,9 @@ m.variant <- local({
 
 length(m.variant)
 summary(m.variant)
+
+# Or call the function in SeqArray
+summary(seqMissing(genofile, per.variant=TRUE))
 ```
 
 2. Calculate the missing rate per sample:
@@ -509,6 +515,9 @@ m.sample <- local({
 
 length(m.sample)
 summary(m.sample)
+
+# Or call the function in SeqArray
+summary(seqMissing(genofile, per.variant=FALSE))
 ```
 
 
@@ -598,6 +607,9 @@ afreq <- seqApply(genofile, "genotype", function(x) { mean(x==0, na.rm=TRUE) },
 
 length(afreq)
 summary(afreq)
+
+# Or call the function in SeqArray
+summary(seqAlleleFreq(genofile, 0L))
 ```
 
 ### Multi-process Implementation

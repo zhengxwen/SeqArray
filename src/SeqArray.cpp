@@ -108,6 +108,31 @@ COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
 	return -1;
 }
 
+/// Get the number of alleles
+COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele)
+{
+	int n = 0;
+	while (*allele)
+	{
+		if (*allele != ',')
+		{
+			n ++;
+			while ((*allele != ',') && (*allele != 0))
+				allele ++;
+			if (*allele == ',')
+			{
+				allele ++;
+				if (*allele == 0)
+				{
+					n ++;
+					break;
+				}
+			}
+		}
+	}
+	return n;
+}
+
 
 
 extern "C"
@@ -759,57 +784,6 @@ COREARRAY_DLL_EXPORT SEXP seq_missing_snp(SEXP geno)
 	SEXP rv;
 	PROTECT(rv = NEW_NUMERIC(1));
 	REAL(rv)[0] = (double)miss_cnt / num_sample;
-	UNPROTECT(1);
-
-	return rv;
-}
-
-
-COREARRAY_DLL_EXPORT SEXP seq_missing_samp(SEXP geno, SEXP miss_cnt)
-{
-	SEXP dim = getAttrib(geno, R_DimSymbol);
-	int num_ploidy = INTEGER(dim)[0];
-	int num_sample = INTEGER(dim)[1];
-	int *miss = INTEGER(miss_cnt);
-
-	int *p = INTEGER(geno);
-	for (int i=0; i < num_sample; i++)
-	{
-		int *pp = p;
-		for (int j=0; j < num_ploidy; j++, pp++)
-		{
-			if (C_UInt32(*pp) > 2)
-				{ miss[i] ++; break; }
-		}
-		p += num_ploidy;
-	}
-
-	return R_NilValue;
-}
-
-
-COREARRAY_DLL_EXPORT SEXP seq_allele_freq(SEXP geno)
-{
-	SEXP dim = getAttrib(geno, R_DimSymbol);
-	int num_ploidy = INTEGER(dim)[0];
-	int num_sample = INTEGER(dim)[1];
-	int ref_cnt=0, valid_cnt=0;
-
-	int *p = INTEGER(geno);
-	for (int i=0; i < num_sample; i++)
-	{
-		int *pp = p;
-		for (int j=0; j < num_ploidy; j++, pp++)
-		{
-			if (C_UInt32(*pp) == 0) ref_cnt ++;
-			if (C_UInt32(*pp) <= 2) valid_cnt ++;
-		}
-		p += num_ploidy;
-	}
-
-	SEXP rv;
-	PROTECT(rv = NEW_NUMERIC(1));
-	REAL(rv)[0] = (double)ref_cnt / valid_cnt;
 	UNPROTECT(1);
 
 	return rv;

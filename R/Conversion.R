@@ -843,26 +843,26 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     if (!is.null(info.var))
     {
         s <- z$info$var.name
-        if (is.null(s)) s <- c()
+        if (is.null(s)) s <- character()
         if (length(setdiff(info.var, s)) > 0)
             stop(paste("Not exist:", paste(setdiff(info.var, s), collapse=",")))
         if (length(info.var) > 0)
             z$info <- z$info[match(info.var, z$info$var.name), ]
         else
-            z$info <- NULL
+            z$info <- list()
     }
 
     # the FORMAT field
     if (!is.null(fmt.var))
     {
         s <- z$format$var.name
-        if (is.null(s)) s <- c()
+        if (is.null(s)) s <- character()
         if (length(setdiff(fmt.var, s)) > 0)
             stop(paste("Not exist:", paste(setdiff(fmt.var, s), collapse=",")))
         if (length(fmt.var) > 0)
             z$format <- z$format[match(fmt.var, z$format$var.name), ]
         else
-            z$format <- NULL
+            z$format <- list()
     }
 
 
@@ -892,7 +892,6 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     }
     op <- options("useFancyQuotes")
     options(useFancyQuotes = FALSE)
-
     on.exit({ options(op); close(ofile) })
 
     if (verbose)
@@ -903,7 +902,6 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         cat("The FORMAT field: ", paste(z$format$var.name, collapse=", "),
             "\n", sep="")
     }
-
 
     ######################################################
     # write the header

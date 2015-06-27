@@ -309,10 +309,10 @@ seqSummary <- function(gdsfile, varname=NULL,
         tmp <- get.attr.gdsn(n)
         if ("sequence.variant.format" %in% names(tmp))
         {
-            ans$sequence.variant.format <- tmp$sequence.variant.format
+            ans$format.version <- tmp$sequence.variant.format
             if (verbose)
             {
-                cat("Sequence Variant Format: ", ans$sequence.variant.format,
+                cat("Format Version: ", ans$sequence.variant.format,
                     "\n", sep="")
             }
         }
@@ -455,7 +455,7 @@ seqSummary <- function(gdsfile, varname=NULL,
             vars <- unique(vars[vars != ""])
             dat <- NULL
             if (verbose)
-                cat("Annotation, information variables:\n")
+                cat("Annotation, INFO variable(s):\n")
             for (nm in vars)
             {
                 n <- index.gdsn(gds, paste("annotation/info/", nm, sep=""))
@@ -481,7 +481,7 @@ seqSummary <- function(gdsfile, varname=NULL,
             vars <- ls.gdsn(n)
             dat <- NULL
             if (verbose)
-                cat("Annotation, format variables:\n")
+                cat("Annotation, FORMAT variable(s):\n")
             for (nm in vars)
             {
                 n <- index.gdsn(gds, paste("annotation/format/", nm, sep=""))
@@ -507,7 +507,7 @@ seqSummary <- function(gdsfile, varname=NULL,
             vars <- ls.gdsn(n)
             dat <- data.frame(var.name=vars, stringsAsFactors=FALSE)
             if (verbose)
-                cat("Sample Annotation:", vars, "\n")
+                cat("Annotation, sample variable(s):", vars, "\n")
             ans$sample.annot <- dat
         }
 
@@ -524,43 +524,48 @@ seqSummary <- function(gdsfile, varname=NULL,
 
 
 #######################################################################
-# Merge multiple GDS files
+# Missing rate
 #
+seqMissing <- function(gdsfile, per.variant=TRUE)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.logical(per.variant))
 
-# seqMissing <- function(gds.obj, by.samp=TRUE, by.snp=TRUE)
-# {
-#   # check
-#   stopifnot(inherits(gds.obj, "SeqVarGDSClass"))
-#   stopifnot(is.logical(by.samp) & (length(by.samp)==1))
-#   stopifnot(is.logical(by.snp) & (length(by.snp)==1))
-# 
-#   rv <- list()
-#   if (by.snp)
-#   {
-#       rv[["by.snp"]] <- apply.gdsn(index.gdsn(gds.obj, "genotype/data"),
-#           margin=3, as.is = "double", FUN = function(g)
-#               { .Call("seq_missing_snp", g, PACKAGE="SeqArray") }
-#       )
-#   }
-#   if (by.samp)
-#   {
-#       node <- index.gdsn(gds.obj, "genotype/data")
-#       m <- objdesp.gdsn(node)$dim[2]
-#       n <- integer(m)
-#       apply.gdsn(node, margin=3, as.is = "none", FUN = function(g)
-#           { .Call("seq_missing_samp", g, n, PACKAGE="SeqArray") })
-#       rv[["by.samp"]] <- n / m
-#   }
-# 
-#   rv
-# }
+    if (per.variant)
+    {
+        seqApply(gdsfile, "genotype", margin="by.variant", as.is="double",
+            FUN = .cfunction("FC_Missing_PerVariant"))
+    } else {
+        z <- seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)
+        # z$seldim[1] -- # of selected samples
+        # z$seldim[2] -- # of selected variants
+        sum <- integer(z$seldim[1])
+        seqApply(gdsfile, "genotype", margin="by.variant", as.is="none",
+            FUN = .cfunction2("FC_Missing_PerSample"), arg2=sum)
+        sum / (2L * z$seldim[2])
+    }
+}
 
-# seqAlleleFreq <- function(gds.obj)
-# {
-#   # check
-#   stopifnot(inherits(gds.obj, "SeqVarGDSClass"))
-# 
-#   apply.gdsn(index.gdsn(gds.obj, "genotype/data"),
-#       margin=3, as.is = "double", FUN = function(g)
-#           { .Call("seq_allele_freq", g, PACKAGE="SeqArray") })
-# }
+
+
+#######################################################################
+# Allele frequencies
+#
+seqAlleleFreq <- function(gdsfile, ref.allele=0L)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.numeric(ref.allele) | is.logical(ref.allele))
+    stopifnot(length(ref.allele) == 1L)
+
+    if (is.na(ref.allele))
+    {
+        seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+            as.is="list", FUN = .cfunction("FC_AF_List"))
+    } else {
+        .Call("FC_AF_SetIndex", ref.allele, PACKAGE="SeqArray")
+        seqApply(gdsfile, "genotype", margin="by.variant", as.is="double",
+            FUN = .cfunction("FC_AF_Index"))
+    }
+}

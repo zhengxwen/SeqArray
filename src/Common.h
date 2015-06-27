@@ -136,6 +136,9 @@ COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str);
 COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
 	size_t nlist);
 
+/// Get the number of alleles
+COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele);
+
 
 
 // ===========================================================
