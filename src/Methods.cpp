@@ -26,6 +26,12 @@
 extern "C"
 {
 /// Calculate the missing rate per variant
+COREARRAY_DLL_EXPORT SEXP FC_NumAllele(SEXP AlleleStr)
+{
+	return ScalarInteger(GetNumOfAllele(CHAR(STRING_ELT(AlleleStr, 0))));
+}
+
+/// Calculate the missing rate per variant
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 {
 	int *p = INTEGER(Geno);

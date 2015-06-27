@@ -524,6 +524,24 @@ seqSummary <- function(gdsfile, varname=NULL,
 
 
 #######################################################################
+#######################################################################
+#######################################################################
+
+#######################################################################
+# Missing rate
+#
+seqNumAllele <- function(gdsfile)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+
+    seqApply(gdsfile, "allele", margin="by.variant", as.is="integer",
+        FUN = .cfunction("FC_NumAllele"))
+}
+
+
+
+#######################################################################
 # Missing rate
 #
 seqMissing <- function(gdsfile, per.variant=TRUE)

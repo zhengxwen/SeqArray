@@ -10,7 +10,8 @@ CHANGES IN VERSION 1.9.0-1.9.5
 
     o support `seqApply(..., margin="by.sample")`
 
-    o new functions `seqOptimize()`, `seqMissing()` and `seqAlleleFreq()`
+    o new functions `seqOptimize()`, `seqMissing()`, `seqAlleleFreq()` and
+      `seqNumAllele()`
 
 
 CHANGES IN VERSION 1.8.0
