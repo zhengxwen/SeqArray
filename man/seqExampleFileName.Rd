@@ -2,7 +2,7 @@
 \alias{seqExampleFileName}
 \title{Example GDS file}
 \description{
-    The example GDS file for sequencing variants
+    The example GDS file(s) for sequencing variants.
 }
 \usage{
 seqExampleFileName(type=c("gds", "vcf", "KG_Phase1"))

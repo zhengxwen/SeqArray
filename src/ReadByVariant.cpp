@@ -46,7 +46,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 
 	TotalNum_Variant = nVariant;
 	VariantSelect = VariantSel;
-	Num_Sample = NUM_OF_TRUE(SampleSel, nSample);
+	Num_Sample = GetNumOfTRUE(SampleSel, nSample);
 
 	string Path2; // the path with '@'
 
@@ -198,9 +198,9 @@ bool CVarApplyByVariant::NextCell()
 void CVarApplyByVariant::ReadGenoData(int *Base)
 {
 	// the size of Init.GENO_BUFFER has been check in 'Init()'
-	ssize_t SlideCnt = DLen[1]*DLen[2];
+	ssize_t SlideCnt = DLen[1] * DLen[2];
 
-	TdIterator it;
+	CdIterator it;
 	GDS_Iter_GetStart(Node, &it);
 	GDS_Iter_Offset(&it, C_Int64(IndexRaw)*SlideCnt);
 	GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
@@ -387,7 +387,7 @@ extern "C"
 // ===========================================================
 
 /// Apply functions over margins on a working space
-COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho)
 {
 	COREARRAY_TRY
@@ -395,19 +395,19 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
 
 		// init selection
 		if (Sel.Sample.empty())
 		{
-			PdSequenceX N = GDS_Node_Path(Root, "sample.id", TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
 			int Cnt = GDS_Array_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 			Sel.Sample.resize(Cnt, TRUE);
 		}
 		if (Sel.Variant.empty())
 		{
-			PdSequenceX N = GDS_Node_Path(Root, "variant.id", TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
 			int Cnt = GDS_Array_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
 			Sel.Variant.resize(Cnt, TRUE);
@@ -417,7 +417,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		int nProtected = 0;
 
 		// the number of selected variants
-		int nVariant = NUM_OF_TRUE(&Sel.Variant[0], Sel.Variant.size());
+		int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
 		if (nVariant <= 0)
 			throw ErrSeqArray("There is no selected variant.");
 
@@ -621,7 +621,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
 // ===========================================================
 
 /// Apply functions via a sliding window over variants
-COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP SEQ_SlidingWindow(SEXP gdsfile, SEXP var_name,
 	SEXP win_size, SEXP shift_size, SEXP FUN, SEXP as_is, SEXP var_index,
 	SEXP rho)
 {
@@ -635,14 +635,14 @@ COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
 		// initialize selection
 		if (Sel.Sample.empty())
 		{
-			PdSequenceX N = GDS_Node_Path(Root, "sample.id", TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
 			int Cnt = GDS_Array_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 			Sel.Sample.resize(Cnt, TRUE);
 		}
 		if (Sel.Variant.empty())
 		{
-			PdSequenceX N = GDS_Node_Path(Root, "variant.id", TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
 			int Cnt = GDS_Array_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
 			Sel.Variant.resize(Cnt, TRUE);
@@ -652,7 +652,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
 		int nProtected = 0;
 
 		// the number of selected variants
-		int nVariant = NUM_OF_TRUE(&Sel.Variant[0], Sel.Variant.size());
+		int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
 		if (nVariant <= 0)
 			throw ErrSeqArray("There is no selected variant.");
 
@@ -818,7 +818,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
 			for (it=NodeList.begin(); it != NodeList.end(); it ++)
 			{
 				if (!it->NextCell())
-					throw ErrSeqArray("internal error in 'sqa_SlidingWindow'");
+					throw ErrSeqArray("internal error in 'SEQ_SlidingWindow'");
 			}
 		}
 

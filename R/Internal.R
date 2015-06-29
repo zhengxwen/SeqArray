@@ -13,8 +13,9 @@
 
 .cfunction <- function(name)
 {
-    fn <- function(arg) { NULL }
-    f <- quote(.Call(EXTERNALNAME, arg))
+    fn <- function(x) { NULL }
+    f <- quote(.Call(EXTERNALNAME, x))
+    f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
     body(fn) <- f
     fn
@@ -22,8 +23,8 @@
 
 .cfunction2 <- function(name)
 {
-    fn <- function(arg1, arg2) { NULL }
-    f <- quote(.Call(EXTERNALNAME, arg1, arg2))
+    fn <- function(x, y) { NULL }
+    f <- quote(.Call(EXTERNALNAME, x, y))
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
     body(fn) <- f
     fn

@@ -71,10 +71,10 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 
 	TotalNum_Sample = nSample;
 	SampleSelect = SampleSel;
-	Num_Variant = NUM_OF_TRUE(VariantSel, nVariant);
+	Num_Variant = GetNumOfTRUE(VariantSel, nVariant);
 
 	string Path2; // the path with '@'
-	PdSequenceX IndexNode = NULL;  // the corresponding index variable
+	PdAbstractArray IndexNode = NULL;  // the corresponding index variable
 
 	switch (Type)
 	{
@@ -418,7 +418,7 @@ extern "C"
 // ===========================================================
 
 /// Apply functions over margins on a working space
-COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho)
 {
 	COREARRAY_TRY
@@ -426,19 +426,19 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
 
 		// init selection
 		if (Sel.Sample.empty())
 		{
-			PdSequenceX N = GDS_Node_Path(Root, "sample.id", TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
 			int Cnt = GDS_Array_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 			Sel.Sample.resize(Cnt, TRUE);
 		}
 		if (Sel.Variant.empty())
 		{
-			PdSequenceX N = GDS_Node_Path(Root, "variant.id", TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
 			int Cnt = GDS_Array_GetTotalCount(N);
 			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
 			Sel.Variant.resize(Cnt, TRUE);
@@ -448,7 +448,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
 		int nProtected = 0;
 
 		// the number of selected variants
-		int nSample = NUM_OF_TRUE(&Sel.Sample[0], Sel.Sample.size());
+		int nSample = GetNumOfTRUE(&Sel.Sample[0], Sel.Sample.size());
 		if (nSample <= 0)
 			throw ErrSeqArray("There is no selected sample.");
 

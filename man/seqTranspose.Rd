@@ -2,7 +2,7 @@
 \alias{seqTranspose}
 \title{Transpose Data Array}
 \description{
-    Transpose data array or matrix for possibly higher-speed access
+    Transpose data array or matrix for possibly higher-speed access.
 }
 \usage{
 seqTranspose(gdsfile, var.name, compress=NULL, verbose=TRUE)

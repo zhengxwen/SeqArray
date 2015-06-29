@@ -2,8 +2,8 @@
 \alias{seqApply}
 \title{Apply Functions Over Array Margins}
 \description{
-    Returns a vector or list of values obtained by applying a function to margins
-of arrays or matrices
+    Returns a vector or list of values obtained by applying a function to
+margins of arrays or matrices.
 }
 \usage{
 seqApply(gdsfile, var.name, FUN, margin = c("by.variant", "by.sample"),

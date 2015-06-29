@@ -2,7 +2,7 @@
 \alias{seqMerge}
 \title{Merge Multiple Sequencing GDS Files}
 \description{
-    Merge multiple sequencing GDS files
+    Merge multiple sequencing GDS files.
 }
 \usage{
 seqMerge(gds.fn, out.fn, compress.option = seqCompress.Option(),

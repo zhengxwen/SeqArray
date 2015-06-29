@@ -1,15 +1,15 @@
 # Load the shared object
 useDynLib(SeqArray,
-    sqa_File_Init, sqa_File_Done,
-    sqa_FilterPushEmpty, sqa_FilterPushLast, sqa_FilterPop,
-    sqa_SetSpaceSample, sqa_SetSpaceVariant, sqa_GetSpace,
-    sqa_SplitSelectedVariant, sqa_SplitSelectedSample,
-    sqa_Summary,
+    SEQ_File_Init, SEQ_File_Done,
+    SEQ_FilterPushEmpty, SEQ_FilterPushLast, SEQ_FilterPop,
+    SEQ_SetSpaceSample, SEQ_SetSpaceVariant,
+    SEQ_SetChrom, SEQ_GetSpace,
+    SEQ_SplitSelectedVariant, SEQ_SplitSelectedSample,
+    SEQ_Summary,
 
-    sqa_Parse_VCF4, sqa_Quote, sqa_InitOutVCF4, sqa_OutVCF4,
-    sqa_GetData, sqa_Apply_Variant, sqa_Apply_Sample,
-    sqa_SlidingWindow, sqa_NumOfAllele,
-    sqa_cvt_allele
+    SEQ_Parse_VCF4, SEQ_Quote, SEQ_InitOutVCF4, SEQ_OutVCF4,
+    SEQ_GetData, SEQ_Apply_Variant, SEQ_Apply_Sample,
+    SEQ_SlidingWindow, SEQ_NumOfAllele
 )
 
 # Import all packages listed as Imports or Depends

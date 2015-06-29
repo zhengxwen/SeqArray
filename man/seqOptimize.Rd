@@ -2,16 +2,16 @@
 \alias{seqOptimize}
 \title{Transpose Data Array}
 \description{
-    Transpose data array or matrix for possibly higher-speed access
+    Transpose data array or matrix for possibly higher-speed access.
 }
 \usage{
-seqOptimize(gdsfn, target=c("SeqVarTools"), format.var=TRUE, cleanup=TRUE,
+seqOptimize(gdsfn, target=c("by.sample"), format.var=TRUE, cleanup=TRUE,
     verbose=TRUE)
 }
 \arguments{
     \item{gdsfn}{a \code{\link{SeqVarGDSClass}} object}
-    \item{target}{"SeqVarTools" -- optimize GDS file for the SeqVarTools
-        package}
+    \item{target}{"by.sample" -- optimize GDS file for
+        \code{seqApply(..., margin="by.sample")}}
     \item{format.var}{a character vector for selected variable names,
         or \code{TRUE} for all variables, according to "annotation/format"}
     \item{cleanup}{call \code{link{cleanup.gds}} if \code{TRUE}}
@@ -21,8 +21,8 @@ seqOptimize(gdsfn, target=c("SeqVarTools"), format.var=TRUE, cleanup=TRUE,
     None.
 }
 \details{
-    It is designed for possibly higher-speed access. More details will be
-provided in the future version.
+    Warning: optimizing GDS file for reading data by sample may increase file
+size by up to 2X as genotype data and all format data is duplicated.
 }
 
 \author{Xiuwen Zheng}
@@ -39,7 +39,7 @@ provided in the future version.
 seqVCF2GDS(vcf.fn, "tmp.gds")
 
 # prepare data for the SeqVarTools package
-seqOptimize("tmp.gds", target="SeqVarTools")
+seqOptimize("tmp.gds", target="by.sample")
 
 
 # list the structure of GDS variables

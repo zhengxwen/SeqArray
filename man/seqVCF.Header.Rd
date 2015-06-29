@@ -2,7 +2,7 @@
 \alias{seqVCF.Header}
 \title{Parse the header of a VCF file}
 \description{
-    Parse the header of a VCF file
+    Parse the header of a VCF file.
 }
 \usage{
 seqVCF.Header(vcf.fn)

@@ -780,12 +780,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             cat("Parsing \"", vcf.fn[i], "\" ...\n", sep="")
 
         ##################################################
-        # define wrapping R function for the C code 'sqa_Parse_VCF4'
+        # define wrapping R function for the C code 'SEQ_Parse_VCF4'
         #   because 'getConnection' in Rconnections.h is hidden
         # see https://stat.ethz.ch/pipermail/r-devel/2007-April/045264.html
 
         # call C function
-        v <- .Call(sqa_Parse_VCF4, vcf.fn[i], header, gfile$root,
+        v <- .Call(SEQ_Parse_VCF4, vcf.fn[i], header, gfile$root,
             list(sample.num = as.integer(length(samp.id)),
                 genotype.var.name = genotype.var.name,
                 raise.error = raise.error, verbose = verbose),
@@ -869,7 +869,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ## double quote text if needed
     dq <- function(s, text=FALSE)
     {
-        .Call(sqa_Quote, s, text)
+        .Call(SEQ_Quote, s, text)
     }
 
 
@@ -1038,7 +1038,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
     # call C function
-    .Call(sqa_InitOutVCF4, len.info, len.fmt)
+    .Call(SEQ_InitOutVCF4, len.info, len.fmt)
 
 
     # variable names
@@ -1059,7 +1059,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # output lines variant by variant
     seqApply(gdsfile, nm, margin="by.variant", as.is="none",
         FUN = function(x) {
-            s <- .Call(sqa_OutVCF4, x)
+            s <- .Call(SEQ_OutVCF4, x)
             cat(s, file=ofile)
     })
 
@@ -1130,7 +1130,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 
     # add "snp.allele"
     add.gdsn(gfile, "snp.allele",
-        .Call(sqa_cvt_allele, seqGetData(gdsfile, "allele")),
+        .cfunction("FC_AlleleStr")(seqGetData(gdsfile, "allele")),
         compress=compress.annotation, closezip=TRUE)
 
     # add "genotype"

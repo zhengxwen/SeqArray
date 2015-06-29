@@ -67,7 +67,7 @@ static void SNPRelate_InitSeqArray(TParam *Param)
 
 	// the GDS root node
 	PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(Param->SeqGDSFile, "root"));
-	PdSequenceX N;
+	PdAbstractArray N;
 
 	N = GDS_Node_Path(Root, "sample.id", TRUE);
 	*Param->pTotalSampleNum = GDS_Array_GetTotalCount(N);
@@ -124,8 +124,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		Obj = new CVarApplyByVariant;
 		Param->Object = Obj;
 
-		PdGDSObj Root = GDS_R_SEXP2Obj(
-			GetListElement(Param->SeqGDSFile, "root"));
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(Param->SeqGDSFile);
 		TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
 		Obj->InitObject(CVariable::ctGenotype,
 			"genotype/data", Root, Sel.Variant.size(),

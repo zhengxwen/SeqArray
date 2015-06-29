@@ -302,10 +302,10 @@ seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
 
             if (.split == "by.variant")
             {
-                if (.Call(sqa_SplitSelectedVariant, gfile, .idx, .n_process) <= 0)
+                if (.Call(SEQ_SplitSelectedVariant, gfile, .idx, .n_process) <= 0)
                     return(NULL)
             } else if (.split == "by.sample") {
-                if (.Call(sqa_SplitSelectedSample, gfile, .idx, .n_process) <= 0)
+                if (.Call(SEQ_SplitSelectedSample, gfile, .idx, .n_process) <= 0)
                     return(NULL)
             }
 
@@ -472,7 +472,7 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
 # Optimize data by transposing
 #
 
-seqOptimize <- function(gdsfn, target=c("SeqVarTools"),
+seqOptimize <- function(gdsfn, target=c("by.sample"),
     format.var=TRUE, cleanup=TRUE, verbose=TRUE)
 {
     # check
@@ -485,7 +485,7 @@ seqOptimize <- function(gdsfn, target=c("SeqVarTools"),
     gdsfile <- seqOpen(gdsfn, FALSE)
     on.exit({ seqClose(gdsfile) })
 
-    if (target == "SeqVarTools")
+    if (target == "by.sample")
     {
         # genotype
         if (verbose) cat("Working on 'genotype' ...\n")

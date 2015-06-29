@@ -130,14 +130,20 @@ public:
 // ===========================================================
 
 /// Get the list element named str, or return NULL
-COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str);
-
-/// Get the list element named str, or return NULL
 COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
 	size_t nlist);
 
+/// Get the list element named str, or return NULL
+COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str);
+
 /// Get the number of alleles
 COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele);
+
+/// Get the total count requiring the number of dimension is one
+COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname);
+
+/// Get the number of TRUEs
+COREARRAY_DLL_LOCAL size_t GetNumOfTRUE(C_BOOL *array, size_t n);
 
 
 
@@ -228,16 +234,6 @@ inline static string GDS_UP_PATH(const char *path)
 	const char *p = path + strlen(path) - 1;
 	while ((p!=path) && (*p != '/')) p --;
 	return string(path, p);
-}
-
-
-/// get the number of TRUEs
-inline static size_t NUM_OF_TRUE(C_BOOL *array, size_t n)
-{
-	size_t ans = 0;
-	for (; n > 0; n--)
-		if (*array++) ans ++;
-	return ans;
 }
 
 #endif /* _HEADER_SEQ_COMMON_ */

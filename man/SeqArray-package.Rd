@@ -4,7 +4,7 @@
 \docType{package}
 \title{Big Data Management of Genome-wide Sequencing Variants}
 \description{
-    Big-Data Management of Genome-Wide Sequencing Variants
+    Big-data management of genome-wide sequencing variants.
 }
 \details{
     In the era of big data, thousands of gigabyte-size data sets are

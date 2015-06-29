@@ -3,7 +3,7 @@
 \title{Apply functions via a sliding window over variants}
 \description{
     Returns a vector or list of values obtained by applying a function to a
-sliding window over variants
+sliding window over variants.
 }
 \usage{
 seqSlidingWindow(gdsfile, var.name, win.size, shift=1, FUN,

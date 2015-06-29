@@ -2,7 +2,7 @@
 \alias{seqGetFilter}
 \title{Get the Filter of Samples and Variants}
 \description{
-    Get the filter of samples and variants
+    Get the filter of samples and variants.
 }
 \usage{
 seqGetFilter(gdsfile)

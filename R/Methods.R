@@ -46,7 +46,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
     }
 
-    .Call(sqa_File_Init, ans)
+    .Call(SEQ_File_Init, ans)
 
     new("SeqVarGDSClass", ans)
 }
@@ -58,7 +58,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
 #
 setMethod("seqClose", "SeqVarGDSClass", function(object)
     {
-        .Call(sqa_File_Done, object)
+        .Call(SEQ_File_Done, object)
         closefn.gds(object)
         invisible()
     }
@@ -70,7 +70,8 @@ setMethod("seqClose", "SeqVarGDSClass", function(object)
 # To set a working space with selected samples and variants
 #
 seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
-    samp.sel=NULL, variant.sel=NULL, action=c("set", "push", "push+set", "pop"),
+    samp.sel=NULL, variant.sel=NULL,
+    action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
     verbose=TRUE)
 {
     # check
@@ -78,8 +79,10 @@ seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
     stopifnot(is.logical(verbose))
 
     action <- match.arg(action)
+    intersect.flag <- FALSE
     switch(action,
         "set" = NULL,
+        "intersect" = { intersect.flag <- TRUE },
         "push" = {
             if (!all(is.null(sample.id), is.null(variant.id),
                     is.null(samp.sel), is.null(variant.sel)))
@@ -87,10 +90,14 @@ seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
                 stop("The arguments 'sample.id', 'variant.id', ",
                     "'samp.sel' and 'variant.sel' should be NULL.")
             }
-            .Call(sqa_FilterPushLast, gdsfile)
+            .Call(SEQ_FilterPushLast, gdsfile)
         },
         "push+set" = {
-            .Call(sqa_FilterPushEmpty, gdsfile)
+            .Call(SEQ_FilterPushEmpty, gdsfile)
+        },
+        "push+intersect" = {
+            .Call(SEQ_FilterPushEmpty, gdsfile)
+            intersect.flag <- TRUE
         },
         "pop" = {
             if (!all(is.null(sample.id), is.null(variant.id),
@@ -99,7 +106,7 @@ seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
                 stop("The arguments 'sample.id', 'variant.id', ",
                     "'samp.sel' and 'variant.sel' should be NULL.")
             }
-            .Call(sqa_FilterPop, gdsfile)
+            .Call(SEQ_FilterPop, gdsfile)
             return(invisible())
         }
     )
@@ -108,30 +115,46 @@ seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
     {
         stopifnot(is.vector(sample.id))
         stopifnot(is.numeric(sample.id) | is.character(sample.id))
-        .Call(sqa_SetSpaceSample, gdsfile, sample.id, verbose)
+        .Call(SEQ_SetSpaceSample, gdsfile, sample.id, intersect.flag, verbose)
     } else if (!is.null(samp.sel))
     {
         stopifnot(is.vector(samp.sel) & is.logical(samp.sel))
-        .Call(sqa_SetSpaceSample, gdsfile, samp.sel, verbose)
+        .Call(SEQ_SetSpaceSample, gdsfile, samp.sel, intersect.flag, verbose)
     }
 
     if (!is.null(variant.id))
     {
         stopifnot(is.vector(variant.id))
         stopifnot(is.numeric(variant.id) | is.character(variant.id))
-        .Call(sqa_SetSpaceVariant, gdsfile, variant.id, verbose)
+        .Call(SEQ_SetSpaceVariant, gdsfile, variant.id, intersect.flag, verbose)
     } else if (!is.null(variant.sel))
     {
         stopifnot(is.vector(variant.sel) & is.logical(variant.sel))
-        .Call(sqa_SetSpaceVariant, gdsfile, variant.sel, verbose)
+        .Call(SEQ_SetSpaceVariant, gdsfile, variant.sel, intersect.flag, verbose)
     } else {
         if (is.null(sample.id) & is.null(samp.sel))
         {
-            .Call(sqa_SetSpaceSample, gdsfile, NULL, verbose)
-            .Call(sqa_SetSpaceVariant, gdsfile, NULL, verbose)
+            .Call(SEQ_SetSpaceSample, gdsfile, NULL, intersect.flag, verbose)
+            .Call(SEQ_SetSpaceVariant, gdsfile, NULL, intersect.flag, verbose)
         }
     }
 
+    invisible()
+}
+
+
+
+#######################################################################
+# Set a filter according to specified chromosomes
+#
+seqSetFilterChrom <- function(gdsfile, include=NULL, is.num=NA)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.null(include) | is.numeric(include) | is.character(include))
+    stopifnot(is.logical(is.num))
+
+    .Call(SEQ_SetChrom, gdsfile, include, is.num)
     invisible()
 }
 
@@ -158,7 +181,7 @@ seqGetFilter <- function(gdsfile)
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
 
-    .Call(sqa_GetSpace, gdsfile)
+    .Call(SEQ_GetSpace, gdsfile)
 }
 
 
@@ -172,7 +195,7 @@ seqGetData <- function(gdsfile, var.name)
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(var.name) & (length(var.name)==1))
 
-    .Call(sqa_GetData, gdsfile, var.name)
+    .Call(SEQ_GetData, gdsfile, var.name)
 }
 
 
@@ -198,13 +221,13 @@ seqApply <- function(gdsfile, var.name, FUN,
     if (margin == "by.variant")
     {
         # C call
-        rv <- .Call(sqa_Apply_Variant, gdsfile, var.name, FUN, as.is,
+        rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
             var.index, new.env())
         if (as.is == "none") return(invisible())
     } else if (margin == "by.sample")
     {
         # C call
-        rv <- .Call(sqa_Apply_Sample, gdsfile, var.name, FUN, as.is,
+        rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
             var.index, new.env())
         if (as.is == "none") return(invisible())
     }
@@ -243,7 +266,7 @@ seqSlidingWindow <- function(gdsfile, var.name, win.size, shift=1, FUN,
     FUN <- match.fun(FUN)
 
     # C call
-    rv <- .Call(sqa_SlidingWindow, gdsfile, var.name, win.size, shift,
+    rv <- .Call(SEQ_SlidingWindow, gdsfile, var.name, win.size, shift,
         FUN, as.is, var.index, new.env())
 
     if (as.is == "none") return(invisible())
@@ -311,10 +334,7 @@ seqSummary <- function(gdsfile, varname=NULL,
         {
             ans$format.version <- tmp$sequence.variant.format
             if (verbose)
-            {
-                cat("Format Version: ", ans$sequence.variant.format,
-                    "\n", sep="")
-            }
+                cat("Format Version: ", ans$format.version, "\n", sep="")
         }
 
         ########################################################
@@ -367,7 +387,7 @@ seqSummary <- function(gdsfile, varname=NULL,
         if (dm != n.variant)
             stop("Error: the length of the 'allele' variable.")
         if ((check != "") | verbose)
-            nallele <- .Call(sqa_NumOfAllele, n)
+            nallele <- .Call(SEQ_NumOfAllele, n)
         if (verbose)
         {
             tab <- table(nallele)
@@ -517,7 +537,7 @@ seqSummary <- function(gdsfile, varname=NULL,
     } else {
 
         # get a description of variable
-        .Call(sqa_Summary, gds, varname)
+        .Call(SEQ_Summary, gds, varname)
     }
 }
 
@@ -560,7 +580,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE)
         # z$seldim[2] -- # of selected variants
         sum <- integer(z$seldim[1])
         seqApply(gdsfile, "genotype", margin="by.variant", as.is="none",
-            FUN = .cfunction2("FC_Missing_PerSample"), arg2=sum)
+            FUN = .cfunction2("FC_Missing_PerSample"), y=sum)
         sum / (2L * z$seldim[2])
     }
 }
@@ -582,7 +602,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L)
         seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
             as.is="list", FUN = .cfunction("FC_AF_List"))
     } else {
-        .Call("FC_AF_SetIndex", ref.allele, PACKAGE="SeqArray")
+        .cfunction("FC_AF_SetIndex")(ref.allele)
         seqApply(gdsfile, "genotype", margin="by.variant", as.is="double",
             FUN = .cfunction("FC_AF_Index"))
     }

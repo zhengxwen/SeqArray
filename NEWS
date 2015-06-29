@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.5
+CHANGES IN VERSION 1.9.0-1.9.6
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -10,8 +10,10 @@ CHANGES IN VERSION 1.9.0-1.9.5
 
     o support `seqApply(..., margin="by.sample")`
 
-    o new functions `seqOptimize()`, `seqMissing()`, `seqAlleleFreq()` and
-      `seqNumAllele()`
+    o new functions `seqOptimize()`, `seqMissing()`, `seqAlleleFreq()`,
+      `seqNumAllele()` and `seqSetFilterChrom()`
+
+    o "intersection" and "push+intersection" in `seqSetFilter()`
 
 
 CHANGES IN VERSION 1.8.0

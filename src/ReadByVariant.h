@@ -28,8 +28,8 @@
 class COREARRAY_DLL_LOCAL CVarApplyByVariant: public CVarApply
 {
 protected:
-	PdSequenceX Node;       ///< the GDS variable
-	PdSequenceX IndexNode;  ///< the corresponding index variable
+	PdAbstractArray Node;       ///< the GDS variable
+	PdAbstractArray IndexNode;  ///< the corresponding index variable
 
 	C_Int32 IndexRaw;          ///< the index according to the raw data set
 	C_Int32 NumIndexRaw;       ///< the increment of raw index

@@ -2,7 +2,7 @@
 \alias{seqParallel}
 \title{Apply Functions in Parallel}
 \description{
-    Apply a user-defined function in parallel
+    Apply a user-defined function in parallel.
 }
 \usage{
 seqParallel(cl, gdsfile, FUN = function(gdsfile, ...) NULL,

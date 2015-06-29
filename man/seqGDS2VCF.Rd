@@ -2,7 +2,7 @@
 \alias{seqGDS2VCF}
 \title{Convert to a VCF file}
 \description{
-    Convert a GDS file to a VCF file
+    Convert a GDS file to a VCF file.
 }
 \usage{
 seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)

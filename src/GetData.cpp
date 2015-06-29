@@ -43,7 +43,7 @@ static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 	return Array;
 }
 
-static void MAP_INDEX(PdSequenceX Node, const vector<C_BOOL> &sel,
+static void MAP_INDEX(PdAbstractArray Node, const vector<C_BOOL> &sel,
 	vector<int> &out_len, vector<C_BOOL> &out_var_sel,
 	C_Int32 &out_var_start, C_Int32 &out_var_count)
 {
@@ -134,7 +134,7 @@ static void MAP_INDEX(PdSequenceX Node, const vector<C_BOOL> &sel,
 
 
 /// Get data from a working space
-COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
+COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 {
 	COREARRAY_TRY
 
@@ -156,7 +156,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 			// ===========================================================
 			// sample.id
 
-			PdSequenceX N = GDS_Node_Path(Root, s, TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
 			DimCnt = GDS_Array_DimCnt(N);
 			if (DimCnt != 1)
 				throw ErrSeqArray("Invalid dimension of 'sample.id'.");
@@ -180,7 +180,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 			// variant.id, position, chromosome, allele, annotation/id
 			// annotation/qual, annotation/filter
 
-			PdSequenceX N = GDS_Node_Path(Root, s, TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
 			DimCnt = GDS_Array_DimCnt(N);
 			if (DimCnt != 1)
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
@@ -200,7 +200,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 			// ===========================================================
 			// phase/
 
-			PdSequenceX N = GDS_Node_Path(Root, "phase/data", TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, "phase/data", TRUE);
 			DimCnt = GDS_Array_DimCnt(N);
 			if ((DimCnt != 2) && (DimCnt != 3))
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
@@ -238,14 +238,14 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 			// init selection
 			if (Sel.Sample.empty())
 			{
-				PdSequenceX N = GDS_Node_Path(Root, "sample.id", TRUE);
+				PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
 				int Cnt = GDS_Array_GetTotalCount(N);
 				if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
 				Sel.Sample.resize(Cnt, TRUE);
 			}
 			if (Sel.Variant.empty())
 			{
-				PdSequenceX N = GDS_Node_Path(Root, "variant.id", TRUE);
+				PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
 				int Cnt = GDS_Array_GetTotalCount(N);
 				if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
 				Sel.Variant.resize(Cnt, TRUE);
@@ -296,13 +296,13 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 		} else if (strncmp(s, "annotation/info/", 16) == 0)
 		{
 			GDS_PATH_PREFIX_CHECK(s);
-			PdSequenceX N = GDS_Node_Path(Root, s, TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
 			DimCnt = GDS_Array_DimCnt(N);
 			if ((DimCnt!=1) && (DimCnt!=2))
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 
 			string path_ex = GDS_PATH_PREFIX(s, '@');
-			PdSequenceX N_idx = GDS_Node_Path(Root, path_ex.c_str(), FALSE);
+			PdAbstractArray N_idx = GDS_Node_Path(Root, path_ex.c_str(), FALSE);
 			if (N_idx == NULL)
 			{
 				// no index
@@ -367,9 +367,9 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 		} else if (strncmp(s, "annotation/format/", 18) == 0)
 		{
 			GDS_PATH_PREFIX_CHECK(s);
-			PdSequenceX N =
+			PdAbstractArray N =
 				GDS_Node_Path(Root, string(string(s)+"/data").c_str(), TRUE);
-			PdSequenceX N_idx =
+			PdAbstractArray N_idx =
 				GDS_Node_Path(Root, string(string(s)+"/@data").c_str(), TRUE);
 
 			DimCnt = GDS_Array_DimCnt(N);
@@ -424,7 +424,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name)
 		} else if (strncmp(s, "sample.annotation/", 18) == 0)
 		{
 			GDS_PATH_PREFIX_CHECK(s);
-			PdSequenceX N = GDS_Node_Path(Root, s, TRUE);
+			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
 			int nSamp = GDS_Array_GetTotalCount(
 				GDS_Node_Path(Root, "sample.id", TRUE));
 

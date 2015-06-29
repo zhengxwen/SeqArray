@@ -132,7 +132,7 @@ static const string TO_TEXT(SEXP X, int Start=0, int MaxCnt=-1,
 }
 
 
-/// used in sqa_OutVCF4
+/// used in SEQ_OutVCF4
 static vector<int> _VCF4_INFO_Number;    //< 
 static vector<int> _VCF4_FORMAT_Number;  //< 
 
@@ -145,7 +145,7 @@ extern "C"
 // ###########################################################
 
 /// double quote text if needed
-COREARRAY_DLL_EXPORT SEXP sqa_Quote(SEXP text, SEXP dQuote)
+COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 {
 	SEXP NewText, ans;
 	PROTECT(NewText = AS_CHARACTER(text));
@@ -171,7 +171,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_Quote(SEXP text, SEXP dQuote)
 
 
 /// convert to VCF4
-COREARRAY_DLL_EXPORT SEXP sqa_InitOutVCF4(SEXP Info, SEXP Format)
+COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Info, SEXP Format)
 {
 	int *pInfo = INTEGER(Info);
 	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
@@ -182,7 +182,7 @@ COREARRAY_DLL_EXPORT SEXP sqa_InitOutVCF4(SEXP Info, SEXP Format)
 }
 
 /// convert to VCF4
-COREARRAY_DLL_EXPORT SEXP sqa_OutVCF4(SEXP X)
+COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 {
 	const char *p, *s;
 	string txt, tmp;

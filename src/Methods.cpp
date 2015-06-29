@@ -22,14 +22,18 @@
 #include <Common.h>
 
 
-
 extern "C"
 {
+// ======================================================================
+
 /// Calculate the missing rate per variant
 COREARRAY_DLL_EXPORT SEXP FC_NumAllele(SEXP AlleleStr)
 {
 	return ScalarInteger(GetNumOfAllele(CHAR(STRING_ELT(AlleleStr, 0))));
 }
+
+
+// ======================================================================
 
 /// Calculate the missing rate per variant
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
@@ -67,6 +71,8 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
 }
 
 
+// ======================================================================
+
 /// Get a list of allele frequencies
 COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 {
@@ -103,6 +109,8 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 }
 
 
+// ======================================================================
+
 static int AlleleFreq_Index = 0;
 
 /// Set the reference allele
@@ -129,5 +137,27 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP Geno)
 	}
 	return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
 }
+
+
+// ======================================================================
+
+/// Convert a Sequencing GDS file to a SNP GDS file in `seqGDS2SNP()`
+COREARRAY_DLL_EXPORT SEXP FC_AlleleStr(SEXP allele)
+{
+	const R_xlen_t n = XLENGTH(allele);
+	for (R_xlen_t i=0; i < n; i++)
+	{
+		char *s = (char*)CHAR(STRING_ELT(allele, i));
+		while (*s)
+		{
+			if (*s == ',')
+				{ *s = '/'; break; }
+			s ++;
+		}
+	}
+	return allele;
+}
+
+
 
 } // extern "C"

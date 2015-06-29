@@ -2,7 +2,7 @@
 \alias{seqSummary}
 \title{Get the summary of a GDS file}
 \description{
-    Get the summary of a sequencing GDS file
+    Get the summary of a sequencing GDS file.
 }
 \usage{
 seqSummary(gdsfile, varname=NULL, check=c("check", "full.check", "none"),

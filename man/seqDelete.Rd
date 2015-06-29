@@ -2,7 +2,7 @@
 \alias{seqDelete}
 \title{Delete variables in a Sequencing GDS File}
 \description{
-    Delete variables in a sequencing GDS file
+    Delete variables in a sequencing GDS file.
 }
 \usage{
 seqDelete(gdsfile, info.varname=character(), format.varname=character(),

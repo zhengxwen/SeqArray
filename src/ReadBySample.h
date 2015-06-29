@@ -26,7 +26,7 @@
 class COREARRAY_DLL_LOCAL CVarApplyBySample: public CVarApply
 {
 protected:
-	PdSequenceX Node;       ///< the GDS variable
+	PdAbstractArray Node;       ///< the GDS variable
 
 	C_Int32 VariantStart;   ///< start index according to the variants
 	C_Int32 VariantCount;   ///< the length according to the variants
