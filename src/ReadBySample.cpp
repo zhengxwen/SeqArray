@@ -487,7 +487,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"
-					"\tsample.id, annotation/format/VARIABLE_NAME\n"
+					"\tsample.id, genotype, annotation/format/VARIABLE_NAME\n"
 					"\tsample.annotation/VARIABLE_NAME",
 					s.c_str());
 			}

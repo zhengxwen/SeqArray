@@ -146,8 +146,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
 
 		// 
-		C_BOOL *SelPtr[256];
-		int DimCnt, DStart[256], DLen[256];
+		C_BOOL *SelPtr[GDS_MAX_NUM_DIMENSION];
+		int DStart[GDS_MAX_NUM_DIMENSION], DLen[GDS_MAX_NUM_DIMENSION];
+		int DimCnt;
 
 		// the path of GDS variable
 		const char *s = CHAR(STRING_ELT(var_name, 0));
@@ -293,6 +294,34 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				UNPROTECT(4);
 			}
 
+		} else if (strcmp(s, "@genotype") == 0)
+		{
+			static const char *VarName = "genotype/@data";
+			PdAbstractArray N = GDS_Node_Path(Root, VarName, TRUE);
+			C_Int32 st  = 0;
+			C_Int32 cnt = GetGDSObjCount(N, VarName);
+			if (Sel.Variant.empty())
+			{
+				rv_ans = GDS_R_Array_Read(N, &st, &cnt, NULL, 0);
+			} else {
+				C_BOOL *SelList = &Sel.Variant[0];
+				rv_ans = GDS_R_Array_Read(N, &st, &cnt, &SelList, 0);
+			}
+		} else if (strncmp(s, "annotation/info/@", 17) == 0)
+		{
+			PdAbstractArray N = GDS_Node_Path(Root, s, FALSE);
+			if (N != NULL)
+			{
+				C_Int32 st  = 0;
+				C_Int32 cnt = GetGDSObjCount(N, s);
+				if (Sel.Variant.empty())
+				{
+					rv_ans = GDS_R_Array_Read(N, &st, &cnt, NULL, 0);
+				} else {
+					C_BOOL *SelList = &Sel.Variant[0];
+					rv_ans = GDS_R_Array_Read(N, &st, &cnt, &SelList, 0);
+				}
+			}
 		} else if (strncmp(s, "annotation/info/", 16) == 0)
 		{
 			GDS_PATH_PREFIX_CHECK(s);
@@ -364,6 +393,23 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				}
 			}
 
+		} else if (strncmp(s, "annotation/format/@", 19) == 0)
+		{
+			string name(s);
+			name.erase(18, 1).append("/@data");
+			PdAbstractArray N = GDS_Node_Path(Root, name.c_str(), FALSE);
+			if (N != NULL)
+			{
+				C_Int32 st  = 0;
+				C_Int32 cnt = GetGDSObjCount(N, name.c_str());
+				if (Sel.Variant.empty())
+				{
+					rv_ans = GDS_R_Array_Read(N, &st, &cnt, NULL, 0);
+				} else {
+					C_BOOL *SelList = &Sel.Variant[0];
+					rv_ans = GDS_R_Array_Read(N, &st, &cnt, &SelList, 0);
+				}
+			}
 		} else if (strncmp(s, "annotation/format/", 18) == 0)
 		{
 			GDS_PATH_PREFIX_CHECK(s);
@@ -448,7 +494,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 		} else {
 			throw ErrSeqArray(
 				"'%s' is not a standard variable name, and the standard format:\n"
-				"\tsample.id, variant.id, position, chromosome, allele\n"
+				"\tsample.id, variant.id, position, chromosome, allele, genotype\n"
 				"\tannotation/id, annotation/qual, annotation/filter\n"
 				"\tannotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME\n"
 				"\tsample.annotation/VARIABLE_NAME", s);

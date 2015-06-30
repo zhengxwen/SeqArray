@@ -705,7 +705,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SlidingWindow(SEXP gdsfile, SEXP var_name,
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"
-					"\tvariant.id, position, chromosome, allele\n"
+					"\tvariant.id, position, chromosome, allele, genotype\n"
 					"\tannotation/id, annotation/qual, annotation/filter\n"
 					"\tannotation/info/VARIABLE_NAME', annotation/format/VARIABLE_NAME",
 					s.c_str());

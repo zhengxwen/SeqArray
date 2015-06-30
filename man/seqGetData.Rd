@@ -16,10 +16,14 @@ seqGetData(gdsfile, var.name)
 }
 \details{
     The variable name should be \code{"sample.id"}, \code{"variant.id"},
-\code{"position"}, \code{"chromosome"}, \code{"allele"}, \code{"annotation/id"},
-\code{"annotation/qual"}, \code{"annotation/filter"},
+\code{"position"}, \code{"chromosome"}, \code{"allele"}, \code{"genotype"},
+\code{"annotation/id"}, \code{"annotation/qual"}, \code{"annotation/filter"},
 \code{"annotation/info/VARIABLE_NAME"}, or
 \code{"annotation/format/VARIABLE_NAME"}.
+
+\code{"@genotype"}, \code{"annotation/info/@VARIABLE_NAME"} or
+\code{"annotation/format/@VARIABLE_NAME"} are used to obtain the index
+associated with these variables.
 }
 
 \author{Xiuwen Zheng}

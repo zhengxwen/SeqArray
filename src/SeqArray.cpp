@@ -851,35 +851,21 @@ COREARRAY_DLL_EXPORT SEXP SEQ_NumOfAllele(SEXP allele_node)
 	COREARRAY_TRY
 
 		// GDS nodes
-		PdAbstractArray N;
-		memcpy(&N, INTEGER(allele_node), sizeof(N));
-
+		PdAbstractArray N = GDS_R_SEXP2Obj(allele_node);
 		if (GDS_Array_DimCnt(N) != 1)
-			throw ErrSeqArray("Invalid dimension!");
-		int Count = GDS_Array_GetTotalCount(N);
+			throw ErrSeqArray("Invalid dimension of 'allele'!");
+		int Count = GetGDSObjCount(N, "allele");
 
 		// allocate integers
 		PROTECT(rv_ans = NEW_INTEGER(Count));
-
 		int *base = INTEGER(rv_ans);
 		string s;
 
-		for (int i=0; i < Count; i ++)
+		for (C_Int32 i=0; i < Count; i ++)
 		{
-			C_Int32 _st = i;
-			C_Int32 _cnt = 1;
-			GDS_Array_ReadData(N, &_st, &_cnt, &s, svStrUTF8);
-
-			// determine how many alleles
-			int num_allele = 0;
-			const char *p = s.c_str();
-			while (*p != 0)
-			{
-				num_allele ++;
-				while ((*p != 0) && (*p != ',')) p ++;
-				if (*p == ',') p ++;
-			}
-			base[i] = num_allele;
+			static const C_Int32 ONE = 1;
+			GDS_Array_ReadData(N, &i, &ONE, &s, svStrUTF8);
+			base[i] = GetNumOfAllele(s.c_str());
 		}
 
 		UNPROTECT(1);
@@ -919,35 +905,6 @@ COREARRAY_DLL_EXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
 
 
 
-COREARRAY_DLL_EXPORT SEXP seq_missing_snp(SEXP geno)
-{
-	SEXP dim = getAttrib(geno, R_DimSymbol);
-	int num_ploidy = INTEGER(dim)[0];
-	int num_sample = INTEGER(dim)[1];
-	int miss_cnt = 0;
-
-	int *p = INTEGER(geno);
-	for (int i=0; i < num_sample; i++)
-	{
-		int *pp = p;
-		for (int j=0; j < num_ploidy; j++, pp++)
-		{
-			if (C_UInt32(*pp) > 2)
-				{ miss_cnt ++; break; }
-		}
-		p += num_ploidy;
-	}
-
-	SEXP rv;
-	PROTECT(rv = NEW_NUMERIC(1));
-	REAL(rv)[0] = (double)miss_cnt / num_sample;
-	UNPROTECT(1);
-
-	return rv;
-}
-
-
-
 // ===========================================================
 // the initial function when the package is loaded
 // ===========================================================
@@ -970,7 +927,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_FilterPushEmpty, 1),       CALL(SEQ_FilterPushLast, 1),
 		CALL(SEQ_FilterPop, 1),
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceVariant, 4),
-		CALL(SEQ_GetSpace, 1),
+		CALL(SEQ_SetChrom, 3),              CALL(SEQ_GetSpace, 1),
 
 		CALL(SEQ_SplitSelectedVariant, 3),  CALL(SEQ_SplitSelectedSample, 3),
 		CALL(SEQ_Summary, 2),
