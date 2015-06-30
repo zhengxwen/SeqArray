@@ -50,6 +50,7 @@ public:
 	C_Int32 CurIndex;       ///< the index of variant, starting from ZERO
 
 	CVarApplyByVariant();
+	virtual ~CVarApplyByVariant() {}
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
 		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel);

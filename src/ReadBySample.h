@@ -51,6 +51,7 @@ public:
 
 
 	CVarApplyBySample();
+	virtual ~CVarApplyBySample() {}
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
 		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel);

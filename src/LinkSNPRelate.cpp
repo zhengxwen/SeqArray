@@ -20,6 +20,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "ReadByVariant.h"
+#include "ReadBySample.h"
 
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
@@ -27,6 +28,8 @@
 
 extern "C"
 {
+// TTypeGenoDim and TParam are also defined in "SNPRelate/src/dGenGWAS.h"
+
 enum TTypeGenoDim
 {
 	RDim_Sample_X_SNP = 0,  ///< genotype matrix: sample X snp
@@ -42,7 +45,7 @@ typedef struct
 	C_Int32 *pSNPNum;
 
 	SEXP SeqGDSFile;
-	void *Object;
+	CVarApply *Object;
 	int *GenoBuffer;
 	int Index;
 } TParam;
@@ -51,7 +54,7 @@ inline static void Done_Object(TParam *Param)
 {
 	if (Param->Object)
 	{
-		delete (CVarApplyByVariant*)(Param->Object);
+		delete Param->Object;
 		Param->Object = NULL;
 	}
 	if (Param->GenoBuffer)
@@ -66,7 +69,7 @@ static void SNPRelate_InitSeqArray(TParam *Param)
 	Done_Object(Param);
 
 	// the GDS root node
-	PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(Param->SeqGDSFile, "root"));
+	PdGDSObj Root = GDS_R_SEXP2FileRoot(Param->SeqGDSFile);
 	PdAbstractArray N;
 
 	N = GDS_Node_Path(Root, "sample.id", TRUE);
@@ -173,11 +176,8 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 				}
 				*OutBuf ++ = val;
 			}
-
 		} else {
-			C_UInt8 *g = OutBuf;
-			OutBuf ++;
-
+			C_UInt8 *g = (OutBuf ++);
 			int *p = Param->GenoBuffer;
 			for (size_t n=Obj->Num_Sample; n > 0; n--)
 			{
@@ -204,7 +204,87 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 	C_UInt8 *OutBuf, TTypeGenoDim OutDim, TParam *Param)
 {
-	throw "SNPRelate_SampleRead has not been implemented.";
+	CVarApplyBySample *Obj =
+		(CVarApplyBySample*)(Param->Object);
+
+	if (!Obj)
+	{
+		Obj = new CVarApplyBySample;
+		Param->Object = Obj;
+
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(Param->SeqGDSFile);
+		TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
+		Obj->InitObject(CVariable::ctGenotype,
+			"genotype/data", Root, Sel.Variant.size(),
+			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
+
+		size_t SIZE = (Obj->Num_Variant) * (Obj->DLen[2]);
+		Param->GenoBuffer = new int[SIZE];
+		Param->Index = 0;
+	}
+
+	if (Param->Index > SampStart)
+	{
+		Obj->ResetObject();
+		Param->Index = 0;
+	}
+	while (Param->Index < SampStart)
+	{
+		Obj->NextCell();
+		Param->Index ++;
+	}
+
+	for (int sn = SampCount; sn > 0; sn--)
+	{
+		Obj->ReadGenoData(Param->GenoBuffer);
+		Obj->NextCell();
+		Param->Index ++;
+
+		if (OutDim == RDim_SNP_X_Sample)
+		{
+			int *p = Param->GenoBuffer;
+			for (size_t n=Obj->Num_Variant; n > 0; n--)
+			{
+				int *pp = p;
+				p += Obj->DLen[2];
+				C_UInt8 val = 0;
+				for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
+				{
+					if (*pp == 0)
+					{
+						val ++;
+						if (val > 2) val = 2;
+					} else if (*pp == NA_INTEGER)
+					{
+						val = 3; break;
+					}
+				}
+				*OutBuf ++ = val;
+			}
+
+		} else {
+			C_UInt8 *g = (OutBuf ++);
+			int *p = Param->GenoBuffer;
+			for (size_t n=Obj->Num_Variant; n > 0; n--)
+			{
+				int *pp = p;
+				p += Obj->DLen[2];
+				C_UInt8 val = 0;
+				for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
+				{
+					if (*pp == 0)
+					{
+						val ++;
+						if (val > 2) val = 2;
+					} else if (*pp == NA_INTEGER)
+					{
+						val = 3; break;
+					}
+				}
+				*g = val; g += SampCount;
+			}
+		}
+	}
 }
 
 static void SNPRelate_SetSnpSelection(C_BOOL *sel, TParam *Param)

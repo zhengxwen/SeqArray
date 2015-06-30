@@ -102,6 +102,9 @@ class COREARRAY_DLL_LOCAL CVarApply: public CVariable
 public:
 	C_BOOL *NeedTRUE(size_t size);
 
+	CVarApply() {}
+	virtual ~CVarApply() {}
+
 private:
 	vector<C_BOOL> _TRUE;
 };
