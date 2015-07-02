@@ -8,13 +8,27 @@
 
 
 #######################################################################
+# Get the numbers of selected samples and variants
+#
+
+.seldim <- function(gdsfile)
+{
+    z <- seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)
+    # z$seldim[1] -- # of selected samples
+    # z$seldim[2] -- # of selected variants
+    z$seldim
+}
+
+
+
+#######################################################################
 # Internal C function
 #
 
 .cfunction <- function(name)
 {
     fn <- function(x) { NULL }
-    f <- quote(.Call(EXTERNALNAME, x))
+    f <- quote(.Call(SEQ_ExternalName1, x))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
     body(fn) <- f
@@ -24,7 +38,7 @@
 .cfunction2 <- function(name)
 {
     fn <- function(x, y) { NULL }
-    f <- quote(.Call(EXTERNALNAME, x, y))
+    f <- quote(.Call(SEQ_ExternalName2, x, y))
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
     body(fn) <- f
     fn
@@ -87,8 +101,7 @@
     stopifnot(is.null(cl) | inherits(cl, "cluster"))
     stopifnot(is.numeric(.num))
     stopifnot(is.function(.fun))
-    stopifnot(is.null(.combinefun) | is.character(.combinefun) |
-        is.function(.combinefun))
+    stopifnot(is.character(.combinefun) | is.function(.combinefun))
     stopifnot(is.logical(.stopcluster))
 
     if (!is.null(cl))
@@ -96,7 +109,7 @@
         ############################################################
         # parallel implementation
 
-        if (is.null(.combinefun))
+        if (identical(.combinefun, "unlist") | identical(.combinefun, "list"))
             ans <- vector("list", .num)
         else
             ans <- NULL
@@ -104,7 +117,7 @@
         p <- length(cl)
         if ((.num > 0L) && p)
         {
-            ## **** this closure is sending to all nodes
+            ## this closure is sending to all nodes
             argfun <- function(i) c(i, list(...))
 
             submit <- function(node, job)
@@ -134,20 +147,18 @@
                 {
                     if (.stopcluster)
                         parallel::stopCluster(cl)
-                    stop("One node produced an error: ", as.character(dv))
+                    stop("One of the nodes produced an error: ", as.character(dv))
                 }
 
-                if (!is.character(.combinefun))
+                if (is.function(.combinefun))
                 {
-                    if (is.null(.combinefun))
-                    {
-                        ans[[d$tag]] <- dv
-                    } else {
-                        if (is.null(ans))
-                            ans <- dv
-                        else
-                            ans <- .combinefun(ans, dv)
-                    }
+                    if (is.null(ans))
+                        ans <- dv
+                    else
+                        ans <- .combinefun(ans, dv)
+                } else if (.combinefun %in% c("unlist", "list"))
+                {
+                    ans[[d$tag]] <- dv
                 }
 
                 if (stopflag)
@@ -159,16 +170,8 @@
         ############################################################
         # serial implementation
 
-        if (is.null(.combinefun))
+        if (is.function(.combinefun))
         {
-            ans <- vector("list", .num)
-            for (i in seq_len(.num))
-                ans[[i]] <- .fun(i, ...)
-        } else if (is.character(.combinefun))
-        {
-            for (i in seq_len(.num)) .fun(i, ...)
-            ans <- NULL
-        } else {
             ans <- NULL
             for (i in seq_len(.num))
             {
@@ -178,6 +181,15 @@
                 else
                     ans <- .combinefun(ans, dv)
             }
+        } else if (identical(.combinefun, "none"))
+        {
+            for (i in seq_len(.num)) .fun(i, ...)
+            ans <- NULL
+        } else if (.combinefun %in% c("unlist", "list"))
+        {
+            ans <- vector("list", .num)
+            for (i in seq_len(.num))
+                ans[[i]] <- .fun(i, ...)
         }
     }
 

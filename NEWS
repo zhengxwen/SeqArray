@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.6
+CHANGES IN VERSION 1.9.0-1.9.7
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -14,6 +14,9 @@ CHANGES IN VERSION 1.9.0-1.9.6
       `seqNumAllele()` and `seqSetFilterChrom()`
 
     o "intersection" and "push+intersection" in `seqSetFilter()`
+
+    o parallel implementation in `seqNumAllele()`, `seqMissing()` and
+      `seqAlleleFreq()`
 
 
 CHANGES IN VERSION 1.8.0

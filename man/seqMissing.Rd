@@ -5,12 +5,16 @@
     Calculate the missing rates per variant or per sample.
 }
 \usage{
-seqMissing(gdsfile, per.variant=TRUE)
+seqMissing(gdsfile, per.variant=TRUE, parallel=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{per.variant}{missing rate per variant if \code{TRUE}, or
         missing rate per sample if \code{FALSE}}
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
+        processing) or other value; \code{parallel} is passed to the argument
+        \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
+        for more details.}
 }
 \value{
     A vector of missing rates.
@@ -18,7 +22,8 @@ seqMissing(gdsfile, per.variant=TRUE)
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqOpen}}
+    \code{\link{seqAlleleFreq}}, \code{\link{seqNumAllele}},
+    \code{\link{seqParallel}}
 }
 
 \examples{

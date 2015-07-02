@@ -243,54 +243,130 @@ seqCompress.Option <- function(default="ZIP_RA.MAX", ...)
 #######################################################################
 # Apply functions in parallel
 #
-seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
-    split=c("by.variant", "by.sample", "none"), .combine=NULL, ...)
+seqParallel <- function(cl, gdsfile, FUN, split=c("by.variant", "by.sample", "none"),
+    .combine="unlist", .selection.flag=FALSE, ...)
 {
     # check
-    stopifnot(is.null(cl) | inherits(cl, "cluster"))
+    stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) | inherits(cl, "cluster"))
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.function(FUN))
     split <- match.arg(split)
-    stopifnot(is.null(.combine) | is.character(.combine) | is.function(.combine))
+    stopifnot(is.character(.combine) | is.function(.combine))
+    stopifnot(is.logical(.selection.flag))
 
-    if (!is.null(.combine))
+    if (is.character(.combine))
     {
-        if (is.character(.combine))
-        {
-            if (!(.combine %in% c("", "none")))
-                .combine <- match.fun(.combine)
-        } else
+        stopifnot(length(.combine) == 1L)
+        if (!(.combine %in% c("unlist", "list", "none")))
             .combine <- match.fun(.combine)
     }
 
-    if (length(cl) <= 1)
+    if (is.null(cl) | identical(cl, FALSE) | identical(cl, 1L) | identical(cl, 1))
     {
         #################################################################
         # a single process
 
-        ans <- FUN(gdsfile, ...)
+        if (.selection.flag)
+        {
+            dm <- .seldim(gdsfile)
+            # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
+            if (split == "by.variant")
+                ans <- FUN(gdsfile, rep(TRUE, dm[2L]), ...)
+            else if (split == "by.sample")
+                ans <- FUN(gdsfile, rep(TRUE, dm[1L]), ...)
+            else
+                ans <- FUN(gdsfile, NULL, ...)
+        } else
+            ans <- FUN(gdsfile, ...)
 
-    } else {
+    } else if (identical(cl, TRUE) | is.numeric(cl))
+    {
+        # library
+        if (!requireNamespace("parallel"))
+            stop("the 'parallel' package should be installed.")
+
+        if (identical(cl, TRUE))
+        {
+            cl <- parallel::detectCores() - 1L
+            if (cl <= 1L) cl <- 2L
+        }
+        stopifnot(length(cl) == 1L)
+        if (cl <= 0L)
+            cl <- getOption("mc.cores", 2L)
+        if (.Platform$OS.type == "windows")
+            cl <- 1L
+        if (cl <= 0L)
+        	stop("Invalid number of cores!")
+
+        if (split %in% c("by.variant", "by.sample"))
+        {
+            dm <- .seldim(gdsfile)
+            # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
+            if (split == "by.variant")
+            {
+                if (dm[2L] <= 0) stop("No variants selected.")
+                if (cl > dm[2L]) cl <- dm[2L]
+            } else {
+                if (dm[1L] <= 0) stop("No samples selected.")
+                if (cl > dm[1L]) cl <- dm[1L]
+            }
+        }
+
+        ans <- parallel::mclapply(seq_len(cl),
+            mc.preschedule=FALSE, mc.cores=cl, mc.cleanup=TRUE,
+            FUN = function(i, .fun)
+            {
+                sel <- .Call(SEQ_SplitSelection, gdsfile, split, i, cl,
+                    .selection.flag)
+                # call the user-defined function
+                if (.selection.flag)
+                    FUN(gdsfile, sel, ...)
+                else
+                    FUN(gdsfile, ...)
+            }, .fun = FUN)
+
+        if (is.list(ans))
+        {
+            if (identical(.combine, "unlist"))
+            {
+                ans <- unlist(ans, recursive=FALSE)
+            } else if (is.function(.combine))
+            {
+                rv <- ans[[1]]
+                for (i in seq_len(length(ans)-1L) + 1L)
+                    rv <- .combine(rv, ans[[i]])
+                ans <- rv
+            }
+        }
+
+    } else if (inherits(cl, "cluster"))
+    {
         #################################################################
         # multiple processes
 
         # library
         if (!requireNamespace("parallel"))
-            stop("the `parallel' package should be installed.")
+            stop("the 'parallel' package should be installed.")
 
-        # the selected variants
-        selection <- seqGetFilter(gdsfile)
-        if (sum(selection$sample.sel, na.rm=TRUE) <= 0)
-            stop("No selected samples!")
-        if (sum(selection$variant.sel, na.rm=TRUE) <= 0)
-            stop("No selected variants!")
+        if (split %in% c("by.variant", "by.sample"))
+        {
+            dm <- .seldim(gdsfile)
+            # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
+            if (split == "by.variant")
+            {
+                if (dm[2L] <= 0) stop("No variants selected.")
+                if (length(cl) > dm[2L]) cl <- cl[seq_len(dm[2L])]
+            } else {
+                if (dm[1L] <= 0) stop("No samples selected.")
+                if (length(cl) > dm[1L]) cl <- cl[seq_len(dm[1L])]
+            }
+        }
 
-        # enumerate
         ans <- .DynamicClusterCall(cl, length(cl), .fun =
-            function(.idx, .n_process, .gds.fn, .selection, FUN, .split, ...)
+            function(.idx, .n_process, .gds.fn, .selection, FUN, .split, .selection.flag, ...)
         {
             # load the package
-            library(SeqArray)
+            library("SeqArray")
 
             # open the file
             gfile <- seqOpen(.gds.fn)
@@ -300,34 +376,31 @@ seqParallel <- function(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
             seqSetFilter(gfile, samp.sel=.selection$sample.sel,
                 variant.sel=.selection$variant.sel)
 
-            if (.split == "by.variant")
-            {
-                if (.Call(SEQ_SplitSelectedVariant, gfile, .idx, .n_process) <= 0)
-                    return(NULL)
-            } else if (.split == "by.sample") {
-                if (.Call(SEQ_SplitSelectedSample, gfile, .idx, .n_process) <= 0)
-                    return(NULL)
-            }
-
-            # call
-            FUN(gfile, ...)
+            sel <- .Call(SEQ_SplitSelection, gfile, .split, .idx, .n_process,
+                .selection.flag)
+            # call the user-defined function
+            if (.selection.flag)
+                FUN(gdsfile, sel, ...)
+            else
+                FUN(gdsfile, ...)
 
         }, .combinefun = .combine, .stopcluster=FALSE,
             .n_process = length(cl), .gds.fn = gdsfile$filename,
-            .selection = selection, FUN = FUN, .split = split, ...
+            .selection = seqGetFilter(gdsfile), FUN = FUN,
+            .split = split, .selection.flag=.selection.flag, ...
         )
 
-        if (is.list(ans) & is.null(.combine))
+        if (is.list(ans) & identical(.combine, "unlist"))
             ans <- unlist(ans, recursive=FALSE)
+    } else {
+        stop("Invalid 'cl' in seqParallel.")
     }
 
     # output
-    if (is.character(.combine))
-    {
-        if (.combine == "none")
-            return(invisible())
-    }
-    return(ans)
+    if (identical(.combine, "none"))
+        invisible()
+    else
+        ans
 }
 
 
@@ -431,18 +504,18 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(var.name) & is.vector(var.name))
-    stopifnot(length(var.name) == 1)
+    stopifnot(length(var.name) == 1L)
 
     node <- index.gdsn(gdsfile, var.name)
     desp <- objdesp.gdsn(node)
     dm <- desp$dim
-    if (length(dm) > 1)
+    if (length(dm) > 1L)
     {
         # dimension
-        dm <- c(dm[-(length(dm)-1)], 0)
+        dm <- c(dm[-(length(dm)-1L)], 0L)
         # folder
         index <- unlist(strsplit(var.name, "/"))
-        if (length(index) <= 1)
+        if (length(index) <= 1L)
             folder <- gdsfile$root
         else
             folder <- index.gdsn(gdsfile, index=index[-length(index)])
@@ -455,7 +528,7 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
             valdim=dm, compress=compress)
 
         # write data
-        apply.gdsn(node, margin=length(dm)-1, as.is="none", FUN=function(g) {
+        apply.gdsn(node, margin=length(dm)-1L, as.is="none", FUN=function(g) {
             append.gdsn(newnode, g)
         }, .useraw=TRUE)
 

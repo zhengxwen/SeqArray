@@ -16,7 +16,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
     stopifnot(is.logical(readonly))
 
     # open the file
-    ans <- openfn.gds(gds.fn, readonly=readonly)
+    ans <- openfn.gds(gds.fn, readonly=readonly, allow.fork=TRUE)
 
     # FileFormat
     at <- get.attr.gdsn(ans$root)
@@ -544,19 +544,23 @@ seqSummary <- function(gdsfile, varname=NULL,
 
 
 #######################################################################
-#######################################################################
+# Data Analysis
 #######################################################################
 
 #######################################################################
-# Missing rate
+# The number of alleles per site
 #
-seqNumAllele <- function(gdsfile)
+seqNumAllele <- function(gdsfile, parallel=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
 
-    seqApply(gdsfile, "allele", margin="by.variant", as.is="integer",
-        FUN = .cfunction("FC_NumAllele"))
+    seqParallel(parallel, gdsfile, split="by.variant",
+        FUN = function(gdsfile)
+        {
+            seqApply(gdsfile, "allele", margin="by.variant", as.is="integer",
+                FUN = .cfunction("FC_NumAllele"))
+        })
 }
 
 
@@ -564,7 +568,7 @@ seqNumAllele <- function(gdsfile)
 #######################################################################
 # Missing rate
 #
-seqMissing <- function(gdsfile, per.variant=TRUE)
+seqMissing <- function(gdsfile, per.variant=TRUE, parallel=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -572,38 +576,89 @@ seqMissing <- function(gdsfile, per.variant=TRUE)
 
     if (per.variant)
     {
-        seqApply(gdsfile, "genotype", margin="by.variant", as.is="double",
-            FUN = .cfunction("FC_Missing_PerVariant"))
+        seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(gdsfile)
+            {
+               seqApply(gdsfile, "genotype", margin="by.variant",
+                   as.is="double", FUN=.cfunction("FC_Missing_PerVariant"))
+            })
     } else {
-        z <- seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)
-        # z$seldim[1] -- # of selected samples
-        # z$seldim[2] -- # of selected variants
-        sum <- integer(z$seldim[1])
-        seqApply(gdsfile, "genotype", margin="by.variant", as.is="none",
-            FUN = .cfunction2("FC_Missing_PerSample"), y=sum)
-        sum / (2L * z$seldim[2])
+        dm <- .seldim(gdsfile)
+        # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
+
+        sum <- seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(gdsfile, num)
+            {
+                tmpsum <- integer(num)
+                seqApply(gdsfile, "genotype", margin="by.variant",
+                   as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
+                   y=tmpsum)
+                tmpsum
+            }, .combine="+", num=dm[1])
+        sum / (2L * dm[2])
     }
 }
 
 
 
 #######################################################################
-# Allele frequencies
+# Allele frequency
 #
-seqAlleleFreq <- function(gdsfile, ref.allele=0L)
+seqAlleleFreq <- function(gdsfile, ref.allele=0L, parallel=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.numeric(ref.allele) | is.logical(ref.allele))
-    stopifnot(length(ref.allele) == 1L)
+    stopifnot(is.null(ref.allele) | is.numeric(ref.allele) | is.character(ref.allele))
 
-    if (is.na(ref.allele))
+    if (is.null(ref.allele))
     {
-        seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
-            as.is="list", FUN = .cfunction("FC_AF_List"))
-    } else {
-        .cfunction("FC_AF_SetIndex")(ref.allele)
-        seqApply(gdsfile, "genotype", margin="by.variant", as.is="double",
-            FUN = .cfunction("FC_AF_Index"))
+        seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(gdsfile)
+            {
+                seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                    as.is="list", FUN = .cfunction("FC_AF_List"))
+            })
+    } else if (is.numeric(ref.allele))
+    {
+        dm <- .seldim(gdsfile)
+        # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
+        if (!(length(ref.allele) %in% c(1L, dm[2L])))
+            stop("'length(ref.allele)' should be 1 or the number of selected variants.")
+
+        if (length(ref.allele) == 1L)
+        {
+            seqParallel(parallel, gdsfile, split="by.variant",
+                FUN = function(gdsfile, ref)
+                {
+                    .cfunction("FC_AF_SetIndex")(ref)
+                    seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                        as.is="double", FUN = .cfunction("FC_AF_Index"))
+                }, ref=ref.allele)
+        } else {
+            ref.allele <- as.integer(ref.allele)
+            seqParallel(parallel, gdsfile, split="by.variant",
+                .selection.flag=TRUE,
+                FUN = function(gdsfile, selflag, ref)
+                {
+                    .cfunction("FC_AF_SetIndex")(ref[selflag])
+                    seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                        as.is="double", FUN = .cfunction("FC_AF_Index"))
+                }, ref=ref.allele)
+        }
+    } else if (is.character(ref.allele))
+    {
+        dm <- .seldim(gdsfile)
+        # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
+        if (length(ref.allele) != dm[2L])
+            stop("'length(ref.allele)' should be the number of selected variants.")
+
+        seqParallel(parallel, gdsfile, split="by.variant",
+            .selection.flag=TRUE,
+            FUN = function(gdsfile, selflag, ref)
+            {
+                .cfunction("FC_AF_SetAllele")(ref[selflag])
+                seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                    as.is="double", FUN = .cfunction("FC_AF_Allele"))
+            }, ref=ref.allele)
     }
 }

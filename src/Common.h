@@ -139,14 +139,17 @@ COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
 /// Get the list element named str, or return NULL
 COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str);
 
-/// Get the number of alleles
-COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele);
-
 /// Get the total count requiring the number of dimension is one
 COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname);
 
 /// Get the number of TRUEs
 COREARRAY_DLL_LOCAL size_t GetNumOfTRUE(C_BOOL *array, size_t n);
+
+/// Get the number of alleles
+COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list);
+
+/// Get the index in an allele list
+COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list);
 
 
 

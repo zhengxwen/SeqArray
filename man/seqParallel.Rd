@@ -5,25 +5,36 @@
     Apply a user-defined function in parallel.
 }
 \usage{
-seqParallel(cl, gdsfile, FUN = function(gdsfile, ...) NULL,
-    split=c("by.variant", "by.sample", "none"), .combine=NULL, ...)
+seqParallel(cl, gdsfile, FUN, split=c("by.variant", "by.sample", "none"),
+    .combine="unlist", .selection.flag=FALSE, ...)
 }
 \arguments{
-    \item{cl}{NULL or a cluster object, created by the package \link[parallel]{parallel}
-        or \href{http://CRAN.R-project.org/package=snow}{snow}}
+    \item{cl}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
+        parallel processing with the maximum number of cores minor one;
+        a numeric value: the number of cores to be used;
+        a cluster object for parallel processing, created by the functions
+        in the package \code{\link{parallel}}, like \code{\link{makeCluster}}.
+        See details}
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{FUN}{the function to be applied}
+    \item{FUN}{the function to be applied, should be like
+        \code{FUN(gdsfile, ...)}}
     \item{split}{split the dataset by variant or sample according to multiple
         processes, or "none" for no split}
-    \item{.combine}{define a fucntion for combining results from different processes;
-        by default, \code{'c'} is used; if \code{.combine==""}, return \code{invisible()}}
+    \item{.combine}{define a fucntion for combining results from different
+        processes; by default, \code{"unlist"} is used, to produce a vector
+        which contains all the atomic components; \code{"list"}, return a list
+        of results created by processes; \code{"none"}, no return; or a
+        function, like "+".}
+    \item{.selection.flag}{\code{TRUE} -- passes a logical vector of selection
+        to the second argument of \code{FUN(gdsfile, selection, ...)}}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{
-    If \code{cl = NULL} or \code{length(cl) == 0}, the function simply calls
-\code{FUN(gdsfile, ...)}; otherwise, it splits jobs to different processes and calls
-\code{FUN(gdsfile, ...)} on each process, the optional arguments are passed to different
-processes.
+    When \code{cl} is \code{TRUE} or a numeric value, forking techniques are
+used to create a new child process as a copy of the current R process, see
+\code{\link{mcfork}}. However, forking is not available on Windows, so serial
+processing is used instead. In order to use multiple processes on Windows,
+users have to create a cluster object via \code{\link{makeCluster}}.
 }
 \value{
     A vector or list of values.
@@ -31,8 +42,7 @@ processes.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqSetFilter}},
-    \code{\link{seqGetData}}
+    \code{\link{seqSetFilter}}, \code{\link{seqGetData}},
     \code{\link{seqApply}}
 }
 

@@ -5,10 +5,14 @@
     Return the numbers of alleles for each site.
 }
 \usage{
-seqNumAllele(gdsfile)
+seqNumAllele(gdsfile, parallel=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
+        processing) or other value; \code{parallel} is passed to the argument
+        \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
+        for more details.}
 }
 \value{
     The numbers of alleles for each site.
@@ -16,7 +20,8 @@ seqNumAllele(gdsfile)
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqOpen}}
+    \code{\link{seqAlleleFreq}}, \code{\link{seqMissing}},
+    \code{\link{seqParallel}}
 }
 
 \examples{

@@ -390,6 +390,19 @@ seqClose(genofile)
 ```
 
 
+## Functions for Data Analysis
+
+**Table 2**: A list of functions for data analysis.
+
+| Function      | Description |
+|:--------------|:-------------------------------------------|
+| seqNumAllele  | Number of alleles per site. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
+| seqMissing    | Missing genotype percentage. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
+| seqAlleleFreq | Allele frequency. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
+
+~
+
+
 
 # Examples
 

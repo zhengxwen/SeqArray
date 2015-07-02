@@ -108,31 +108,6 @@ COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str)
 	return elmt;
 }
 
-/// Get the number of alleles
-COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele)
-{
-	int n = 0;
-	while (*allele)
-	{
-		if (*allele != ',')
-		{
-			n ++;
-			while ((*allele != ',') && (*allele != 0))
-				allele ++;
-			if (*allele == ',')
-			{
-				allele ++;
-				if (*allele == 0)
-				{
-					n ++;
-					break;
-				}
-			}
-		}
-	}
-	return n;
-}
-
 /// Get the total count requiring the number of dimension is one
 COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname)
 {
@@ -149,6 +124,51 @@ COREARRAY_DLL_LOCAL size_t GetNumOfTRUE(C_BOOL *array, size_t n)
 	return ans;
 }
 
+/// Get the number of alleles
+COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list)
+{
+	int n = 0;
+	while (*allele_list)
+	{
+		if (*allele_list != ',')
+		{
+			n ++;
+			while ((*allele_list != ',') && (*allele_list != 0))
+				allele_list ++;
+			if (*allele_list == ',')
+			{
+				allele_list ++;
+				if (*allele_list == 0)
+				{
+					n ++;
+					break;
+				}
+			}
+		}
+	}
+	return n;
+}
+
+/// Get the index in an allele list
+COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list)
+{
+	int idx = 0;
+	const char *st = allele_list;
+	while (*allele_list)
+	{
+		while ((*allele_list != ',') && (*allele_list != 0))
+			allele_list ++;
+		if (strncmp(allele, st, allele_list - st) == 0)
+			return idx;
+		if (*allele_list == ',')
+		{
+			idx ++;
+			allele_list ++;
+			st = allele_list;
+		}
+	}
+	return -1;
+}
 
 
 extern "C"
@@ -638,49 +658,71 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile)
 }
 
 
-static void CLEAR_SEL_VALUE(int num, vector<C_BOOL>::iterator &it)
+// ===========================================================
+
+inline static C_BOOL *CLEAR_SELECTION(size_t num, C_BOOL *p)
 {
 	while (num > 0)
 	{
-		if (*it != 0) { num --; *it = FALSE; }
-		it ++;
+		if (*p != FALSE) { num--; *p = FALSE; }
+		p ++;
 	}
+	return p;
 }
-static void SKIP_SEL(int num, vector<C_BOOL>::iterator &it)
+inline static C_BOOL *SKIP_SELECTION(size_t num, C_BOOL *p)
 {
 	while (num > 0)
 	{
-		if (*it != 0) num --;
-		it ++;
+		if (*p != FALSE) num--;
+		p ++;
 	}
+	return p;
 }
 
 /// split the selected variants according to multiple processes
-COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectedVariant(SEXP gdsfile, SEXP Index,
-	SEXP n_process)
+COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
+	SEXP index, SEXP n_process, SEXP selection_flag)
 {
+	const char *split_str = CHAR(STRING_ELT(split, 0));
+	int Process_Index = Rf_asInteger(index) - 1;  // starting from 0
+	int Num_Process = Rf_asInteger(n_process);
+	int SelFlag = Rf_asLogical(selection_flag);
+
 	COREARRAY_TRY
 
 		// selection object
 		TInitObject::TSelection &s = Init.Selection(gdsfile);
 
-		// the index process starting from 1
-		int Process_Index = INTEGER(AS_INTEGER(Index))[0] - 1;
-		int Num_Process = INTEGER(AS_INTEGER(n_process))[0];
-
-		// the total number of selected variants
-		vector<C_BOOL>::iterator it;
-		int N_Variant = 0;
-		for (it=s.Variant.begin(); it != s.Variant.end();)
+		// the total number of selected elements
+		int SelectCount;
+		C_BOOL *sel;
+		if (strcmp(split_str, "by.variant") == 0)
 		{
-			if (*it != 0) N_Variant ++;
-			it ++;
+			if (s.Variant.empty())
+			{
+				s.Variant.resize(
+					GDS_Array_GetTotalCount(GDS_Node_Path(
+					GDS_R_SEXP2FileRoot(gdsfile), "variant.id", TRUE)), TRUE);
+			}
+			sel = &s.Variant[0];
+			SelectCount = GetNumOfTRUE(sel, s.Variant.size());
+		} else if (strcmp(split_str, "by.sample") == 0)
+		{
+			if (s.Sample.empty())
+			{
+				s.Sample.resize(
+					GDS_Array_GetTotalCount(GDS_Node_Path(
+					GDS_R_SEXP2FileRoot(gdsfile), "sample.id", TRUE)), TRUE);
+			}
+			sel = &s.Sample[0];
+			SelectCount = GetNumOfTRUE(sel, s.Sample.size());
+		} else {
+			return rv_ans;
 		}
-		if (N_Variant <= 0) error("No variant!");
 
 		// split a list
 		vector<int> split(Num_Process);
-		double avg = (double)N_Variant / Num_Process;
+		double avg = (double)SelectCount / Num_Process;
 		double start = 0;
 		for (int i=0; i < Num_Process; i++)
 		{
@@ -689,83 +731,34 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectedVariant(SEXP gdsfile, SEXP Index,
 		}
 
 		// ---------------------------------------------------
-		it = s.Variant.begin();
 		int st = 0;
 		for (int i=0; i < Process_Index; i++)
 		{
-			CLEAR_SEL_VALUE(split[i] - st, it);
+			sel = CLEAR_SELECTION(split[i] - st, sel);
 			st = split[i];
 		}
 		int ans_n = split[Process_Index] - st;
-		SKIP_SEL(ans_n, it);
+		sel = SKIP_SELECTION(ans_n, sel);
 		st = split[Process_Index];
 		for (int i=Process_Index+1; i < Num_Process; i++)
 		{
-			CLEAR_SEL_VALUE(split[i] - st, it);
+			sel = CLEAR_SELECTION(split[i] - st, sel);
 			st = split[i];
 		}
 
 		// ---------------------------------------------------
 		// output
-		rv_ans = ScalarInteger(ans_n);
-
-	COREARRAY_CATCH
-}
-
-
-/// split the selected samples according to multiple processes
-COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectedSample(SEXP gdsfile, SEXP Index,
-	SEXP n_process)
-{
-	COREARRAY_TRY
-
-		// selection object
-		TInitObject::TSelection &s = Init.Selection(gdsfile);
-
-		// the index process starting from 1
-		int Process_Index = INTEGER(AS_INTEGER(Index))[0] - 1;
-		int Num_Process = INTEGER(AS_INTEGER(n_process))[0];
-
-		// the total number of selected samples
-		vector<C_BOOL>::iterator it;
-		int N_Sample = 0;
-		for (it=s.Sample.begin(); it != s.Sample.end();)
+		if (SelFlag == TRUE)
 		{
-			if (*it != 0) N_Sample ++;
-			it ++;
+			rv_ans = NEW_LOGICAL(SelectCount);
+			int *p = INTEGER(rv_ans);
+			memset((void*)p, 0, sizeof(int) * size_t(SelectCount));
+			if (Process_Index > 0)
+				p += split[Process_Index-1];
+			for (; ans_n > 0; ans_n--) *p++ = TRUE;
+		} else {
+			rv_ans = ScalarInteger(ans_n);
 		}
-		if (N_Sample <= 0) error("No sample!");
-
-		// split a list
-		vector<int> split(Num_Process);
-		double avg = (double)N_Sample / Num_Process;
-		double start = 0;
-		for (int i=0; i < Num_Process; i++)
-		{
-			start += avg;
-			split[i] = (int)(start + 0.5);
-		}
-
-		// ---------------------------------------------------
-		it = s.Sample.begin();
-		int st = 0;
-		for (int i=0; i < Process_Index; i++)
-		{
-			CLEAR_SEL_VALUE(split[i] - st, it);
-			st = split[i];
-		}
-		int ans_n = split[Process_Index] - st;
-		SKIP_SEL(ans_n, it);
-		st = split[Process_Index];
-		for (int i=Process_Index+1; i < Num_Process; i++)
-		{
-			CLEAR_SEL_VALUE(split[i] - st, it);
-			st = split[i];
-		}
-
-		// ---------------------------------------------------
-		// output
-		rv_ans = ScalarInteger(ans_n);
 
 	COREARRAY_CATCH
 }
@@ -909,6 +902,17 @@ COREARRAY_DLL_EXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
 // the initial function when the package is loaded
 // ===========================================================
 
+COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName1(SEXP x)
+{
+	return R_NilValue;
+}
+
+COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName2(SEXP x, SEXP y)
+{
+	return R_NilValue;
+}
+
+
 /// initialize the package
 COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 {
@@ -922,14 +926,15 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
-		CALL(SEQ_File_Init, 1),             CALL(SEQ_File_Done, 1),
+		CALL(SEQ_ExternalName1, 1),         CALL(SEQ_ExternalName2, 2),
 
+		CALL(SEQ_File_Init, 1),             CALL(SEQ_File_Done, 1),
 		CALL(SEQ_FilterPushEmpty, 1),       CALL(SEQ_FilterPushLast, 1),
 		CALL(SEQ_FilterPop, 1),
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceVariant, 4),
-		CALL(SEQ_SetChrom, 3),              CALL(SEQ_GetSpace, 1),
+		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 3),
+		CALL(SEQ_GetSpace, 1),
 
-		CALL(SEQ_SplitSelectedVariant, 3),  CALL(SEQ_SplitSelectedSample, 3),
 		CALL(SEQ_Summary, 2),
 
 		CALL(SEQ_GetData, 2),
