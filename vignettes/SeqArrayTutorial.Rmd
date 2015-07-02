@@ -251,6 +251,20 @@ unlink("tmp.gds")
 
 # Data Processing
 
+## Functions for Data Analysis
+
+**Table 2**: A list of functions for data analysis.
+
+| Function      | Description |
+|:--------------|:-------------------------------------------|
+| seqGetData    | Gets data from a sequencing GDS file (from a subset of data). [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
+| seqApply      | Applies a user-defined function over array margins. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
+| seqNumAllele  | Number of alleles per site. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
+| seqMissing    | Missing genotype percentage. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
+| seqAlleleFreq | Allele frequency. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
+
+~
+
 ## Get Data
 
 ```{r}
@@ -388,19 +402,6 @@ summary(afreq)
 # Close the GDS file
 seqClose(genofile)
 ```
-
-
-## Functions for Data Analysis
-
-**Table 2**: A list of functions for data analysis.
-
-| Function      | Description |
-|:--------------|:-------------------------------------------|
-| seqNumAllele  | Number of alleles per site. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
-| seqMissing    | Missing genotype percentage. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
-| seqAlleleFreq | Allele frequency. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
-
-~
 
 
 
