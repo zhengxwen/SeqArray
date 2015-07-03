@@ -5,7 +5,7 @@
     Calculate the missing rates per variant or per sample.
 }
 \usage{
-seqMissing(gdsfile, per.variant=TRUE, parallel=FALSE)
+seqMissing(gdsfile, per.variant=TRUE, parallel=getOption("gds.parallel", FALSE))
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}

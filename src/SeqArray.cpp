@@ -294,7 +294,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_sel,
 						*pArray++ = ((*base++) != 0);
 				}
 			} else {
-				if (XLENGTH(samp_sel) != GetNumOfTRUE(pArray, flag_array.size()))
+				if ((size_t)XLENGTH(samp_sel) != GetNumOfTRUE(pArray, flag_array.size()))
 				{
 					throw ErrSeqArray(
 						"Invalid length of 'samp.sel' "
@@ -437,7 +437,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_sel,
 						*pArray++ = ((*base++) != 0);
 				}
 			} else {
-				if (XLENGTH(var_sel) != GetNumOfTRUE(pArray, flag_array.size()))
+				if ((size_t)XLENGTH(var_sel) != GetNumOfTRUE(pArray, flag_array.size()))
 				{
 					throw ErrSeqArray(
 						"Invalid length of 'variant.sel' "
