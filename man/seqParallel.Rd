@@ -32,9 +32,9 @@ seqParallel(cl, gdsfile, FUN, split=c("by.variant", "by.sample", "none"),
 \details{
     When \code{cl} is \code{TRUE} or a numeric value, forking techniques are
 used to create a new child process as a copy of the current R process, see
-\code{\link{mcfork}}. However, forking is not available on Windows, so serial
-processing is used instead. In order to use multiple processes on Windows,
-users have to create a cluster object via \code{\link{makeCluster}}.
+\code{?parallel::mcfork}. However, forking is not available on Windows, so
+serial processing is used instead. In order to use multiple processes on
+Windows, users have to create a cluster object via \code{\link{makeCluster}}.
 }
 \value{
     A vector or list of values.
