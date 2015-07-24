@@ -33,7 +33,7 @@ the conversion.
 }
 
 \examples{
-# the file of GDS
+# the GDS file
 gds.fn <- seqExampleFileName("gds")
 
 seqGDS2SNP(gds.fn, "test.gds")

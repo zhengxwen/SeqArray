@@ -26,8 +26,8 @@ for data integrality.
 }
 
 \examples{
-gds.fn <- seqExampleFileName("gds")
-# or gds.fn <- "C:/YourFolder/Your_GDS_File.gds"
+# the GDS file
+(gds.fn <- seqExampleFileName("gds"))
 
 # open the GDS file
 gdsfile <- seqOpen(gds.fn)

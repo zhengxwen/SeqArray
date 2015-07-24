@@ -857,7 +857,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 
 		// chr prefix
 		vector<string> ChrPref;
-		for (size_t i=0; i < (size_t)XLENGTH(ChrPrefix); i++)
+		for (R_xlen_t i=0; i < XLENGTH(ChrPrefix); i++)
 			ChrPref.push_back(CHAR(STRING_ELT(ChrPrefix, i)));
 
 		// =========================================================

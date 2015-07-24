@@ -48,16 +48,15 @@ are in a valid range or not, etc.
 }
 
 \examples{
+# the GDS file
 (gds.fn <- seqExampleFileName("gds"))
-# or gds.fn <- "C:/YourFolder/Your_GDS_File.gds"
 
 seqSummary(gds.fn)
 
 seqSummary(gds.fn, "genotype")
 
 
-######################################################
-# display
+# open a GDS file
 f <- seqOpen(gds.fn)
 
 # get 'sample.id

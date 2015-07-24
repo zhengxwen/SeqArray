@@ -15,12 +15,208 @@ seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
 {
     type <- match.arg(type)
     switch(type,
-        gds = system.file("extdata", "CEU_Exon.gds", package="SeqArray"),
-        vcf = system.file("extdata", "CEU_Exon.vcf.gz", package="SeqArray"),
+        gds =
+            system.file("extdata", "CEU_Exon.gds", package="SeqArray"),
+        vcf =
+            system.file("extdata", "CEU_Exon.vcf.gz", package="SeqArray"),
         KG_Phase1 =
             system.file("extdata", "1KG_phase1_release_v3_chr22.gds",
-            package="SeqArray")
+                package="SeqArray")
     )
+}
+
+
+
+#######################################################################
+# Export to a GDS file
+#
+seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
+    samp.var=NULL, verbose=TRUE)
+{
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.character(out.fn) & (length(out.fn)==1L))
+    stopifnot(is.null(info.var) | is.character(info.var))
+    stopifnot(is.null(fmt.var) | is.character(fmt.var))
+    stopifnot(is.null(samp.var) | is.character(samp.var))
+    stopifnot(is.logical(verbose))
+
+    #######################################################################
+
+    cp <- function(folder, sel, name, name2=NULL, show=verbose)
+    {
+        if (is.null(name2)) name2 <- name
+        if (show)
+            cat("Exporting \"", name2, "\" ...\n", sep="")
+        src <- index.gdsn(gdsfile, name2)
+        dst <- add.gdsn(folder, name, storage=src)
+        put.attr.gdsn(dst, val=src)
+        if (!is.null(sel))
+        {
+            dm <- objdesp.gdsn(src)$dim
+            ss <- vector("list", length(dm))
+            ss[[length(dm)]] <- sel
+            for (i in seq_len(length(dm)-1L))
+                ss[[i]] <- rep(TRUE, dm[i])
+            sel <- ss
+        }
+        assign.gdsn(dst, src, append=FALSE, seldim=sel)
+    }
+
+    cp2 <- function(folder, samp.sel, var.sel, name, show=verbose)
+    {
+        if (show)
+            cat("Exporting \"", name, "\" ...\n", sep="")
+
+        dat1 <- index.gdsn(gdsfile, paste(name, "data", sep="/"))
+        dat2 <- index.gdsn(gdsfile, paste(name, "~data", sep="/"), silent=TRUE)
+        idx <- index.gdsn(gdsfile, paste(name, "@data", sep="/"))
+        num <- read.gdsn(idx)
+        stopifnot(length(num) == length(var.sel))
+
+        dst1 <- add.gdsn(folder, "data", storage=dat1)
+        put.attr.gdsn(dst1, val=dat1)
+        if (!is.null(dat2))
+        {
+            dst2 <- add.gdsn(folder, "~data", storage=dat2)
+            put.attr.gdsn(dst2, val=dat2)
+        }
+        dstidx <- add.gdsn(folder, "@data", storage=idx)
+        put.attr.gdsn(dstidx, val=idx)
+
+        dm <- objdesp.gdsn(dat1)$dim
+        sel <- vector("list", length(dm))
+        for (i in seq_len(length(dm)-2L))
+            sel[[i]] <- rep(TRUE, dm[i])
+        flag <- rep(var.sel, num)
+
+        sel[[length(dm)]] <- flag
+        sel[[length(dm)-1L]] <- samp.sel
+        assign.gdsn(dst1, dat1, append=FALSE, seldim=sel)
+
+        if (!is.null(dat2))
+        {
+            sel[[length(dm)]] <- samp.sel
+            sel[[length(dm)-1L]] <- flag
+            assign.gdsn(dst2, dat2, append=FALSE, seldim=sel)
+        }
+
+        assign.gdsn(dstidx, idx, append=FALSE, seldim=var.sel)
+    }
+
+    cp.info <- function(folder, sel, name, name2, show=verbose)
+    {
+        if (show)
+            cat("Exporting \"", name2, "\" ...\n", sep="")
+        src <- index.gdsn(gdsfile, name2)
+        idx <- index.gdsn(gdsfile, .var_path(name2, "@"), silent=TRUE)
+
+        dst <- add.gdsn(folder, name, storage=src)
+        put.attr.gdsn(dst, val=src)
+        if (!is.null(idx))
+        {
+            dstidx <- add.gdsn(folder, paste("@", name, sep=""), storage=idx)
+            put.attr.gdsn(dstidx, val=idx)
+        }
+
+        dm <- objdesp.gdsn(src)$dim
+        ss <- vector("list", length(dm))
+        ss[[length(dm)]] <- sel
+        for (i in seq_len(length(dm)-1L))
+            ss[[i]] <- rep(TRUE, dm[i])
+        assign.gdsn(dst, src, append=FALSE, seldim=ss)
+
+        if (!is.null(idx))
+            assign.gdsn(dstidx, idx, append=FALSE, seldim=sel)
+    }
+
+    #######################################################################
+
+    # create the GDS file
+    outfile <- createfn.gds(out.fn)
+    on.exit({ closefn.gds(outfile) })
+
+    # copy folders and attributes
+    put.attr.gdsn(outfile$root, val=gdsfile$root)
+    copyto.gdsn(outfile, index.gdsn(gdsfile, "description"))
+
+    # the selection
+    S <- seqGetFilter(gdsfile)
+
+    ## sample.id, etc
+    cp(outfile, S$sample.sel, "sample.id")
+    cp(outfile, S$variant.sel, "variant.id")
+    cp(outfile, S$variant.sel, "position")
+    cp(outfile, S$variant.sel, "chromosome")
+    cp(outfile, S$variant.sel, "allele")
+
+    ## genotype
+    node <- addfolder.gdsn(outfile, "genotype")
+    put.attr.gdsn(node, val=index.gdsn(gdsfile, "genotype"))
+    cp2(node, S$sample.sel, S$variant.sel, "genotype")
+
+    if (prod(objdesp.gdsn(index.gdsn(gdsfile, "genotype/extra.index"))$dim) <= 0)
+    {
+        copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra.index"))
+        copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra"))
+    } else  # TODO
+        stop("Not implemented in \"genotype/extra.index\".")
+
+    ## annotation
+    node <- addfolder.gdsn(outfile, "annotation")
+    put.attr.gdsn(node, val=index.gdsn(gdsfile, "annotation"))
+    node.info <- NULL
+    node.fmt <- NULL
+    lst <- ls.gdsn(index.gdsn(gdsfile, "annotation"))
+    for (nm in lst)
+    {
+        if (nm == "info")
+        {
+            if (is.null(node.info))
+            {
+                node.info <- addfolder.gdsn(node, "info")
+                put.attr.gdsn(node.info,
+                    val=index.gdsn(gdsfile, "annotation/info"))
+            }
+            lst.info <- ls.gdsn(index.gdsn(gdsfile, "annotation/info"))
+            for (nm2 in lst.info)
+            {
+                cp.info(node.info, S$variant.sel, nm2,
+                    paste("annotation", "info", nm2, sep="/"))
+            }
+        } else if (nm == "format")
+        {
+            if (is.null(node.fmt))
+            {
+                node.fmt <- addfolder.gdsn(node, "format")
+                put.attr.gdsn(node.fmt,
+                    val=index.gdsn(gdsfile, "annotation/format"))
+            }
+            lst.fmt <- ls.gdsn(index.gdsn(gdsfile, "annotation/format"))
+            for (nm2 in lst.fmt)
+            {
+                s <- paste("annotation", "format", nm2, sep="/")
+                n2 <- addfolder.gdsn(node.fmt, nm2)
+                put.attr.gdsn(n2, val=index.gdsn(gdsfile, s))
+                cp2(n2, S$sample.sel, S$variant.sel, s)
+            }
+        } else {
+            cp(node, S$variant.sel, nm, paste("annotation", nm, sep="/"))
+        }
+    }
+
+    ## sample.annotation
+    node <- addfolder.gdsn(outfile, "sample.annotation")
+    n2 <- index.gdsn(gdsfile, "sample.annotation", silent=TRUE)
+    if (!is.null(n2))
+    {
+        put.attr.gdsn(node, val=n2)
+        lst <- ls.gdsn(n2)
+        for (nm in lst)
+            cp(node, S$sample.sel, nm, paste("sample.annotation", nm, sep="/"))
+    }
+
+    # output
+    invisible(normalizePath(out.fn))
 }
 
 
@@ -28,41 +224,33 @@ seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
 #######################################################################
 # Merge multiple GDS files
 #
-seqMerge <- function(gds.fn, out.fn, compress.option = seqCompress.Option(),
+seqMerge <- function(gds.fn, out.fn,
+    compress.option = seqCompress.Option(),
     verbose = TRUE)
 {
     # check
-    stopifnot(is.character(gds.fn) & (length(gds.fn)>0))
-    stopifnot(is.character(out.fn) & (length(out.fn)==1))
-    stopifnot(is.logical(verbose) & (length(verbose)==1))
+    stopifnot(is.character(gds.fn))
+    if (length(gds.fn) <= 1L)
+        stop("'gds.fn' should have more than one files.")
+    stopifnot(is.character(out.fn) & (length(out.fn)==1L))
+    stopifnot(is.logical(verbose))
 
-
-    # define functions
-    compress <- function(var.name)
-    {
-        if (var.name %in% names(compress.option))
-            compress.option[[var.name]]
-        else
-            ""
-    }
-
-
-    ##################################################
-    # open GDS files
-
-    opfile <- vector("list", length(gds.fn))
+    ## open GDS files
+    gdsList <- vector("list", length(gds.fn))
     on.exit({
-        for (i in 1:length(opfile))
+        for (i in seq_len(length(gdsList)))
         {
-            if (!is.null(opfile[[i]]))
-                closefn.gds(opfile[[i]])
+            if (!is.null(gdsList[[i]]))
+                seqClose(gdsList[[i]])
         }
     })
+    for (i in seq_len(length(gds.fn)))
+        gdsList[[i]] <- seqOpen(gds.fn[i])
 
-    # for - loop
+    # for-loop
     samp.list <- list()
-    variant.num <- 0
-    for (i in 1:length(gds.fn))
+    variant.num <- 0L
+    for (i in seq_len(length(gds.fn)))
     {
         if (verbose)
             cat(sprintf("Open (%02d): %s\n", i, gds.fn[i]))

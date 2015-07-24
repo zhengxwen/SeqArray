@@ -29,30 +29,30 @@ seqVCF.Header <- function(vcf.fn)
     geno.text <- NULL
 
     n <- 0L
-    for (i in 1:length(vcf.fn))
+    for (i in seq_len(length(vcf.fn)))
     {
         opfile <- file(vcf.fn[i], open="rt")
         on.exit(close(opfile))
 
         # read header
         ans <- NULL
-        while (length(s <- readLines(opfile, n=1)) > 0)
+        while (length(s <- readLines(opfile, n=1L)) > 0L)
         {
             n <- n + 1L
-            if (substr(s, 1, 6) != "#CHROM")
+            if (substr(s, 1L, 6L) != "#CHROM")
             {
-                s <- substring(s, 3)
+                s <- substring(s, 3L)
                 ans <- c(ans, s)
             } else {
-                s <- readLines(opfile, n=1)
-                if (length(s) > 0)
+                s <- readLines(opfile, n=1L)
+                if (length(s) > 0L)
                 {
                     ss <- scan(text=s, what=character(), sep="\t", quiet=TRUE)
-                    geno.text <- c(geno.text, ss[-(1:9)])
+                    geno.text <- c(geno.text, ss[-seq_len(9L)])
                 }
                 break
             }
-            if ((n %% 10000L) == 0)
+            if ((n %% 10000L) == 0L)
             {
                 warning(sprintf(
                 "There are too many lines in the header (>= %d). ", n),
@@ -79,13 +79,13 @@ seqVCF.Header <- function(vcf.fn)
     {
         # split by "="
         x <- as.integer(regexpr("=", txt, fixed=TRUE))
-        rv <- matrix("", nrow=length(txt), ncol=2)
-        for (i in 1:length(txt))
+        rv <- matrix("", nrow=length(txt), ncol=2L)
+        for (i in seq_len(length(txt)))
         {
-            if (x[i] > 0)
+            if (x[i] > 0L)
             {
-                rv[i,1] <- substring(txt[i], 1, x[i]-1)
-                rv[i,2] <- substring(txt[i], x[i]+1)
+                rv[i,1L] <- substring(txt[i], 1L, x[i]-1L)
+                rv[i,2L] <- substring(txt[i], x[i]+1L)
             }
         }
         rv
@@ -93,14 +93,14 @@ seqVCF.Header <- function(vcf.fn)
 
 
     #########################################################
-    # get names and values, length(txt) == 1
+    # get names and values, length(txt) == 1L
 
     val.data.frame <- function(txt, check.name)
     {
-        if (substr(txt, 1, 1) == "<")
-            txt <- substring(txt, 2)
+        if (substr(txt, 1L, 1L) == "<")
+            txt <- substring(txt, 2L)
         if (substr(txt, nchar(txt), nchar(txt)) == ">")
-            txt <- substr(txt, 1, nchar(txt) - 1)
+            txt <- substr(txt, 1L, nchar(txt)-1L)
 
         rv <- value.string(scan(text=txt, what = character(),
             sep = ",", quote="\"", quiet=TRUE))
@@ -111,18 +111,18 @@ seqVCF.Header <- function(vcf.fn)
         {
             if (nrow(rv) == length(check.name))
             {
-                for (i in 1:nrow(rv))
+                for (i in seq_len(nrow(rv)))
                 {
-                    if (tolower(rv[i,1]) == tolower(check.name[i]))
+                    if (tolower(rv[i,1L]) == tolower(check.name[i]))
                     {
-                        ans[[ check.name[i] ]] <- rv[i,2]
+                        ans[[ check.name[i] ]] <- rv[i,2L]
                     } else
                         return(NULL)
                 }
             }
         } else {
-            for (i in 1:nrow(rv))
-                ans[[ rv[i,1] ]] <- rv[i,2]
+            for (i in seq_len(nrow(rv)))
+                ans[[ rv[i,1L] ]] <- rv[i,2L]
         }
         as.data.frame(ans, stringsAsFactors=FALSE)
     }
@@ -136,7 +136,7 @@ seqVCF.Header <- function(vcf.fn)
         {
             N <- suppressWarnings(as.integer(number))
             if (is.finite(N))
-                N >= 0
+                N >= 0L
             else
                 FALSE
         } else
@@ -171,24 +171,24 @@ seqVCF.Header <- function(vcf.fn)
     }
 
     ans <- value.string(ans)
-    ans <- data.frame(id=ans[,1], value=ans[,2], stringsAsFactors=FALSE)
+    ans <- data.frame(id=ans[,1L], value=ans[,2L], stringsAsFactors=FALSE)
 
     #########################################################
     # fileformat=VCFv4.1
 
     s <- ans$value[ans$id == "fileformat"]
-    if (length(s) < 1)
+    if (length(s) < 1L)
         stop("no defined fileformat!")
-    else if (length(s) > 1)
+    else if (length(s) > 1L)
         stop("Multiple fileformat!")
-    fileformat <- s[1]
+    fileformat <- s[1L]
     ans <- ans[ans$id != "fileformat", ]
 
     #########################################################
     # assembly=url
 
     s <- ans$value[ans$id == "assembly"]
-    assembly <- if (length(s) > 0) s else NULL
+    assembly <- if (length(s) > 0L) s else NULL
     ans <- ans[ans$id != "assembly", ]
 
 
@@ -304,19 +304,20 @@ seqVCF.SampID <- function(vcf.fn)
 {
     # check
     stopifnot(is.character(vcf.fn))
-    stopifnot(length(vcf.fn) == 1)
+    stopifnot(length(vcf.fn) == 1L)
 
     # open the vcf file
-    opfile <- file(vcf.fn[1], open="rt")
+    opfile <- file(vcf.fn[1L], open="rt")
     on.exit(close(opfile))
 
     # read header
     samp.id <- NULL
-    while (length(s <- readLines(opfile, n=1)) > 0)
+    while (length(s <- readLines(opfile, n=1L)) > 0L)
     {
-        if (substr(s, 1, 6) == "#CHROM")
+        if (substr(s, 1L, 6L) == "#CHROM")
         {
-            samp.id <- scan(text=s, what=character(0), sep="\t", quiet=TRUE)[-c(1:9)]
+            samp.id <- scan(text=s, what=character(0), sep="\t",
+                quiet=TRUE)[-seq_len(9)]
             break
         }
     }
@@ -339,16 +340,16 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 {
     # check
     stopifnot(is.character(vcf.fn) & is.vector(vcf.fn))
-    stopifnot(length(vcf.fn) > 0)
+    stopifnot(length(vcf.fn) > 0L)
 
     stopifnot(is.character(out.fn) & is.vector(out.fn))
-    stopifnot(length(out.fn) == 1)
+    stopifnot(length(out.fn) == 1L)
 
     stopifnot(is.null(header) | inherits(header, "SeqVCFHeaderClass"))
     stopifnot(inherits(compress.option, "SeqGDSCompressFlagClass"))
 
     stopifnot(is.character(genotype.var.name) & is.vector(genotype.var.name))
-    stopifnot(length(genotype.var.name) == 1)
+    stopifnot(length(genotype.var.name) == 1L)
     stopifnot(!is.na(genotype.var.name))
 
     stopifnot(is.null(info.import) |
@@ -359,20 +360,20 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.character(ignore.chr.prefix))
 
     stopifnot(is.logical(raise.error) & is.vector(raise.error))
-    stopifnot(length(raise.error) == 1)
+    stopifnot(length(raise.error) == 1L)
 
     stopifnot(is.logical(verbose) & is.vector(verbose))
-    stopifnot(length(verbose) == 1)
+    stopifnot(length(verbose) == 1L)
 
 
     # check sample id
     samp.id <- NULL
-    for (i in 1:length(vcf.fn))
+    for (i in seq_len(length(vcf.fn)))
     {
         if (is.null(samp.id))
         {
             samp.id <- seqVCF.SampID(vcf.fn[i])
-            if (length(samp.id) <= 0)
+            if (length(samp.id) <= 0L)
                 stop("There is no sample in the VCF file.")
         } else {
             tmp <- seqVCF.SampID(vcf.fn[i])
@@ -417,18 +418,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     tmp <- FALSE
     if (!is.null(header$format))
     {
-        if (nrow(header$format) > 0)
+        if (nrow(header$format) > 0L)
             tmp <- TRUE
     }
     if (tmp)
     {
         geno_idx <- which(header$format$ID == genotype.var.name)
-        if (length(geno_idx) <= 0)
+        if (length(geno_idx) <= 0L)
         {
             stop(sprintf(
             "There is no variable in the FORMAT field according to '%s'.",
                 genotype.var.name))
-        } else if (length(geno_idx) > 1)
+        } else if (length(geno_idx) > 1L)
         {
             stop(sprintf(
             "There are more than one variable in the FORMAT field according to '%s'.",
@@ -473,22 +474,22 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         put.attr.gdsn(n, "vcf.assembly", header$assembly)
     if (!is.null(header$filter))
     {
-        if (nrow(header$filter) > 0)
+        if (nrow(header$filter) > 0L)
             put.attr.gdsn(add.gdsn(n, "vcf.filter", header$filter), "R.invisible")
     }
     if (!is.null(header$alt))
     {
-        if (nrow(header$alt) > 0)
+        if (nrow(header$alt) > 0L)
             put.attr.gdsn(add.gdsn(n, "vcf.alt", header$alt), "R.invisible")
     }
     if (!is.null(header$contig))
     {
-        if (nrow(header$contig) > 0)
+        if (nrow(header$contig) > 0L)
             put.attr.gdsn(add.gdsn(n, "vcf.contig", header$contig), "R.invisible")
     }
     if (!is.null(header$header))
     {
-        if (nrow(header$header) > 0)
+        if (nrow(header$header) > 0L)
             put.attr.gdsn(add.gdsn(n, "vcf.header", header$header), "R.invisible")
     }
 
@@ -505,68 +506,68 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # add basic site information
 
     # add variant.id
-    add.gdsn(gfile, "variant.id", storage="int32", valdim=c(0),
+    add.gdsn(gfile, "variant.id", storage="int32", valdim=0L,
         compress=compress("variant.id"))
 
     # add position
     # TODO: need to check whether position can be stored in 'int32'
-    add.gdsn(gfile, "position", storage="int32", valdim=c(0),
+    add.gdsn(gfile, "position", storage="int32", valdim=0L,
         compress=compress("position"))
 
     # add chromosome
-    add.gdsn(gfile, "chromosome", storage="string", valdim=c(0),
+    add.gdsn(gfile, "chromosome", storage="string", valdim=0L,
         compress=compress("chromosome"))
 
     # add allele
-    add.gdsn(gfile, "allele", storage="string", valdim=c(0),
+    add.gdsn(gfile, "allele", storage="string", valdim=0L,
         compress=compress("allele"))
 
     # add a folder for genotypes
     varGeno <- addfolder.gdsn(gfile, "genotype")
-    put.attr.gdsn(varGeno, "VariableName", genotype.var.name[1])
-    put.attr.gdsn(varGeno, "Description", geno_format$Description[1])
+    put.attr.gdsn(varGeno, "VariableName", genotype.var.name[1L])
+    put.attr.gdsn(varGeno, "Description", geno_format$Description[1L])
 
     # add data to the folder of genotype
-    if (header$num.ploidy > 1)
+    if (header$num.ploidy > 1L)
     {
         geno.node <- add.gdsn(varGeno, "data", storage="bit2",
-            valdim=c(header$num.ploidy, nSamp, 0),
+            valdim=c(header$num.ploidy, nSamp, 0L),
             compress=compress("genotype"))
     } else {
         geno.node <- add.gdsn(varGeno, "data", storage="bit2",
-            valdim=c(nSamp, 0), compress=compress("genotype"))
+            valdim=c(nSamp, 0L), compress=compress("genotype"))
     }
-    node <- add.gdsn(varGeno, "@data", storage="uint8", valdim=c(0),
-        compress=compress("genotype"))
-    put.attr.gdsn(node, "R.invisible")
+    node <- add.gdsn(varGeno, "@data", storage="uint8", valdim=0L,
+        compress=compress("genotype"), visible=FALSE)
 
-    node <- add.gdsn(varGeno, "extra.index", storage="int32", valdim=c(3,0),
-        compress=compress("genotype.extra"))
-    put.attr.gdsn(node, "R.colnames", c("sample.index", "variant.index", "length"))
-    add.gdsn(varGeno, "extra", storage="int16", valdim=c(0),
+    node <- add.gdsn(varGeno, "extra.index", storage="int32",
+        valdim=c(3L,0L), compress=compress("genotype.extra"))
+    put.attr.gdsn(node, "R.colnames",
+        c("sample.index", "variant.index", "length"))
+    add.gdsn(varGeno, "extra", storage="int16", valdim=0L,
         compress=compress("genotype.extra"))
 
 
     # add phase folder
-    if (header$num.ploidy > 1)
+    if (header$num.ploidy > 1L)
     {
         varPhase <- addfolder.gdsn(gfile, "phase")
         # add data
-        if (header$num.ploidy > 2)
+        if (header$num.ploidy > 2L)
         {
             add.gdsn(varPhase, "data", storage="bit1",
-                valdim=c(header$num.ploidy-1, nSamp, 0),
+                valdim=c(header$num.ploidy-1L, nSamp, 0L),
                 compress=compress("phase"))
         } else {
-            add.gdsn(varPhase, "data", storage="bit1", valdim=c(nSamp, 0),
+            add.gdsn(varPhase, "data", storage="bit1", valdim=c(nSamp, 0L),
                 compress=compress("phase"))
         }
 
         node <- add.gdsn(varPhase, "extra.index", storage="int32",
-            valdim=c(3,0), compress=compress("phase.extra"))
+            valdim=c(3L,0L), compress=compress("phase.extra"))
         put.attr.gdsn(node, "R.colnames",
             c("sample.index", "variant.index", "length"))
-        add.gdsn(varPhase, "extra", storage="bit1", valdim=c(0),
+        add.gdsn(varPhase, "extra", storage="bit1", valdim=0L,
             compress=compress("phase.extra"))
     }
 
@@ -577,15 +578,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     varAnnot <- addfolder.gdsn(gfile, "annotation")
 
     # add id
-    add.gdsn(varAnnot, "id", storage="string", valdim=c(0),
+    add.gdsn(varAnnot, "id", storage="string", valdim=0L,
         compress=compress("id"))
 
     # add qual
-    add.gdsn(varAnnot, "qual", storage="float", valdim=c(0),
+    add.gdsn(varAnnot, "qual", storage="float", valdim=0L,
         compress=compress("qual"))
 
     # add filter
-    varFilter <- add.gdsn(varAnnot, "filter", storage="int32", valdim=c(0),
+    varFilter <- add.gdsn(varAnnot, "filter", storage="int32", valdim=0L,
         compress=compress("filter"))
 
 
@@ -596,7 +597,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     if (!is.null(header$info))
     {
-        if (nrow(header$info) > 0)
+        if (nrow(header$info) > 0L)
         {
             int_type <- integer(nrow(header$info))
             int_num  <- suppressWarnings(as.integer(header$info$Number))
@@ -609,11 +610,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             {
                 # INFO Type
                 switch(tolower(header$info$Type[i]),
-                    integer = { mode <- "int32"; int_type[i] <- 1 },
-                    float = { mode <- "float32"; int_type[i] <- 2 },
-                    flag = { mode <- "bit1"; int_type[i] <- 3 },
-                    character = { mode <- "string"; int_type[i] <- 4 },
-                    string = { mode <- "string"; int_type[i] <- 4 },
+                    integer = { mode <- "int32"; int_type[i] <- 1L },
+                    float = { mode <- "float32"; int_type[i] <- 2L },
+                    flag = { mode <- "bit1"; int_type[i] <- 3L },
+                    character = { mode <- "string"; int_type[i] <- 4L },
+                    string = { mode <- "string"; int_type[i] <- 4L },
                     stop(sprintf("Unknown INFO Type: %s", header$info$Type[i]))
                 )
 
@@ -624,29 +625,29 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     initdim <- as.integer(s)
                     if (mode == "bit1")
                     {
-                        if (initdim != 0)
+                        if (initdim != 0L)
                         {
                             print(header$info[i, ])
                             stop("The length of 'Flag' type should be ZERO!")
                         }
                     } else {
-                        if (initdim <= 0)
+                        if (initdim <= 0L)
                         {
                             print(header$info[i, ])
                             stop("The length should be >0.")
-                        } else if (initdim > 1)
-                            initdim <- c(initdim, 0)
+                        } else if (initdim > 1L)
+                            initdim <- c(initdim, 0L)
                         else
-                            initdim <- c(0)
+                            initdim <- 0L
                     }
                 } else {
-                    initdim <- c(0)
+                    initdim <- 0L
                     if (s == ".")
-                        int_num[i] <- -1
+                        int_num[i] <- -1L
                     else if (s == "A")
-                        int_num[i] <- -2
+                        int_num[i] <- -2L
                     else if (s == "G")
-                        int_num[i] <- -3
+                        int_num[i] <- -3L
                     else
                         stop("seqVCF2GDS: internal error!")
                 }
@@ -664,9 +665,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     {
                         node <- add.gdsn(varInfo,
                             paste("@", header$info$ID[i], sep=""),
-                            storage="int32", valdim=c(0),
-                            compress=compress("info"))
-                        put.attr.gdsn(node, "R.invisible")
+                            storage="int32", valdim=0L,
+                            compress=compress("info"), visible=FALSE)
                     }
                 }
             }
@@ -693,19 +693,19 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         else
             import.flag <- header$format$ID %in% fmt.import
     } else {
-        int_type <- integer(0)
-        int_num <- integer(0)
-        import.flag <- logical(0)
+        int_type <- integer()
+        int_num <- integer()
+        import.flag <- logical()
     }
 
     for (i in seq_len(length(int_type)))
     {
         # FORMAT Type
         switch(tolower(header$format$Type[i]),
-            integer = { mode <- "int32"; int_type[i] <- 1 },
-            float = { mode <- "float32"; int_type[i] <- 2 },
-            character = { mode <- "string"; int_type[i] <- 4 },
-            string = { mode <- "string"; int_type[i] <- 4 },
+            integer = { mode <- "int32"; int_type[i] <- 1L },
+            float = { mode <- "float32"; int_type[i] <- 2L },
+            character = { mode <- "string"; int_type[i] <- 4L },
+            string = { mode <- "string"; int_type[i] <- 4L },
             stop(sprintf("Unknown FORMAT Type: %s", header$format$Type[i]))
         )
 
@@ -719,17 +719,17 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 print(header[, i])
                 stop("The length should be >0.")
             } else if (initdim > 1)
-                initdim <- c(initdim, nSamp, 0)
+                initdim <- c(initdim, nSamp, 0L)
             else
-                initdim <- c(nSamp, 0)
+                initdim <- c(nSamp, 0L)
         } else {
-            initdim <- c(nSamp, 0)
+            initdim <- c(nSamp, 0L)
             if (s == ".")
-                int_num[i] <- -1
+                int_num[i] <- -1L
             else if (s == "A")
-                int_num[i] <- -2
+                int_num[i] <- -2L
             else if (s == "G")
-                int_num[i] <- -3
+                int_num[i] <- -3L
             else
                 stop("seqVCF2GDS: internal error!")
         }
@@ -744,9 +744,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
             add.gdsn(node, "data", storage=mode, valdim=initdim,
                 compress=compress("format"))
-            tmp <- add.gdsn(node, "@data", storage="int32", valdim=c(0),
-                compress=compress("format"))
-            put.attr.gdsn(tmp, "R.invisible")
+            tmp <- add.gdsn(node, "@data", storage="int32", valdim=0L,
+                compress=compress("format"), visible=FALSE)
         }
     }
 
@@ -771,7 +770,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     ##################################################
     # for-loop each file
-    for (i in 1:length(vcf.fn))
+    for (i in seq_len(length(vcf.fn)))
     {
         opfile <- file(vcf.fn[i], open="rt")
         on.exit({ closefn.gds(gfile); close(opfile) })
@@ -791,7 +790,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 raise.error = raise.error, verbose = verbose),
             readLines, opfile, 512L,  # 'readLines(opfile, 512L)'
             ignore.chr.prefix, new.env())
-        if (length(v) > 0)
+        if (length(v) > 0L)
         {
             put.attr.gdsn(varFilter, "R.class", "factor")
             put.attr.gdsn(varFilter, "R.levels", v)
@@ -832,7 +831,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(vcf.fn) & (length(vcf.fn)==1))
+    stopifnot(is.character(vcf.fn) & (length(vcf.fn)==1L))
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
 
@@ -844,9 +843,9 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         s <- z$info$var.name
         if (is.null(s)) s <- character()
-        if (length(setdiff(info.var, s)) > 0)
+        if (length(setdiff(info.var, s)) > 0L)
             stop(paste("Not exist:", paste(setdiff(info.var, s), collapse=",")))
-        if (length(info.var) > 0)
+        if (length(info.var) > 0L)
             z$info <- z$info[match(info.var, z$info$var.name), ]
         else
             z$info <- list()
@@ -857,9 +856,9 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         s <- z$format$var.name
         if (is.null(s)) s <- character()
-        if (length(setdiff(fmt.var, s)) > 0)
+        if (length(setdiff(fmt.var, s)) > 0L)
             stop(paste("Not exist:", paste(setdiff(fmt.var, s), collapse=",")))
-        if (length(fmt.var) > 0)
+        if (length(fmt.var) > 0L)
             z$format <- z$format[match(fmt.var, z$format$var.name), ]
         else
             z$format <- list()
@@ -876,8 +875,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # create an output text file
 
-    vcf.fn <- vcf.fn[1]
-    ext <- substring(vcf.fn, nchar(vcf.fn)-2)
+    vcf.fn <- vcf.fn[1L]
+    ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
     if (ext == ".gz")
     {
         ofile <- gzfile(vcf.fn, "wt")
@@ -940,10 +939,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         dat <- read.gdsn(n)
         nm <- names(dat)
-        for (i in 1:nrow(dat))
+        for (i in seq_len(nrow(dat)))
         {
             s <- NULL
-            for (j in 1:ncol(dat))
+            for (j in seq_len(ncol(dat)))
                 s[j] <- paste(nm[j], "=", dq(dat[i,j]), sep="")
             s <- paste(s, collapse=",")
             cat("##contig=<", s, ">\n", sep="", file=ofile)
@@ -963,7 +962,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     if (!is.null(n))
     {
         dat <- read.gdsn(n)
-        for (i in 1:nrow(dat))
+        for (i in seq_len(nrow(dat)))
         {
             cat(sprintf("##FILTER=<ID=%s,Description=%s>\n",
                 dq(dat$ID[i]), dq(dat$Description[i], TRUE)), file=ofile)
@@ -986,11 +985,11 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     if (!is.null(n))
     {
         dat <- read.gdsn(n)
-        for (i in 1:nrow(dat))
+        for (i in seq_len(nrow(dat)))
         {
-            s <- dat[i,1]
+            s <- dat[i,1L]
             if (!(s %in% c("fileDate", "source")))
-                cat("##", s, "=", dq(dat[i,2]), "\n", sep="", file=ofile)
+                cat("##", s, "=", dq(dat[i,2L]), "\n", sep="", file=ofile)
         }
     }
 
@@ -1022,7 +1021,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     for (n in nm.info)
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile, n))
-        a$Number <- if (is.null(a$Number)) "." else a$Number[1]
+        a$Number <- if (is.null(a$Number)) "." else a$Number[1L]
         len.info <- c(len.info, a$Number)
     }
     len.info <- suppressWarnings(as.integer(len.info))
@@ -1032,7 +1031,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     for (n in nm.format)
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile, n))
-        a$Number <- if (is.null(a$Number)) "." else a$Number[1]
+        a$Number <- if (is.null(a$Number)) "." else a$Number[1L]
         len.fmt <- c(len.fmt, a$Number)
     }
     len.fmt <- suppressWarnings(as.integer(len.fmt))
@@ -1044,15 +1043,15 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # variable names
     nm <- c("chromosome", "position", "annotation/id", "allele",
         "annotation/qual", "annotation/filter", "genotype", "phase")
-    if (length(nm.info) > 0) nm <- c(nm, nm.info)
-    if (length(nm.format) > 0) nm <- c(nm, nm.format)
+    if (length(nm.info) > 0L) nm <- c(nm, nm.info)
+    if (length(nm.format) > 0L) nm <- c(nm, nm.format)
 
     s <- c("chr", "pos", "id", "allele", "qual", "filter", "geno", "phase")
     # the INFO field
-    if (length(nm.info) > 0)
+    if (length(nm.info) > 0L)
         s <- c(s, paste("info.", z$info$var.name, sep=""))
     # the FORMAT field
-    if (length(nm.format) > 0)
+    if (length(nm.format) > 0L)
         s <- c(s, paste("fmt.", z$format$var.name, sep=""))
     names(nm) <- s
 
@@ -1135,12 +1134,12 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 
     # add "genotype"
     gGeno <- add.gdsn(gfile, "genotype", storage="bit2",
-        valdim=c(length(sampid), 0), compress=compress.geno)
+        valdim=c(length(sampid), 0L), compress=compress.geno)
     put.attr.gdsn(gGeno, "sample.order")
 
     seqApply(gdsfile, "genotype", margin="by.variant", as.is="none",
         FUN = function(x) {
-            g <- colSums(x==0)
+            g <- colSums(x==0L)
             g[is.na(g)] <- 3L
             append.gdsn(gGeno, g)
     })

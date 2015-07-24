@@ -47,7 +47,7 @@ variable defined with 'Type=Flag' in the VCF format.
 }
 
 \examples{
-# the file of GDS
+# the GDS file
 gds.fn <- seqExampleFileName("gds")
 
 file.copy(gds.fn, "test.gds", overwrite=TRUE)

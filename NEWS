@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.7
+CHANGES IN VERSION 1.9.0-1.9.8
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -17,6 +17,8 @@ CHANGES IN VERSION 1.9.0-1.9.7
 
     o parallel implementation in `seqNumAllele()`, `seqMissing()` and
       `seqAlleleFreq()`
+
+    o a new function `seqExport()`
 
 
 CHANGES IN VERSION 1.8.0

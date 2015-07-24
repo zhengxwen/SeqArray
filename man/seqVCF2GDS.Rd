@@ -61,9 +61,8 @@ to merge genomic variants if VCF data are divided by chromosomes.
 }
 
 \examples{
-# the file name of VCF
+# the VCF file
 vcf.fn <- seqExampleFileName("vcf")
-# or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # convert
 seqVCF2GDS(vcf.fn, "tmp.gds")
@@ -90,6 +89,10 @@ seqVCF2GDS(vcf.fn, "tmp.gds",
 # display
 (f <- seqOpen("tmp.gds"))
 seqClose(f)
+
+
+# delete the temporary file
+unlink("tmp.gds")
 }
 
 \keyword{gds}

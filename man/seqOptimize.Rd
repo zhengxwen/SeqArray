@@ -47,6 +47,8 @@ seqOptimize("tmp.gds", target="by.sample")
 # close
 seqClose(f)
 
+
+# delete the temporary file
 unlink("tmp.gds")
 }
 

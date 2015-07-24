@@ -1,5 +1,6 @@
 ---
-title: "SeqArray: an R/Bioconductor Package for Big Data Management of Genome-Wide Sequencing Variants"
+title: 'SeqArray: an R/Bioconductor Package for Big Data Management of Genome-Wide
+  Sequencing Variants'
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
 date: "Jun 23, 2015"
 output:
@@ -9,11 +10,8 @@ output:
   pdf_document:
     toc: yes
     toc_depth: 3
-vignette: >
-  %\VignetteIndexEntry{SeqArray Tutorial}
-  %\VignetteDepends{gdsfmt}
-  %\VignetteKeywords{GWAS, SNP, Variants}
-  %\VignetteEngine{knitr::rmarkdown}
+vignette: |
+  %\VignetteIndexEntry{SeqArray Tutorial} %\VignetteDepends{gdsfmt} %\VignetteKeywords{GWAS, SNP, Variants} %\VignetteEngine{knitr::rmarkdown}
 ---
 
 
@@ -262,6 +260,7 @@ unlink("tmp.gds")
 | seqNumAllele  | Number of alleles per site. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
 | seqMissing    | Missing genotype percentage. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
 | seqAlleleFreq | Allele frequency. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
+| ...           | [LINK](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)  |
 
 ~
 

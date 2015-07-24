@@ -29,9 +29,8 @@ provided in the future version.
 }
 
 \examples{
-# the file name of VCF
+# the VCF file
 (vcf.fn <- seqExampleFileName("vcf"))
-# or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # convert
 seqVCF2GDS(vcf.fn, "tmp.gds")
@@ -50,6 +49,8 @@ index.gdsn(f, "genotype/~data")
 
 # close
 seqClose(f)
+
+# delete the temporary file
 unlink("tmp.gds")
 }
 

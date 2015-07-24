@@ -25,9 +25,8 @@ seqSetFilterChrom(gdsfile, include=NULL, is.num=NA, from.bp=NaN, to.bp=NaN)
 }
 
 \examples{
-# the file of GDS
-gds.fn <- seqExampleFileName("gds")
-# or gds.fn <- "C:/YourFolder/Your_GDS_File.gds"
+# the GDS file
+(gds.fn <- seqExampleFileName("gds"))
 
 f <- seqOpen(gds.fn)
 seqSummary(f)

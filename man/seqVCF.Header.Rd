@@ -43,7 +43,7 @@ seqVCF.Header(vcf.fn)
 }
 
 \examples{
-# the file name of VCF
+# the VCF file
 (vcf.fn <- seqExampleFileName("vcf"))
 # or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 

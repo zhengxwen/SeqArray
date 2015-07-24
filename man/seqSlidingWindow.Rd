@@ -51,9 +51,8 @@ high-speed memory instead of disk.
 }
 
 \examples{
-# the file of GDS
-gds.fn <- seqExampleFileName("gds")
-# or gds.fn <- "C:/YourFolder/Your_GDS_File.gds"
+# the GDS file
+(gds.fn <- seqExampleFileName("gds"))
 
 # display
 (f <- seqOpen(gds.fn))

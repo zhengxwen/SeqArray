@@ -234,5 +234,12 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleStr(SEXP allele)
 }
 
 
+// ======================================================================
+
+/// 
+COREARRAY_DLL_EXPORT SEXP FC_IBD_OneLocus(SEXP allele)
+{
+	return R_NilValue;
+}
 
 } // extern "C"

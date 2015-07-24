@@ -20,6 +20,7 @@ function.list <- c(
 	"seqCompress.Option",
 	"seqDelete",
 	"seqExampleFileName",
+	"seqExport",
 	"seqGDS2SNP",
 	"seqGDS2VCF",
 	"seqGetData",
