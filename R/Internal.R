@@ -25,6 +25,16 @@
 # Internal C function
 #
 
+.cfunction0 <- function(name)
+{
+    fn <- function(x) { NULL }
+    f <- quote(.Call(SEQ_ExternalName0))
+    f[[1L]] <- .Call
+    f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
+    body(fn) <- f
+    fn
+}
+
 .cfunction <- function(name)
 {
     fn <- function(x) { NULL }
@@ -39,6 +49,27 @@
 {
     fn <- function(x, y) { NULL }
     f <- quote(.Call(SEQ_ExternalName2, x, y))
+    f[[1L]] <- .Call
+    f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
+    body(fn) <- f
+    fn
+}
+
+.cfunction3 <- function(name)
+{
+    fn <- function(x, y, z) { NULL }
+    f <- quote(.Call(SEQ_ExternalName3, x, y, z))
+    f[[1L]] <- .Call
+    f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
+    body(fn) <- f
+    fn
+}
+
+.cfunction4 <- function(name)
+{
+    fn <- function(w, x, y, z) { NULL }
+    f <- quote(.Call(SEQ_ExternalName4, w, x, y, z))
+    f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
     body(fn) <- f
     fn

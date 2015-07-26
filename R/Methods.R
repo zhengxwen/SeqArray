@@ -686,3 +686,49 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
             }, ref=ref.allele)
     }
 }
+
+
+
+#######################################################################
+# IBD
+#
+ssIBD <- function(gdsfile, method=c("OneLocus", "TwoLoci"),
+    parallel=getOption("gds.parallel", FALSE))
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    method <- match.arg(method)
+
+    if (method == "OneLocus")
+    {
+        v <- seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(gdsfile)
+            {
+                n <- .seldim(gdsfile)[1L]
+                size <- n * (n + 1L) / 2L
+                # m[,1] -- numerator, m[,2] -- denominator
+                m <- matrix(0.0, nrow=size, ncol=2L)
+                seqApply(gdsfile, "genotype", margin = "by.variant",
+                    as.is = "none", FUN = .cfunction3("FC_IBD_OneLocus"),
+                    y = m, z = raw(size))
+                m
+            }, .combine="+")
+    } else if (method == "TwoLoci")
+    {
+        v <- seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(gdsfile)
+            {
+                n <- .seldim(gdsfile)[1L]
+                size <- n * (n + 1L) / 2L
+                # m[,1] -- numerator, m[,2] -- denominator
+                m <- matrix(0.0, nrow=size, ncol=2L)
+                .cfunction0("FC_IBD_TwoLoci_Init")()
+                seqApply(gdsfile, "genotype", margin = "by.variant",
+                    as.is = "none", FUN = .cfunction3("FC_IBD_TwoLoci"),
+                    y = m, z = raw(size))
+                m
+            }, .combine="+")
+    }
+
+    .cfunction2("FC_IBD_Div")(v, .seldim(gdsfile)[1L])
+}

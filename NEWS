@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.8
+CHANGES IN VERSION 1.9.0-1.9.9
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -19,6 +19,8 @@ CHANGES IN VERSION 1.9.0-1.9.8
       `seqAlleleFreq()`
 
     o a new function `seqExport()`
+
+    o v1.9.9: fix a bug (https://github.com/zhengxwen/SeqArray/issues/7)
 
 
 CHANGES IN VERSION 1.8.0

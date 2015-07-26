@@ -823,7 +823,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		vector<string> filter_list;
 
 		// variant id (integer)
-		C_Int32 variant_index = 1;
+		C_Int32 variant_index = GDS_Array_GetTotalCount(varIdx);
 
 		// the string buffer
 		string name, value;
@@ -894,8 +894,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 
 			// -----------------------------------------------------
 			// variant id
-			GDS_Array_AppendData(varIdx, 1, &variant_index, svInt32);
 			variant_index ++;
+			GDS_Array_AppendData(varIdx, 1, &variant_index, svInt32);
 
 
 			// -----------------------------------------------------

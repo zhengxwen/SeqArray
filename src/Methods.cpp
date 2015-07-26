@@ -51,9 +51,8 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 /// Calculate the missing rate per sample
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
 {
-	SEXP dim = getAttrib(Geno, R_DimSymbol);
-	int num_ploidy = INTEGER(dim)[0];
-	int num_sample = INTEGER(dim)[1];
+	int *pdim = INTEGER(getAttrib(Geno, R_DimSymbol));
+	int num_ploidy=pdim[0], num_sample=pdim[1];
 
 	int *pG = INTEGER(Geno);
 	int *pS = INTEGER(sum);
@@ -236,9 +235,182 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleStr(SEXP allele)
 
 // ======================================================================
 
-/// 
-COREARRAY_DLL_EXPORT SEXP FC_IBD_OneLocus(SEXP allele)
+/// Get a matrix from the numerators and denominators
+COREARRAY_DLL_EXPORT SEXP FC_IBD_Div(SEXP NumeratorDenominator, SEXP N)
 {
+	size_t n = Rf_asInteger(N);
+	size_t size = n * (n + 1) / 2;
+	if (XLENGTH(NumeratorDenominator) != 2*size)
+		error("Invalid 'numerator' and 'denominator'.");
+
+	SEXP rv_ans = PROTECT(Rf_allocMatrix(REALSXP, n, n));
+	double *base = REAL(rv_ans);
+	double *pN = REAL(NumeratorDenominator);
+	double *pD = REAL(NumeratorDenominator) + size;
+	for (size_t i=0; i < n; i++)
+	{
+		for (size_t j=i; j < n; j++)
+		{
+			base[i*n + j] = base[j*n + i] = (*pN) / (*pD);
+			pN ++; pD ++;
+		}
+	}
+	UNPROTECT(1);
+
+	return rv_ans;
+}
+
+#define MISSING    0x7F
+
+/// Calculate average IBD over loci
+COREARRAY_DLL_EXPORT SEXP FC_IBD_OneLocus(SEXP Geno, SEXP NumeratorDenominator,
+	SEXP M_ij)
+{
+	int *pdim = INTEGER(getAttrib(Geno, R_DimSymbol));
+	int num_ploidy=pdim[0], num_sample=pdim[1];
+	if (num_ploidy != 2)
+		error("Should be diploid.");
+
+	C_Int8 *pM = (C_Int8*)RAW(M_ij);
+	int *g_i = INTEGER(Geno);
+	C_Int64 Sum = 0;
+	int nSum = 0;
+
+	for (int i=0; i < num_sample; i++, g_i+=2)
+	{
+		if ((g_i[0] != NA_INTEGER) && (g_i[1] != NA_INTEGER))
+		{
+			*pM ++ = (g_i[0] == g_i[1]) ? 4 : 0;  // 4 * M_i
+			int *g_j = g_i + 2;
+
+			for (int j=i+1; j < num_sample; j++, g_j+=2)
+			{
+				if ((g_j[0] != NA_INTEGER) && (g_j[1] != NA_INTEGER))
+				{
+					C_Int8 val = 0;  // 4 * M_{ij}
+					if (g_i[0] == g_j[0]) val++;
+					if (g_i[0] == g_j[1]) val++;
+					if (g_i[1] == g_j[0]) val++;
+					if (g_i[1] == g_j[1]) val++;
+					*pM ++ = val;
+					Sum += val; nSum ++;
+				} else
+					*pM ++ = MISSING;
+			}
+		} else {
+			for (int j=i; j < num_sample; j++)
+				*pM ++ = MISSING;
+		}
+	}
+
+	if (nSum > 0)
+	{
+		size_t n = size_t(num_sample) * (num_sample + 1) / 2;
+		double Mb = (double)Sum / nSum * 0.25;
+		double OneMb = 1 - Mb;
+		double *pN = REAL(NumeratorDenominator);
+		double *pD = REAL(NumeratorDenominator) + n;
+		C_Int8 *pM = (C_Int8*)RAW(M_ij);
+		for (; n > 0; n--)
+		{
+			if (*pM != MISSING)
+			{
+				*pN += (*pM) * 0.25 - Mb;
+				*pD += OneMb;
+			}
+			pN ++; pD ++; pM ++;
+		}
+	}
+
+	return R_NilValue;
+}
+
+
+static vector<int> IBD_TwoLoci_GenoBuffer;
+
+COREARRAY_DLL_EXPORT SEXP FC_IBD_TwoLoci_Init()
+{
+	IBD_TwoLoci_GenoBuffer.clear();
+	return R_NilValue;
+}
+
+/// Calculate average IBD over loci
+COREARRAY_DLL_EXPORT SEXP FC_IBD_TwoLoci(SEXP Geno, SEXP NumeratorDenominator,
+	SEXP M_ij)
+{
+	int *pdim = INTEGER(getAttrib(Geno, R_DimSymbol));
+	int num_ploidy=pdim[0], num_sample=pdim[1];
+	if (num_ploidy != 2)
+		error("Should be diploid.");
+
+	if (IBD_TwoLoci_GenoBuffer.empty())
+	{
+		IBD_TwoLoci_GenoBuffer.resize(num_sample*2);
+		return R_NilValue;
+	}
+
+	C_Int8 *pM = (C_Int8*)RAW(M_ij);
+	int *g1_i = &IBD_TwoLoci_GenoBuffer[0];
+	int *g2_i = INTEGER(Geno);
+	C_Int64 Sum = 0;
+	int nSum = 0;
+
+	for (int i=0; i < num_sample; i++, g1_i+=2, g2_i+=2)
+	{
+		if ((g1_i[0] != NA_INTEGER) && (g1_i[1] != NA_INTEGER) &&
+			(g2_i[0] != NA_INTEGER) && (g2_i[1] != NA_INTEGER))
+		{
+			const int h1_i = g1_i[0] | (g2_i[0] << 16);
+			const int h2_i = g1_i[1] | (g2_i[1] << 16);
+			*pM ++ = (h1_i == h2_i) ? 4 : 0;  // 4 * M_i
+			int *g1_j = g1_i + 2;
+			int *g2_j = g2_i + 2;
+
+			for (int j=i+1; j < num_sample; j++, g1_j+=2, g2_j+=2)
+			{
+				if ((g1_j[0] != NA_INTEGER) && (g1_j[1] != NA_INTEGER) &&
+					(g2_j[0] != NA_INTEGER) && (g2_j[1] != NA_INTEGER))
+				{
+					const int h1_j = g1_j[0] | (g2_j[0] << 16);
+					const int h2_j = g1_j[1] | (g2_j[1] << 16);
+					C_Int8 val = 0;  // 4 * M_{ij}
+					if (h1_i == h1_j) val++;
+					if (h1_i == h2_j) val++;
+					if (h2_i == h1_j) val++;
+					if (h2_i == h2_j) val++;
+					*pM ++ = val;
+					Sum += val; nSum ++;
+				} else
+					*pM ++ = MISSING;
+			}
+		} else {
+			for (int j=i; j < num_sample; j++)
+				*pM ++ = MISSING;
+		}
+	}
+
+	if (nSum > 0)
+	{
+		size_t n = size_t(num_sample) * (num_sample + 1) / 2;
+		double Mb = (double)Sum / nSum * 0.25;
+		double OneMb = 1 - Mb;
+		double *pN = REAL(NumeratorDenominator);
+		double *pD = REAL(NumeratorDenominator) + n;
+		C_Int8 *pM = (C_Int8*)RAW(M_ij);
+		for (; n > 0; n--)
+		{
+			if (*pM != MISSING)
+			{
+				*pN += (*pM) * 0.25 - Mb;
+				*pD += OneMb;
+			}
+			pN ++; pD ++; pM ++;
+		}
+	}
+
+	// copy genotype to the buffer
+	memcpy(&IBD_TwoLoci_GenoBuffer[0], INTEGER(Geno), sizeof(int)*num_sample*2);
+
 	return R_NilValue;
 }
 

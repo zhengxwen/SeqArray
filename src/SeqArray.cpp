@@ -902,12 +902,27 @@ COREARRAY_DLL_EXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
 // the initial function when the package is loaded
 // ===========================================================
 
+COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName0()
+{
+	return R_NilValue;
+}
+
 COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName1(SEXP x)
 {
 	return R_NilValue;
 }
 
 COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName2(SEXP x, SEXP y)
+{
+	return R_NilValue;
+}
+
+COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName3(SEXP x, SEXP y, SEXP z)
+{
+	return R_NilValue;
+}
+
+COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName4(SEXP w, SEXP x, SEXP y, SEXP z)
 {
 	return R_NilValue;
 }
@@ -926,7 +941,9 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
-		CALL(SEQ_ExternalName1, 1),         CALL(SEQ_ExternalName2, 2),
+		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
+		CALL(SEQ_ExternalName2, 2),         CALL(SEQ_ExternalName3, 3),
+		CALL(SEQ_ExternalName4, 4),
 
 		CALL(SEQ_File_Init, 1),             CALL(SEQ_File_Done, 1),
 		CALL(SEQ_FilterPushEmpty, 1),       CALL(SEQ_FilterPushLast, 1),
