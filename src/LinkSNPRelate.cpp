@@ -36,7 +36,7 @@ enum TTypeGenoDim
 	RDim_SNP_X_Sample = 1   ///< genotype matrix: snp X sample
 };
 
-typedef struct
+typedef COREARRAY_DLL_LOCAL struct
 {
 	TTypeGenoDim *pGenoDimType;
 	C_Int32 *pTotalSampleNum;
@@ -131,7 +131,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
 		Obj->InitObject(CVariable::ctGenotype,
 			"genotype/data", Root, Sel.Variant.size(),
-			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
+			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
 
 		size_t SIZE = (Obj->Num_Sample) * (Obj->DLen[2]);
 		Param->GenoBuffer = new int[SIZE];

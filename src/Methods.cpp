@@ -53,7 +53,6 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
 {
 	int *pdim = INTEGER(getAttrib(Geno, R_DimSymbol));
 	int num_ploidy=pdim[0], num_sample=pdim[1];
-
 	int *pG = INTEGER(Geno);
 	int *pS = INTEGER(sum);
 

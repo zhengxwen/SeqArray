@@ -844,7 +844,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_NumOfAllele(SEXP allele_node)
 	COREARRAY_TRY
 
 		// GDS nodes
-		PdAbstractArray N = GDS_R_SEXP2Obj(allele_node);
+		PdAbstractArray N = GDS_R_SEXP2Obj(allele_node, TRUE);
 		if (GDS_Array_DimCnt(N) != 1)
 			throw ErrSeqArray("Invalid dimension of 'allele'!");
 		int Count = GetGDSObjCount(N, "allele");
@@ -937,7 +937,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	extern SEXP SEQ_GetData(SEXP, SEXP);
 	extern SEXP SEQ_Apply_Sample(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-	extern SEXP SEQ_Apply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_Apply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	static R_CallMethodDef callMethods[] =
 	{
@@ -955,7 +955,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_Summary, 2),
 
 		CALL(SEQ_GetData, 2),
-		CALL(SEQ_Apply_Sample, 6),          CALL(SEQ_Apply_Variant, 6),
+		CALL(SEQ_Apply_Sample, 6),          CALL(SEQ_Apply_Variant, 7),
 
 		{ NULL, NULL, 0 }
 	};

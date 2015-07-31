@@ -29,11 +29,12 @@ CVarApplyByVariant::CVarApplyByVariant()
 {
 	Node = IndexNode = NULL;
 	VariantSelect = NULL;
+	UseRaw = false;
 }
 
 void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 	PdGDSObj Root, int nVariant, C_BOOL *VariantSel, int nSample,
-	C_BOOL *SampleSel)
+	C_BOOL *SampleSel, bool _UseRaw)
 {
 	static const char *ErrDim = "Invalid dimension of '%s'.";
 
@@ -47,9 +48,9 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 	TotalNum_Variant = nVariant;
 	VariantSelect = VariantSel;
 	Num_Sample = GetNumOfTRUE(SampleSel, nSample);
+	UseRaw = _UseRaw;
 
 	string Path2; // the path with '@'
-
 	switch (Type)
 	{
 		case ctBasic:
@@ -206,11 +207,12 @@ void CVarApplyByVariant::ReadGenoData(int *Base)
 	GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
 	C_UInt8 *s = &Init.GENO_BUFFER[0];
 	int *p = Base;
-	for (int i=0; i < DLen[1]; i++)
+	C_BOOL *sel = SelPtr[1];
+	for (int n=DLen[1]; n > 0 ; n--)
 	{
-		if (SelPtr[1][i])
+		if (*sel++)
 		{
-			for (int j=0; j < DLen[2]; j++)
+			for (int m=DLen[2]; m > 0 ; m--)
 				*p++ = *s++;
 		} else {
 			s += DLen[2];
@@ -228,16 +230,13 @@ void CVarApplyByVariant::ReadGenoData(int *Base)
 
 		int shift = idx*2;
 		s = &Init.GENO_BUFFER[0];
-		p = Base;
-		for (int i=0; i < DLen[1]; i++)
+		p = Base; sel = SelPtr[1];
+		for (int n=DLen[1]; n > 0 ; n--)
 		{
-			if (SelPtr[1][i])
+			if (*sel++)
 			{
-				for (int j=0; j < DLen[2]; j++)
-				{
-					*p |= int(*s) << shift;
-					p ++; s ++;
-				}
+				for (int m=DLen[2]; m > 0 ; m--)
+					*p++ |= int(*s++) << shift;
 			} else {
 				s += DLen[2];
 			}
@@ -252,12 +251,72 @@ void CVarApplyByVariant::ReadGenoData(int *Base)
 	}	
 }
 
+void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
+{
+	// the size of Init.GENO_BUFFER has been check in 'Init()'
+	ssize_t SlideCnt = DLen[1] * DLen[2];
+
+	CdIterator it;
+	GDS_Iter_GetStart(Node, &it);
+	GDS_Iter_Offset(&it, C_Int64(IndexRaw)*SlideCnt);
+	GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
+	C_UInt8 *s = &Init.GENO_BUFFER[0];
+	C_UInt8 *p = Base;
+	C_BOOL *sel = SelPtr[1];
+	for (int n=DLen[1]; n > 0 ; n--)
+	{
+		if (*sel++)
+		{
+			for (int m=DLen[2]; m > 0 ; m--)
+				*p++ = *s++;
+		} else {
+			s += DLen[2];
+		}
+	}
+
+	C_UInt8 missing = 3;
+	if (NumIndexRaw > 4)
+		warning("RAW type may not be sufficient to store genotypes.");
+
+	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
+	for (int idx=1; idx < NumIndexRaw; idx ++)
+	{
+		GDS_Iter_GetStart(Node, &it);
+		GDS_Iter_Offset(&it, (C_Int64(IndexRaw) + idx)*SlideCnt);
+		GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
+
+		C_UInt8 shift = idx*2;
+		s = &Init.GENO_BUFFER[0];
+		p = Base; sel = SelPtr[1];
+		for (int n=DLen[1]; n > 0 ; n--)
+		{
+			if (*sel++)
+			{
+				for (int m=DLen[2]; m > 0 ; m--)
+					*p++ |= (*s++) << shift;
+			} else {
+				s += DLen[2];
+			}
+		}
+
+		missing = (missing << 2) | 0x03;
+	}
+	for (size_t n=CellCount; n > 0; n--)
+	{
+		if (*Base == missing) *Base = 0xFF;
+		Base ++;
+	}	
+}
+
 void CVarApplyByVariant::ReadData(SEXP Val)
 {
 	if (NumIndexRaw <= 0) return;
 	if (VarType == ctGenotype)
 	{
-		ReadGenoData(INTEGER(Val));
+		if (UseRaw)
+			ReadGenoData(RAW(Val));
+		else
+			ReadGenoData(INTEGER(Val));
 	} else {
 		C_Int32 st[3] = { IndexRaw, 0, 0 };
 		DLen[0] = NumIndexRaw;
@@ -309,20 +368,29 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 		SEXP ans = R_NilValue, dim;
 		if (COREARRAY_SV_INTEGER(SVType))
 		{
-			char classname[32];
-			classname[0] = 0;
-			GDS_Node_GetClassName(Node, classname, sizeof(classname));
-			if (strcmp(classname, "dBit1") == 0)
+			if (VarType == ctGenotype)
 			{
-				PROTECT(ans = NEW_LOGICAL(CellCount));
-			} else if (GDS_R_Is_Logical(Node))
-			{
-				PROTECT(ans = NEW_LOGICAL(CellCount));
+				if (UseRaw)
+					PROTECT(ans = NEW_RAW(CellCount));
+				else
+					PROTECT(ans = NEW_INTEGER(CellCount));
+				nProtected ++;
 			} else {
-				PROTECT(ans = NEW_INTEGER(CellCount));
-				nProtected += GDS_R_Set_IfFactor(Node, ans);
+				char classname[64];
+				classname[0] = 0;
+				GDS_Node_GetClassName(Node, classname, sizeof(classname));
+				if (strcmp(classname, "dBit1") == 0)
+				{
+					PROTECT(ans = NEW_LOGICAL(CellCount));
+				} else if (GDS_R_Is_Logical(Node))
+				{
+					PROTECT(ans = NEW_LOGICAL(CellCount));
+				} else {
+					PROTECT(ans = NEW_INTEGER(CellCount));
+					nProtected += GDS_R_Set_IfFactor(Node, ans);
+				}
+				nProtected ++;
 			}
-			nProtected ++;
 		} else if (COREARRAY_SV_FLOAT(SVType))
 		{
 			PROTECT(ans = NEW_NUMERIC(CellCount));
@@ -388,8 +456,12 @@ extern "C"
 
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho)
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP UseRaw, SEXP rho)
 {
+	int use_raw_flag = Rf_asLogical(UseRaw);
+	if (use_raw_flag == NA_LOGICAL)
+		error("'.useraw' must be TRUE or FALSE.");
+
 	COREARRAY_TRY
 
 		// the selection
@@ -470,7 +542,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			}
 
 			NodeList[i].InitObject(VarType, s.c_str(), Root, Sel.Variant.size(),
-				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
+				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0],
+				use_raw_flag != FALSE);
 		}
 
 		// ===========================================================
@@ -630,7 +703,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SlidingWindow(SEXP gdsfile, SEXP var_name,
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"), TRUE);
 
 		// initialize selection
 		if (Sel.Sample.empty())
@@ -712,7 +785,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SlidingWindow(SEXP gdsfile, SEXP var_name,
 			}
 
 			NodeList[i].InitObject(VarType, s.c_str(), Root, Sel.Variant.size(),
-				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
+				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
 		}
 
 		// ===========================================================

@@ -720,14 +720,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		// bool Verbose = (LOGICAL(GetListElement(param, "verbose"))[0] == TRUE);
 
 		// the number of ploidy
-		int num_ploidy = INTEGER(GetListElement(header, "num.ploidy"))[0];
+		int num_ploidy = Rf_asInteger(GetListElement(header, "num.ploidy"));
 		if (num_ploidy <= 0)
 			throw ErrSeqArray("Invalid header$num.ploidy: %d.", num_ploidy);
 
 
 		// GDS nodes
-		PdAbstractArray Root;
-		memcpy(&Root, INTEGER(gds_root), sizeof(Root));
+		PdAbstractArray Root = GDS_R_SEXP2Obj(gds_root, FALSE);
 
 		PdAbstractArray varIdx = GDS_Node_Path(Root, "variant.id", TRUE);
 		PdAbstractArray varChr = GDS_Node_Path(Root, "chromosome", TRUE);

@@ -39,6 +39,7 @@ protected:
 	C_SVType SVType;        ///< data type for GDS reading
 	C_BOOL *SelPtr[3];      ///< pointers to selection
 	C_BOOL *VariantSelect;  ///< pointer to variant selection
+	bool UseRaw;
 
 public:
 	TType VarType;          ///< VCF data type
@@ -53,12 +54,16 @@ public:
 	virtual ~CVarApplyByVariant() {}
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
-		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel);
+		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
+		bool _UseRaw);
 	void ResetObject();
 
 	bool NextCell();
 
+	/// read genotypes in 32-bit integer
 	void ReadGenoData(int *Base);
+	/// read genotypes in unsigned 8-bit intetger
+	void ReadGenoData(C_UInt8 *Base);
 
 	void ReadData(SEXP Val);
 

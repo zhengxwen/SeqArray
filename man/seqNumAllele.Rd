@@ -5,7 +5,7 @@
     Return the numbers of alleles for each site.
 }
 \usage{
-seqNumAllele(gdsfile, parallel=getOption("gds.parallel", FALSE))
+seqNumAllele(gdsfile, parallel=getOption("seqarray.parallel", FALSE))
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}

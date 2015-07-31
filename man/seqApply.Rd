@@ -8,7 +8,8 @@ margins of arrays or matrices.
 \usage{
 seqApply(gdsfile, var.name, FUN, margin = c("by.variant", "by.sample"),
     as.is = c("none", "list", "integer", "double", "character",
-    "logical", "raw"), var.index = c("none", "relative", "absolute"), ...)
+    "logical", "raw"), var.index = c("none", "relative", "absolute"),
+    .useraw=FALSE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -24,6 +25,7 @@ seqApply(gdsfile, var.name, FUN, margin = c("by.variant", "by.sample"),
         \code{margin = "by.variant"}: \code{"relative"} for indexing in the
         selection defined by \code{\link{seqSetFilter}}, \code{"absolute"}
         for indexing with respect to all data}
+    \item{.useraw}{use RAW for genotypes}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{
@@ -65,6 +67,10 @@ head(variant.id <- seqGetData(f, "variant.id"))
 set.seed(100)
 seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)],
     variant.id=sample(variant.id, 10))
+
+# read
+seqApply(f, "genotype", FUN=print, as.is="none")
+seqApply(f, "genotype", FUN=print, as.is="none", .useraw=TRUE)
 
 # read multiple variables variant by variant
 seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id",

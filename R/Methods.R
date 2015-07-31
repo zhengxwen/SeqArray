@@ -228,7 +228,7 @@ seqGetData <- function(gdsfile, var.name)
 seqApply <- function(gdsfile, var.name, FUN,
     margin = c("by.variant", "by.sample"), as.is = c("none", "list",
     "integer", "double", "character", "logical", "raw"),
-    var.index = c("none", "relative", "absolute"), ...)
+    var.index = c("none", "relative", "absolute"), .useraw=FALSE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -244,7 +244,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     {
         # C call
         rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
-            var.index, new.env())
+            var.index, .useraw, new.env())
         if (as.is == "none") return(invisible())
     } else if (margin == "by.sample")
     {
@@ -572,7 +572,7 @@ seqSummary <- function(gdsfile, varname=NULL,
 #######################################################################
 # The number of alleles per site
 #
-seqNumAllele <- function(gdsfile, parallel=getOption("gds.parallel", FALSE))
+seqNumAllele <- function(gdsfile, parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -591,7 +591,7 @@ seqNumAllele <- function(gdsfile, parallel=getOption("gds.parallel", FALSE))
 # Missing rate
 #
 seqMissing <- function(gdsfile, per.variant=TRUE,
-    parallel=getOption("gds.parallel", FALSE))
+    parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -628,7 +628,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE,
 # Allele frequency
 #
 seqAlleleFreq <- function(gdsfile, ref.allele=0L,
-    parallel=getOption("gds.parallel", FALSE))
+    parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -693,7 +693,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
 # IBD
 #
 ssIBD <- function(gdsfile, method=c("OneLocus", "TwoLoci"),
-    parallel=getOption("gds.parallel", FALSE))
+    parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))

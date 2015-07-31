@@ -5,7 +5,8 @@
     Calculate the allele frequencies.
 }
 \usage{
-seqAlleleFreq(gdsfile, ref.allele=0L, parallel=getOption("gds.parallel", FALSE))
+seqAlleleFreq(gdsfile, ref.allele=0L,
+    parallel=getOption("seqarray.parallel", FALSE))
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}

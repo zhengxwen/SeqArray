@@ -20,6 +20,8 @@ CHANGES IN VERSION 1.9.0-1.9.9
 
     o a new function `seqExport()`
 
+    o new argument `.useraw` in `seqApply()`
+
     o v1.9.9: fix a bug (https://github.com/zhengxwen/SeqArray/issues/7)
 
 

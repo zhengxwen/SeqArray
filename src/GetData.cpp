@@ -143,7 +143,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
 		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"));
+		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"), TRUE);
 
 		// 
 		C_BOOL *SelPtr[GDS_MAX_NUM_DIMENSION];
@@ -265,7 +265,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				CVarApplyByVariant NodeVar;
 				NodeVar.InitObject(CVariable::ctGenotype,
 					"genotype/data", Root, Sel.Variant.size(),
-					&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
+					&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
 
 				// the number of calling PROTECT
 				int SIZE = NodeVar.Num_Sample * NodeVar.DLen[2];
