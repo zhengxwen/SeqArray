@@ -39,7 +39,7 @@ protected:
 	C_SVType SVType;        ///< data type for GDS reading
 	C_BOOL *SelPtr[3];      ///< pointers to selection
 	C_BOOL *VariantSelect;  ///< pointer to variant selection
-	bool UseRaw;
+	bool UseRaw;            ///< whether use RAW type
 
 public:
 	TType VarType;          ///< VCF data type
@@ -74,15 +74,12 @@ public:
 
 extern "C"
 {
-/// Get data from a working space
-COREARRAY_DLL_EXPORT SEXP sqa_GetData(SEXP gdsfile, SEXP var_name);
-
 /// Apply functions over margins on a working space
-COREARRAY_DLL_EXPORT SEXP sqa_Apply_Variant(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho);
+COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho);
 
 /// Apply functions via a sliding window over variants
-COREARRAY_DLL_EXPORT SEXP sqa_SlidingWindow(SEXP gdsfile, SEXP var_name,
+COREARRAY_DLL_EXPORT SEXP SEQ_SlidingWindow(SEXP gdsfile, SEXP var_name,
 	SEXP win_size, SEXP shift_size, SEXP FUN, SEXP as_is, SEXP var_index,
 	SEXP rho);
 

@@ -271,20 +271,20 @@ COREARRAY_DLL_EXPORT SEXP FC_IBD_OneLocus(SEXP Geno, SEXP NumeratorDenominator,
 		error("Should be diploid.");
 
 	C_Int8 *pM = (C_Int8*)RAW(M_ij);
-	int *g_i = INTEGER(Geno);
+	Rbyte *g_i = RAW(Geno);
 	C_Int64 Sum = 0;
 	int nSum = 0;
 
 	for (int i=0; i < num_sample; i++, g_i+=2)
 	{
-		if ((g_i[0] != NA_INTEGER) && (g_i[1] != NA_INTEGER))
+		if ((g_i[0] != NA_RAW) && (g_i[1] != NA_RAW))
 		{
 			*pM ++ = (g_i[0] == g_i[1]) ? 4 : 0;  // 4 * M_i
-			int *g_j = g_i + 2;
+			Rbyte *g_j = g_i + 2;
 
 			for (int j=i+1; j < num_sample; j++, g_j+=2)
 			{
-				if ((g_j[0] != NA_INTEGER) && (g_j[1] != NA_INTEGER))
+				if ((g_j[0] != NA_RAW) && (g_j[1] != NA_RAW))
 				{
 					C_Int8 val = 0;  // 4 * M_{ij}
 					if (g_i[0] == g_j[0]) val++;
@@ -325,11 +325,19 @@ COREARRAY_DLL_EXPORT SEXP FC_IBD_OneLocus(SEXP Geno, SEXP NumeratorDenominator,
 }
 
 
-static vector<int> IBD_TwoLoci_GenoBuffer;
+static vector<Rbyte> IBD_TwoLoci_GenoBuffer;
+static int IBD_TwoLoci_Interval;
+static int IBD_TwoLoci_Interval_Start;
+static int IBD_TwoLoci_Interval_Index;
 
-COREARRAY_DLL_EXPORT SEXP FC_IBD_TwoLoci_Init()
+COREARRAY_DLL_EXPORT SEXP FC_IBD_TwoLoci_Init(SEXP interval, SEXP num_samp)
 {
-	IBD_TwoLoci_GenoBuffer.clear();
+	IBD_TwoLoci_Interval = Rf_asInteger(interval);
+	if (IBD_TwoLoci_Interval <= 0)
+		error("Invalid 'interval'.");
+	IBD_TwoLoci_Interval_Start = 0;
+	IBD_TwoLoci_Interval_Index = 0;
+	IBD_TwoLoci_GenoBuffer.resize(Rf_asInteger(num_samp)*2*IBD_TwoLoci_Interval);
 	return R_NilValue;
 }
 
@@ -337,41 +345,44 @@ COREARRAY_DLL_EXPORT SEXP FC_IBD_TwoLoci_Init()
 COREARRAY_DLL_EXPORT SEXP FC_IBD_TwoLoci(SEXP Geno, SEXP NumeratorDenominator,
 	SEXP M_ij)
 {
-	int *pdim = INTEGER(getAttrib(Geno, R_DimSymbol));
-	int num_ploidy=pdim[0], num_sample=pdim[1];
+	const int *pdim = INTEGER(getAttrib(Geno, R_DimSymbol));
+	const int num_ploidy=pdim[0], num_sample=pdim[1];
+	const size_t size = num_sample * 2;
 	if (num_ploidy != 2)
 		error("Should be diploid.");
 
-	if (IBD_TwoLoci_GenoBuffer.empty())
+	if (IBD_TwoLoci_Interval_Start < IBD_TwoLoci_Interval)
 	{
-		IBD_TwoLoci_GenoBuffer.resize(num_sample*2);
+		memcpy(&IBD_TwoLoci_GenoBuffer[size * IBD_TwoLoci_Interval_Start],
+			RAW(Geno), size);
+		IBD_TwoLoci_Interval_Start ++;
 		return R_NilValue;
 	}
 
 	C_Int8 *pM = (C_Int8*)RAW(M_ij);
-	int *g1_i = &IBD_TwoLoci_GenoBuffer[0];
-	int *g2_i = INTEGER(Geno);
+	Rbyte *g1_i = &IBD_TwoLoci_GenoBuffer[size * IBD_TwoLoci_Interval_Index];
+	Rbyte *g2_i = RAW(Geno);
 	C_Int64 Sum = 0;
 	int nSum = 0;
 
 	for (int i=0; i < num_sample; i++, g1_i+=2, g2_i+=2)
 	{
-		if ((g1_i[0] != NA_INTEGER) && (g1_i[1] != NA_INTEGER) &&
-			(g2_i[0] != NA_INTEGER) && (g2_i[1] != NA_INTEGER))
+		if ((g1_i[0] != NA_RAW) && (g1_i[1] != NA_RAW) &&
+			(g2_i[0] != NA_RAW) && (g2_i[1] != NA_RAW))
 		{
-			const int h1_i = g1_i[0] | (g2_i[0] << 16);
-			const int h2_i = g1_i[1] | (g2_i[1] << 16);
+			const int h1_i = g1_i[0] | (int(g2_i[0]) << 16);
+			const int h2_i = g1_i[1] | (int(g2_i[1]) << 16);
 			*pM ++ = (h1_i == h2_i) ? 4 : 0;  // 4 * M_i
-			int *g1_j = g1_i + 2;
-			int *g2_j = g2_i + 2;
+			Rbyte *g1_j = g1_i + 2;
+			Rbyte *g2_j = g2_i + 2;
 
 			for (int j=i+1; j < num_sample; j++, g1_j+=2, g2_j+=2)
 			{
-				if ((g1_j[0] != NA_INTEGER) && (g1_j[1] != NA_INTEGER) &&
-					(g2_j[0] != NA_INTEGER) && (g2_j[1] != NA_INTEGER))
+				if ((g1_j[0] != NA_RAW) && (g1_j[1] != NA_RAW) &&
+					(g2_j[0] != NA_RAW) && (g2_j[1] != NA_RAW))
 				{
-					const int h1_j = g1_j[0] | (g2_j[0] << 16);
-					const int h2_j = g1_j[1] | (g2_j[1] << 16);
+					const int h1_j = g1_j[0] | (int(g2_j[0]) << 16);
+					const int h2_j = g1_j[1] | (int(g2_j[1]) << 16);
 					C_Int8 val = 0;  // 4 * M_{ij}
 					if (h1_i == h1_j) val++;
 					if (h1_i == h2_j) val++;
@@ -408,7 +419,11 @@ COREARRAY_DLL_EXPORT SEXP FC_IBD_TwoLoci(SEXP Geno, SEXP NumeratorDenominator,
 	}
 
 	// copy genotype to the buffer
-	memcpy(&IBD_TwoLoci_GenoBuffer[0], INTEGER(Geno), sizeof(int)*num_sample*2);
+	memcpy(&IBD_TwoLoci_GenoBuffer[size * IBD_TwoLoci_Interval_Index],
+		RAW(Geno), size);
+	IBD_TwoLoci_Interval_Index ++;
+	if (IBD_TwoLoci_Interval_Index >= IBD_TwoLoci_Interval)
+		IBD_TwoLoci_Interval_Index = 0;
 
 	return R_NilValue;
 }

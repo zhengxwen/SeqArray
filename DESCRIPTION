@@ -1,8 +1,8 @@
 Package: SeqArray
 Type: Package
 Title: Big Data Management of Genome-Wide Sequencing Variants
-Version: 1.9.9
-Date: 2015-07-24
+Version: 1.9.10
+Date: 2015-07-31
 Depends: gdsfmt (>= 1.5.9)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation

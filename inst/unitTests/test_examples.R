@@ -11,40 +11,11 @@ library(SeqArray)
 # test functions
 #
 
-function.list <- c(
-	"SeqArray-package",
-	"SeqVarGDSClass-class",
-	"seqAlleleFreq",
-	"seqApply",
-	"seqClose-methods",
-	"seqCompress.Option",
-	"seqDelete",
-	"seqExampleFileName",
-	"seqExport",
-	"seqGDS2SNP",
-	"seqGDS2VCF",
-	"seqGetData",
-	"seqGetFilter",
-	"seqInfoNewVar",
-	"seqMerge",
-	"seqMissing",
-	"seqNumAllele",
-	"seqOpen",
-	"seqOptimize",
-	"seqParallel",
-	"seqSetFilter",
-	"seqSetFilterChrom",
-	"seqSlidingWindow",
-	"seqSummary",
-	"seqTranspose",
-	"seqVCF.Header",
-	"seqVCF.SampID",
-	"seqVCF2GDS"
-)
-
-
 test_examples <- function()
 {
+	function.list <- readRDS(
+		system.file("Meta", "Rd.rds", package="SeqArray"))$Name
+
 	sapply(function.list, FUN = function(func.name)
 		{
 			args <- list(

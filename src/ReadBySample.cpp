@@ -43,7 +43,8 @@ CVarApplyBySample::CVarApplyBySample()
 }
 
 void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
-	int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel)
+	int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
+	bool _UseRaw)
 {
 	static const char *ErrDim = "Invalid dimension of '%s'.";
 
@@ -72,6 +73,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	TotalNum_Sample = nSample;
 	SampleSelect = SampleSel;
 	Num_Variant = GetNumOfTRUE(VariantSel, nVariant);
+	UseRaw = _UseRaw;
 
 	string Path2; // the path with '@'
 	PdAbstractArray IndexNode = NULL;  // the corresponding index variable
@@ -307,11 +309,57 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 	}
 }
 
+void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
+{
+	C_Int32 st[3] = { CurIndex, VariantStart, 0 };
+	C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
+	C_UInt8 *s = &Init.GENO_BUFFER[0];
+
+	GDS_Array_ReadDataEx(Node, st, cn, SelPtr, s, svUInt8);
+
+	for (int i=0; i < Num_Variant; i++)
+	{
+		C_UInt8 *p;
+		int missing = 3;
+
+		// the first 2 bits
+		p = Base;
+		for (int j=DLen[2]; j > 0; j--)
+			*p++ = *s++;
+
+		if (GenoCellCnt[i] > 4)
+			warning("RAW type may not be sufficient to store genotypes.");
+
+		/// the left bits
+		C_UInt8 shift = 2;
+		for (int m=GenoCellCnt[i]; m > 1; m--)
+		{
+			p = Base;
+			for (int j=DLen[2]; j > 0; j--)
+			{
+				*p |= int(*s) << shift;
+				p ++; s ++;
+			}
+			shift += 2;
+			missing = (missing << 2) | 0x03;
+		}
+
+		for (int j=DLen[2]; j > 0; j--)
+		{
+			if (*Base == missing) *Base = NA_RAW;
+			Base ++;
+		}
+	}
+}
+
 void CVarApplyBySample::ReadData(SEXP Val)
 {
 	if (VarType == ctGenotype)
 	{
-		ReadGenoData(INTEGER(Val));
+		if (UseRaw)
+			ReadGenoData(RAW(Val));
+		else
+			ReadGenoData(INTEGER(Val));
 	} else {
 		C_Int32 st[3] = { CurIndex, VariantStart, 0 };
 		C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
@@ -340,20 +388,29 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 		SEXP ans = R_NilValue, dim;
 		if (COREARRAY_SV_INTEGER(SVType))
 		{
-			char classname[32];
-			classname[0] = 0;
-			GDS_Node_GetClassName(Node, classname, sizeof(classname));
-			if (strcmp(classname, "dBit1") == 0)
+			if (VarType == ctGenotype)
 			{
-				PROTECT(ans = NEW_LOGICAL(CellCount));
-			} else if (GDS_R_Is_Logical(Node))
-			{
-				PROTECT(ans = NEW_LOGICAL(CellCount));
+				if (UseRaw)
+					PROTECT(ans = NEW_RAW(CellCount));
+				else
+					PROTECT(ans = NEW_INTEGER(CellCount));
+				nProtected ++;
 			} else {
-				PROTECT(ans = NEW_INTEGER(CellCount));
-				nProtected += GDS_R_Set_IfFactor(Node, ans);
+				char classname[32];
+				classname[0] = 0;
+				GDS_Node_GetClassName(Node, classname, sizeof(classname));
+				if (strcmp(classname, "dBit1") == 0)
+				{
+					PROTECT(ans = NEW_LOGICAL(CellCount));
+				} else if (GDS_R_Is_Logical(Node))
+				{
+					PROTECT(ans = NEW_LOGICAL(CellCount));
+				} else {
+					PROTECT(ans = NEW_INTEGER(CellCount));
+					nProtected += GDS_R_Set_IfFactor(Node, ans);
+				}
+				nProtected ++;
 			}
-			nProtected ++;
 		} else if (COREARRAY_SV_FLOAT(SVType))
 		{
 			PROTECT(ans = NEW_NUMERIC(CellCount));
@@ -419,8 +476,12 @@ extern "C"
 
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho)
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho)
 {
+	int use_raw_flag = Rf_asLogical(use_raw);
+	if (use_raw_flag == NA_LOGICAL)
+		error("'.useraw' must be TRUE or FALSE.");
+
 	COREARRAY_TRY
 
 		// the selection
@@ -493,7 +554,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			}
 
 			NodeList[i].InitObject(VarType, s.c_str(), Root, Sel.Variant.size(),
-				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
+				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0],
+				use_raw_flag != FALSE);
 		}
 
 		// ===============================================================

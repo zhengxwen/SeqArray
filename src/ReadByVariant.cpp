@@ -303,7 +303,7 @@ void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
 	}
 	for (size_t n=CellCount; n > 0; n--)
 	{
-		if (*Base == missing) *Base = 0xFF;
+		if (*Base == missing) *Base = NA_RAW;
 		Base ++;
 	}	
 }
@@ -456,9 +456,9 @@ extern "C"
 
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP UseRaw, SEXP rho)
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho)
 {
-	int use_raw_flag = Rf_asLogical(UseRaw);
+	int use_raw_flag = Rf_asLogical(use_raw);
 	if (use_raw_flag == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
 

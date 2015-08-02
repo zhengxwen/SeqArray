@@ -1,6 +1,5 @@
 ---
-title: 'SeqArray: an R/Bioconductor Package for Big Data Management of Genome-Wide
-  Sequencing Variants'
+title: "SeqArray: an R/Bioconductor Package for Big Data Management of Genome-Wide Sequencing Variants"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
 date: "Jun 23, 2015"
 output:
@@ -10,8 +9,11 @@ output:
   pdf_document:
     toc: yes
     toc_depth: 3
-vignette: |
-  %\VignetteIndexEntry{SeqArray Tutorial} %\VignetteDepends{gdsfmt} %\VignetteKeywords{GWAS, SNP, Variants} %\VignetteEngine{knitr::rmarkdown}
+vignette: >
+  %\VignetteIndexEntry{SeqArray Tutorial}
+  %\VignetteDepends{gdsfmt}
+  %\VignetteKeywords{GWAS, SNP, Variants}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 

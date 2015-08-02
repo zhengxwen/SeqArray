@@ -250,7 +250,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     {
         # C call
         rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
-            var.index, new.env())
+            var.index, .useraw, new.env())
         if (as.is == "none") return(invisible())
     }
     rv
@@ -692,7 +692,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
 #######################################################################
 # IBD
 #
-ssIBD <- function(gdsfile, method=c("OneLocus", "TwoLoci"),
+ssIBD <- function(gdsfile, method=c("OneLocus", "TwoLoci"), interval=1L,
     parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
@@ -710,24 +710,25 @@ ssIBD <- function(gdsfile, method=c("OneLocus", "TwoLoci"),
                 m <- matrix(0.0, nrow=size, ncol=2L)
                 seqApply(gdsfile, "genotype", margin = "by.variant",
                     as.is = "none", FUN = .cfunction3("FC_IBD_OneLocus"),
-                    y = m, z = raw(size))
+                    y = m, z = raw(size), .useraw=TRUE)
                 m
             }, .combine="+")
     } else if (method == "TwoLoci")
     {
         v <- seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(gdsfile)
+            FUN = function(gdsfile, interval)
             {
                 n <- .seldim(gdsfile)[1L]
                 size <- n * (n + 1L) / 2L
                 # m[,1] -- numerator, m[,2] -- denominator
                 m <- matrix(0.0, nrow=size, ncol=2L)
-                .cfunction0("FC_IBD_TwoLoci_Init")()
+                .cfunction2("FC_IBD_TwoLoci_Init")(interval, n)
+                # apply
                 seqApply(gdsfile, "genotype", margin = "by.variant",
                     as.is = "none", FUN = .cfunction3("FC_IBD_TwoLoci"),
-                    y = m, z = raw(size))
+                    y = m, z = raw(size), .useraw=TRUE)
                 m
-            }, .combine="+")
+            }, .combine="+", interval=interval)
     }
 
     .cfunction2("FC_IBD_Div")(v, .seldim(gdsfile)[1L])

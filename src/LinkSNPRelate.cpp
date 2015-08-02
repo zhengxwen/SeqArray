@@ -46,7 +46,7 @@ typedef COREARRAY_DLL_LOCAL struct
 
 	SEXP SeqGDSFile;
 	CVarApply *Object;
-	int *GenoBuffer;
+	C_UInt8 *GenoBuffer;
 	int Index;
 } TParam;
 
@@ -131,10 +131,10 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
 		Obj->InitObject(CVariable::ctGenotype,
 			"genotype/data", Root, Sel.Variant.size(),
-			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
+			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], true);
 
 		size_t SIZE = (Obj->Num_Sample) * (Obj->DLen[2]);
-		Param->GenoBuffer = new int[SIZE];
+		Param->GenoBuffer = new C_UInt8[SIZE];
 		Param->Index = 0;
 	}
 
@@ -157,10 +157,10 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 
 		if (OutDim == RDim_Sample_X_SNP)
 		{
-			int *p = Param->GenoBuffer;
+			C_UInt8 *p = Param->GenoBuffer;
 			for (size_t n=Obj->Num_Sample; n > 0; n--)
 			{
-				int *pp = p;
+				C_UInt8 *pp = p;
 				p += Obj->DLen[2];
 				C_UInt8 val = 0;
 				for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
@@ -169,7 +169,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 					{
 						val ++;
 						if (val > 2) val = 2;
-					} else if (*pp == NA_INTEGER)
+					} else if (*pp == NA_RAW)
 					{
 						val = 3; break;
 					}
@@ -178,10 +178,10 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 			}
 		} else {
 			C_UInt8 *g = (OutBuf ++);
-			int *p = Param->GenoBuffer;
+			C_UInt8 *p = Param->GenoBuffer;
 			for (size_t n=Obj->Num_Sample; n > 0; n--)
 			{
-				int *pp = p;
+				C_UInt8 *pp = p;
 				p += Obj->DLen[2];
 				C_UInt8 val = 0;
 				for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
@@ -190,7 +190,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 					{
 						val ++;
 						if (val > 2) val = 2;
-					} else if (*pp == NA_INTEGER)
+					} else if (*pp == NA_RAW)
 					{
 						val = 3; break;
 					}
@@ -216,10 +216,10 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 		TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
 		Obj->InitObject(CVariable::ctGenotype,
 			"genotype/data", Root, Sel.Variant.size(),
-			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0]);
+			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
 
 		size_t SIZE = (Obj->Num_Variant) * (Obj->DLen[2]);
-		Param->GenoBuffer = new int[SIZE];
+		Param->GenoBuffer = new C_UInt8[SIZE];
 		Param->Index = 0;
 	}
 
@@ -242,10 +242,10 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 
 		if (OutDim == RDim_SNP_X_Sample)
 		{
-			int *p = Param->GenoBuffer;
+			C_UInt8 *p = Param->GenoBuffer;
 			for (size_t n=Obj->Num_Variant; n > 0; n--)
 			{
-				int *pp = p;
+				C_UInt8 *pp = p;
 				p += Obj->DLen[2];
 				C_UInt8 val = 0;
 				for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
@@ -254,7 +254,7 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 					{
 						val ++;
 						if (val > 2) val = 2;
-					} else if (*pp == NA_INTEGER)
+					} else if (*pp == NA_RAW)
 					{
 						val = 3; break;
 					}
@@ -264,10 +264,10 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 
 		} else {
 			C_UInt8 *g = (OutBuf ++);
-			int *p = Param->GenoBuffer;
+			C_UInt8 *p = Param->GenoBuffer;
 			for (size_t n=Obj->Num_Variant; n > 0; n--)
 			{
-				int *pp = p;
+				C_UInt8 *pp = p;
 				p += Obj->DLen[2];
 				C_UInt8 val = 0;
 				for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
@@ -276,7 +276,7 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 					{
 						val ++;
 						if (val > 2) val = 2;
-					} else if (*pp == NA_INTEGER)
+					} else if (*pp == NA_RAW)
 					{
 						val = 3; break;
 					}

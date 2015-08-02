@@ -69,8 +69,12 @@ seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)],
     variant.id=sample(variant.id, 10))
 
 # read
-seqApply(f, "genotype", FUN=print, as.is="none")
-seqApply(f, "genotype", FUN=print, as.is="none", .useraw=TRUE)
+seqApply(f, "genotype", FUN=print, margin="by.variant")
+seqApply(f, "genotype", FUN=print, margin="by.variant", .useraw=TRUE)
+
+seqApply(f, "genotype", FUN=print, margin="by.sample")
+seqApply(f, "genotype", FUN=print, margin="by.sample", .useraw=TRUE)
+
 
 # read multiple variables variant by variant
 seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id",

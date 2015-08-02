@@ -37,6 +37,7 @@ protected:
 	C_SVType SVType;        ///< data type for GDS reading
 	C_BOOL *SelPtr[3];      ///< pointers to selection
 	C_BOOL *SampleSelect;   ///< pointer to sample selection
+	bool UseRaw;            ///< whether use RAW type
 
 	vector<C_BOOL> VariantSelectBuffer;  ///< the buffer of selection
 
@@ -54,12 +55,14 @@ public:
 	virtual ~CVarApplyBySample() {}
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
-		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel);
+		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
+		bool _UseRaw);
 	void ResetObject();
 
 	bool NextCell();
 
 	void ReadGenoData(int *Base);
+	void ReadGenoData(C_UInt8 *Base);
 
 	void ReadData(SEXP Val);
 
@@ -70,8 +73,6 @@ public:
 
 extern "C"
 {
-/// Apply functions over margins on a working space
-COREARRAY_DLL_EXPORT SEXP sqa_Apply_Sample(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP rho);
-
+COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho);
 } // extern "C"

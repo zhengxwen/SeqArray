@@ -41,6 +41,8 @@ using namespace CoreArray;
 
 #define LongBool int
 
+#define NA_RAW     0xFF
+
 
 // ===========================================================
 // The Initialized Object
