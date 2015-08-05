@@ -61,7 +61,9 @@ public:
 
 	bool NextCell();
 
+	/// read genotypes in 32-bit integer
 	void ReadGenoData(int *Base);
+	/// read genotypes in unsigned 8-bit intetger
 	void ReadGenoData(C_UInt8 *Base);
 
 	void ReadData(SEXP Val);

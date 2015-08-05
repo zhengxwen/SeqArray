@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.9
+CHANGES IN VERSION 1.9.0-1.9.11
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -23,6 +23,9 @@ CHANGES IN VERSION 1.9.0-1.9.9
     o new argument `.useraw` in `seqApply()`
 
     o v1.9.9: fix a bug (https://github.com/zhengxwen/SeqArray/issues/7)
+
+    o v1.9.11: fix an issue of `seqVCF2GDS()` when there are duplicated format
+      or info ID
 
 
 CHANGES IN VERSION 1.8.0

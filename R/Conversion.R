@@ -418,6 +418,16 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     tmp <- FALSE
     if (!is.null(header$format))
     {
+		flag <- duplicated(header$format$ID)
+		if (any(flag))
+		{
+			if (verbose)
+			{
+				cat(sprintf("Duplicated Format ID (%s) are removed.\n",
+					paste(header$format$ID[flag], collapse=",")))
+			}
+			header$format <- header$format[!flag, ]
+		}
         if (nrow(header$format) > 0L)
             tmp <- TRUE
     }
@@ -535,7 +545,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             compress=compress("genotype"))
     } else {
         geno.node <- add.gdsn(varGeno, "data", storage="bit2",
-            valdim=c(nSamp, 0L), compress=compress("genotype"))
+            valdim=c(1L, nSamp, 0L), compress=compress("genotype"))
     }
     node <- add.gdsn(varGeno, "@data", storage="uint8", valdim=0L,
         compress=compress("genotype"), visible=FALSE)
@@ -597,6 +607,17 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     if (!is.null(header$info))
     {
+		flag <- duplicated(header$info$ID)
+		if (any(flag))
+		{
+			if (verbose)
+			{
+				cat(sprintf("Duplicated Info ID (%s) are removed.\n",
+					paste(header$info$ID[flag], collapse=",")))
+			}
+			header$info <- header$info[!flag, ]
+		}
+
         if (nrow(header$info) > 0L)
         {
             int_type <- integer(nrow(header$info))

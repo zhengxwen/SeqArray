@@ -1,1 +1,1 @@
-# BiocGenerics:::testPackage("SeqArray")
+BiocGenerics:::testPackage("SeqArray")
