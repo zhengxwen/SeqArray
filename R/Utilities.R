@@ -28,6 +28,69 @@ seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
 
 
 #######################################################################
+# Setup the parallel parameters in SeqArray
+#
+seqSetup <- function(cluster=TRUE)
+{
+    # check
+    stopifnot(is.null(cluster) | is.logical(cluster) |
+        is.numeric(cluster) | inherits(cluster, "cluster"))
+
+    if (is.null(cluster) || identical(cluster, FALSE))
+    {
+        opt <- getOption("seqarray.parallel", NULL)
+        if (inherits(opt, "cluster"))
+        {
+            if (!requireNamespace("parallel"))
+                stop("the 'parallel' package should be installed.")
+            parallel::stopCluster(opt)
+        }
+        options(seqarray.parallel=cluster)
+        return(invisible())
+    }
+
+    # Windows platform does not support forking, we have to setup a cluster
+    if (.Platform$OS.type == "windows")
+    {
+        setup <- function(num.cores)
+        {
+            cl <- parallel::makeCluster(num.cores)
+            parallel::clusterCall(cl, function() { library(SeqArray); NULL })
+            cl
+        }
+
+        if (is.logical(cluster))
+        {
+            stopifnot(length(cluster) == 1L)
+            if (cluster)
+            {
+                # library
+                if (!requireNamespace("parallel"))
+                    stop("the 'parallel' package should be installed.")
+                cl <- parallel::detectCores() - 1L
+                if (cl <= 1L) cl <- 2L
+                cluster <- setup(cl)
+            }
+        } else if (is.numeric(cluster))
+        {
+            stopifnot(length(cluster) == 1L)
+            if (cluster > 1L)
+            {
+                # library
+                if (!requireNamespace("parallel"))
+                    stop("the 'parallel' package should be installed.")
+                cluster <- setup(cluster)
+            }
+        }
+    }
+
+    options(seqarray.parallel=cluster)
+    invisible()
+}
+
+
+
+#######################################################################
 # Export to a GDS file
 #
 seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
@@ -224,8 +287,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 #######################################################################
 # Merge multiple GDS files
 #
-seqMerge <- function(gds.fn, out.fn,
-    compress.option = seqCompress.Option(),
+seqMerge <- function(gds.fn, out.fn, compress.option=seqCompress.Option(),
     verbose = TRUE)
 {
     # check
@@ -234,137 +296,6 @@ seqMerge <- function(gds.fn, out.fn,
         stop("'gds.fn' should have more than one files.")
     stopifnot(is.character(out.fn) & (length(out.fn)==1L))
     stopifnot(is.logical(verbose))
-
-    ## open GDS files
-    gdsList <- vector("list", length(gds.fn))
-    on.exit({
-        for (i in seq_len(length(gdsList)))
-        {
-            if (!is.null(gdsList[[i]]))
-                seqClose(gdsList[[i]])
-        }
-    })
-    for (i in seq_len(length(gds.fn)))
-        gdsList[[i]] <- seqOpen(gds.fn[i])
-
-    # for-loop
-    samp.list <- list()
-    variant.num <- 0L
-    for (i in seq_len(length(gds.fn)))
-    {
-        if (verbose)
-            cat(sprintf("Open (%02d): %s\n", i, gds.fn[i]))
-        opfile[[i]] <- seqOpen(gds.fn[i])
-
-        samp.list[[i]] <- read.gdsn(index.gdsn(opfile[[i]], "sample.id"))
-        desp <- objdesp.gdsn(index.gdsn(opfile[[i]], "variant.id"))
-        variant.num <- variant.num + prod(desp$dim)
-    }
-
-    # merge all sample id
-    samp.id <- unique(unlist(samp.list))
-    if (verbose)
-    {
-        cat(sprintf("Input: %d samples, %d variants.\n",
-            length(samp.id), variant.num))
-    }
-
-
-    ##################################################
-    # create a GDS file
-
-    gfile <- createfn.gds(out.fn)
-    on.exit({ closefn.gds(gfile) }, add=TRUE)
-    if (verbose)
-        cat("Output: ", out.fn, "\n", sep="")
-
-    # add header
-    n <- add.gdsn(gfile, name="description", storage="folder")
-    put.attr.gdsn(n, "sequence.variant.format", "v1.0")
-
-    # add sample id
-    add.gdsn(gfile, "sample.id", samp.id, compress=compress("sample.id"), closezip=TRUE)
-
-    # add variant.id
-    # TODO: 
-    node <- add.gdsn(gfile, "variant.id", storage="int32", valdim=c(0),
-        compress=compress("variant.id"))
-    for (i in 1:length(opfile))
-        assign.gdsn(node, index.gdsn(opfile[[i]], "variant.id"), TRUE)
-    readmode.gdsn(node)
-
-    # add position
-    # TODO: need to check whether position can be stored in 'int32'
-    node <- add.gdsn(gfile, "position", storage="int32", valdim=c(0),
-        compress=compress("position"))
-    for (i in 1:length(opfile))
-        assign.gdsn(node, index.gdsn(opfile[[i]], "position"), TRUE)
-    readmode.gdsn(node)
-
-    # add chromosome
-    node <- add.gdsn(gfile, "chromosome", storage="string", valdim=c(0),
-        compress=compress("chromosome"))
-    for (i in 1:length(opfile))
-        assign.gdsn(node, index.gdsn(opfile[[i]], "chromosome"), TRUE)
-    readmode.gdsn(node)
-
-    # add allele
-    node <- add.gdsn(gfile, "allele", storage="string", valdim=c(0),
-        compress=compress("allele"))
-    for (i in 1:length(opfile))
-        assign.gdsn(node, index.gdsn(opfile[[i]], "allele"), TRUE)
-    readmode.gdsn(node)
-
-    # sync file
-    sync.gds(gfile)
-
-
-    # add a folder for genotypes
-    att <- get.attr.gdsn(index.gdsn(opfile[[1]], "genotype"))
-    varGeno <- add.gdsn(gfile, name="genotype", storage="folder")
-    for (i in 1:length(att))
-        put.attr.gdsn(varGeno, names(att)[i], att[[i]])
-    readmode.gdsn(node)
-
-    # add length data to the folder of genotype
-    node <- add.gdsn(varGeno, "length", storage="int32", valdim=c(0),
-        compress=compress("genotype"))
-    for (i in 1:length(opfile))
-        assign.gdsn(node, index.gdsn(opfile[[i]], "genotype/length"), TRUE)
-    readmode.gdsn(node)
-
-    # add genotypic data to the folder of genotype
-    desp <- objdesp.gdsn(index.gdsn(opfile[[1]], "genotype/data"))
-    desp$dim[length(desp$dim)] <- 0
-    node <- add.gdsn(varGeno, "data", storage="bit2", valdim=desp$dim,
-        compress=compress("genotype"))
-    for (i in 1:length(opfile))
-    {
-        assign.gdsn(node, index.gdsn(opfile[[i]], "genotype/data"), TRUE)
-        if (verbose)
-            cat(sprintf("\tGenotype (%02d) done.\n", i))
-    }
-    readmode.gdsn(node)
-
-
-    # add phase folder
-    if (!is.null(index.gdsn(opfile[[1]], "phase", FALSE)))
-    {
-        varPhase <- add.gdsn(gfile, name="phase", storage="folder")
-
-        # add data
-        desp <- objdesp.gdsn(index.gdsn(opfile[[1]], "phase/data"))
-        desp$dim[length(desp$dim)] <- 0
-        node <- add.gdsn(varPhase, "data", storage="bit1", valdim=desp$dim,
-            compress=compress("phase"))
-        for (i in 1:length(opfile))
-        {
-            assign.gdsn(node, index.gdsn(opfile[[i]], "phase/data"), TRUE)
-            if (verbose)
-                cat(sprintf("\tPhase (%02d) done.\n", i))
-        }
-        readmode.gdsn(node)
-    }
 
     # return
     invisible()
@@ -484,7 +415,7 @@ seqParallel <- function(cl, gdsfile, FUN, split=c("by.variant", "by.sample", "no
         if (.Platform$OS.type == "windows")
             cl <- 1L
         if (cl <= 0L)
-        	stop("Invalid number of cores!")
+            stop("Invalid number of cores!")
 
         if (split %in% c("by.variant", "by.sample"))
         {

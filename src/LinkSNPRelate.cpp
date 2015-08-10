@@ -36,7 +36,7 @@ enum TTypeGenoDim
 	RDim_SNP_X_Sample = 1   ///< genotype matrix: snp X sample
 };
 
-typedef COREARRAY_DLL_LOCAL struct
+typedef struct COREARRAY_DLL_LOCAL SParam
 {
 	TTypeGenoDim *pGenoDimType;
 	C_Int32 *pTotalSampleNum;

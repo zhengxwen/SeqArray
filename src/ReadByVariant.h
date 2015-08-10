@@ -41,6 +41,9 @@ protected:
 	C_BOOL *VariantSelect;  ///< pointer to variant selection
 	bool UseRaw;            ///< whether use RAW type
 
+	vector<C_BOOL> Selection;  ///< the buffer of selection
+	int NumOfBits;             ///< the number of bits
+
 public:
 	TType VarType;          ///< VCF data type
 	int TotalNum_Variant;   ///< the total number of variants

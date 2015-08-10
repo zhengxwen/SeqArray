@@ -49,6 +49,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 	VariantSelect = VariantSel;
 	Num_Sample = GetNumOfTRUE(SampleSel, nSample);
 	UseRaw = _UseRaw;
+	NumOfBits = GDS_Array_GetBitOf(Node);
 
 	string Path2; // the path with '@'
 	switch (Type)
@@ -78,10 +79,22 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 				throw ErrSeqArray(ErrDim, Path2.c_str());
 
 			CellCount = Num_Sample * DLen[2];
-			Init.Need_GenoBuffer(DLen[1] * DLen[2]);
-
-			SelPtr[1] = SampleSel;
-			SelPtr[2] = NeedTRUE(DLen[2]);
+			Init.Need_GenoBuffer(CellCount);
+			{
+				Selection.resize(DLen[1] * DLen[2]);
+				C_BOOL *p = SelPtr[1] = &Selection[0];
+				memset(p, TRUE, Selection.size());
+				C_BOOL *s = SampleSel;
+				for (int n=DLen[1]; n > 0; n--)
+				{
+					if (*s++ == FALSE)
+					{
+						for (int m=DLen[2]; m > 0; m--)
+							*p ++ = FALSE;
+					} else
+						p += DLen[2];
+				}
+			}
 			break;
 
 		case ctPhase:
@@ -198,52 +211,34 @@ bool CVarApplyByVariant::NextCell()
 
 void CVarApplyByVariant::ReadGenoData(int *Base)
 {
-	// the size of Init.GENO_BUFFER has been check in 'Init()'
-	ssize_t SlideCnt = DLen[1] * DLen[2];
+	// the size of Init.GENO_BUFFER has been checked in 'Init()'
+	const ssize_t SlideCnt = ssize_t(DLen[1]) * ssize_t(DLen[2]);
 
+	// NumIndexRaw always >= 1
 	CdIterator it;
-	GDS_Iter_GetStart(Node, &it);
-	GDS_Iter_Offset(&it, C_Int64(IndexRaw)*SlideCnt);
-	GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
-	C_UInt8 *s = &Init.GENO_BUFFER[0];
-	int *p = Base;
-	C_BOOL *sel = SelPtr[1];
-	for (int n=DLen[1]; n > 0 ; n--)
-	{
-		if (*sel++)
-		{
-			for (int m=DLen[2]; m > 0 ; m--)
-				*p++ = *s++;
-		} else {
-			s += DLen[2];
-		}
-	}
+	GDS_Iter_Position(Node, &it, C_Int64(IndexRaw)*SlideCnt);
+	GDS_Iter_RDataEx(&it, Base, SlideCnt, svInt32, SelPtr[1]);
 
-	int missing = 3;
-
-	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
+	const int bit_mask = ~((-1) << NumOfBits);
+	int missing = bit_mask;
 	for (int idx=1; idx < NumIndexRaw; idx ++)
 	{
-		GDS_Iter_GetStart(Node, &it);
-		GDS_Iter_Offset(&it, (C_Int64(IndexRaw) + idx)*SlideCnt);
-		GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
+		GDS_Iter_Position(Node, &it, (C_Int64(IndexRaw) + idx)*SlideCnt);
+		GDS_Iter_RDataEx(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8, SelPtr[1]);
 
-		int shift = idx*2;
-		s = &Init.GENO_BUFFER[0];
-		p = Base; sel = SelPtr[1];
-		for (int n=DLen[1]; n > 0 ; n--)
+		int shift = idx * NumOfBits;
+		C_UInt8 *s = &Init.GENO_BUFFER[0];
+		int *p = Base;
+		for (int n=Num_Sample; n > 0 ; n--)
 		{
-			if (*sel++)
-			{
-				for (int m=DLen[2]; m > 0 ; m--)
-					*p++ |= int(*s++) << shift;
-			} else {
-				s += DLen[2];
-			}
+			for (int m=DLen[2]; m > 0 ; m--)
+				*p++ |= int(*s++) << shift;
 		}
 
-		missing = (missing << 2) | 0x03;
+		missing = (missing << NumOfBits) | bit_mask;
 	}
+
+	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
 	for (size_t n=CellCount; n > 0; n--)
 	{
 		if (*Base == missing) *Base = NA_INTEGER;
@@ -253,54 +248,52 @@ void CVarApplyByVariant::ReadGenoData(int *Base)
 
 void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
 {
-	// the size of Init.GENO_BUFFER has been check in 'Init()'
-	ssize_t SlideCnt = DLen[1] * DLen[2];
+	// the size of Init.GENO_BUFFER has been checked in 'Init()'
+	const ssize_t SlideCnt = ssize_t(DLen[1]) * ssize_t(DLen[2]);
 
+	// NumIndexRaw always >= 1
 	CdIterator it;
-	GDS_Iter_GetStart(Node, &it);
-	GDS_Iter_Offset(&it, C_Int64(IndexRaw)*SlideCnt);
-	GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
-	C_UInt8 *s = &Init.GENO_BUFFER[0];
-	C_UInt8 *p = Base;
-	C_BOOL *sel = SelPtr[1];
-	for (int n=DLen[1]; n > 0 ; n--)
+	GDS_Iter_Position(Node, &it, C_Int64(IndexRaw)*SlideCnt);
+	GDS_Iter_RDataEx(&it, Base, SlideCnt, svUInt8, SelPtr[1]);
+
+	const C_UInt8 bit_mask = ~((-1) << NumOfBits);
+	C_UInt8 missing = bit_mask;
+	int MyNumIndexRaw = NumIndexRaw;
+	switch (NumOfBits)
 	{
-		if (*sel++)
+	case 2:
+		if (NumIndexRaw > 4)
+			warning("RAW type may not be sufficient to store genotypes.");
+		break;
+	case 4:
+		if (NumIndexRaw > 2)
+			warning("RAW type may not be sufficient to store genotypes.");
+		break;
+	case 8:
+		MyNumIndexRaw = 1;
+		if (NumIndexRaw > 1)
+			warning("RAW type may not be sufficient to store genotypes.");
+		break;
+	}
+
+	for (int idx=1; idx < MyNumIndexRaw; idx ++)
+	{
+		GDS_Iter_Position(Node, &it, (C_Int64(IndexRaw) + idx)*SlideCnt);
+		GDS_Iter_RDataEx(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8, SelPtr[1]);
+
+		C_UInt8 shift = idx * NumOfBits;
+		C_UInt8 *s = &Init.GENO_BUFFER[0];
+		C_UInt8 *p = Base;
+		for (int n=Num_Sample; n > 0 ; n--)
 		{
 			for (int m=DLen[2]; m > 0 ; m--)
-				*p++ = *s++;
-		} else {
-			s += DLen[2];
+				*p++ |= (*s++) << shift;
 		}
-	}
 
-	C_UInt8 missing = 3;
-	if (NumIndexRaw > 4)
-		warning("RAW type may not be sufficient to store genotypes.");
+		missing = (missing << NumOfBits) | bit_mask;
+	}
 
 	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
-	for (int idx=1; idx < NumIndexRaw; idx ++)
-	{
-		GDS_Iter_GetStart(Node, &it);
-		GDS_Iter_Offset(&it, (C_Int64(IndexRaw) + idx)*SlideCnt);
-		GDS_Iter_RData(&it, &Init.GENO_BUFFER[0], SlideCnt, svUInt8);
-
-		C_UInt8 shift = idx*2;
-		s = &Init.GENO_BUFFER[0];
-		p = Base; sel = SelPtr[1];
-		for (int n=DLen[1]; n > 0 ; n--)
-		{
-			if (*sel++)
-			{
-				for (int m=DLen[2]; m > 0 ; m--)
-					*p++ |= (*s++) << shift;
-			} else {
-				s += DLen[2];
-			}
-		}
-
-		missing = (missing << 2) | 0x03;
-	}
 	for (size_t n=CellCount; n > 0; n--)
 	{
 		if (*Base == missing) *Base = NA_RAW;

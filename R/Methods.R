@@ -20,7 +20,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
 
     # FileFormat
     at <- get.attr.gdsn(ans$root)
-    if ("FileFormat" %in% names(at))
+    if (!is.null(at$FileFormat))
     {
         # it does not throw any warning or error if FileFormat does not exist,
         # but it is encouraged to add this attribute
@@ -28,6 +28,20 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         {
             stop(sprintf("'%s' is not a sequencing-variant GDS file (%s).",
                 gds.fn, "'FileFormat' should be 'SEQ_ARRAY'"))
+        }
+    }
+
+    # FileVersion
+    version <- at$FileVersion
+    if (!is.null(version))
+    {
+        # it does not throw any warning or error if FileVersion does not exist,
+        # but it is encouraged to add this attribute
+        if (!identical(version, "v1.0"))
+        {
+            stop(sprintf(
+            	"Invalid FileVersion '%s' (should be v1.0).",
+            	as.character(version)))
         }
     }
 
@@ -39,15 +53,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
     }
 
-    at <- get.attr.gdsn(n)
-    if (!("sequence.variant.format" %in% names(at)))
-    {
-        closefn.gds(ans)
-        stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
-    }
-
     .Call(SEQ_File_Init, ans)
-
     new("SeqVarGDSClass", ans)
 }
 

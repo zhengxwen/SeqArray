@@ -39,7 +39,8 @@ protected:
 	C_BOOL *SampleSelect;   ///< pointer to sample selection
 	bool UseRaw;            ///< whether use RAW type
 
-	vector<C_BOOL> VariantSelectBuffer;  ///< the buffer of selection
+	vector<C_BOOL> Selection;  ///< the buffer of selection
+	int NumOfBits;             ///< the number of bits
 
 public:
 	TType VarType;          ///< VCF data type

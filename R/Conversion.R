@@ -334,36 +334,27 @@ seqVCF.SampID <- function(vcf.fn)
 #
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
-    genotype.var.name="GT", compress.option=seqCompress.Option(),
+    genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
+    compress.option=seqCompress.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     raise.error=TRUE, verbose=TRUE)
 {
     # check
-    stopifnot(is.character(vcf.fn) & is.vector(vcf.fn))
-    stopifnot(length(vcf.fn) > 0L)
-
-    stopifnot(is.character(out.fn) & is.vector(out.fn))
-    stopifnot(length(out.fn) == 1L)
+    stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
+    stopifnot(is.character(out.fn), length(out.fn)==1L)
 
     stopifnot(is.null(header) | inherits(header, "SeqVCFHeaderClass"))
     stopifnot(inherits(compress.option, "SeqGDSCompressFlagClass"))
 
-    stopifnot(is.character(genotype.var.name) & is.vector(genotype.var.name))
-    stopifnot(length(genotype.var.name) == 1L)
+    stopifnot(is.character(genotype.var.name), length(genotype.var.name)==1L)
     stopifnot(!is.na(genotype.var.name))
+    genotype.storage <- match.arg(genotype.storage)
 
-    stopifnot(is.null(info.import) |
-        (is.character(info.import) & is.vector(info.import)))
-    stopifnot(is.null(fmt.import) |
-        (is.character(fmt.import) & is.vector(fmt.import)))
-
-    stopifnot(is.character(ignore.chr.prefix))
-
-    stopifnot(is.logical(raise.error) & is.vector(raise.error))
-    stopifnot(length(raise.error) == 1L)
-
-    stopifnot(is.logical(verbose) & is.vector(verbose))
-    stopifnot(length(verbose) == 1L)
+    stopifnot(is.null(info.import) | is.character(info.import))
+    stopifnot(is.null(fmt.import) | is.character(fmt.import))
+    stopifnot(is.character(ignore.chr.prefix), length(ignore.chr.prefix)>0L)
+    stopifnot(is.logical(raise.error), length(raise.error)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
 
     # check sample id
@@ -412,22 +403,23 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         cat("\tthe number of sets of chromosomes (ploidy): ",
             header$num.ploidy, "\n", sep="")
         cat("\tthe number of samples: ", length(samp.id), "\n", sep="")
+        cat("\tGDS genotype storage: ", genotype.storage, "\n", sep="")
     }
 
     # check header
     tmp <- FALSE
     if (!is.null(header$format))
     {
-		flag <- duplicated(header$format$ID)
-		if (any(flag))
-		{
-			if (verbose)
-			{
-				cat(sprintf("Duplicated Format ID (%s) are removed.\n",
-					paste(header$format$ID[flag], collapse=",")))
-			}
-			header$format <- header$format[!flag, ]
-		}
+        flag <- duplicated(header$format$ID)
+        if (any(flag))
+        {
+            if (verbose)
+            {
+                cat(sprintf("Duplicated Format ID (%s) are removed.\n",
+                    paste(header$format$ID[flag], collapse=",")))
+            }
+            header$format <- header$format[!flag, ]
+        }
         if (nrow(header$format) > 0L)
             tmp <- TRUE
     }
@@ -476,31 +468,31 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     on.exit(closefn.gds(gfile))
 
     put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
-    n <- addfolder.gdsn(gfile, "description")
-    put.attr.gdsn(n, "sequence.variant.format", "v1.0")
+    put.attr.gdsn(gfile$root, "FileVersion", "v1.0")
 
+    n <- addfolder.gdsn(gfile, "description")
     put.attr.gdsn(n, "vcf.fileformat", header$fileformat)
     if (!is.null(header$assembly))
         put.attr.gdsn(n, "vcf.assembly", header$assembly)
     if (!is.null(header$filter))
     {
         if (nrow(header$filter) > 0L)
-            put.attr.gdsn(add.gdsn(n, "vcf.filter", header$filter), "R.invisible")
+            add.gdsn(n, "vcf.filter", header$filter, visible=FALSE)
     }
     if (!is.null(header$alt))
     {
         if (nrow(header$alt) > 0L)
-            put.attr.gdsn(add.gdsn(n, "vcf.alt", header$alt), "R.invisible")
+            add.gdsn(n, "vcf.alt", header$alt, visible=FALSE)
     }
     if (!is.null(header$contig))
     {
         if (nrow(header$contig) > 0L)
-            put.attr.gdsn(add.gdsn(n, "vcf.contig", header$contig), "R.invisible")
+            add.gdsn(n, "vcf.contig", header$contig, visible=FALSE)
     }
     if (!is.null(header$header))
     {
         if (nrow(header$header) > 0L)
-            put.attr.gdsn(add.gdsn(n, "vcf.header", header$header), "R.invisible")
+            add.gdsn(n, "vcf.header", header$header, visible=FALSE)
     }
 
 
@@ -540,11 +532,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # add data to the folder of genotype
     if (header$num.ploidy > 1L)
     {
-        geno.node <- add.gdsn(varGeno, "data", storage="bit2",
+        geno.node <- add.gdsn(varGeno, "data", storage=genotype.storage,
             valdim=c(header$num.ploidy, nSamp, 0L),
             compress=compress("genotype"))
     } else {
-        geno.node <- add.gdsn(varGeno, "data", storage="bit2",
+        geno.node <- add.gdsn(varGeno, "data", storage=genotype.storage,
             valdim=c(1L, nSamp, 0L), compress=compress("genotype"))
     }
     node <- add.gdsn(varGeno, "@data", storage="uint8", valdim=0L,
@@ -607,16 +599,16 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     if (!is.null(header$info))
     {
-		flag <- duplicated(header$info$ID)
-		if (any(flag))
-		{
-			if (verbose)
-			{
-				cat(sprintf("Duplicated Info ID (%s) are removed.\n",
-					paste(header$info$ID[flag], collapse=",")))
-			}
-			header$info <- header$info[!flag, ]
-		}
+        flag <- duplicated(header$info$ID)
+        if (any(flag))
+        {
+            if (verbose)
+            {
+                cat(sprintf("Duplicated Info ID (%s) are removed.\n",
+                    paste(header$info$ID[flag], collapse=",")))
+            }
+            header$info <- header$info[!flag, ]
+        }
 
         if (nrow(header$info) > 0L)
         {

@@ -74,6 +74,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	SampleSelect = SampleSel;
 	Num_Variant = GetNumOfTRUE(VariantSel, nVariant);
 	UseRaw = _UseRaw;
+	NumOfBits = GDS_Array_GetBitOf(Node);
 
 	string Path2; // the path with '@'
 	PdAbstractArray IndexNode = NULL;  // the corresponding index variable
@@ -119,10 +120,10 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				VariantCount = 0;
 				for (int i=I; i < ICnt; i++) VariantCount += ILen[i];
 
-				VariantSelectBuffer.resize(VariantCount);
+				Selection.resize(VariantCount);
 				GenoCellCnt.resize(Num_Variant);
 
-				C_BOOL *p = &VariantSelectBuffer[0];
+				C_BOOL *p = &Selection[0];
 				C_UInt8 *p8 = &GenoCellCnt[0];
 				CellCount = 0;
 				for (int i=I; i < ICnt; i++)
@@ -147,7 +148,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			Init.Need_GenoBuffer(CellCount);
 
 			SelPtr[0] = NeedTRUE(1);
-			SelPtr[1] = &VariantSelectBuffer[0];
+			SelPtr[1] = &Selection[0];
 			SelPtr[2] = NeedTRUE(DLen[2]);
 			break;
 
@@ -199,8 +200,8 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				VariantCount = 0;
 				for (int i=I; i < ICnt; i++) VariantCount += ILen[i];
 
-				VariantSelectBuffer.resize(VariantCount);
-				C_BOOL *p = &VariantSelectBuffer[0];
+				Selection.resize(VariantCount);
+				C_BOOL *p = &Selection[0];
 				CellCount = 0;
 				for (int i=I; i < ICnt; i++)
 				{
@@ -220,7 +221,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			}
 
 			SelPtr[0] = NeedTRUE(1);
-			SelPtr[1] = &VariantSelectBuffer[0];
+			SelPtr[1] = &Selection[0];
 			if (DimCnt > 2)
 			{
 				SelPtr[2] = NeedTRUE(DLen[2]);
@@ -276,11 +277,12 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 	C_UInt8 *s = &Init.GENO_BUFFER[0];
 
 	GDS_Array_ReadDataEx(Node, st, cn, SelPtr, s, svUInt8);
+	const int bit_mask = ~((-1) << NumOfBits);
 
 	for (int i=0; i < Num_Variant; i++)
 	{
 		int *p;
-		int missing = 3;
+		int missing = bit_mask;
 
 		// the first 2 bits
 		p = Base;
@@ -288,7 +290,7 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 			*p++ = *s++;
 
 		/// the left bits
-		C_UInt8 shift = 2;
+		C_UInt8 shift = NumOfBits;
 		for (int m=GenoCellCnt[i]; m > 1; m--)
 		{
 			p = Base;
@@ -297,8 +299,8 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 				*p |= int(*s) << shift;
 				p ++; s ++;
 			}
-			shift += 2;
-			missing = (missing << 2) | 0x03;
+			shift += NumOfBits;
+			missing = (missing << NumOfBits) | bit_mask;
 		}
 
 		for (int j=DLen[2]; j > 0; j--)
@@ -316,22 +318,29 @@ void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
 	C_UInt8 *s = &Init.GENO_BUFFER[0];
 
 	GDS_Array_ReadDataEx(Node, st, cn, SelPtr, s, svUInt8);
+	const int bit_mask = ~((-1) << NumOfBits);
 
 	for (int i=0; i < Num_Variant; i++)
 	{
 		C_UInt8 *p;
-		int missing = 3;
+		int missing = bit_mask;
 
 		// the first 2 bits
 		p = Base;
 		for (int j=DLen[2]; j > 0; j--)
 			*p++ = *s++;
 
-		if (GenoCellCnt[i] > 4)
-			warning("RAW type may not be sufficient to store genotypes.");
+		if (NumOfBits == 2)
+		{
+			if (GenoCellCnt[i] > 4)
+				warning("RAW type may not be sufficient to store genotypes.");
+		} else {
+			if (GenoCellCnt[i] > 1)
+				warning("RAW type may not be sufficient to store genotypes.");
+		}
 
 		/// the left bits
-		C_UInt8 shift = 2;
+		C_UInt8 shift = NumOfBits;
 		for (int m=GenoCellCnt[i]; m > 1; m--)
 		{
 			p = Base;
@@ -340,8 +349,8 @@ void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
 				*p |= int(*s) << shift;
 				p ++; s ++;
 			}
-			shift += 2;
-			missing = (missing << 2) | 0x03;
+			shift += NumOfBits;
+			missing = (missing << NumOfBits) | bit_mask;
 		}
 
 		for (int j=DLen[2]; j > 0; j--)

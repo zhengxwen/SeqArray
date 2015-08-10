@@ -711,11 +711,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		// initialize variables		
 
 		// the total number of samples
-		int nTotalSamp = INTEGER(GetListElement(param, "sample.num"))[0];
+		int nTotalSamp = Rf_asInteger(GetListElement(param, "sample.num"));
 		// the variable name for genotypic data
 		string geno_id = CHAR(STRING_ELT(GetListElement(param, "genotype.var.name"), 0));
-		// NumericRaiseError
-		bool RaiseError = (LOGICAL(GetListElement(param, "raise.error"))[0] == TRUE);
+		// raise an error
+		bool RaiseError = (Rf_asLogical(GetListElement(param, "raise.error")) == TRUE);
 		// verbose
 		// bool Verbose = (LOGICAL(GetListElement(param, "verbose"))[0] == TRUE);
 
@@ -741,6 +741,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		PdAbstractArray varGenoLen = GDS_Node_Path(Root, "genotype/@data", TRUE);
 		PdAbstractArray varGenoExtraIdx = GDS_Node_Path(Root, "genotype/extra.index", TRUE);
 		PdAbstractArray varGenoExtra = GDS_Node_Path(Root, "genotype/extra", TRUE);
+
+		const int GenoNumBits= GDS_Array_GetBitOf(varGeno);
+		if ((GenoNumBits!=2) && (GenoNumBits!=8))
+			throw ErrSeqArray("Invalid data type in genotype/data.");
+		const int GenoBitMask = ~((-1) << GenoNumBits);
 
 		PdAbstractArray varPhase, varPhaseExtraIdx, varPhaseExtra;
 		if (num_ploidy > 1)
@@ -1276,23 +1281,23 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			// -------------------------------------------------
 			// write genotypes
 
-			// determine how many bits
-			int num_bits = 2;
+			// determine how many bits (GenoNumBits == 2, 4 or 8)
+			int num_bits = GenoNumBits;
 			// plus ONE for missing value
 			while ((num_allele + 1) > (1 << num_bits))
-				num_bits += 2;
-			I32 = num_bits / 2;
+				num_bits += GenoNumBits;
+			I32 = num_bits / GenoNumBits;
 			GDS_Array_AppendData(varGenoLen, 1, &I32, svInt32);
 
 			// write to the variable "genotype"
-			for (int bits=0; bits < num_bits; bits += 2)
+			for (int bits=0; bits < num_bits; bits += GenoNumBits)
 			{
 				I8s.clear();
 				for (int i=0; i < nTotalSamp; i++)
 				{
 					vector<C_Int16> &pAllele = Geno[i];
 					for (int j=0; j < num_ploidy; j++)
-						I8s.push_back((pAllele[j] >> bits) & 0x03);
+						I8s.push_back((pAllele[j] >> bits) & GenoBitMask);
 				}
 				GDS_Array_AppendData(varGeno, nTotalSamp*num_ploidy,
 					&(I8s[0]), svInt8);

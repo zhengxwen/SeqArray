@@ -137,8 +137,7 @@
 
     if (!is.null(cl))
     {
-        ############################################################
-        # parallel implementation
+        ## parallel implementation
 
         if (identical(.combinefun, "unlist") | identical(.combinefun, "list"))
             ans <- vector("list", .num)
@@ -148,9 +147,9 @@
         p <- length(cl)
         if ((.num > 0L) && p)
         {
-            ## this closure is sending to all nodes
-            argfun <- function(i) c(i, list(...))
+            ####  this closure is sending to all nodes
 
+            argfun <- function(i) c(i, list(...))
             submit <- function(node, job)
                 sendCall(cl[[node]], .fun, argfun(job), tag = job)
 
@@ -198,8 +197,7 @@
         }
     } else {
 
-        ############################################################
-        # serial implementation
+        ####  serial implementation
 
         if (is.function(.combinefun))
         {

@@ -5,8 +5,9 @@
     Reformat Variant Call Format (VCF) files.
 }
 \usage{
-seqVCF2GDS(vcf.fn, out.fn, header = NULL, genotype.var.name = "GT",
-    compress.option = seqCompress.Option(), info.import=NULL, fmt.import=NULL,
+seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
+    genotype.storage=c("bit2", "bit4", "bit8"),
+    compress.option=seqCompress.Option(), info.import=NULL, fmt.import=NULL,
     ignore.chr.prefix="chr", raise.error=TRUE, verbose=TRUE)
 }
 \arguments{
@@ -16,6 +17,9 @@ seqVCF2GDS(vcf.fn, out.fn, header = NULL, genotype.var.name = "GT",
         \code{\link{seqVCF.Header}(vcf.fn)}}
     \item{genotype.var.name}{the ID for genotypic data in the FORMAT column;
         "GT" by default, VCFv4.0}
+    \item{genotype.storage}{"bit2" by default; with respect to the compression
+        size and access speed, "bit2" is the most efficient when most of
+        variants are biallelic.}
     \item{compress.option}{specify the compression options, by default
         \code{\link{seqCompress.Option}}}
     \item{info.import}{characters, the variable name(s) in the INFO field
