@@ -30,7 +30,7 @@ seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
 #######################################################################
 # Setup the parallel parameters in SeqArray
 #
-seqSetup <- function(cluster=TRUE)
+seqParallelSetup <- function(cluster=TRUE)
 {
     # check
     stopifnot(is.null(cluster) | is.logical(cluster) |

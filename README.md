@@ -10,8 +10,7 @@ SeqArray: Big Data Management of Genome-Wide Sequencing Variants
 
 ## Features
 
-Big data management of genome-wide variants imported from Variant Call Format (VCF), with the CoreArray C++ library: genotypic data and annotations are stored in an array-oriented manner, offering efficient access of genetic variants using the R programming language.
-
+Big data management of genome-wide variants with thousands of individuals from Variant Call Format (VCF): genotypic data (e.g., SNP, indel and structural variation calls) and annotations are stored in an array-oriented and compressed manner, with efficient access of data using the R programming language.
 
 ## Bioconductor:
 

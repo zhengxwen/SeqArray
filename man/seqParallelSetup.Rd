@@ -1,11 +1,11 @@
-\name{seqSetup}
-\alias{seqSetup}
+\name{seqParallelSetup}
+\alias{seqParallelSetup}
 \title{Setup a parallel environment}
 \description{
     Setup a parallel environment in R.
 }
 \usage{
-seqSetup(cluster=TRUE)
+seqParallelSetup(cluster=TRUE)
 }
 \arguments{
     \item{cluster}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
@@ -33,7 +33,8 @@ to the value of \code{cluster}.
 }
 
 \examples{
-seqSetup()
+\donttest{
+seqParallelSetup(2L)
 
 # the GDS file
 (gds.fn <- seqExampleFileName("gds"))
@@ -47,7 +48,8 @@ summary(seqMissing(f))
 # close the GDS file
 seqClose(f)
 
-seqSetup(FALSE)
+seqParallelSetup(FALSE)
+}
 }
 
 \keyword{gds}
