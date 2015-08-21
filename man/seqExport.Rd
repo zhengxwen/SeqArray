@@ -1,8 +1,8 @@
 \name{seqExport}
 \alias{seqExport}
-\title{Export to GDS file}
+\title{Export to a GDS File}
 \description{
-    Export to a GDS file with selected samples and variants, which are defined
+    Exports to a GDS file with selected samples and variants, which are defined
 by \code{seqSetFilter()}.
 }
 \usage{

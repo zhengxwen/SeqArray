@@ -2,7 +2,7 @@
 \alias{seqCompress.Option}
 \title{Compression Options for Importing VCF File(s)}
 \description{
-    Get compression options for importing VCF file(s).
+    Gets compression options for importing VCF file(s).
 }
 \usage{
 seqCompress.Option(default="ZIP_RA.MAX", ...)

@@ -1,8 +1,8 @@
 \name{seqVCF.Header}
 \alias{seqVCF.Header}
-\title{Parse the header of a VCF file}
+\title{Parse the Header of a VCF File}
 \description{
-    Parse the header of a VCF file.
+    Parses the header of a VCF file.
 }
 \usage{
 seqVCF.Header(vcf.fn)

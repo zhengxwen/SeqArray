@@ -1,6 +1,6 @@
 \name{seqOptimize}
 \alias{seqOptimize}
-\title{Transpose Data Array}
+\title{Optimize the Storage of Data Array}
 \description{
     Transpose data array or matrix for possibly higher-speed access.
 }

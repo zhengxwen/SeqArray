@@ -1,8 +1,8 @@
 \name{seqGetFilter}
 \alias{seqGetFilter}
-\title{Get the Filter of Samples and Variants}
+\title{Get the Filter of GDS File}
 \description{
-    Get the filter of samples and variants.
+    Gets the filter of samples and variants.
 }
 \usage{
 seqGetFilter(gdsfile)

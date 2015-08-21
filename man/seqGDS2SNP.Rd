@@ -1,8 +1,8 @@
 \name{seqGDS2SNP}
 \alias{seqGDS2SNP}
-\title{Convert to a SNP GDS file}
+\title{Convert to a SNP GDS File}
 \description{
-    Convert a sequencing GDS file to a SNP GDS file.
+    Converts a sequence GDS file to a SNP GDS file.
 }
 \usage{
 seqGDS2SNP(gdsfile, out.gdsfn, compress.annotation="ZIP_RA.max",

@@ -2,7 +2,7 @@
 \alias{seqMissing}
 \title{Missing genotype percentage}
 \description{
-    Calculate the missing rates per variant or per sample.
+    Calculates the missing rates per variant or per sample.
 }
 \usage{
 seqMissing(gdsfile, per.variant=TRUE,

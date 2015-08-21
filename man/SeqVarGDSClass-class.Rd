@@ -18,7 +18,7 @@ Variant Call Format (VCF) data. It extends \code{\link[gdsfmt]{gds.class}}.
 }
 
 \details{
-	A sequencing GDS file is created from a VCF file with
+	A sequence GDS file is created from a VCF file with
 \code{\link{seqVCF2GDS}}. This file can be opened with \code{\link{seqOpen}}
 to create a \code{SeqVarGDSClass} object.
 }

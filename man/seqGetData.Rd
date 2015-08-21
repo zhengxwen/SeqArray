@@ -1,8 +1,8 @@
 \name{seqGetData}
 \alias{seqGetData}
-\title{Get Data from a Sequencing GDS file}
+\title{Get Data}
 \description{
-    Get data from a sequencing GDS file.
+    Gets data from a sequence GDS file.
 }
 \usage{
 seqGetData(gdsfile, var.name)

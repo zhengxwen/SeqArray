@@ -1,8 +1,8 @@
 \name{seqAlleleFreq}
 \alias{seqAlleleFreq}
-\title{Allele frequencies}
+\title{Get Allele Frequencies}
 \description{
-    Calculate the allele frequencies.
+    Calculates the allele frequencies.
 }
 \usage{
 seqAlleleFreq(gdsfile, ref.allele=0L,

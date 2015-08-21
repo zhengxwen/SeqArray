@@ -2,8 +2,10 @@
 \alias{seqClose}
 \alias{seqClose,SeqVarGDSClass-method}
 
-\title{Close a SeqArray object}
-\description{Close a SeqArray file or object}
+\title{Close the SeqArray GDS File}
+\description{
+    Closes a sequence GDS file.
+}
 
 \usage{
 \S4method{seqClose}{SeqVarGDSClass}(object)
@@ -17,7 +19,7 @@
 \details{
     If \code{object} is
     \itemize{
-        \item{\code{\link{SeqVarGDSClass}}, close the sequencing GDS file.}
+        \item{\code{\link{SeqVarGDSClass}}, close the sequence GDS file.}
     }
 }
 

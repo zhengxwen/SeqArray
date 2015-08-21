@@ -1,8 +1,8 @@
 \name{seqSetFilter}
 \alias{seqSetFilter}
-\title{Set a filter to sample or variant}
+\title{Set a Filter to Sample or Variant}
 \description{
-    Set a filter to sample and/or variant.
+    Sets a filter to sample and/or variant.
 }
 \usage{
 seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,

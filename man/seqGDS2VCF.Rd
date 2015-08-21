@@ -1,8 +1,8 @@
 \name{seqGDS2VCF}
 \alias{seqGDS2VCF}
-\title{Convert to a VCF file}
+\title{Convert to a VCF File}
 \description{
-    Convert a GDS file to a VCF file.
+    Converts a sequence GDS file to a VCF file.
 }
 \usage{
 seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)

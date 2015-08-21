@@ -1,8 +1,8 @@
 \name{seqOpen}
 \alias{seqOpen}
-\title{Open a Sequencing GDS File}
+\title{Open a Sequence GDS File}
 \description{
-    Open a sequencing GDS file.
+    Opens a sequence GDS file.
 }
 \usage{
 seqOpen(gds.fn, readonly=TRUE)

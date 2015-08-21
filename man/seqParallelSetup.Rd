@@ -1,8 +1,8 @@
 \name{seqParallelSetup}
 \alias{seqParallelSetup}
-\title{Setup a parallel environment}
+\title{Setup a Parallel Environment}
 \description{
-    Setup a parallel environment in R.
+    Setups a parallel environment in R.
 }
 \usage{
 seqParallelSetup(cluster=TRUE)
@@ -33,7 +33,8 @@ to the value of \code{cluster}.
 }
 
 \examples{
-\donttest{
+library(parallel)
+
 seqParallelSetup(2L)
 
 # the GDS file
@@ -49,7 +50,6 @@ summary(seqMissing(f))
 seqClose(f)
 
 seqParallelSetup(FALSE)
-}
 }
 
 \keyword{gds}

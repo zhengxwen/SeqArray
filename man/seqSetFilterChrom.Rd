@@ -1,8 +1,8 @@
 \name{seqSetFilterChrom}
 \alias{seqSetFilterChrom}
-\title{Chromosome selection}
+\title{Chromosome Selection}
 \description{
-    Select the variants according to the specified chromosome(s).
+    Selects the variants according to the specified chromosome(s).
 }
 \usage{
 seqSetFilterChrom(gdsfile, include=NULL, is.num=NA, from.bp=NaN, to.bp=NaN)

@@ -45,11 +45,11 @@ in SeqArray, and most of data analyses could be done using these 6 functions:
 \tabular{ll}{
     \bold{Function} \tab \bold{Description} \cr
     seqVCF2GDS \tab Imports VCF files \cr
-    seqSummary \tab Gets the summary of a sequencing GDS file (# of samples,
+    seqSummary \tab Gets the summary of a sequence GDS file (# of samples,
         # of variants, INFO/FORMAT variables, etc) \cr
     seqSetFilter \tab Sets a filter to sample or variant (define a subset
         of data) \cr
-    seqGetData \tab Gets data from a sequencing GDS file (from a subset
+    seqGetData \tab Gets data from a sequence GDS file (from a subset
         of data) \cr
     seqApply \tab Applies a user-defined function over array margins \cr
     seqParallel \tab Applies functions in parallel \cr

@@ -1,8 +1,8 @@
 \name{seqSummary}
 \alias{seqSummary}
-\title{Get the summary of a GDS file}
+\title{Summarize the Sequence GDS File}
 \description{
-    Get the summary of a sequencing GDS file.
+    Gets the summary of sequence GDS file.
 }
 \usage{
 seqSummary(gdsfile, varname=NULL, check=c("check", "full.check", "none"),

@@ -2,7 +2,7 @@
 \alias{seqNumAllele}
 \title{Number of alleles}
 \description{
-    Return the numbers of alleles for each site.
+    Returns the numbers of alleles for each site.
 }
 \usage{
 seqNumAllele(gdsfile, parallel=getOption("seqarray.parallel", FALSE))

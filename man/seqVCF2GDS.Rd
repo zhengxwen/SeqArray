@@ -1,8 +1,8 @@
 \name{seqVCF2GDS}
 \alias{seqVCF2GDS}
-\title{Reformat VCF files}
+\title{Reformat VCF Files}
 \description{
-    Reformat Variant Call Format (VCF) files.
+    Reformats Variant Call Format (VCF) files.
 }
 \usage{
 seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",

@@ -1,9 +1,28 @@
-language: cpp
-script: ./travis-tool.sh run_tests
-before_script:
-  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
-  - chmod 755 ./travis-tool.sh
-  - ./travis-tool.sh bootstrap
-  - ./travis-tool.sh github_package zhengxwen/gdsfmt zhengxwen/SNPRelate
-  - ./travis-tool.sh install_deps
-  - ./travis-tool.sh bioc_install BiocStyle Biostrings GenomicRanges IRanges VariantAnnotation
+language: r
+
+# Be strict when checking our package
+warnings_are_errors: true
+
+# System dependencies for HTTP calling
+apt_packages:
+  - libcurl4-openssl-dev
+  - libxml2-dev
+
+r_binary_packages:
+  - RUnit
+  - Rcpp
+
+# Install packages from Bioconductor
+bioc_packages:
+  - BiocGenerics
+  - Biostrings
+  - GenomicRanges
+  - IRanges
+  - S4Vectors
+  - VariantAnnotation
+
+# Install packages from github
+r_github_packages:
+  - zhengxwen/gdsfmt
+  - zhengxwen/SNPRelate
+

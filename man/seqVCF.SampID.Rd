@@ -1,8 +1,8 @@
 \name{seqVCF.SampID}
 \alias{seqVCF.SampID}
-\title{Get the sample IDs of a VCF file}
+\title{Get the Sample IDs}
 \description{
-    Return the sample IDs of a VCF file.
+    Returns the sample IDs of a VCF file.
 }
 \usage{
 seqVCF.SampID(vcf.fn)

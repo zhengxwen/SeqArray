@@ -1,6 +1,6 @@
 \name{seqSlidingWindow}
 \alias{seqSlidingWindow}
-\title{Apply functions via a sliding window over variants}
+\title{Apply Functions via a Sliding Window Over Variants}
 \description{
     Returns a vector or list of values obtained by applying a function to a
 sliding window over variants.

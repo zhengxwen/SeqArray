@@ -1,8 +1,8 @@
 \name{seqInfoNewVar}
 \alias{seqInfoNewVar}
-\title{Add a variable to the INFO field}
+\title{Add a Variable to the INFO Field}
 \description{
-    Add a new variable to the INFO field in the specified GDS file.
+    Adds a new variable to the INFO field in the specified GDS file.
 }
 \usage{
 seqInfoNewVar(gdsfile, var.name, variant.id, val,

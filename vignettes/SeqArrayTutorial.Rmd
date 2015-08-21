@@ -40,9 +40,9 @@ Here, I focus on the application of CoreArray for statisticians working in the R
 | Function     | Description |
 |:-------------|:-------------------------------------------|
 | seqVCF2GDS   | Imports VCF files  |
-| seqSummary   | Gets the summary of a sequencing GDS file (Num. of samples, Num. of variants, INFO/FORMAT variables, etc)  |
+| seqSummary   | Gets the summary of a sequence GDS file (Num. of samples, Num. of variants, INFO/FORMAT variables, etc)  |
 | seqSetFilter | Sets a filter to sample or variant (define a subset of data)  |
-| seqGetData   | Gets data from a sequencing GDS file (from a subset of data)  |
+| seqGetData   | Gets data from a sequence GDS file (from a subset of data)  |
 | seqApply     | Applies a user-defined function over array margins  |
 | seqParallel  | Applies functions in parallel  |
 
@@ -257,7 +257,7 @@ unlink("tmp.gds")
 
 | Function      | Description |
 |:--------------|:-------------------------------------------|
-| seqGetData    | Gets data from a sequencing GDS file (from a subset of data). [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
+| seqGetData    | Gets data from a sequence GDS file (from a subset of data). [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
 | seqApply      | Applies a user-defined function over array margins. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
 | seqNumAllele  | Number of alleles per site. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
 | seqMissing    | Missing genotype percentage. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
