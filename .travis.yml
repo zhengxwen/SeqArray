@@ -1,6 +1,7 @@
 language: r
 
-# Be strict when checking our package
+sudo: required
+
 warnings_are_errors: true
 bioc_required: true
 
