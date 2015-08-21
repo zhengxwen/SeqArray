@@ -13,15 +13,6 @@ r_binary_packages:
   - RUnit
   - Rcpp
 
-# Install packages from Bioconductor
-bioc_packages:
-  - BiocGenerics
-  - Biostrings
-  - GenomicRanges
-  - IRanges
-  - S4Vectors
-  - VariantAnnotation
-
 # Install packages from github
 r_github_packages:
   - zhengxwen/gdsfmt
