@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.12
+CHANGES IN VERSION 1.9.0-1.9.13
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -29,6 +29,8 @@ CHANGES IN VERSION 1.9.0-1.9.12
 
     o v1.9.12: improve access speed (+50%, benchmark on calling
       seqApply(..., FUN=function(x) {}))
+
+    o v1.9.13: a new function `seqSNP2GDS()`
 
 
 CHANGES IN VERSION 1.8.0

@@ -936,7 +936,7 @@ head(round(pc.percent, 2))
 
 Population information are available:
 ```{r}
-pop.code <- factor(read.gdsn(index.gdsn(genofile, "sample.annotation/Population")))
+pop.code <- factor(seqGetData(genofile, "sample.annotation/Population"))
 head(pop.code)
 
 popgroup <- list(

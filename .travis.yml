@@ -1,14 +1,7 @@
 language: r
 
-sudo: required
-
 warnings_are_errors: true
 bioc_required: true
-
-# System dependencies for HTTP calling
-apt_packages:
-  - libcurl4-openssl-dev
-  - libxml2-dev
 
 r_binary_packages:
   - RUnit

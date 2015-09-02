@@ -47,7 +47,7 @@ cleanup.gds("tmp.gds")
 
 
 # remove the temporary file
-unlink("tmp", force=TRUE)
+unlink("tmp.gds", force=TRUE)
 }
 
 \keyword{gds}

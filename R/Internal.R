@@ -97,6 +97,49 @@
 
 
 #######################################################################
+# append the repeated values
+#
+
+.repeat_gds <- function(node, elm, count)
+{
+    val <- rep(elm, 65536L)
+    while (count > 0L)
+    {
+        size <- ifelse(count <= 65536L, count, 65536L)
+        append.gdsn(node, val[seq_len(size)], check=FALSE)
+        count <- count - size
+    }
+    invisible()
+}
+
+
+
+#######################################################################
+# Data Type define VCF Format
+#
+
+.vcf_type <- function(node)
+{
+    a <- get.attr.gdsn(node)
+    if (is.null(a$Type))
+    {
+        i <- objdesp.gdsn(node)$type
+        if (i %in% c("Raw", "Integer", "Logical"))
+            v <- "Integer"
+        else if (i %in% "Real")
+            v <- "Float"
+        else if (i %in% c("Factor", "String"))
+            v <- "String"
+        else
+            v <- "."
+    } else
+        v <- a$Type
+    v
+}
+
+
+
+#######################################################################
 # Parallel functions
 #
 

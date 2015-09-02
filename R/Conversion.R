@@ -965,7 +965,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # the INFO field
     for (nm in z$info$var.name)
     {
-        a <- get.attr.gdsn(index.gdsn(gdsfile, paste("annotation/info/", nm, sep="")))
+        a <- get.attr.gdsn(index.gdsn(gdsfile,
+            paste("annotation/info/", nm, sep="")))
         cat(sprintf("##INFO=<ID=%s,Number=%s,Type=%s,Description=%s>\n",
             nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE)), file=ofile)
     }
@@ -988,7 +989,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         a$VariableName, dq(a$Description, TRUE)), file=ofile)
     for (nm in z$format$var.name)
     {
-        a <- get.attr.gdsn(index.gdsn(gdsfile, paste("annotation/format/", nm, sep="")))
+        a <- get.attr.gdsn(index.gdsn(gdsfile,
+            paste("annotation/format/", nm, sep="")))
         cat(sprintf("##FORMAT=<ID=%s,Number=%s,Type=%s,Description=%s>\n",
             nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE)), file=ofile)
     }
@@ -1085,21 +1087,22 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
 
 #######################################################################
-# Convert a Sequencing GDS file to a SNP GDS file
+# Convert a Sequence GDS file to a SNP GDS file
 #
 
 seqGDS2SNP <- function(gdsfile, out.gdsfn,
-    compress.annotation="ZIP_RA.max", compress.geno="ZIP_RA.max",
+    compress.geno="ZIP_RA.max", compress.annotation="ZIP_RA.max",
     verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(out.gdsfn))
-    stopifnot(is.vector(out.gdsfn) & (length(out.gdsfn)==1L))
+    stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
+    stopifnot(is.character(compress.geno))
+    stopifnot(is.character(compress.annotation))
     stopifnot(is.logical(verbose))
 
     if (verbose)
-        cat("Sequencing GDS to SNP GDS Format:\n")
+        cat("Sequence GDS to SNP GDS Format:\n")
 
     # if it is a file name
     if (is.character(gdsfile))
@@ -1161,6 +1164,191 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 
     if (verbose)
         cat("Done.\n")
+
+    # output
+    invisible(normalizePath(out.gdsfn))
+}
+
+
+
+#######################################################################
+# Convert a SNP GDS file to a Sequence GDS file
+#
+
+seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
+    compress.annotation="ZIP_RA.max", verbose=TRUE)
+{
+    # check
+    stopifnot(is.character(gds.fn), length(gds.fn)==1L)
+    stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
+    stopifnot(is.character(compress.geno))
+    stopifnot(is.character(compress.annotation))
+    stopifnot(is.logical(verbose))
+
+    if (verbose)
+        cat("SNP GDS to Sequence GDS Format:\n")
+
+    # open the existing SNP GDS
+    srcfile <- openfn.gds(gds.fn)
+    on.exit({ closefn.gds(srcfile) })
+
+    nSamp <- prod(objdesp.gdsn(index.gdsn(srcfile, "sample.id"))$dim)
+    nSNP <- prod(objdesp.gdsn(index.gdsn(srcfile, "snp.id"))$dim)
+
+    n <- index.gdsn(srcfile, "genotype")
+    dm <- objdesp.gdsn(n)$dim
+    if (length(dm) != 2)
+        stop("'genotype' of SNP GDS should be a matrix.")
+    snpfirstdim <- TRUE
+    rd <- names(get.attr.gdsn(n))
+    if ("snp.order" %in% rd) snpfirstdim <- TRUE
+    if ("sample.order" %in% rd) snpfirstdim <- FALSE
+    if (snpfirstdim)
+    {
+        if ((dm[1]!=nSNP) || (dm[2]!=nSamp))
+            stop("Invalid dimension of 'genotype'.")
+    } else {
+        if ((dm[1]!=nSamp) || (dm[2]!=nSNP))
+            stop("Invalid dimension of 'genotype'.")
+    }
+
+
+    # create GDS file
+    dstfile <- createfn.gds(out.gdsfn)
+    # close the file at the end
+    on.exit({ if (!is.null(dstfile)) closefn.gds(dstfile) }, add=TRUE)
+
+    put.attr.gdsn(dstfile$root, "FileFormat", "SEQ_ARRAY")
+    put.attr.gdsn(dstfile$root, "FileVersion", "v1.0")
+
+    n <- addfolder.gdsn(dstfile, "description")
+    put.attr.gdsn(n, "source.format", "SNPRelate GDS Format")
+
+    # add sample.id
+    if (verbose) cat("    sample.id\n")
+    copyto.gdsn(dstfile, index.gdsn(srcfile, "sample.id"))
+    # add variant.id
+    if (verbose) cat("    variant.id\n")
+    copyto.gdsn(dstfile, index.gdsn(srcfile, "snp.id"), "variant.id")
+    # add position
+    if (verbose) cat("    position.id\n")
+    copyto.gdsn(dstfile, index.gdsn(srcfile, "snp.position"), "position")
+
+    # add chromosome
+    if (verbose) cat("    chromosome\n")
+    n <- add.gdsn(dstfile, "chromosome", storage="string",
+        compress=compress.annotation)
+    append.gdsn(n, index.gdsn(srcfile, "snp.chromosome"))
+    readmode.gdsn(n)
+
+    # add allele
+    if (verbose) cat("    allele\n")
+    add.gdsn(dstfile, "allele", val = .cfunction("FC_AlleleStr2")(
+        read.gdsn(index.gdsn(srcfile, "snp.allele"))),
+        compress=compress.annotation, closezip=TRUE)
+
+    # add a folder for genotypes
+    if (verbose) cat("    genotype\n")
+    n <- addfolder.gdsn(dstfile, "genotype")
+    put.attr.gdsn(n, "VariableName", "GT")
+    put.attr.gdsn(n, "Description", "Genotype")
+
+
+    # add genotypes to genotype/data
+    n1 <- add.gdsn(n, "data", storage="bit2", valdim=c(2L, nSamp, 0L),
+        compress=compress.geno)
+    apply.gdsn(index.gdsn(srcfile, "genotype"), ifelse(snpfirstdim, 1L, 2L),
+        FUN = .cfunction("FC_SNP2GDS"), as.is="gdsnode", target.node=n1)
+    readmode.gdsn(n1)
+
+    n1 <- add.gdsn(n, "@data", storage="uint8", compress=compress.annotation,
+        visible=FALSE)
+    .repeat_gds(n1, 1L, nSNP)
+    readmode.gdsn(n1)
+
+    n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
+        compress=compress.geno, closezip=TRUE)
+    put.attr.gdsn(n1, "R.colnames",
+        c("sample.index", "variant.index", "length"))
+    add.gdsn(n, "extra", storage="int16", compress=compress.geno, closezip=TRUE)
+
+
+    # add a folder for phase information
+    if (verbose) cat("    phase\n")
+    n <- addfolder.gdsn(dstfile, "phase")
+
+    n1 <- add.gdsn(n, "data", storage="bit1", valdim=c(nSamp, 0L),
+        compress=compress.annotation)
+    .repeat_gds(n1, 0L, nSNP*nSamp)
+    readmode.gdsn(n1)
+
+    n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
+        compress=compress.annotation, closezip=TRUE)
+    put.attr.gdsn(n1, "R.colnames",
+        c("sample.index", "variant.index", "length"))
+    add.gdsn(n, "extra", storage="bit1", compress=compress.annotation,
+        closezip=TRUE)
+
+
+    # add annotation folder
+    if (verbose) cat("    annotation\n")
+    n <- addfolder.gdsn(dstfile, "annotation")
+
+    # add annotation/id
+    n1 <- add.gdsn(n, "id", storage="string", compress=compress.annotation)
+    if (is.null(index.gdsn(srcfile, "snp.rs.id", silent=TRUE)))
+        assign.gdsn(n1, index.gdsn(srcfile, "snp.id"))
+    else
+        assign.gdsn(n1, index.gdsn(srcfile, "snp.rs.id"))
+    readmode.gdsn(n1)
+
+    # add annotation/qual
+    n1 <- add.gdsn(n, "qual", storage="float", compress=compress.annotation)
+    .repeat_gds(n1, NaN, nSNP)
+    readmode.gdsn(n1)
+
+    # add filter
+    n1 <- add.gdsn(n, "filter", storage="int32", compress=compress.annotation)
+    .repeat_gds(n1, 0L, nSNP)
+    readmode.gdsn(n1)
+    put.attr.gdsn(n1, "R.class", "factor")
+    put.attr.gdsn(n1, "R.levels", c("PASS"))
+
+    # add the INFO field
+    n1 <- addfolder.gdsn(n, "info")
+    n2 <- index.gdsn(srcfile, "snp.annot", silent=TRUE)
+    if (!is.null(n2))
+    {
+        for (i in ls.gdsn(n2))
+            copyto.gdsn(n1, index.gdsn(n2, i))
+    }
+
+    # add the FORMAT field
+    addfolder.gdsn(n, "format")
+
+
+    # add sample annotation
+    if (verbose) cat("    sample.annotation\n")
+    n <- addfolder.gdsn(dstfile, "sample.annotation")
+    n1 <- index.gdsn(srcfile, "sample.annot", silent=TRUE)
+    if (!is.null(n1))
+    {
+        for (i in ls.gdsn(n1))
+            copyto.gdsn(n, index.gdsn(n1, i))
+    }
+
+
+    ##################################################
+    # optimize access efficiency
+
+    if (verbose)
+    {
+        cat("Done.\n")
+        cat("Optimize the access efficiency ...\n")
+    }
+    closefn.gds(dstfile)
+    dstfile <- NULL
+    cleanup.gds(out.gdsfn, verbose=verbose)
 
     # output
     invisible(normalizePath(out.gdsfn))
