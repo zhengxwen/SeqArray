@@ -30,6 +30,7 @@ importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF)
 
 # Export all names
 exportPattern("^seq*")
+export(.Last.lib)
 
 # exportClasses(SeqVarGDSClass, SeqVarNodeNewInfoClass)
 exportClasses(SeqVarGDSClass)

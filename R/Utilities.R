@@ -7,6 +7,19 @@
 #
 
 
+#######################################################################
+.Last.lib <- function(libpath)
+{
+    cl <- getOption("seqarray.parallel", FALSE)
+    if (inherits(cl, "cluster"))
+    {
+        if (requireNamespace("parallel"))
+            parallel::stopCluster(cl)
+        options(seqarray.parallel=NULL)
+    }
+}
+
+
 
 #######################################################################
 # Get the file name of an example

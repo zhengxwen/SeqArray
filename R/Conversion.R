@@ -1304,7 +1304,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
 
     # add annotation/qual
     n1 <- add.gdsn(n, "qual", storage="float", compress=compress.annotation)
-    .repeat_gds(n1, NaN, nSNP)
+    .repeat_gds(n1, 100.0, nSNP)
     readmode.gdsn(n1)
 
     # add filter
@@ -1518,7 +1518,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 
     # add annotation/qual
     n1 <- add.gdsn(n, "qual", storage="float", compress=compress.annotation)
-    .repeat_gds(n1, NaN, nrow(bimD))
+    .repeat_gds(n1, 100.0, nrow(bimD))
     readmode.gdsn(n1)
 
     # add filter

@@ -2,7 +2,7 @@
 \alias{seqParallelSetup}
 \title{Setup a Parallel Environment}
 \description{
-    Setups a parallel environment in R.
+    Setups a parallel environment in R for the current session.
 }
 \usage{
 seqParallelSetup(cluster=TRUE)
@@ -22,6 +22,8 @@ used to create a new child process as a copy of the current R process, see
 multiple processes created by \code{\link{makeCluster}} are used instead.
     The R environment option \code{seqarray.parallel} will be set according
 to the value of \code{cluster}.
+    Using \code{seqParallelSetup(FALSE)} removes the registered cluster, as
+does stopping the registered cluster.
 }
 \value{
     None.
