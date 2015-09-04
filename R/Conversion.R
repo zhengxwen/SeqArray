@@ -1181,8 +1181,8 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     # check
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
-    stopifnot(is.character(compress.geno))
-    stopifnot(is.character(compress.annotation))
+    stopifnot(is.character(compress.geno), length(compress.geno)==1L)
+    stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
     stopifnot(is.logical(verbose))
 
     if (verbose)
@@ -1348,6 +1348,222 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     }
     closefn.gds(dstfile)
     dstfile <- NULL
+    cleanup.gds(out.gdsfn, verbose=verbose)
+
+    # output
+    invisible(normalizePath(out.gdsfn))
+}
+
+
+
+#######################################################################
+# Convert a PLINK BED file to a Sequence GDS file
+#
+
+seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
+    compress.geno="ZIP_RA.max", compress.annotation="ZIP_RA.max", verbose=TRUE)
+{
+    # check
+    stopifnot(is.character(bed.fn), length(bed.fn)==1L)
+    stopifnot(is.character(fam.fn), length(fam.fn)==1L)
+    stopifnot(is.character(bim.fn), length(bim.fn)==1L)
+    stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
+    stopifnot(is.character(compress.geno), length(compress.geno)==1L)
+    stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (verbose)
+        cat("PLINK BED to Sequence GDS Format:\n")
+
+    ##  open and detect bed.fn  ##
+
+    bedfile <- .open_bin(bed.fn)
+    on.exit({ .close_conn(bedfile) })
+    bed_flag <- .Call(SEQ_ConvBEDFlag, bedfile$con, readBin, new.env())
+    if (verbose)
+    {
+        cat("\tBED file: \"", bed.fn, "\"", sep="")
+        if (bed_flag == 0)
+            cat(" in the individual-major mode (SNP X Sample)\n")
+        else
+            cat(" in the SNP-major mode (Sample X SNP)\n")
+    }
+
+    ##  read fam.fn  ##
+
+    f <- .open_text(fam.fn, TRUE)
+    famD <- read.table(f$con, header=FALSE, stringsAsFactors=FALSE)
+    .close_conn(f)
+
+    names(famD) <- c("FamilyID", "InvID", "PatID", "MatID", "Sex", "Pheno")
+    if (anyDuplicated(famD$InvID) == 0L)
+    {
+        sample.id <- famD$InvID
+    } else {
+        sample.id <- paste(famD$FamilyID, famD$InvID, sep="-")
+        if (length(unique(sample.id)) != dim(famD)[1])
+            stop("IDs in PLINK BED are not unique!")
+    }
+    if (verbose)
+        cat("\tFAM file: \"", fam.fn, "\" (", nrow(famD), "samples)\n", sep="")
+
+    ##  read bim.fn  ##
+
+    f <- .open_text(bim.fn, TRUE)
+    bimD <- read.table(f$con, header=FALSE, stringsAsFactors=FALSE)
+    .close_conn(f)
+    names(bimD) <- c("chr", "snp.id", "map", "pos", "allele1", "allele2")
+    if (verbose)
+        cat("\tBIM file: \"", bim.fn, "\" (", nrow(bimD), "variants)\n", sep="")
+
+
+    ##  create GDS file  ##
+
+    dstfile <- createfn.gds(out.gdsfn)
+    # close the file at the end
+    on.exit({ closefn.gds(dstfile) }, add=TRUE)
+
+    put.attr.gdsn(dstfile$root, "FileFormat", "SEQ_ARRAY")
+    put.attr.gdsn(dstfile$root, "FileVersion", "v1.0")
+
+    n <- addfolder.gdsn(dstfile, "description")
+    put.attr.gdsn(n, "source.format", "PLINK BED Format")
+
+    # add sample.id
+    if (verbose) cat("    sample.id\n")
+    add.gdsn(dstfile, "sample.id", sample.id, compress=compress.annotation,
+        closezip=TRUE)
+    # add variant.id
+    if (verbose) cat("    variant.id\n")
+    add.gdsn(dstfile, "variant.id", seq_len(nrow(bimD)),
+        compress=compress.annotation, closezip=TRUE)
+    # add position
+    if (verbose) cat("    position.id\n")
+    add.gdsn(dstfile, "position", bimD$pos, storage="int32",
+        compress=compress.annotation, closezip=TRUE)
+    # add chromosome
+    if (verbose) cat("    chromosome\n")
+    add.gdsn(dstfile, "chromosome", bimD$chr, storage="string",
+        compress=compress.annotation, closezip=TRUE)
+    # add allele
+    if (verbose) cat("    allele\n")
+    add.gdsn(dstfile, "allele", paste(bimD$allele1, bimD$allele2, sep=","),
+        storage="string", compress=compress.annotation, closezip=TRUE)
+
+    # add a folder for genotypes
+    if (verbose) cat("    genotype")
+    n <- addfolder.gdsn(dstfile, "genotype")
+    put.attr.gdsn(n, "VariableName", "GT")
+    put.attr.gdsn(n, "Description", "Genotype")
+
+    # add genotypes to genotype/data
+    vg <- add.gdsn(n, "data", storage="bit2",
+        valdim=c(2L, ifelse(bed_flag==0L, nrow(bimD), nrow(famD)), 0L),
+        compress=compress.geno)
+    # convert
+    .Call(SEQ_ConvBED2GDS, vg, ifelse(bed_flag==0L, nrow(famD), nrow(bimD)),
+        bedfile$con, readBin, new.env())
+    readmode.gdsn(vg)
+
+    n1 <- add.gdsn(n, "@data", storage="uint8",
+        compress=ifelse(bed_flag==0L, "", compress.annotation),
+        visible=FALSE)
+    .repeat_gds(n1, 1L, nrow(bimD))
+    readmode.gdsn(n1)
+
+    n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
+        compress=compress.geno, closezip=TRUE)
+    put.attr.gdsn(n1, "R.colnames",
+        c("sample.index", "variant.index", "length"))
+    add.gdsn(n, "extra", storage="int16", compress=compress.geno, closezip=TRUE)
+
+    # sync file
+    sync.gds(dstfile)
+
+    # close the BED file
+    on.exit({ closefn.gds(dstfile) })
+    .close_conn(bedfile)
+
+    if (bed_flag == 0L)
+    {
+        cat(" (transposed)")
+        permdim.gdsn(vg, c(2L,1L))
+    }
+    cat("\n")
+
+    # add a folder for phase information
+    if (verbose) cat("    phase\n")
+    n <- addfolder.gdsn(dstfile, "phase")
+
+    n1 <- add.gdsn(n, "data", storage="bit1", valdim=c(nrow(famD), 0L),
+        compress=compress.annotation)
+    .repeat_gds(n1, 0L, nrow(bimD)*nrow(famD))
+    readmode.gdsn(n1)
+
+    n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
+        compress=compress.annotation, closezip=TRUE)
+    put.attr.gdsn(n1, "R.colnames",
+        c("sample.index", "variant.index", "length"))
+    add.gdsn(n, "extra", storage="bit1", compress=compress.annotation,
+        closezip=TRUE)
+
+
+    # add annotation folder
+    if (verbose) cat("    annotation\n")
+    n <- addfolder.gdsn(dstfile, "annotation")
+
+    # add annotation/id
+    add.gdsn(n, "id", bimD$snp.id, storage="string",
+        compress=compress.annotation, closezip=TRUE)
+
+    # add annotation/qual
+    n1 <- add.gdsn(n, "qual", storage="float", compress=compress.annotation)
+    .repeat_gds(n1, NaN, nrow(bimD))
+    readmode.gdsn(n1)
+
+    # add filter
+    n1 <- add.gdsn(n, "filter", storage="int32", compress=compress.annotation)
+    .repeat_gds(n1, 0L, nrow(bimD))
+    readmode.gdsn(n1)
+    put.attr.gdsn(n1, "R.class", "factor")
+    put.attr.gdsn(n1, "R.levels", c("PASS"))
+
+    # add the INFO field
+    addfolder.gdsn(n, "info")
+    # add the FORMAT field
+    addfolder.gdsn(n, "format")
+
+    # add sample annotation
+    if (verbose) cat("    sample.annotation\n")
+    n <- addfolder.gdsn(dstfile, "sample.annotation")
+    add.gdsn(n, "family", famD$FamilyID, compress=compress.annotation,
+        closezip=TRUE)
+    add.gdsn(n, "father", famD$PatID, compress=compress.annotation,
+        closezip=TRUE)
+    add.gdsn(n, "mother", famD$MatID, compress=compress.annotation,
+        closezip=TRUE)
+
+    sex <- rep("", length(sample.id))
+    sex[famD$Sex==1L] <- "M"; sex[famD$Sex==2L] <- "F"
+    add.gdsn(n, "sex", sex, compress=compress.annotation, closezip=TRUE)
+
+    add.gdsn(n, "phenotype", famD$Pheno, compress=compress.annotation,
+        closezip=TRUE)
+
+    # sync file
+    sync.gds(dstfile)
+
+
+    ##################################################
+    # optimize access efficiency
+
+    if (verbose)
+    {
+        cat("Done.\n")
+        cat("Optimize the access efficiency ...\n")
+    }
+    on.exit()
+    closefn.gds(dstfile)
     cleanup.gds(out.gdsfn, verbose=verbose)
 
     # output

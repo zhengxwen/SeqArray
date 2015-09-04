@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.13
+CHANGES IN VERSION 1.9.0-1.9.14
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -31,6 +31,8 @@ CHANGES IN VERSION 1.9.0-1.9.13
       seqApply(..., FUN=function(x) {}))
 
     o v1.9.13: a new function `seqSNP2GDS()`
+
+    o v1.9.14: a new function `seqBED2GDS()`
 
 
 CHANGES IN VERSION 1.8.0

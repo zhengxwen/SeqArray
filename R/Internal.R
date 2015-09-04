@@ -140,6 +140,90 @@
 
 
 #######################################################################
+# Open and close a connection,
+# Please always call '.close_conn' after '.open_bin' and '.open_text'
+
+.last_str <- function(s, len)
+{
+    substring(s, nchar(s)-len+1L, nchar(s))
+}
+
+.open_bin <- function(filename)
+{
+    stopifnot(is.character(filename))
+    con2 <- NULL
+
+    if ((substr(filename, 1, 6) == "ftp://") |
+        (substr(filename, 1, 7) == "http://"))
+    {
+        if (.last_str(filename, 3) == ".gz")
+        {
+            con <- gzcon(url(filename, "rb"))
+        } else
+            con <- url(filename, "rb")
+    } else {
+        if (.last_str(filename, 3) == ".gz")
+        {
+            con <- gzfile(filename, "rb")
+        } else if (.last_str(filename, 3) == ".xz")
+        {
+            con <- xzfile(filename, "rb")
+        } else 
+            con <- file(filename, "rb")
+    }
+
+    # open(con)
+    list(filename=filename, con=con, con2=con2)
+}
+
+.open_text <- function(filename, require.txtmode=FALSE)
+{
+    stopifnot(is.character(filename))
+    con2 <- NULL
+
+    if ((substr(filename, 1, 6) == "ftp://") |
+        (substr(filename, 1, 7) == "http://"))
+    {
+        if (.last_str(filename, 3) == ".gz")
+        {
+            con <- gzcon(url(filename, "rb"))
+            if (require.txtmode)
+            {
+                fn <- tempfile(fileext=".tmpfile")
+                write(readLines(con), file=fn, sep="\n")
+                close(con)
+                con <- fn
+                con2 <- NULL
+            }
+        } else
+            con <- url(filename, "rt")
+    } else
+        con <- file(filename, "rt")
+
+    # open(con)
+    list(filename=filename, con=con, con2=con2)
+}
+
+.close_conn <- function(conn)
+{
+    if (is.character(conn$con))
+    {
+        if (.last_str(conn$con, 8) == ".tmpfile")
+            unlink(conn$con, force=TRUE)
+    } else if (inherits(conn$con, "connection"))
+    {
+        close(conn$con)
+    }
+
+    if (inherits(conn$con2, "connection"))
+    {
+        close(conn$con2)
+    }
+}
+
+
+
+#######################################################################
 # Parallel functions
 #
 

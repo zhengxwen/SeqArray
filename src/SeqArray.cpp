@@ -938,6 +938,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_GetData(SEXP, SEXP);
 	extern SEXP SEQ_Apply_Sample(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_Apply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_ConvBEDFlag(SEXP, SEXP, SEXP);
+	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	static R_CallMethodDef callMethods[] =
 	{
@@ -956,6 +958,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_GetData, 2),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
+
+		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),
 
 		{ NULL, NULL, 0 }
 	};

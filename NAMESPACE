@@ -10,6 +10,8 @@ useDynLib(SeqArray,
     SEQ_GetData, SEQ_Apply_Variant, SEQ_Apply_Sample,
     SEQ_SlidingWindow, SEQ_NumOfAllele,
 
+    SEQ_ConvBEDFlag, SEQ_ConvBED2GDS,
+
     SEQ_ExternalName0, SEQ_ExternalName1, SEQ_ExternalName2,
     SEQ_ExternalName3, SEQ_ExternalName4
 )
