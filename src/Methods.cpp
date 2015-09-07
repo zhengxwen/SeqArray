@@ -273,12 +273,42 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleStr2(SEXP allele)
 
 // ======================================================================
 
+/// Get a list of allele frequencies
+COREARRAY_DLL_EXPORT SEXP FC_AlleleCount(SEXP List)
+{
+	SEXP Geno = VECTOR_ELT(List, 0);
+	int *p = INTEGER(Geno);
+	int nAllele = GetNumOfAllele(CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
+
+	SEXP rv = NEW_INTEGER(nAllele);
+	int *pV = INTEGER(rv);
+	memset((void*)pV, 0, sizeof(int)*nAllele);
+
+	for (size_t n=XLENGTH(Geno); n > 0; n--)
+	{
+		int g = *p ++;
+		if (g != NA_INTEGER)
+		{
+			if ((0 <= g) && (g < nAllele))
+			{
+				pV[g] ++;
+			} else
+				warning("Invalid value in 'genotype/data'.");
+		}
+	}
+
+	return rv;
+}
+
+
+// ======================================================================
+
 /// Get a matrix from the numerators and denominators
 COREARRAY_DLL_EXPORT SEXP FC_IBD_Div(SEXP NumeratorDenominator, SEXP N)
 {
 	size_t n = Rf_asInteger(N);
 	size_t size = n * (n + 1) / 2;
-	if (XLENGTH(NumeratorDenominator) != 2*size)
+	if ((size_t)XLENGTH(NumeratorDenominator) != 2*size)
 		error("Invalid 'numerator' and 'denominator'.");
 
 	SEXP rv_ans = PROTECT(Rf_allocMatrix(REALSXP, n, n));

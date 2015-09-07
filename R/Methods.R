@@ -745,6 +745,25 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
 
 
 #######################################################################
+# Allele Counts
+#
+seqAlleleCount <- function(gdsfile,
+    parallel=getOption("seqarray.parallel", FALSE))
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+
+    seqParallel(parallel, gdsfile, split="by.variant",
+        FUN = function(gdsfile)
+        {
+            seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                as.is="list", FUN = .cfunction("FC_AlleleCount"))
+        })
+}
+
+
+
+#######################################################################
 # IBD
 #
 ssIBD <- function(gdsfile, method=c("OneLocus", "TwoLoci"), interval=1L,

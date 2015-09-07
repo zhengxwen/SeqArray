@@ -551,9 +551,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
 
     # add phase folder
+    varPhase <- addfolder.gdsn(gfile, "phase")
     if (header$num.ploidy > 1L)
     {
-        varPhase <- addfolder.gdsn(gfile, "phase")
         # add data
         if (header$num.ploidy > 2L)
         {
@@ -1227,12 +1227,15 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     # add sample.id
     if (verbose) cat("    sample.id\n")
     copyto.gdsn(dstfile, index.gdsn(srcfile, "sample.id"))
+    compression.gdsn(index.gdsn(dstfile, "sample.id"), compress.annotation)
     # add variant.id
     if (verbose) cat("    variant.id\n")
     copyto.gdsn(dstfile, index.gdsn(srcfile, "snp.id"), "variant.id")
+    compression.gdsn(index.gdsn(dstfile, "variant.id"), compress.annotation)
     # add position
-    if (verbose) cat("    position.id\n")
+    if (verbose) cat("    position\n")
     copyto.gdsn(dstfile, index.gdsn(srcfile, "snp.position"), "position")
+    compression.gdsn(index.gdsn(dstfile, "position"), compress.annotation)
 
     # add chromosome
     if (verbose) cat("    chromosome\n")
@@ -1320,7 +1323,10 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     if (!is.null(n2))
     {
         for (i in ls.gdsn(n2))
+        {
             copyto.gdsn(n1, index.gdsn(n2, i))
+            compression.gdsn(index.gdsn(n1, i), compress.annotation)
+        }
     }
 
     # add the FORMAT field
@@ -1334,7 +1340,10 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     if (!is.null(n1))
     {
         for (i in ls.gdsn(n1))
+        {
             copyto.gdsn(n, index.gdsn(n1, i))
+            compression.gdsn(index.gdsn(n, i), compress.annotation)
+        }
     }
 
 

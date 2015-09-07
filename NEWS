@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.14
+CHANGES IN VERSION 1.9.0-1.9.15
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -33,6 +33,8 @@ CHANGES IN VERSION 1.9.0-1.9.14
     o v1.9.13: a new function `seqSNP2GDS()`
 
     o v1.9.14: a new function `seqBED2GDS()`
+
+    o v1.9.15: a new function `seqAlleleCount()`
 
 
 CHANGES IN VERSION 1.8.0

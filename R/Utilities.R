@@ -13,7 +13,7 @@
     cl <- getOption("seqarray.parallel", FALSE)
     if (inherits(cl, "cluster"))
     {
-        if (requireNamespace("parallel"))
+        if (requireNamespace("parallel", quietly=TRUE))
             parallel::stopCluster(cl)
         options(seqarray.parallel=NULL)
     }
@@ -375,8 +375,9 @@ seqCompress.Option <- function(default="ZIP_RA.MAX", ...)
 #######################################################################
 # Apply functions in parallel
 #
-seqParallel <- function(cl, gdsfile, FUN, split=c("by.variant", "by.sample", "none"),
-    .combine="unlist", .selection.flag=FALSE, ...)
+seqParallel <- function(cl, gdsfile, FUN,
+    split=c("by.variant", "by.sample", "none"), .combine="unlist",
+    .selection.flag=FALSE, ...)
 {
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) | inherits(cl, "cluster"))
