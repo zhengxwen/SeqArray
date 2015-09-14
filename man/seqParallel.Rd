@@ -5,8 +5,9 @@
     Applies a user-defined function in parallel.
 }
 \usage{
-seqParallel(cl, gdsfile, FUN, split=c("by.variant", "by.sample", "none"),
-    .combine="unlist", .selection.flag=FALSE, ...)
+seqParallel(cl=getOption("seqarray.parallel", FALSE), gdsfile, FUN,
+    split=c("by.variant", "by.sample", "none"), .combine="unlist",
+    .selection.flag=FALSE, ...)
 }
 \arguments{
     \item{cl}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:

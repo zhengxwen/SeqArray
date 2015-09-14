@@ -7,7 +7,7 @@
 
 
 #######################################################################
-# Open a sequencing-variant GDS file
+# Open a SeqArray GDS file
 #
 seqOpen <- function(gds.fn, readonly=TRUE)
 {
@@ -26,7 +26,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         # but it is encouraged to add this attribute
         if (!identical(at$FileFormat, "SEQ_ARRAY"))
         {
-            stop(sprintf("'%s' is not a sequencing-variant GDS file (%s).",
+            stop(sprintf("'%s' is not a SeqArray GDS file (%s).",
                 gds.fn, "'FileFormat' should be 'SEQ_ARRAY'"))
         }
     }
@@ -50,7 +50,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
     if (is.null(n))
     {
         closefn.gds(ans)
-        stop(sprintf("'%s' is not a sequencing-variant GDS file.", gds.fn))
+        stop(sprintf("'%s' is not a SeqArray GDS file.", gds.fn))
     }
 
     .Call(SEQ_File_Init, ans)
@@ -60,7 +60,7 @@ seqOpen <- function(gds.fn, readonly=TRUE)
 
 
 #######################################################################
-# Close a sequencing-variant GDS file
+# Close a SeqArray GDS file
 #
 setMethod("seqClose", "SeqVarGDSClass", function(object)
     {

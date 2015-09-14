@@ -45,6 +45,7 @@ Here, I focus on the application of CoreArray for statisticians working in the R
 | seqGetData   | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
 | seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
 | seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqParallel.html)  |
+| seqParallelSetup  | Setups a cluster environment for parallel computing. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqParallelSetup.html)  |
 
 ~
 

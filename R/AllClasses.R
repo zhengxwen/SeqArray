@@ -15,7 +15,7 @@ setValidity("SeqVarGDSClass",
     function(object)
     {
         if (!inherits(object, "gds.class"))
-            return("object should inherited from `gds.class'.")
+            return("object should inherited from 'gds.class'.")
 
         n <- index.gdsn(object, "description", silent=TRUE)
         if (is.null(n))

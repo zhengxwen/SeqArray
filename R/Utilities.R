@@ -57,10 +57,9 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
         {
             .loadparallel()
             parallel::stopCluster(opt)
-            if (verbose) cat("Stop the computing cluster.\n")
-        } else {
-            if (verbose) cat("No computing cluster.\n")
         }
+        if (verbose)
+            cat("Stop the computing cluster.\n")
         options(seqarray.parallel=cluster)
         return(invisible())
     }
@@ -85,7 +84,10 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
                 if (cl <= 1L) cl <- 2L
                 cluster <- setup(cl)
                 if (verbose)
-                    cat(sprintf("Create %d R processes.\n", cl))
+                {
+                    cat("Enable the computing cluster with", cl,
+                        "R processes.\n")
+                }
             } else {
                 if (verbose) cat("No computing cluster.\n")
             }
@@ -98,7 +100,10 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
                 cl <- cluster
                 cluster <- setup(cluster)
                 if (verbose)
-                    cat(sprintf("Create %d R processes.\n", cl))
+                {
+                    cat("Enable the computing cluster with", cl,
+                        "R processes.\n")
+                }
             }
         }
     } else {
@@ -109,7 +114,10 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             n <- parallel::detectCores() - 1L
             if (n <= 1L) n <- 2L
             if (verbose)
-                cat("Use", n, "forked R processes.\n")
+            {
+                cat("Enable the computing cluster with", n,
+                    "forked R processes.\n")
+            }
         } else if (is.numeric(cluster))
         {
             stopifnot(length(cluster) == 1L)
@@ -117,7 +125,10 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             {
                 .loadparallel()
                 if (verbose)
-                    cat("Use", cluster, "forked R processes.\n")
+                {
+                    cat("Enable the computing cluster with", cluster,
+                        "forked R processes.\n")
+                }
             }
         }
     }
@@ -400,9 +411,9 @@ seqCompress.Option <- function(default="ZIP_RA.MAX", ...)
 #######################################################################
 # Apply functions in parallel
 #
-seqParallel <- function(cl, gdsfile, FUN,
-    split=c("by.variant", "by.sample", "none"), .combine="unlist",
-    .selection.flag=FALSE, ...)
+seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
+    gdsfile, FUN, split=c("by.variant", "by.sample", "none"),
+    .combine="unlist", .selection.flag=FALSE, ...)
 {
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) | inherits(cl, "cluster"))
