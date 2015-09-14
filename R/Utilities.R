@@ -43,20 +43,23 @@ seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
 #######################################################################
 # Setup the parallel parameters in SeqArray
 #
-seqParallelSetup <- function(cluster=TRUE)
+seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.null(cluster) | is.logical(cluster) |
         is.numeric(cluster) | inherits(cluster, "cluster"))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (is.null(cluster) || identical(cluster, FALSE))
     {
         opt <- getOption("seqarray.parallel", NULL)
         if (inherits(opt, "cluster"))
         {
-            if (!requireNamespace("parallel"))
-                stop("the 'parallel' package should be installed.")
+            .loadparallel()
             parallel::stopCluster(opt)
+            if (verbose) cat("Stop the computing cluster.\n")
+        } else {
+            if (verbose) cat("No computing cluster.\n")
         }
         options(seqarray.parallel=cluster)
         return(invisible())
@@ -77,22 +80,44 @@ seqParallelSetup <- function(cluster=TRUE)
             stopifnot(length(cluster) == 1L)
             if (cluster)
             {
-                # library
-                if (!requireNamespace("parallel"))
-                    stop("the 'parallel' package should be installed.")
+                .loadparallel()
                 cl <- parallel::detectCores() - 1L
                 if (cl <= 1L) cl <- 2L
                 cluster <- setup(cl)
+                if (verbose)
+                    cat(sprintf("Create %d R processes.\n", cl))
+            } else {
+                if (verbose) cat("No computing cluster.\n")
             }
         } else if (is.numeric(cluster))
         {
             stopifnot(length(cluster) == 1L)
             if (cluster > 1L)
             {
-                # library
-                if (!requireNamespace("parallel"))
-                    stop("the 'parallel' package should be installed.")
+                .loadparallel()
+                cl <- cluster
                 cluster <- setup(cluster)
+                if (verbose)
+                    cat(sprintf("Create %d R processes.\n", cl))
+            }
+        }
+    } else {
+        # unix forking technique
+        if (identical(cluster, TRUE))
+        {
+            .loadparallel()
+            n <- parallel::detectCores() - 1L
+            if (n <= 1L) n <- 2L
+            if (verbose)
+                cat("Use", n, "forked R processes.\n")
+        } else if (is.numeric(cluster))
+        {
+            stopifnot(length(cluster) == 1L)
+            if (cluster > 1L)
+            {
+                .loadparallel()
+                if (verbose)
+                    cat("Use", cluster, "forked R processes.\n")
             }
         }
     }
@@ -110,11 +135,11 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     samp.var=NULL, verbose=TRUE)
 {
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(out.fn) & (length(out.fn)==1L))
+    stopifnot(is.character(out.fn), length(out.fn)==1L)
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
     stopifnot(is.null(samp.var) | is.character(samp.var))
-    stopifnot(is.logical(verbose))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     #######################################################################
 
@@ -307,8 +332,8 @@ seqMerge <- function(gds.fn, out.fn, compress.option=seqCompress.Option(),
     stopifnot(is.character(gds.fn))
     if (length(gds.fn) <= 1L)
         stop("'gds.fn' should have more than one files.")
-    stopifnot(is.character(out.fn) & (length(out.fn)==1L))
-    stopifnot(is.logical(verbose))
+    stopifnot(is.character(out.fn), length(out.fn)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # return
     invisible()
@@ -558,7 +583,7 @@ seqDelete <- function(gdsfile, info.varname=character(),
     stopifnot(is.character(format.varname))
     stopifnot(is.logical(verbose))
 
-    if (verbose) cat("Deleting INFO variable(s):")
+    if (verbose) cat("Delete INFO variable(s):")
     for (nm in info.varname)
     {
         n <- index.gdsn(gdsfile, paste0("annotation/info/", nm))
@@ -570,7 +595,7 @@ seqDelete <- function(gdsfile, info.varname=character(),
     }
     if (verbose) cat("\n")
 
-    if (verbose) cat("Deleting FORMAT variable(s):")
+    if (verbose) cat("Delete FORMAT variable(s):")
     for (nm in format.varname)
     {
         n <- index.gdsn(gdsfile, paste0("annotation/format/", nm))

@@ -16,13 +16,14 @@ seqOpen(gds.fn, readonly=TRUE)
 }
 \details{
     It is strongly suggested to call \code{seqOpen} instead of
-\code{\link[gdsfmt]{openfn.gds}}, since \code{seqOpen} will perform internal checking
+\code{\link{openfn.gds}}, since \code{seqOpen} will perform internal checking
 for data integrality.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqGetData}}, \code{\link{seqApply}}
+    \code{\link{seqClose}}, \code{\link{seqGetData}},
+    \code{\link{seqApply}}
 }
 
 \examples{

@@ -12,8 +12,8 @@
 seqOpen <- function(gds.fn, readonly=TRUE)
 {
     # check
-    stopifnot(is.character(gds.fn) & (length(gds.fn)==1))
-    stopifnot(is.logical(readonly))
+    stopifnot(is.character(gds.fn), length(gds.fn)==1L)
+    stopifnot(is.logical(readonly), length(readonly)==1L)
 
     # open the file
     ans <- openfn.gds(gds.fn, readonly=readonly, allow.fork=TRUE)
@@ -633,9 +633,9 @@ seqNumAllele <- function(gdsfile, parallel=getOption("seqarray.parallel", FALSE)
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
 
     seqParallel(parallel, gdsfile, split="by.variant",
-        FUN = function(gdsfile)
+        FUN = function(f)
         {
-            seqApply(gdsfile, "allele", margin="by.variant", as.is="integer",
+            seqApply(f, "allele", margin="by.variant", as.is="integer",
                 FUN = .cfunction("FC_NumAllele"))
         })
 }
@@ -655,9 +655,9 @@ seqMissing <- function(gdsfile, per.variant=TRUE,
     if (per.variant)
     {
         seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(gdsfile)
+            FUN = function(f)
             {
-               seqApply(gdsfile, "genotype", margin="by.variant",
+               seqApply(f, "genotype", margin="by.variant",
                    as.is="double", FUN=.cfunction("FC_Missing_PerVariant"))
             })
     } else {
@@ -665,15 +665,15 @@ seqMissing <- function(gdsfile, per.variant=TRUE,
         # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
 
         sum <- seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(gdsfile, num)
+            FUN = function(f, num)
             {
                 tmpsum <- integer(num)
-                seqApply(gdsfile, "genotype", margin="by.variant",
-                   as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
-                   y=tmpsum)
+                seqApply(f, "genotype", margin="by.variant",
+                    as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
+                    y=tmpsum)
                 tmpsum
-            }, .combine="+", num=dm[1])
-        sum / (2L * dm[2])
+            }, .combine="+", num=dm[1L])
+        sum / (2L * dm[2L])
     }
 }
 
@@ -687,14 +687,15 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.null(ref.allele) | is.numeric(ref.allele) | is.character(ref.allele))
+    stopifnot(is.null(ref.allele) | is.numeric(ref.allele) |
+        is.character(ref.allele))
 
     if (is.null(ref.allele))
     {
         seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(gdsfile)
+            FUN = function(f)
             {
-                seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                seqApply(f, c("genotype", "allele"), margin="by.variant",
                     as.is="list", FUN = .cfunction("FC_AF_List"))
             })
     } else if (is.numeric(ref.allele))
@@ -702,25 +703,27 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
         dm <- .seldim(gdsfile)
         # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
         if (!(length(ref.allele) %in% c(1L, dm[2L])))
+        {
             stop("'length(ref.allele)' should be 1 or the number of selected variants.")
+        }
 
         if (length(ref.allele) == 1L)
         {
             seqParallel(parallel, gdsfile, split="by.variant",
-                FUN = function(gdsfile, ref)
+                FUN = function(f, ref)
                 {
                     .cfunction("FC_AF_SetIndex")(ref)
-                    seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                    seqApply(f, c("genotype", "allele"), margin="by.variant",
                         as.is="double", FUN = .cfunction("FC_AF_Index"))
                 }, ref=ref.allele)
         } else {
             ref.allele <- as.integer(ref.allele)
             seqParallel(parallel, gdsfile, split="by.variant",
                 .selection.flag=TRUE,
-                FUN = function(gdsfile, selflag, ref)
+                FUN = function(f, selflag, ref)
                 {
                     .cfunction("FC_AF_SetIndex")(ref[selflag])
-                    seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                    seqApply(f, c("genotype", "allele"), margin="by.variant",
                         as.is="double", FUN = .cfunction("FC_AF_Index"))
                 }, ref=ref.allele)
         }
@@ -729,14 +732,16 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
         dm <- .seldim(gdsfile)
         # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
         if (length(ref.allele) != dm[2L])
+        {
             stop("'length(ref.allele)' should be the number of selected variants.")
+        }
 
         seqParallel(parallel, gdsfile, split="by.variant",
             .selection.flag=TRUE,
-            FUN = function(gdsfile, selflag, ref)
+            FUN = function(f, selflag, ref)
             {
                 .cfunction("FC_AF_SetAllele")(ref[selflag])
-                seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+                seqApply(f, c("genotype", "allele"), margin="by.variant",
                     as.is="double", FUN = .cfunction("FC_AF_Allele"))
             }, ref=ref.allele)
     }
@@ -754,9 +759,9 @@ seqAlleleCount <- function(gdsfile,
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
 
     seqParallel(parallel, gdsfile, split="by.variant",
-        FUN = function(gdsfile)
+        FUN = function(f)
         {
-            seqApply(gdsfile, c("genotype", "allele"), margin="by.variant",
+            seqApply(f, c("genotype", "allele"), margin="by.variant",
                 as.is="list", FUN = .cfunction("FC_AlleleCount"))
         })
 }

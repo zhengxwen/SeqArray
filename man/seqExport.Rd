@@ -18,7 +18,7 @@ seqExport(gdsfile, out.fn, info.var=NULL, fmt.var=NULL, samp.var=NULL,
         for import; or \code{NULL} for all variables}
     \item{samp.var}{characters, the variable name(s) in the folder
         \code{"sample.annotation"}}
-    \item{verbose}{if TRUE, show information}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     Return the file name of GDS format with an absolute path.

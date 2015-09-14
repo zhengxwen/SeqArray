@@ -16,7 +16,7 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
     \item{fmt.var}{a list of variable names in the FORMAT field, or NULL for
         using all variables; \code{character(0)} for no variable
         in the FORMAT field}
-    \item{verbose}{if TRUE, show information}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     Return the file name of VCF file with an absolute path.

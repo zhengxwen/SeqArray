@@ -5,7 +5,7 @@
     Setups a parallel environment in R for the current session.
 }
 \usage{
-seqParallelSetup(cluster=TRUE)
+seqParallelSetup(cluster=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{cluster}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
@@ -14,6 +14,7 @@ seqParallelSetup(cluster=TRUE)
         a cluster object for parallel processing, created by the functions
         in the package \code{\link{parallel}}, like \code{\link{makeCluster}}.
         See details}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \details{
     When \code{cl} is \code{TRUE} or a numeric value, forking techniques are

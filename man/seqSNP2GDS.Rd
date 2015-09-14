@@ -16,7 +16,7 @@ seqSNP2GDS(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     \item{compress.annotation}{the compression method for the GDS variables,
         except "genotype"; optional values are defined in the function
         \code{add.gdsn}}
-    \item{verbose}{if TRUE, show information}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     Return the file name of SeqArray file with an absolute path.

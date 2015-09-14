@@ -30,7 +30,7 @@ seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,
             set the current filter to the intersection of selected samples
             and/or variants;
         \code{"pop"} -- pop up the last filter}
-    \item{verbose}{if TRUE, show information}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     None.

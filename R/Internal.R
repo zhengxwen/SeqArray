@@ -27,7 +27,7 @@
 
 .cfunction0 <- function(name)
 {
-    fn <- function(x) { NULL }
+    fn <- function(x) NULL
     f <- quote(.Call(SEQ_ExternalName0))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
@@ -37,7 +37,7 @@
 
 .cfunction <- function(name)
 {
-    fn <- function(x) { NULL }
+    fn <- function(x) NULL
     f <- quote(.Call(SEQ_ExternalName1, x))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
@@ -47,7 +47,7 @@
 
 .cfunction2 <- function(name)
 {
-    fn <- function(x, y) { NULL }
+    fn <- function(x, y) NULL
     f <- quote(.Call(SEQ_ExternalName2, x, y))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
@@ -57,7 +57,7 @@
 
 .cfunction3 <- function(name)
 {
-    fn <- function(x, y, z) { NULL }
+    fn <- function(x, y, z) NULL
     f <- quote(.Call(SEQ_ExternalName3, x, y, z))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
@@ -67,7 +67,7 @@
 
 .cfunction4 <- function(name)
 {
-    fn <- function(w, x, y, z) { NULL }
+    fn <- function(w, x, y, z) NULL
     f <- quote(.Call(SEQ_ExternalName4, w, x, y, z))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
@@ -153,19 +153,19 @@
     stopifnot(is.character(filename))
     con2 <- NULL
 
-    if ((substr(filename, 1, 6) == "ftp://") |
-        (substr(filename, 1, 7) == "http://"))
+    if ((substr(filename, 1L, 6L) == "ftp://") |
+        (substr(filename, 1L, 7L) == "http://"))
     {
-        if (.last_str(filename, 3) == ".gz")
+        if (.last_str(filename, 3L) == ".gz")
         {
             con <- gzcon(url(filename, "rb"))
         } else
             con <- url(filename, "rb")
     } else {
-        if (.last_str(filename, 3) == ".gz")
+        if (.last_str(filename, 3L) == ".gz")
         {
             con <- gzfile(filename, "rb")
-        } else if (.last_str(filename, 3) == ".xz")
+        } else if (.last_str(filename, 3L) == ".xz")
         {
             con <- xzfile(filename, "rb")
         } else 
@@ -181,10 +181,10 @@
     stopifnot(is.character(filename))
     con2 <- NULL
 
-    if ((substr(filename, 1, 6) == "ftp://") |
-        (substr(filename, 1, 7) == "http://"))
+    if ((substr(filename, 1L, 6L) == "ftp://") |
+        (substr(filename, 1L, 7L) == "http://"))
     {
-        if (.last_str(filename, 3) == ".gz")
+        if (.last_str(filename, 3L) == ".gz")
         {
             con <- gzcon(url(filename, "rb"))
             if (require.txtmode)
@@ -208,7 +208,7 @@
 {
     if (is.character(conn$con))
     {
-        if (.last_str(conn$con, 8) == ".tmpfile")
+        if (.last_str(conn$con, 8L) == ".tmpfile")
             unlink(conn$con, force=TRUE)
     } else if (inherits(conn$con, "connection"))
     {
@@ -221,6 +221,18 @@
     }
 }
 
+
+
+#######################################################################
+# Load Parallel package
+#
+
+.loadparallel <- function()
+{
+    if (!requireNamespace("parallel"))
+        stop("The 'parallel' package should be installed.")
+    invisible()
+}
 
 
 #######################################################################

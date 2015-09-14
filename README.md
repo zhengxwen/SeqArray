@@ -1,4 +1,4 @@
-SeqArray: Big Data Management of Genome-Wide Sequencing Variants
+SeqArray: Big Data Management of Genome-Wide Sequence Variants
 ===
 
 ![GPLv3](http://www.gnu.org/graphics/gplv3-88x31.png)
@@ -10,7 +10,7 @@ SeqArray: Big Data Management of Genome-Wide Sequencing Variants
 
 ## Features
 
-Big data management of genome-wide variants with thousands of individuals from Variant Call Format (VCF): genotypic data (e.g., SNP, indel and structural variation calls) and annotations are stored in an array-oriented and compressed manner, with efficient access of data using the R programming language.
+Big data management of genome-wide sequence variants with thousands of individuals: genotypic data (e.g., SNP, indel and structural variation calls) and annotations in GDS files are stored in an array-oriented and compressed manner, with efficient data access using the R programming language.
 
 ## Bioconductor:
 
@@ -18,7 +18,7 @@ Release Version: v1.8.0
 
 [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 
-Development Version: v1.9.15
+Development Version: v1.9.16
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 

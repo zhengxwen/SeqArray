@@ -1,8 +1,8 @@
 Package: SeqArray
 Type: Package
-Title: Big Data Management of Genome-Wide Sequencing Variants
-Version: 1.9.15
-Date: 2015-09-04
+Title: Big Data Management of Genome-Wide Sequence Variants
+Version: 1.9.16
+Date: 2015-09-13
 Depends: gdsfmt (>= 1.5.12)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation
@@ -13,11 +13,11 @@ Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         person("Stephanie", "Gogarten", role="aut",
         email="sdmorris@u.washington.edu"),
         person("Cathy", "Laurie", role="ctb"))
-Description: Big data management of genome-wide variants with thousands of
-        individuals from Variant Call Format (VCF): genotypic data (e.g.,
-        SNP, indel and structural variation calls) and annotations are stored
-        in an array-oriented and compressed manner, with efficient access of
-        data using the R programming language.
+Description: Big data management of genome-wide sequence variants with
+        thousands of individuals: genotypic data (e.g., SNP, indel and
+        structural variation calls) and annotations in GDS files are stored
+        in an array-oriented and compressed manner, with efficient data access
+        using the R programming language.
 License: GPL-3
 VignetteBuilder: knitr
 URL: http://corearray.sourceforge.net/tutorials/SeqArray/,

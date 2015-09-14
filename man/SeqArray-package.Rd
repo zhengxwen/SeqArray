@@ -2,9 +2,9 @@
 \alias{SeqArray-package}
 \alias{SeqArray}
 \docType{package}
-\title{Big Data Management of Genome-wide Sequencing Variants}
+\title{Big Data Management of Genome-wide Sequence Variants}
 \description{
-    Big-data management of genome-wide sequencing variants.
+    Big-data management of genome-wide sequence variants.
 }
 \details{
     In the era of big data, thousands of gigabyte-size data sets are
@@ -22,7 +22,7 @@ storing DNA polymorphism data such as SNPs, insertions, deletions and
 structural variants, together with rich annotations. However, this format is
 less efficient for large-scale analyses since numeric data have to be parsed
 from a text VCF file before further analyses. The computational burden
-associated with sequencing variants is especially evident with large sample
+associated with sequence variants is especially evident with large sample
 and variant sizes, and it requires efficient numerical implementation and
 data management.
 
@@ -37,7 +37,7 @@ to store multiple extensible data variables in the GDS format, and all datasets
 are stored in a single file with chunked storage layout. Here, I focus on the
 application of CoreArray for statisticians working in the R environment, and
 developed an R/Bioconductor package SeqArray to address or reduce the
-computational burden associated with data management of sequencing variants.
+computational burden associated with data management of sequence variants.
 The kernels of SeqArray are written in C/C++ and highly optimized. Genotypic
 data and annotations are stored in an array-oriented manner, offering efficient
 access of genetic variants using the R language. There are five key functions
@@ -164,9 +164,11 @@ seqSetFilter(f)
 
 # calculate the frequency of reference allele,
 #   a faster version could be obtained by C coding
-af <- seqApply(f, "genotype", FUN=function(x) mean(x==0, na.rm=TRUE), as.is="double")
+af <- seqApply(f, "genotype", FUN=function(x) mean(x==0, na.rm=TRUE),
+    as.is="double")
 length(af)
 summary(af)
+
 
 
 ################################################################

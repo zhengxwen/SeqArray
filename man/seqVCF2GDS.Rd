@@ -31,7 +31,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
         case-sensitive}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
         \code{FALSE}: get missing value if numeric conversion fails}
-    \item{verbose}{if TRUE, show information}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     Return the file name of GDS format with an absolute path.

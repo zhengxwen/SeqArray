@@ -13,7 +13,7 @@ seqMerge(gds.fn, out.fn, compress.option = seqCompress.Option(),
     \item{out.fn}{the output file name}
     \item{compress.option}{specify the compression options, by default
         \code{\link{seqCompress.Option}}}
-    \item{verbose}{if TRUE, show information}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     None.

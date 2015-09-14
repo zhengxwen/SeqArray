@@ -13,7 +13,7 @@ seqTranspose(gdsfile, var.name, compress=NULL, verbose=TRUE)
     \item{compress}{the compression option used in
         \code{\link[gdsfmt]{add.gdsn}}; or determine automatically
         if \code{NULL}}
-    \item{verbose}{if TRUE, show information}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     None.

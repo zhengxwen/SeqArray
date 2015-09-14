@@ -1,5 +1,5 @@
 ---
-title: "SeqArray: an R/Bioconductor Package for Big Data Management of Genome-Wide Sequencing Variants"
+title: "SeqArray -- Big Data Management of Genome-Wide Sequence Variants"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
 date: "Jun 23, 2015"
 output:
@@ -10,20 +10,20 @@ output:
     toc: yes
     toc_depth: 3
 vignette: >
-  %\VignetteIndexEntry{SeqArray Tutorial}
+  %\VignetteIndexEntry{SeqArray Data Format and Access}
   %\VignetteDepends{gdsfmt}
-  %\VignetteKeywords{GWAS, SNP, Variants}
+  %\VignetteKeywords{GWAS, whole-genome, sequencing, SNV}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
 
 # Overview
 
-In the era of big data, thousands of gigabyte-size data sets are challenging scientists for data management, even on well-equipped hardware. Currently, next-generation sequencing techniques are being adopted to investigate common and rare variants, making the analyses of large-scale genotypic data challenging. For example, the 1000 Genomes Project has identified approximately 38 million single nucleotide polymorphisms (SNPs), 1.4 million short insertions and deletions, and more than 14,000 larger deletions from whole-genome sequencing technologies [1]. In the near future, new technologies, like third-generation whole-genome sequencing, will be enabling data to be generated at an unprecedented scale [2]. The Variant Call Format (VCF) was developed for the 1000 Genomes Project, which is a generic text format for storing DNA polymorphism data such as SNPs, insertions, deletions and structural variants, together with rich annotations [3]. However, this format is less efficient for large-scale analyses since numeric data have to be parsed from a text VCF file before further analyses. The computational burden associated with sequencing variants is especially evident with large sample and variant sizes, and it requires efficient numerical implementation and data management.
+In the era of big data, thousands of gigabyte-size data sets are challenging scientists for data management, even on well-equipped hardware. Currently, next-generation sequencing techniques are being adopted to investigate common and rare variants, making the analyses of large-scale genotypic data challenging. For example, the 1000 Genomes Project has identified approximately 38 million single nucleotide polymorphisms (SNPs), 1.4 million short insertions and deletions, and more than 14,000 larger deletions from whole-genome sequencing technologies [1]. In the near future, new technologies, like third-generation whole-genome sequencing, will be enabling data to be generated at an unprecedented scale [2]. The Variant Call Format (VCF) was developed for the 1000 Genomes Project, which is a generic text format for storing DNA polymorphism data such as SNPs, insertions, deletions and structural variants, together with rich annotations [3]. However, this format is less efficient for large-scale analyses since numeric data have to be parsed from a text VCF file before further analyses. The computational burden associated with sequence variants is especially evident with large sample and variant sizes, and it requires efficient numerical implementation and data management.
 
 Here I introduce a high-performance C++ computing library CoreArray ([http://corearray.sourceforge.net](http://corearray.sourceforge.net)) for big-data management of genome-wide variants [4]. CoreArray was designed for developing portable and scalable storage technologies for bioinformatics data, allowing parallel computing at the multicore and cluster levels. It provides the genomic data structure (GDS) file format for array-oriented data: this is a universal data format to store multiple data variables in a single file. The CoreArray library modules are demonstrated in Figure 1. A hierarchical data structure is used to store multiple extensible data variables in the GDS format, and all datasets are stored in a single file with chunked storage layout. The C++ CoreArray library is implemented in the R/Bioconductor package [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) with a tutorial [http://corearray.sourceforge.net/tutorials/gdsfmt/](http://corearray.sourceforge.net/tutorials/gdsfmt/).
 
-Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) to address or reduce the computational burden associated with data management of sequencing variants. Gdsfmt provides a general R interface for the CoreArray library, and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) is specifically designed for data management of sequencing variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are six key functions in SeqArray (Table 1), and most of data analyses could be done using these six functions. The 1000 Genomes Project released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequencing variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
+Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) to address or reduce the computational burden associated with data management of sequence variants. The gdsfmt package provides a general R interface for the CoreArray library, and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) is specifically designed for data management of sequence variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are six key functions in SeqArray (Table 1), and most of data analyses could be done using these six functions. The 1000 Genomes Project released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequence variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
 
 [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) will be of great interest to scientists involved in data analyses of large-scale genomic sequencing data using R environment, particularly those with limited experience of low-level C programming and parallel computing.
 
@@ -39,12 +39,12 @@ Here, I focus on the application of CoreArray for statisticians working in the R
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Imports VCF files  |
-| seqSummary   | Gets the summary of a sequence GDS file (Num. of samples, Num. of variants, INFO/FORMAT variables, etc)  |
-| seqSetFilter | Sets a filter to sample or variant (define a subset of data)  |
-| seqGetData   | Gets data from a sequence GDS file (from a subset of data)  |
-| seqApply     | Applies a user-defined function over array margins  |
-| seqParallel  | Applies functions in parallel  |
+| seqVCF2GDS   | Imports VCF files. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqVCF2GDS.html)  |
+| seqSummary   | Gets the summary of a sequence GDS file (Num. of samples, Num. of variants, INFO/FORMAT variables, etc). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqSummary.html)  |
+| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqSetFilter.html)  |
+| seqGetData   | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
+| seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
+| seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqParallel.html)  |
 
 ~
 
@@ -257,13 +257,13 @@ unlink("tmp.gds")
 
 | Function       | Description |
 |:---------------|:-------------------------------------------|
-| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
-| seqApply       | Applies a user-defined function over array margins. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
-| seqNumAllele   | Number of alleles per site. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
-| seqMissing     | Missing genotype percentage. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
-| seqAlleleFreq  | Allele frequency. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
-| seqAlleleCount | Allele counts. [LINK](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleCount.html)  |
-| ...            | [LINK](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)  |
+| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
+| seqApply       | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
+| seqNumAllele   | Numbers of alleles per site. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
+| seqMissing     | Missing genotype percentages. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
+| seqAlleleFreq  | Allele frequencies. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
+| seqAlleleCount | Allele counts. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleCount.html)  |
+| ...            | [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)  |
 
 ~
 
@@ -880,131 +880,9 @@ seqClose(genofile)
 
 
 
-# Integration with SeqVarTools
-
-An R/Bioconductor package [SeqVarTools](http://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html) is available on Bioconductor, which defines S4 classes and methods for other common operations and analyses on SeqArray datasets.
-
-See the vignette: [http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf)
-
-
-
-# Integration with SNPRelate
-
-The [SNPRelate](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) package is developed to accelerate two key computations in GWAS: principal component analysis (PCA) and relatedness analysis using identity-by-descent (IBD) measures. The kernels of SNPRelate are written in C/C++ and have been highly optimized for multi-core symmetric multiprocessing computer architectures.
-
-```{r}
-library(SeqArray)
-library(SNPRelate)
-
-# 1000 Genomes, Phase 1, chromosome 22
-(gds.fn <- seqExampleFileName("KG_Phase1"))
-
-# open a GDS file
-genofile <- seqOpen(gds.fn)
-
-# display the contents of the GDS file in a hierarchical structure
-genofile
-```
-
-
-## LD-based SNP pruning
-
-It is suggested to use a pruned set of SNPs which are in approximate linkage equilibrium with each other to avoid the strong influence of SNP clusters in principal component analysis and relatedness analysis.
-
-```{r}
-set.seed(1000)
-
-# may try different LD thresholds for sensitivity analysis
-snpset <- snpgdsLDpruning(genofile, ld.threshold=0.2)
-names(snpset)
-head(snpset$chr22)  # snp.id
-
-# get all selected snp id
-snpset.id <- unlist(snpset)
-```
-
-
-## Principal Component Analysis
-
-```{r}
-# Run PCA
-pca <- snpgdsPCA(genofile, snp.id=snpset.id, num.thread=2)
-
-# variance proportion (%)
-pc.percent <- pca$varprop*100
-head(round(pc.percent, 2))
-```
-
-Population information are available:
-```{r}
-pop.code <- factor(seqGetData(genofile, "sample.annotation/Population"))
-head(pop.code)
-
-popgroup <- list(
-    EastAsia = c("CHB", "JPT", "CHS", "CDX", "KHV", "CHD"),
-	European = c("CEU", "TSI", "GBR", "FIN", "IBS"),
-	African  = c("ASW", "ACB", "YRI", "LWK", "GWD", "MSL", "ESN"),
-	SouthAmerica = c("MXL", "PUR", "CLM", "PEL"),
-	India = c("GIH", "PJL", "BEB", "STU", "ITU"))
-
-colors <- sapply(levels(pop.code), function(x) {
-	for (i in 1:length(popgroup)) {
-		if (x %in% popgroup[[i]])
-			return(names(popgroup)[i])
-	}
-	NA
-	})
-colors <- as.factor(colors)
-legend.text <- sapply(levels(colors), function(x) paste(levels(pop.code)[colors==x], collapse=","))
-legend.text
-```
-
-```{r fig.width=5, fig.height=5, fig.align='center'}
-# make a data.frame
-tab <- data.frame(sample.id = pca$sample.id,
-    EV1 = pca$eigenvect[,1],    # the first eigenvector
-    EV2 = pca$eigenvect[,2],    # the second eigenvector
-    Population = pop.code,
-    stringsAsFactors = FALSE)
-head(tab)
-
-# draw
-plot(tab$EV2, tab$EV1, pch=20, cex=0.75, main="1KG Phase 1, chromosome 22",
-    xlab="eigenvector 2", ylab="eigenvector 1", col=colors[tab$Population])
-legend("topleft", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75)
-```
-
-
-## Identity-By-State Analysis
-
-For $n$ study individuals, `snpgdsIBS()` can be used to create a $n \times n$ matrix of genome-wide average IBS pairwise identities. To perform cluster analysis on the $n \times n$ matrix of genome-wide IBS pairwise distances, and determine the groups by a permutation score:
-
-```{r fig.width=5, fig.height=5, fig.align='center'}
-set.seed(1000)
-ibs.hc <- snpgdsHCluster(snpgdsIBS(genofile, num.thread=2))
-```
-
-Here is the population information we have known:
-```{r fig.width=10, fig.height=5, fig.align='center'}
-# Determine groups of individuals by population information
-rv <- snpgdsCutTree(ibs.hc, samp.group=as.factor(colors[pop.code]))
-
-plot(rv$dendrogram, leaflab="none", main="1KG Phase 1, chromosome 22",
-    edgePar=list(col=rgb(0.5,0.5,0.5,0.75), t.col="black"))
-legend("bottomleft", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75, ncol=4)
-```
-
-
-```{r}
-# close the GDS file
-seqClose(genofile)
-```
-
-
-
 # Resources
 
-1. C++ CoreArray project: [http://corearray.sourceforge.net/](http://corearray.sourceforge.net/)
+1. CoreArray C++ project: [http://corearray.sourceforge.net/](http://corearray.sourceforge.net/)
 2. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html)
 3. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 4. SNPRelate R package: [http://github.com/zhengxwen/SNPRelate](http://github.com/zhengxwen/SNPRelate), [http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html)

@@ -1,8 +1,8 @@
 \name{seqExampleFileName}
 \alias{seqExampleFileName}
-\title{Example GDS file}
+\title{Example files}
 \description{
-    The example GDS file(s) for sequencing variants.
+    The example files of VCF and GDS format.
 }
 \usage{
 seqExampleFileName(type=c("gds", "vcf", "KG_Phase1"))
@@ -15,8 +15,8 @@ seqExampleFileName(type=c("gds", "vcf", "KG_Phase1"))
 \code{type = "vcf"}, or the file name of a GDS file if \code{type = "gds"}.
 }
 \details{
-    A GDS sequencing-variant file was created from a subset of VCF data of
-the 1000 Genomes Project.
+    The SeqArray GDS file was created from a subset of VCF data of the 1000
+Genomes Phase 1 Project.
 }
 
 \author{Xiuwen Zheng}
