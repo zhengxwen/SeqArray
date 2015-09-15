@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.9.0-1.9.16
+CHANGES IN VERSION 1.9.0-1.9.17
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -35,6 +35,8 @@ CHANGES IN VERSION 1.9.0-1.9.16
     o v1.9.14: a new function `seqBED2GDS()`
 
     o v1.9.15: a new function `seqAlleleCount()`
+
+    o `seqCompress.Option` is renamed to `seqStorage.Option`
 
 
 CHANGES IN VERSION 1.8.0

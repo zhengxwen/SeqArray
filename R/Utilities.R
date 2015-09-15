@@ -336,8 +336,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 #######################################################################
 # Merge multiple GDS files
 #
-seqMerge <- function(gds.fn, out.fn, compress.option=seqCompress.Option(),
-    verbose = TRUE)
+seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn))
@@ -353,56 +353,15 @@ seqMerge <- function(gds.fn, out.fn, compress.option=seqCompress.Option(),
 
 
 #######################################################################
-# Read the header of a VCF file
+# Storage options for the SeqArray GDS file
 #
-seqCompress.Option <- function(default="ZIP_RA.MAX", ...)
+seqStorage.Option <- function(compression="ZIP_RA.MAX", float.mode="float32")
 {
-    rv <- list(...)
-    n <- names(rv)
+    stopifnot(is.character(compression))
+    stopifnot(is.character(float.mode))
 
-    # mandatory
-
-    if (!("description" %in% n))
-        rv$description <- default
-
-    if (!("sample.id" %in% n))
-        rv$sample.id <- default
-    if (!("variant.id" %in% n))
-        rv$variant.id <- default
-    if (!("position" %in% n))
-        rv$position <- default
-    if (!("chromosome" %in% n))
-        rv$chromosome <- default
-    if (!("allele" %in% n))
-        rv$allele <- default
-
-    if (!("genotype" %in% n))
-        rv$genotype <- default
-    if (!("genotype.extra" %in% n))
-        rv$genotype.extra <- default
-
-    if (!("phase" %in% n))
-        rv$phase <- default
-    if (!("phase.extra" %in% n))
-        rv$phase.extra <- default
-
-    # options
-
-    if (!("id" %in% n))
-        rv$id <- default
-    if (!("qual" %in% n))
-        rv$qual <- default
-    if (!("filter" %in% n))
-        rv$filter <- default
-    if (!("info" %in% n))
-        rv$info <- default
-    if (!("format" %in% n))
-        rv$format <- default
-
-    if (!("annotation" %in% n))
-        rv$annotation <- default
-
-    class(rv) <- "SeqGDSCompressFlagClass"
+	rv <- list(compression=compression, float.mode=float.mode)
+    class(rv) <- "SeqGDSStorageClass"
     return(rv)
 }
 

@@ -306,7 +306,7 @@ struct TVCF_Field_Format
 	/// data -- Int32
 	vector< vector<C_Int32> > I32ss;
 	/// data -- C_Float32
-	vector< vector<C_Float32> > F32ss;
+	vector< vector<C_Float64> > F64ss;
 	/// data -- UTF8 string
 	vector< vector<string> > UTF8ss;
 
@@ -381,10 +381,10 @@ struct TVCF_Field_Format
 				break;
 
 			case FIELD_TYPE_FLOAT:
-				for (vector< vector<float> >::iterator it = F32ss.begin();
-					it != F32ss.end(); it ++)
+				for (vector< vector<double> >::iterator it = F64ss.begin();
+					it != F64ss.end(); it ++)
 				{
-					GDS_Array_AppendData(data_obj, number, &((*it)[0]), svFloat32);
+					GDS_Array_AppendData(data_obj, number, &((*it)[0]), svFloat64);
 				}
 				break;
 
@@ -403,7 +403,7 @@ struct TVCF_Field_Format
 	}
 
 	int WriteVariableLength(int nTotalSample, vector<C_Int32> &I32s,
-		vector<float> &F32s)
+		vector<double> &F64s)
 	{
 		if (number >= 0)
 			throw ErrSeqArray("Wrong call 'WriteVariableLength' in TVCF_Field_Format.");
@@ -433,19 +433,19 @@ struct TVCF_Field_Format
 			case FIELD_TYPE_FLOAT:
 				for (int j=0; j < nTotalSample; j++)
 				{
-					if (nMax < (int)F32ss[j].size())
-						nMax = F32ss[j].size();
+					if (nMax < (int)F64ss[j].size())
+						nMax = F64ss[j].size();
 				}
-				F32s.resize(nTotalSample);
+				F64s.resize(nTotalSample);
 				for (int i=0; i < nMax; i++)
 				{
 					for (int j=0; j < nTotalSample; j++)
 					{
-						vector<float> &B = F32ss[j];
-						F32s[j] = (i < (int)B.size()) ? B[i] : (float)R_NaN;
+						vector<double> &L = F64ss[j];
+						F64s[j] = (i < (int)L.size()) ? L[i] : R_NaN;
 					}
 					GDS_Array_AppendData(data_obj, nTotalSample,
-						&(F32s[0]), svFloat32);
+						&(F64s[0]), svFloat64);
 				}
 				break;
 
@@ -532,11 +532,11 @@ static C_Int32 getInt32(const string &txt, bool RaiseError)
 }
 
 /// get multiple integers from a string
-static void getInt32Array(const string &txt, vector<C_Int32> &I32,
+static void getInt32Array(const string &txt, vector<C_Int32> &I32s,
 	bool RaiseError)
 {
 	const char *p = SKIP(txt.c_str());
-	I32.clear();
+	I32s.clear();
 	while (*p)
 	{
 		char *endptr = (char*)p;
@@ -563,19 +563,19 @@ static void getInt32Array(const string &txt, vector<C_Int32> &I32,
 			p = endptr;
 		}
 
-		I32.push_back(val);
+		I32s.push_back(val);
 		while ((*p != 0) && (*p != ',')) p ++;
 		if (*p == ',') p ++;
 	}
 }
 
 
-/// get a float number from a string
-static float getFloat(string &txt, bool RaiseError)
+/// get a real number from a string
+static double getFloat(string &txt, bool RaiseError)
 {
 	const char *p = SKIP(txt.c_str());
 	char *endptr = (char*)p;
-	float val = strtof(p, &endptr);
+	double val = strtod(p, &endptr);
 	if (endptr == p)
 	{
 		if ((*p != '.') && RaiseError)
@@ -599,16 +599,16 @@ static float getFloat(string &txt, bool RaiseError)
 	return val;
 }
 
-/// get an integer from  a string
-static void getFloatArray(const string &txt, vector<float> &F32,
+/// get multiple real numbers from a string
+static void getFloatArray(const string &txt, vector<double> &F64s,
 	bool RaiseError)
 {
 	const char *p = SKIP(txt.c_str());
-	F32.clear();
+	F64s.clear();
 	while (*p)
 	{
 		char *endptr = (char*)p;
-		float val = strtof(p, &endptr);
+		double val = strtod(p, &endptr);
 		if (endptr == p)
 		{
 			if ((*p != '.') && RaiseError)
@@ -620,7 +620,7 @@ static void getFloatArray(const string &txt, vector<float> &F32,
 		} else
 			p = endptr;
 
-		F32.push_back(val);
+		F64s.push_back(val);
 		while ((*p != 0) && (*p != ',')) p ++;
 		if (*p == ',') p ++;
 	}
@@ -812,7 +812,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 						format_list.back().I32ss.resize(nTotalSamp);
 						break;
 					case FIELD_TYPE_FLOAT:
-						format_list.back().F32ss.resize(nTotalSamp);
+						format_list.back().F64ss.resize(nTotalSamp);
 						break;
 					case FIELD_TYPE_STRING:
 						format_list.back().UTF8ss.resize(nTotalSamp);
@@ -839,9 +839,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		vector<C_Int32> I32s;
 		I32s.reserve(nTotalSamp);
 
-		C_Float32 F32;
-		vector<C_Float32> F32s;
-		F32s.reserve(nTotalSamp);
+		C_Float64 F64;
+		vector<C_Float64> F64s;
+		F64s.reserve(nTotalSamp);
 
 		// the string buffer
 		vector<string> StrList;
@@ -958,8 +958,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			// -----------------------------------------------------
 			// column 6: QUAL
 			RL.GetCell(cell, false);
-			F32 = getFloat(cell, RaiseError);
-			GDS_Array_AppendData(varQual, 1, &F32, svFloat32);
+			F64 = getFloat(cell, RaiseError);
+			GDS_Array_AppendData(varQual, 1, &F64, svFloat64);
 
 
 			// -----------------------------------------------------
@@ -1016,10 +1016,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 							break;
 
 						case FIELD_TYPE_FLOAT:
-							getFloatArray(value, F32s, RaiseError);
-							pInfo->Check(F32s, name, num_allele);
-							GDS_Array_AppendData(pInfo->data_obj, F32s.size(),
-								&(F32s[0]), svFloat32);
+							getFloatArray(value, F64s, RaiseError);
+							pInfo->Check(F64s, name, num_allele);
+							GDS_Array_AppendData(pInfo->data_obj, F64s.size(),
+								&(F64s[0]), svFloat64);
 							break;
 
 						case FIELD_TYPE_FLAG:
@@ -1070,7 +1070,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 						pInfo->Fill(I32s, NA_INTEGER);
 						break;
 					case FIELD_TYPE_FLOAT:
-						pInfo->Fill(F32s, (float)R_NaN);
+						pInfo->Fill(F64s, R_NaN);
 						break;
 					case FIELD_TYPE_FLAG:
 						I32 = 0;
@@ -1260,8 +1260,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 							break;
 
 						case FIELD_TYPE_FLOAT:
-							getFloatArray(value, pFmt->F32ss[samp_idx], RaiseError);
-							pFmt->Check(pFmt->F32ss[samp_idx], name, num_allele, (float)R_NaN);
+							getFloatArray(value, pFmt->F64ss[samp_idx], RaiseError);
+							pFmt->Check(pFmt->F64ss[samp_idx], name, num_allele, R_NaN);
 							break;
 
 						case FIELD_TYPE_STRING:
@@ -1339,7 +1339,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 						} else if (it->number < 0)
 						{
 							// variable-length array
-							I32 = it->WriteVariableLength(nTotalSamp, I32s, F32s);
+							I32 = it->WriteVariableLength(nTotalSamp, I32s, F64s);
 						} else
 							throw ErrSeqArray("Invalid FORMAT Number.");
 						GDS_Array_AppendData(it->len_obj, 1, &I32, svInt32);

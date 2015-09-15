@@ -7,8 +7,9 @@
 \usage{
 seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     genotype.storage=c("bit2", "bit4", "bit8"),
-    compress.option=seqCompress.Option(), info.import=NULL, fmt.import=NULL,
-    ignore.chr.prefix="chr", raise.error=TRUE, verbose=TRUE)
+    storage.option=seqStorage.Option(),
+    info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
+    raise.error=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -20,8 +21,8 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     \item{genotype.storage}{"bit2" by default; with respect to the compression
         size and access speed, "bit2" is the most efficient when most of
         variants are biallelic.}
-    \item{compress.option}{specify the compression options, by default
-        \code{\link{seqCompress.Option}}}
+    \item{storage.option}{specify the storage and compression options,
+        by default \code{\link{seqStorage.Option}}}
     \item{info.import}{characters, the variable name(s) in the INFO field
         for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
@@ -45,8 +46,14 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
         structural variants, together with rich annotations.
 
     If there are more than one files in \code{vcf.fn}, \code{seqVCF2GDS} will
-merge all dataset together if they contain the same samples. It is useful
+merge all VCF files together if they contain the same samples. It is useful
 to merge genomic variants if VCF data are divided by chromosomes.
+
+    The real numbers in the VCF file(s) are stored in 32-bit floating-point
+format by default. Users can set \code{seqStorage.Option(float.mode="float64")}
+to switch to 64-bit floating point format. Or packed real numbers can be
+adopted by setting
+\code{seqStorage.Option(float.mode="packedreal16:scale=0.0001")}.
 }
 \references{
     The variant call format and VCFtools.
@@ -60,7 +67,7 @@ to merge genomic variants if VCF data are divided by chromosomes.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF.Header}}, \code{\link{seqCompress.Option}},
+    \code{\link{seqVCF.Header}}, \code{\link{seqStorage.Option}},
     \code{\link{seqGDS2VCF}}
 }
 

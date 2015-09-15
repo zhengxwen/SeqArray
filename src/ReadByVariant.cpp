@@ -423,8 +423,14 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
 				PROTECT(dim = NEW_INTEGER(3)); nProtected ++;
-				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
-				INTEGER(dim)[2] = NumIndexRaw;
+				int *p = INTEGER(dim);
+				p[0] = DLen[2]; p[1] = Num_Sample; p[2] = NumIndexRaw;
+				SET_DIM(ans, dim);
+			} else if (DimCnt == 2)
+			{
+				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
+				int *p = INTEGER(dim);
+				p[0] = Num_Sample; p[1] = NumIndexRaw;
 				SET_DIM(ans, dim);
 			}
 			break;
