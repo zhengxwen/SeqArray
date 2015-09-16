@@ -546,17 +546,17 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (!is.null(header$alt))
     {
         if (nrow(header$alt) > 0L)
-            add.gdsn(n, "vcf.alt", header$alt, visible=FALSE)
+            AddVar(n, "vcf.alt", header$alt, closezip=TRUE, visible=FALSE)
     }
     if (!is.null(header$contig))
     {
         if (nrow(header$contig) > 0L)
-            add.gdsn(n, "vcf.contig", header$contig, visible=FALSE)
+            AddVar(n, "vcf.contig", header$contig, closezip=TRUE, visible=FALSE)
     }
     if (!is.null(header$header))
     {
         if (nrow(header$header) > 0L)
-            add.gdsn(n, "vcf.header", header$header, visible=FALSE)
+            AddVar(n, "vcf.header", header$header, closezip=TRUE, visible=FALSE)
     }
 
 

@@ -1009,7 +1009,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 				if (pInfo != info_list.end())
 				{
 					if (pInfo->used)
-						throw ErrSeqArray("Duplicate INFO ID: %s.", name.c_str());
+					{
+						Rf_warning("LINE: %d, ignore duplicated INFO ID (%s).",
+							RL.LineNo(), name.c_str());
+						continue;
+					}
 
 					if (pInfo->import_flag)
 					{
@@ -1371,12 +1375,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		if (RL.ColumnNo() > 0)
 		{
 			snprintf(buf, sizeof(buf),
-				"\nFILE: %s\n\tLINE: %d, COLUMN: %d, %s\n\t%s",
-				fn, RL.LineNo(), RL.ColumnNo(), cell.c_str(),
-				GDS_GetError());
+				"%s\nFILE: %s\nLINE: %d, COLUMN: %d, %s\n",
+				GDS_GetError(), fn, RL.LineNo(), RL.ColumnNo(), cell.c_str());
 		} else {
-			snprintf(buf, sizeof(buf), "\nFILE: %s\n\tLINE: %d\n\t%s",
-				fn, RL.LineNo(), GDS_GetError());
+			snprintf(buf, sizeof(buf), "%s\nFILE: %s\nLINE: %d\n",
+				GDS_GetError(), fn, RL.LineNo());
 		}
 		GDS_SetError(buf);
 		has_error = true;
