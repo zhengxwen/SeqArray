@@ -626,7 +626,7 @@ static void getFloatArray(const string &txt, vector<double> &F64s,
 	}
 }
 
-/// get an integer from  a string
+/// get an integer from a string
 static void getStringArray(string &txt, vector<string> &UTF8s)
 {
 	string val;
@@ -724,6 +724,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		if (num_ploidy <= 0)
 			throw ErrSeqArray("Invalid header$num.ploidy: %d.", num_ploidy);
 
+		// filter level list
+		vector<string> filter_list;
+		{
+			SEXP level = GetListElement(param, "filter.levels");
+			if (!isNull(level))
+			{
+				for (int i=0; i < (int)XLENGTH(level); i++)
+					filter_list.push_back(CHAR(STRING_ELT(level, i)));
+			}
+		}
 
 		// GDS nodes
 		PdAbstractArray Root = GDS_R_SEXP2Obj(gds_root, FALSE);
@@ -822,9 +832,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 				}
 			}
 		}
-
-		// filter level list
-		vector<string> filter_list;
 
 		// variant id (integer)
 		C_Int32 variant_index = GDS_Array_GetTotalCount(varIdx);

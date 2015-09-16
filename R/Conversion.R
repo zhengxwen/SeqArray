@@ -829,6 +829,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     ##################################################
     # for-loop each file
+
+    filterlevels <- header$filter$ID
+
     for (i in seq_len(length(vcf.fn)))
     {
         opfile <- file(vcf.fn[i], open="rt")
@@ -841,29 +844,39 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         v <- .Call(SEQ_Parse_VCF4, vcf.fn[i], header, gfile$root,
             list(sample.num = as.integer(length(samp.id)),
                 genotype.var.name = genotype.var.name,
-                raise.error = raise.error, verbose = verbose),
-            readLines, opfile, 512L,  # 'readLines(opfile, 512L)'
+                raise.error = raise.error, filter.levels = filterlevels,
+                verbose = verbose),
+            readLines, opfile, 512L,  # readLines(opfile, 512L)
             ignore.chr.prefix, new.env())
-        if (length(v) > 0L)
-        {
-            put.attr.gdsn(varFilter, "R.class", "factor")
-            put.attr.gdsn(varFilter, "R.levels", v)
 
-    if (!is.null(header$filter))
-    {
-        if (nrow(header$filter) > 0L)
-            add.gdsn(n, "vcf.filter", header$filter, visible=FALSE)
-    }
-
-        }
-
+        filterlevels <- unique(c(filterlevels, v))
         if (verbose)
             print(geno.node)
 
-        on.exit()
+        on.exit({ closefn.gds(gfile) })
         close(opfile)
     }
 
+    if (length(filterlevels) > 0L)
+    {
+        put.attr.gdsn(varFilter, "R.class", "factor")
+        put.attr.gdsn(varFilter, "R.levels", filterlevels)
+
+        if (!is.null(header$filter))
+        {
+            if (nrow(header$filter) > 0L)
+            {
+                dp <- header$filter$Description[match(filterlevels,
+                    header$filter$ID)]
+                dp[is.na(dp)] <- ""
+            }
+        } else
+            dp <- rep("", length(filterlevels))
+
+        put.attr.gdsn(varFilter, "Description", dp)
+    }
+
+    on.exit()
     closefn.gds(gfile)
 
 
@@ -884,7 +897,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
 
 #######################################################################
-# Convert a GDS file to a VCF (sequencing) file
+# Convert a SeqArray GDS file to a VCF file
 #
 
 seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
@@ -1020,14 +1033,15 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     }
 
     # the FILTER field
-    n <- index.gdsn(gdsfile, "description/vcf.filter", silent=TRUE)
+    n <- index.gdsn(gdsfile, "annotation/filter", silent=TRUE)
     if (!is.null(n))
     {
-        dat <- read.gdsn(n)
-        for (i in seq_len(nrow(dat)))
+        at <- get.attr.gdsn(n)
+        id <- at$R.levels; dp <- at$Description
+        for (i in seq_len(length(id)))
         {
             cat(sprintf("##FILTER=<ID=%s,Description=%s>\n",
-                dq(dat$ID[i]), dq(dat$Description[i], TRUE)), file=ofile)
+                dq(id[i]), dq(dp[i], TRUE)), file=ofile)
         }
     }
 

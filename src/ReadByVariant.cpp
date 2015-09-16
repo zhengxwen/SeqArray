@@ -398,23 +398,25 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 		switch (VarType)
 		{
 		case ctGenotype:
-			PROTECT(dim = NEW_INTEGER(2));
-			INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
-			SET_DIM(ans, dim);
-			PROTECT(name_list = NEW_LIST(2));
-			PROTECT(tmp = NEW_CHARACTER(2));
+			{
+				int *p = INTEGER(dim = NEW_INTEGER(2));
+				p[0] = DLen[2]; p[1] = Num_Sample;
+				SET_DIM(ans, dim);
+				PROTECT(name_list = NEW_LIST(2));
+				PROTECT(tmp = NEW_CHARACTER(2));
 				SET_STRING_ELT(tmp, 0, mkChar("allele"));
 				SET_STRING_ELT(tmp, 1, mkChar("sample"));
 				SET_NAMES(name_list, tmp);
-			SET_DIMNAMES(ans, name_list);
-			nProtected += 3;
+				SET_DIMNAMES(ans, name_list);
+				UNPROTECT(2);
+			}
 			break;
 
 		case ctPhase:
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
-				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Sample;
+				int *p = INTEGER(dim = NEW_INTEGER(2));
+				p[0] = DLen[2]; p[1] = Num_Sample;
 				SET_DIM(ans, dim);
 			}
 			break;
@@ -422,14 +424,12 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 		case ctFormat:
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
-				PROTECT(dim = NEW_INTEGER(3)); nProtected ++;
-				int *p = INTEGER(dim);
+				int *p = INTEGER(dim = NEW_INTEGER(3));
 				p[0] = DLen[2]; p[1] = Num_Sample; p[2] = NumIndexRaw;
 				SET_DIM(ans, dim);
 			} else if (DimCnt == 2)
 			{
-				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				int *p = INTEGER(dim);
+				int *p = INTEGER(dim = NEW_INTEGER(2));
 				p[0] = Num_Sample; p[1] = NumIndexRaw;
 				SET_DIM(ans, dim);
 			}
