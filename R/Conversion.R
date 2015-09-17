@@ -14,7 +14,7 @@
 
 #######################################################################
 # Parse the header of a VCF file
-# http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41
+# http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
 seqVCF.Header <- function(vcf.fn)
@@ -75,7 +75,7 @@ seqVCF.Header <- function(vcf.fn)
     #########################################################
     # get names and values
 
-    value.string <- function(txt)
+    ValString <- function(txt)
     {
         # split by "="
         x <- as.integer(regexpr("=", txt, fixed=TRUE))
@@ -95,34 +95,41 @@ seqVCF.Header <- function(vcf.fn)
     #########################################################
     # get names and values, length(txt) == 1L
 
-    val.data.frame <- function(txt, check.name)
+    AsDataFrame <- function(txt, check.name)
     {
         if (substr(txt, 1L, 1L) == "<")
             txt <- substring(txt, 2L)
         if (substr(txt, nchar(txt), nchar(txt)) == ">")
             txt <- substr(txt, 1L, nchar(txt)-1L)
 
-        rv <- value.string(scan(text=txt, what = character(),
-            sep = ",", quote="\"", quiet=TRUE))
+        v <- ValString(scan(text=txt, what=character(),
+            sep=",", quote="\"", quiet=TRUE))
 
         # check
         ans <- list()
         if (!is.null(check.name))
         {
-            if (nrow(rv) == length(check.name))
+            if (is.null(names(check.name)))
+                flag <- rep(TRUE, length(check.name))
+            else
+                flag <- (names(check.name) == "T")
+
+            for (i in seq_len(length(check.name)))
             {
-                for (i in seq_len(nrow(rv)))
+                j <- match(check.name[i], v[,1L])
+                if (is.na(j))
                 {
-                    if (tolower(rv[i,1L]) == tolower(check.name[i]))
-                    {
-                        ans[[ check.name[i] ]] <- rv[i,2L]
-                    } else
-                        return(NULL)
-                }
+                    if (flag[i])
+                        stop("No '", check.name[i], "'.")
+                    a <- NA
+                } else
+                    a <- v[i,2L]
+
+                ans[[ check.name[i] ]] <- a
             }
         } else {
-            for (i in seq_len(nrow(rv)))
-                ans[[ rv[i,1L] ]] <- rv[i,2L]
+            for (i in seq_len(nrow(v)))
+                ans[[ v[i,1L] ]] <- v[i,2L]
         }
         as.data.frame(ans, stringsAsFactors=FALSE)
     }
@@ -130,7 +137,7 @@ seqVCF.Header <- function(vcf.fn)
     #########################################################
     # check number
 
-    check.num <- function(number)
+    CheckNum <- function(number)
     {
         if (!(number %in% c("A", "G", ".")))
         {
@@ -170,17 +177,28 @@ seqVCF.Header <- function(vcf.fn)
         return(rv)
     }
 
-    ans <- value.string(ans)
+    ans <- ValString(ans)
     ans <- data.frame(id=ans[,1L], value=ans[,2L], stringsAsFactors=FALSE)
 
+
     #########################################################
-    # fileformat=VCFv4.1
+    # fileformat=VCFv4.*
 
     s <- ans$value[ans$id == "fileformat"]
     if (length(s) < 1L)
         stop("no defined fileformat!")
     else if (length(s) > 1L)
         stop("Multiple fileformat!")
+    else {
+        if (substr(s, 1L, 4L) == "VCFv")
+        {
+            v <- suppressWarnings(as.double(substring(s, 5)))
+            if (!is.finite(v)) v <- 0
+            if (v < 4.0)
+                stop("'fileformat' should be >= v4.0.")
+        } else
+            stop("Invalid 'fileformat'.")
+    }
     fileformat <- s[1L]
     ans <- ans[ans$id != "fileformat", ]
 
@@ -194,21 +212,24 @@ seqVCF.Header <- function(vcf.fn)
 
     #########################################################
     # INFO=<ID=ID,Number=number,Type=type,Description="description">
+    # INFO=<ID=ID,Number=number,Type=type,Description="description",Source="source",Version="version">
 
     INFO <- NULL
     s <- ans$value[ans$id == "INFO"]
     for (i in seq_len(length(s)))
     {
-        v <- val.data.frame(s[i], c("ID", "Number", "Type", "Description"))
+        v <- AsDataFrame(s[i], c(T="ID", T="Number", T="Type", T="Description",
+            F="Source", F="Version"))
         if (!is.null(v))
         {
-            if (!is.element(tolower(v$Type), c("integer", "float", "flag", "character", "string")))
-                stop(sprintf("INFO=%s", s[i]))
-            if (!check.num(v$Number))
-                stop(sprintf("INFO=%s", s[i]))
+            if (!is.element(tolower(v$Type),
+                    c("integer", "float", "flag", "character", "string")))
+                stop("INFO=", s[i])
+            if (!CheckNum(v$Number))
+                stop("INFO=", s[i])
             INFO <- rbind(INFO, v)
         } else
-            stop(sprintf("INFO=%s", s[i]))
+            stop("INFO=", s[i])
     }
     ans <- ans[ans$id != "INFO", ]
 
@@ -220,11 +241,11 @@ seqVCF.Header <- function(vcf.fn)
     s <- ans$value[ans$id == "FILTER"]
     for (i in seq_len(length(s)))
     {
-        v <- val.data.frame(s[i], c("ID", "Description"))
+        v <- AsDataFrame(s[i], c("ID", "Description"))
         if (!is.null(v))
             FILTER <- rbind(FILTER, v)
         else
-            stop(sprintf("FILTER=%s", s[i]))
+            stop("FILTER=", s[i])
     }
     ans <- ans[ans$id != "FILTER", ]
 
@@ -236,16 +257,17 @@ seqVCF.Header <- function(vcf.fn)
     s <- ans$value[ans$id == "FORMAT"]
     for (i in seq_len(length(s)))
     {
-        v <- val.data.frame(s[i], c("ID", "Number", "Type", "Description"))
+        v <- AsDataFrame(s[i], c("ID", "Number", "Type", "Description"))
         if (!is.null(v))
         {
-            if (!is.element(tolower(v$Type), c("integer", "float", "character", "string")))
-                stop(sprintf("FORMAT=%s", s[i]))
-            if (!check.num(v$Number))
-                stop(sprintf("FORMAT=%s", s[i]))
+            if (!is.element(tolower(v$Type),
+                    c("integer", "float", "character", "string")))
+                stop("FORMAT=", s[i])
+            if (!CheckNum(v$Number))
+                stop("FORMAT=", s[i])
             FORMAT <- rbind(FORMAT, v)
         } else
-            stop(sprintf("FORMAT=%s", s[i]))
+            stop("FORMAT=", s[i])
     }
     ans <- ans[ans$id != "FORMAT", ]
 
@@ -257,12 +279,12 @@ seqVCF.Header <- function(vcf.fn)
     s <- ans$value[ans$id == "ALT"]
     for (i in seq_len(length(s)))
     {
-        v <- val.data.frame(s[i], c("ID", "Description"))
+        v <- AsDataFrame(s[i], c("ID", "Description"))
         if (!is.null(v))
         {
             ALT <- rbind(ALT, v)
         } else
-            stop(sprintf("ALT=%s", s[i]))
+            stop("ALT=", s[i])
     }
     ans <- ans[ans$id != "ALT", ]
 
@@ -274,12 +296,12 @@ seqVCF.Header <- function(vcf.fn)
     s <- ans$value[ans$id == "contig"]
     for (i in seq_len(length(s)))
     {
-        v <- val.data.frame(s[i], NULL)
+        v <- AsDataFrame(s[i], NULL)
         if (!is.null(v))
         {
             contig <- rbind(contig, v)
         } else
-            stop(sprintf("contig=%s", s[i]))
+            stop("contig=", s[i])
     }
     ans <- ans[ans$id != "contig", ]
 
@@ -446,9 +468,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         }
 
         # add.gdsn arguments
-		args <- list(node=node, name=varname, val=val, storage=storage,
-		    valdim=valdim, compress=compress.flag, closezip=closezip,
-		    visible=visible)
+        args <- list(node=node, name=varname, val=val, storage=storage,
+            valdim=valdim, compress=compress.flag, closezip=closezip,
+            visible=visible)
         args <- c(args, eval(parse(text=paste("list(", storage.param, ")"))))
         do.call(add.gdsn, args)
     }
@@ -561,7 +583,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
 
     ##################################################
-    # add sample id
+    # add sample.id
 
     nSamp <- length(samp.id)
     AddVar(gfile, "sample.id", samp.id, closezip=TRUE)
@@ -722,6 +744,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     put.attr.gdsn(node, "Number", header$info$Number[i])
                     put.attr.gdsn(node, "Type", header$info$Type[i])
                     put.attr.gdsn(node, "Description", header$info$Description[i])
+                    if (!is.na(header$info$Source[i]))
+                        put.attr.gdsn(node, "Source", header$info$Source[i])
+                    if (!is.na(header$info$Version[i]))
+                        put.attr.gdsn(node, "Version", header$info$Version[i])
 
                     if (s %in% c(".", "A", "G"))
                     {
@@ -982,16 +1008,17 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     # fileformat
     if (is.null(a$vcf.fileformat))
-        a$vcf.fileformat <- "VCFv4.1"
+        a$vcf.fileformat <- "VCFv4.2"
     cat("##fileformat=", a$vcf.fileformat, "\n", sep="", file=ofile)
 
     # fileDate
     cat("##fileDate=", format(Sys.time(), "%Y%m%d"), "\n", sep="", file=ofile)
 
     # program, source
-    if (is.null(a$sequence.variant.format))
-        a$sequence.variant.format <- "v1.0"
-    cat("##source=SeqArray_RPackage_", a$sequence.variant.format, "\n", sep="", file=ofile)
+    aa <- get.attr.gdsn(gdsfile$root)
+    if (is.null(aa$FileVersion))
+        aa$FileVersion <- "v1.0"
+    cat("##source=SeqArray_Format_", aa$FileVersion, "\n", sep="", file=ofile)
 
     # assembly
     if (!is.null(a$vcf.assembly))
@@ -1028,8 +1055,13 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile,
             paste("annotation/info/", nm, sep="")))
-        cat(sprintf("##INFO=<ID=%s,Number=%s,Type=%s,Description=%s>\n",
-            nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE)), file=ofile)
+        s <- sprintf("ID=%s,Number=%s,Type=%s,Description=%s",
+            nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE))
+        if (!is.null(a$Source))
+            s <- paste(s, ",Source=", dq(a$Source, TRUE), sep="")
+        if (!is.null(a$Version))
+            s <- paste(s, ",Version=", dq(a$Version, TRUE), sep="")
+        cat("##INFO=<", s, ">\n", file=ofile, sep="")
     }
 
     # the FILTER field
