@@ -234,7 +234,8 @@ seqGetData <- function(gdsfile, var.name)
 seqApply <- function(gdsfile, var.name, FUN,
     margin = c("by.variant", "by.sample"), as.is = c("none", "list",
     "integer", "double", "character", "logical", "raw"),
-    var.index = c("none", "relative", "absolute"), .useraw=FALSE, ...)
+    var.index = c("none", "relative", "absolute"),
+    .useraw=FALSE, .list_duplicate=TRUE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -250,7 +251,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     {
         # C call
         rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
-            var.index, .useraw, new.env())
+            var.index, .useraw, .list_duplicate, new.env())
         if (as.is == "none") return(invisible())
     } else if (margin == "by.sample")
     {
@@ -267,7 +268,7 @@ seqApply <- function(gdsfile, var.name, FUN,
 #######################################################################
 # Apply functions via a sliding window over variants
 #
-seqSlidingWindow <- function(gdsfile, var.name, win.size, shift=1, FUN,
+.seqSlidingWindow <- function(gdsfile, var.name, win.size, shift=1, FUN,
     as.is = c("list", "integer", "double", "character", "none"),
     var.index = c("none", "relative", "absolute"), ...)
 {
@@ -696,7 +697,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
             FUN = function(f)
             {
                 seqApply(f, c("genotype", "allele"), margin="by.variant",
-                    as.is="list", FUN = .cfunction("FC_AF_List"))
+                    as.is="list", FUN = .cfunction("FC_AF_List"),
+                    .list_duplicate=FALSE)
             })
     } else if (is.numeric(ref.allele))
     {

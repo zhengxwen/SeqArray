@@ -96,13 +96,13 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
 /// Get a list of allele frequencies
 COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 {
-	SEXP Geno = VECTOR_ELT(List, 0);
-	int *p = INTEGER(Geno);
 	int nAllele = GetNumOfAllele(CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
-
 	SEXP rv = NEW_NUMERIC(nAllele);
 	double *pV = REAL(rv);
 	memset((void*)pV, 0, sizeof(double)*nAllele);
+
+	SEXP Geno = VECTOR_ELT(List, 0);
+	int *p = INTEGER(Geno);
 	int num = 0;
 
 	for (size_t n=XLENGTH(Geno); n > 0; n--)
@@ -120,9 +120,10 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 
 	if (num > 0)
 	{
-		for (int i=0; i < nAllele; i++) pV[i] /= num;
+		const double scale = 1.0 / num;
+		for (; (nAllele--) > 0;) (*pV++) *= scale;
 	} else {
-		for (int i=0; i < nAllele; i++) pV[i] = R_NaN;
+		for (; (nAllele--) > 0;) (*pV++) = R_NaN;
 	}
 
 	return rv;

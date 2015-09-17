@@ -455,11 +455,16 @@ extern "C"
 
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho)
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP list_duplicate,
+	SEXP rho)
 {
 	int use_raw_flag = Rf_asLogical(use_raw);
 	if (use_raw_flag == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
+
+	int dup_flag = Rf_asLogical(list_duplicate);
+	if (dup_flag == NA_LOGICAL)
+		error("'.duplicate' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
 
@@ -657,7 +662,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			switch (DatType)
 			{
 			case 1:
-				SET_ELEMENT(rv_ans, ans_index, duplicate(val)); break;
+				if (dup_flag) val = duplicate(val);
+				SET_ELEMENT(rv_ans, ans_index, val);
+				break;
 			case 2:
 				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val); break;
 			case 3:
@@ -944,22 +951,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SlidingWindow(SEXP gdsfile, SEXP var_name,
 
 				// call R function
 				SEXP val = eval(R_fcall, rho);
+				// save
 				switch (DatType)
 				{
 				case 0:    // integer
-					val = AS_INTEGER(val);
-					INTEGER(rv_ans)[ans_index] = (LENGTH(val) > 0) ?
-						INTEGER(val)[0] : NA_INTEGER;
+					INTEGER(rv_ans)[ans_index] = Rf_asInteger(val);
 					break;
 				case 1:    // double
-					val = AS_NUMERIC(val);
-					REAL(rv_ans)[ans_index] = (LENGTH(val) > 0) ?
-						REAL(val)[0] : R_NaN;
+					REAL(rv_ans)[ans_index] = Rf_asReal(val);
 					break;
 				case 2:    // character
-					val = AS_CHARACTER(val);
-					SET_STRING_ELT(rv_ans, ans_index,
-						(LENGTH(val) > 0) ? STRING_ELT(val, 0) : NA_STRING);
+					SET_STRING_ELT(rv_ans, ans_index, Rf_asChar(val));
 					break;
 				case 3:    // others
 					if (NAMED(val) > 0)

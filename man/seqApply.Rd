@@ -6,10 +6,10 @@
 margins of arrays or matrices.
 }
 \usage{
-seqApply(gdsfile, var.name, FUN, margin = c("by.variant", "by.sample"),
-    as.is = c("none", "list", "integer", "double", "character",
-    "logical", "raw"), var.index = c("none", "relative", "absolute"),
-    .useraw=FALSE, ...)
+seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
+    as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
+    var.index=c("none", "relative", "absolute"),
+    .useraw=FALSE, .list_duplicate=TRUE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -26,6 +26,7 @@ seqApply(gdsfile, var.name, FUN, margin = c("by.variant", "by.sample"),
         selection defined by \code{\link{seqSetFilter}}, \code{"absolute"}
         for indexing with respect to all data}
     \item{.useraw}{use RAW for genotypes}
+    \item{.list_duplicate}{internal use only}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{
