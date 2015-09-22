@@ -369,7 +369,10 @@ struct TVCF_Field_Format
 	void WriteFixedLength()
 	{
 		if (number < 0)
-			throw ErrSeqArray("Wrong call 'WriteFixedLength' in TVCF_Field_Format.");
+		{
+			throw ErrSeqArray(
+				"Invalid call 'WriteFixedLength' in TVCF_Field_Format.");
+		}
 		switch (type)
 		{
 			case FIELD_TYPE_INT:
@@ -392,8 +395,10 @@ struct TVCF_Field_Format
 				for (vector< vector<string> >::iterator it = UTF8ss.begin();
 					it != UTF8ss.end(); it ++)
 				{
-					for (int j=0; j < (int)(*it).size(); j ++)
-						GDS_Array_AppendString(data_obj, (*it)[j].c_str());
+					vector<string> &text = (*it);
+					size_t n = text.size();
+					for (size_t j=0; j < n; j ++)
+						GDS_Array_AppendString(data_obj, text[j].c_str());
 				}
 				break;
 
@@ -406,8 +411,10 @@ struct TVCF_Field_Format
 		vector<double> &F64s)
 	{
 		if (number >= 0)
-			throw ErrSeqArray("Wrong call 'WriteVariableLength' in TVCF_Field_Format.");
-
+		{
+			throw ErrSeqArray(
+				"Invalid call 'WriteVariableLength' in TVCF_Field_Format.");
+		}
 		int nMax = 0;
 		switch (type)
 		{

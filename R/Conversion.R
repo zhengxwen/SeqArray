@@ -359,7 +359,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
     storage.option=seqStorage.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
-    raise.error=TRUE, verbose=TRUE)
+    optimize=TRUE, raise.error=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
@@ -375,9 +375,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.null(info.import) | is.character(info.import))
     stopifnot(is.null(fmt.import) | is.character(fmt.import))
     stopifnot(is.character(ignore.chr.prefix), length(ignore.chr.prefix)>0L)
+    stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(raise.error), length(raise.error)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
+
+    if (verbose) message(date())
 
     # check sample id
     samp.id <- NULL
@@ -912,9 +915,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (verbose)
     {
         cat("Done.\n")
-        cat("Optimize the access efficiency ...\n")
+        message(date())
     }
-    cleanup.gds(out.fn, verbose=verbose)
+    if (optimize)
+    {
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
+        cleanup.gds(out.fn, verbose=verbose)
+        if (verbose) message(date())
+    }
 
     # output
     invisible(normalizePath(out.fn))
@@ -931,7 +940,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(vcf.fn) & (length(vcf.fn)==1L))
+    stopifnot(is.character(vcf.fn), length(vcf.fn)==1L)
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
 

@@ -9,7 +9,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     genotype.storage=c("bit2", "bit4", "bit8"),
     storage.option=seqStorage.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
-    raise.error=TRUE, verbose=TRUE)
+    optimize=TRUE, raise.error=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -30,6 +30,8 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
         chromosome which should be ignored, like "chr"; it is not
         case-sensitive}
+    \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
+        \code{\link{cleanup.gds}}}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
         \code{FALSE}: get missing value if numeric conversion fails}
     \item{verbose}{if \code{TRUE}, show information}

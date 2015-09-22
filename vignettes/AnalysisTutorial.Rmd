@@ -73,7 +73,7 @@ seqParallelSetup(FALSE)
 
 # Integration with SNPRelate
 
-The [SNPRelate](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) package is developed to accelerate two key computations in GWAS: principal component analysis (PCA) and relatedness analysis using identity-by-descent (IBD) measures. The kernels of SNPRelate are written in C/C++ and have been highly optimized for multi-core symmetric multiprocessing computer architectures.
+The [SNPRelate](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) package is developed to accelerate two key computations in genome-wide association studies: principal component analysis (PCA) and relatedness analysis using identity-by-descent (IBD) measures. The kernels of SNPRelate are written in C/C++ and have been highly optimized for multi-core symmetric multiprocessing computer architectures. The genotypes in SeqArray format are converted to categorical dosages of reference alleles (0,1,2,NA), which are the data format used in the SNPRelate pacakge.
 
 ```{r}
 library(SNPRelate)
@@ -200,8 +200,6 @@ seqClose(genofile)
 ## Integration with SeqVarTools
 
 An R/Bioconductor package [SeqVarTools](http://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html) is available on Bioconductor, which defines S4 classes and methods for other common operations and analyses on SeqArray datasets.
-
-See the vignette: [http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf)
 
 
 
