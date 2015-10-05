@@ -95,7 +95,7 @@ seqClose(f)
 
 
 
-# convert without the INFO fields
+# convert without the INFO and FORMAT fields
 seqVCF2GDS(vcf.fn, "tmp.gds",
     info.import=character(0), fmt.import=character(0))
 

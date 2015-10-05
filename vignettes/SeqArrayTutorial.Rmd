@@ -39,13 +39,13 @@ Here, I focus on the application of CoreArray for statisticians working in the R
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Imports VCF files. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqVCF2GDS.html)  |
-| seqSummary   | Gets the summary of a sequence GDS file (Num. of samples, Num. of variants, INFO/FORMAT variables, etc). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqSummary.html)  |
-| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqSetFilter.html)  |
-| seqGetData   | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
-| seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
-| seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqParallel.html)  |
-| seqParallelSetup  | Setups a cluster environment for parallel computing. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqParallelSetup.html)  |
+| seqVCF2GDS   | Imports VCF files. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
+| seqSummary   | Gets the summary of a sequence GDS file (Num. of samples, Num. of variants, INFO/FORMAT variables, etc). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSummary.html)  |
+| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
+| seqGetData   | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
+| seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
+| seqParallelSetup  | Setups a cluster environment for parallel computing. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallelSetup.html)  |
 
 ~
 
@@ -258,13 +258,13 @@ unlink("tmp.gds")
 
 | Function       | Description |
 |:---------------|:-------------------------------------------|
-| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
-| seqApply       | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
-| seqNumAllele   | Numbers of alleles per site. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
-| seqMissing     | Missing genotype percentages. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
-| seqAlleleFreq  | Allele frequencies. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
-| seqAlleleCount | Allele counts. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleCount.html)  |
-| ...            | [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)  |
+| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqApply       | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
+| seqNumAllele   | Numbers of alleles per site. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqNumAllele.html)  |
+| seqMissing     | Missing genotype percentages. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqMissing.html)  |
+| seqAlleleFreq  | Allele frequencies. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleFreq.html)  |
+| seqAlleleCount | Allele counts. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleCount.html)  |
+| ...            | [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)  |
 
 ~
 
@@ -316,7 +316,7 @@ seqGetData(genofile, "genotype")
 ```
 
 Now let us take a look at a variable-length dataset `annotation/info/AA`, which corresponds to the INFO column in the original VCF file. There are four variants, each variant has data with size ONE (`$length`), and data are saved in `$data` contiguously.
-\Robject{\$length} could be ZERO indicating no data for that variant.
+`$length` could be ZERO indicating no data for that variant.
 ```{r}
 # get "annotation/info/AA", a variable-length dataset
 seqGetData(genofile, "annotation/info/AA")
@@ -352,7 +352,7 @@ seqApply(genofile, c(sample.id="sample.id", genotype="genotype"),
 
 ```{r}
 # remove the sample and variant filters
-seqSetFilter(genofile)
+seqResetFilter(genofile)
 
 # get the numbers of alleles per variant
 z <- seqApply(genofile, "allele",
@@ -886,7 +886,6 @@ seqClose(genofile)
 1. CoreArray C++ project: [http://corearray.sourceforge.net/](http://corearray.sourceforge.net/)
 2. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html)
 3. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
-4. SNPRelate R package: [http://github.com/zhengxwen/SNPRelate](http://github.com/zhengxwen/SNPRelate), [http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html)
 
 
 # Session Information

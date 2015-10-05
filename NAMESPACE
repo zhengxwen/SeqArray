@@ -32,11 +32,8 @@ importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF)
 exportPattern("^seq*")
 export(.Last.lib)
 
-# exportClasses(SeqVarGDSClass, SeqVarNodeNewInfoClass)
 exportClasses(SeqVarGDSClass)
 
 
 exportMethods(granges, ref, alt, qual, filt, asVCF)
-
-# exportMethods(seqClose, seqAppend)
-exportMethods(seqClose)
+exportMethods(seqClose, seqSetFilter)

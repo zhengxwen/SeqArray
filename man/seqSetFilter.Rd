@@ -1,17 +1,21 @@
-\name{seqSetFilter}
+\name{seqSetFilter-methods}
 \alias{seqSetFilter}
+\alias{seqSetFilter,SeqVarGDSClass-method}
+\alias{seqResetFilter}
 \title{Set a Filter to Sample or Variant}
 \description{
     Sets a filter to sample and/or variant.
 }
 \usage{
-seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,
-    samp.sel=NULL, variant.sel=NULL,
+\S4method{seqSetFilter}{SeqVarGDSClass}(object,
+    sample.id=NULL, variant.id=NULL, samp.sel=NULL, variant.sel=NULL,
     action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
     verbose=TRUE)
+
+seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 }
 \arguments{
-    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{object}{a \code{\link{SeqVarGDSClass}} object}
     \item{sample.id}{IDs of selected samples}
     \item{variant.id}{IDs of selected variants}
     \item{samp.sel}{a logical/raw vector indicating the selected samples}
@@ -30,7 +34,13 @@ seqSetFilter(gdsfile, sample.id=NULL, variant.id=NULL,
             set the current filter to the intersection of selected samples
             and/or variants;
         \code{"pop"} -- pop up the last filter}
+    \item{sample}{logical, if \code{TRUE}, include all samples}
+    \item{variant}{logical, if \code{TRUE}, include all variants}
     \item{verbose}{if \code{TRUE}, show information}
+}
+\details{
+    \code{seqResetFilter(file)} is equivalent to \code{seqSetFilter(file)},
+where the selection arguments in \code{seqSetFilter} are \code{NULL}.
 }
 \value{
     None.
@@ -74,15 +84,16 @@ seqGetData(f, "genotype")
 
 
 
-# set the intersection
-seqSetFilter(f)
+## set the intersection
+
+seqResetFilter(f)
 seqSetFilterChrom(f, 10L)
 seqSummary(f, "genotype", check="none")
 
 AF <- seqAlleleFreq(f)
 table(AF <= 0.9)
 
-seqSetFilter(f, variant.sel=AF<=0.9, action="intersect")
+seqSetFilter(f, variant.sel=(AF<=0.9), action="intersect")
 seqSummary(f, "genotype", check="none")
 
 

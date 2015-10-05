@@ -25,17 +25,17 @@ vignette: >
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqSetFilter.html)  |
-| seqGetData   | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqGetData.html)  |
-| seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqApply.html)  |
-| seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqParallel.html)  |
-| seqParallelSetup  | Setups a cluster environment for parallel computing. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqParallelSetup.html)  |
+| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
+| seqGetData   | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
+| seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
+| seqParallelSetup  | Setups a cluster environment for parallel computing. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallelSetup.html)  |
 | --- |   |
-| seqNumAllele   | Numbers of alleles per site. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqNumAllele.html)  |
-| seqMissing     | Missing genotype percentages. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqMissing.html)  |
-| seqAlleleFreq  | Allele frequencies. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleFreq.html)  |
-| seqAlleleCount | Allele counts. [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/seqAlleleCount.html)  |
-| ...            | [![](link.png)](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)  |
+| seqNumAllele   | Numbers of alleles per site. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqNumAllele.html)  |
+| seqMissing     | Missing genotype percentages. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqMissing.html)  |
+| seqAlleleFreq  | Allele frequencies. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleFreq.html)  |
+| seqAlleleCount | Allele counts. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleCount.html)  |
+| ...            | [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)  |
 
 
 ## Parallel Implementation
@@ -197,7 +197,7 @@ seqClose(genofile)
 ```
 
 
-## Integration with SeqVarTools
+# Integration with SeqVarTools
 
 An R/Bioconductor package [SeqVarTools](http://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html) is available on Bioconductor, which defines S4 classes and methods for other common operations and analyses on SeqArray datasets.
 

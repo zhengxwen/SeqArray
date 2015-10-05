@@ -82,7 +82,7 @@ seqGDS2VCF(f, "tmp2.vcf.gz", info.var=c("BN","GP","AA","DP","HM2"), fmt.var=char
 # call "diff" in Unix (a command line tool comparing files line by line)
 
 # using all samples and variants
-seqSetFilter(f)
+seqResetFilter(f)
 
 # convert
 seqGDS2VCF(f, "tmp.vcf.gz")

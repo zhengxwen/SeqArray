@@ -14,13 +14,13 @@ Big data management of genome-wide sequence variants with thousands of individua
 
 ## Bioconductor:
 
-Release Version: v1.8.0
+Release Version:
 
 [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 
-* Tutorials: [Vignette](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.pdf)
+* Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [Data Analytics](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/AnalysisTutorial.html)
 
-Development Version: v1.9.17
+Development Version:
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
@@ -50,11 +50,12 @@ The `install_github()` approach requires that you build from source, i.e. `make`
 ```sh
 wget --no-check-certificate https://github.com/zhengxwen/gdsfmt/tarball/master -O gdsfmt_latest.tar.gz
 wget --no-check-certificate https://github.com/zhengxwen/SeqArray/tarball/master -O SeqArray_latest.tar.gz
+R CMD INSTALL gdsfmt_latest.tar.gz
+R CMD INSTALL SeqArray_latest.tar.gz
+
 ## Or
 curl -L https://github.com/zhengxwen/gdsfmt/tarball/master/ -o gdsfmt_latest.tar.gz
 curl -L https://github.com/zhengxwen/SeqArray/tarball/master/ -o SeqArray_latest.tar.gz
-
-## Install
 R CMD INSTALL gdsfmt_latest.tar.gz
 R CMD INSTALL SeqArray_latest.tar.gz
 ```

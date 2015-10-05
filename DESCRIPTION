@@ -1,8 +1,8 @@
 Package: SeqArray
 Type: Package
 Title: Big Data Management of Genome-Wide Sequence Variants
-Version: 1.9.17
-Date: 2015-09-16
+Version: 1.9.18
+Date: 2015-10-04
 Depends: gdsfmt (>= 1.5.12)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation
@@ -20,7 +20,6 @@ Description: Big data management of genome-wide sequence variants with
         using the R programming language.
 License: GPL-3
 VignetteBuilder: knitr
-URL: http://corearray.sourceforge.net/tutorials/SeqArray/,
-        http://github.com/zhengxwen/SeqArray
+URL: http://github.com/zhengxwen/SeqArray
 BugReports: http://github.com/zhengxwen/SeqArray/issues
 biocViews: Infrastructure, Sequencing, Genetics

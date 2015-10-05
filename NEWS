@@ -1,10 +1,13 @@
-CHANGES IN VERSION 1.9.0-1.9.17
+CHANGES IN VERSION 1.10.0
+-------------------------
+
+    o The version number was bumped for the Bioconductor release version 3.2
+
+
+CHANGES IN VERSION 1.9.0-1.9.18
 -------------------------
 
     o a new function `seqGDS2SNP()`
-
-    o "ZIP_RA.MAX" is the default value in `seqCompress.Option()` instead of
-      "ZIP.MAX"
 
     o supported by the SNPRelate package
 
@@ -30,19 +33,21 @@ CHANGES IN VERSION 1.9.0-1.9.17
     o v1.9.12: improve access speed (+50%, benchmark on calling
       seqApply(..., FUN=function(x) {}))
 
-    o v1.9.13: a new function `seqSNP2GDS()`
-
-    o v1.9.14: a new function `seqBED2GDS()`
-
-    o v1.9.15: a new function `seqAlleleCount()`
+    o new functions `seqSNP2GDS()`, `seqBED2GDS()`, `seqAlleleCount()` and
+      `seqResetFilter()`
 
     o `seqCompress.Option` is renamed to `seqStorage.Option`
+
+    o "ZIP_RA" is the default value in `seqStorage.Option()` and other
+      functions instead of "ZIP_RA.max"
+
+    o `seqSetFilter()` becomes a S4 method
 
 
 CHANGES IN VERSION 1.8.0
 -------------------------
 
-    o The version number was bumped for the Bioconductor release version
+    o The version number was bumped for the Bioconductor release version 3.1
 
 
 CHANGES IN VERSION 1.7.1-1.7.5
@@ -63,7 +68,7 @@ CHANGES IN VERSION 1.7.1-1.7.5
 CHANGES IN VERSION 1.6.0
 -------------------------
 
-    o The version number was bumped for the Bioconductor release version
+    o The version number was bumped for the Bioconductor release version 3.0
 
 
 CHANGES IN VERSION 1.5.1-1.5.2

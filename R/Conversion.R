@@ -1004,6 +1004,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     if (verbose)
     {
+        message(date())
         cat("Output: ", vcf.fn, "\n", sep="")
         cat("The INFO field: ", paste(z$info$var.name, collapse=", "),
             "\n", sep="")
@@ -1181,7 +1182,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         })
 
     if (verbose)
+    {
         cat("Done.\n")
+        message(date())
+    }
 
     # output
     invisible(normalizePath(vcf.fn))
@@ -1194,18 +1198,22 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 #
 
 seqGDS2SNP <- function(gdsfile, out.gdsfn,
-    compress.geno="ZIP_RA.max", compress.annotation="ZIP_RA.max",
-    verbose=TRUE)
+    compress.geno="ZIP_RA", compress.annotation="ZIP_RA",
+    optimize=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
-    stopifnot(is.character(compress.geno))
-    stopifnot(is.character(compress.annotation))
-    stopifnot(is.logical(verbose))
+    stopifnot(is.character(compress.geno), length(compress.geno)==1L)
+    stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
+    stopifnot(is.logical(optimize), length(optimize)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose)
+    {
+        message(date())
         cat("Sequence GDS to SNP GDS Format:\n")
+    }
 
     # if it is a file name
     if (is.character(gdsfile))
@@ -1262,11 +1270,24 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
             g[is.na(g)] <- 3L
             append.gdsn(gGeno, g)
     })
-
     readmode.gdsn(gGeno)
 
+    on.exit()
+    seqClose(gdsfile)
+    closefn.gds(gfile)
+
     if (verbose)
+    {
         cat("Done.\n")
+        message(date())
+    }
+    if (optimize)
+    {
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
+        cleanup.gds(out.gdsfn, verbose=verbose)
+        if (verbose) message(date())
+    }
 
     # output
     invisible(normalizePath(out.gdsfn))
@@ -1278,18 +1299,22 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 # Convert a SNP GDS file to a Sequence GDS file
 #
 
-seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
-    compress.annotation="ZIP_RA.max", verbose=TRUE)
+seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
+    compress.annotation="ZIP_RA", optimize=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
     stopifnot(is.character(compress.geno), length(compress.geno)==1L)
     stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
-    stopifnot(is.logical(verbose))
+    stopifnot(is.logical(optimize), length(optimize)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose)
+    {
+        message(date())
         cat("SNP GDS to Sequence GDS Format:\n")
+    }
 
     # open the existing SNP GDS
     srcfile <- openfn.gds(gds.fn)
@@ -1319,7 +1344,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     # create GDS file
     dstfile <- createfn.gds(out.gdsfn)
     # close the file at the end
-    on.exit({ if (!is.null(dstfile)) closefn.gds(dstfile) }, add=TRUE)
+    on.exit({ closefn.gds(dstfile) }, add=TRUE)
 
     put.attr.gdsn(dstfile$root, "FileFormat", "SEQ_ARRAY")
     put.attr.gdsn(dstfile$root, "FileVersion", "v1.0")
@@ -1435,7 +1460,6 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     # add the FORMAT field
     addfolder.gdsn(n, "format")
 
-
     # add sample annotation
     if (verbose) cat("    sample.annotation\n")
     n <- addfolder.gdsn(dstfile, "sample.annotation")
@@ -1449,6 +1473,9 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
         }
     }
 
+    on.exit()
+    closefn.gds(srcfile)
+    closefn.gds(dstfile)
 
     ##################################################
     # optimize access efficiency
@@ -1456,11 +1483,15 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
     if (verbose)
     {
         cat("Done.\n")
-        cat("Optimize the access efficiency ...\n")
+        message(date())
     }
-    closefn.gds(dstfile)
-    dstfile <- NULL
-    cleanup.gds(out.gdsfn, verbose=verbose)
+    if (optimize)
+    {
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
+        cleanup.gds(out.gdsfn, verbose=verbose)
+        if (verbose) message(date())
+    }
 
     # output
     invisible(normalizePath(out.gdsfn))
@@ -1473,7 +1504,8 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA.max",
 #
 
 seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
-    compress.geno="ZIP_RA.max", compress.annotation="ZIP_RA.max", verbose=TRUE)
+    compress.geno="ZIP_RA", compress.annotation="ZIP_RA",
+    optimize=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(bed.fn), length(bed.fn)==1L)
@@ -1482,10 +1514,14 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
     stopifnot(is.character(compress.geno), length(compress.geno)==1L)
     stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
+    stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose)
+    {
+        message(date())
         cat("PLINK BED to Sequence GDS Format:\n")
+    }
 
     ##  open and detect bed.fn  ##
 
@@ -1672,11 +1708,17 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     if (verbose)
     {
         cat("Done.\n")
-        cat("Optimize the access efficiency ...\n")
+        message(date())
     }
     on.exit()
     closefn.gds(dstfile)
-    cleanup.gds(out.gdsfn, verbose=verbose)
+    if (optimize)
+    {
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
+        cleanup.gds(out.gdsfn, verbose=verbose)
+        if (verbose) message(date())
+    }
 
     # output
     invisible(normalizePath(out.gdsfn))

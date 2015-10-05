@@ -9,7 +9,7 @@ margins of arrays or matrices.
 seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
     var.index=c("none", "relative", "absolute"),
-    .useraw=FALSE, .list_duplicate=TRUE, ...)
+    .useraw=FALSE, .list_dup=TRUE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -26,7 +26,7 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         selection defined by \code{\link{seqSetFilter}}, \code{"absolute"}
         for indexing with respect to all data}
     \item{.useraw}{use RAW for genotypes}
-    \item{.list_duplicate}{internal use only}
+    \item{.list_dup}{internal use only}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{
@@ -99,7 +99,7 @@ which(seqGetFilter(f)$variant.sel)
 
 ################################################################
 # reset sample and variant filters
-seqSetFilter(f)
+seqResetFilter(f)
 
 # calculate the frequency of reference allele,
 #   a faster version could be obtained by C coding
@@ -114,7 +114,7 @@ summary(af)
 # apply the user-defined function sample by sample
 
 # reset sample and variant filters
-seqSetFilter(f)
+seqResetFilter(f)
 summary(seqApply(f, "genotype", FUN=function(x) { mean(is.na(x)) },
     margin="by.sample", as.is="double"))
 

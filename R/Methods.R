@@ -40,8 +40,8 @@ seqOpen <- function(gds.fn, readonly=TRUE)
         if (!identical(version, "v1.0"))
         {
             stop(sprintf(
-            	"Invalid FileVersion '%s' (should be v1.0).",
-            	as.character(version)))
+                "Invalid FileVersion '%s' (should be v1.0).",
+                as.character(version)))
         }
     }
 
@@ -62,7 +62,15 @@ seqOpen <- function(gds.fn, readonly=TRUE)
 #######################################################################
 # Close a SeqArray GDS file
 #
-setMethod("seqClose", "SeqVarGDSClass", function(object)
+setMethod("seqClose", signature(object="gds.class"),
+    function(object)
+    {
+        closefn.gds(object)
+    }
+)
+
+setMethod("seqClose", signature(object="SeqVarGDSClass"),
+    function(object)
     {
         .Call(SEQ_File_Done, object)
         closefn.gds(object)
@@ -73,77 +81,97 @@ setMethod("seqClose", "SeqVarGDSClass", function(object)
 
 
 #######################################################################
-# To set a working space with selected samples and variants
+# Set a working space with selected samples and variants
 #
-seqSetFilter <- function(gdsfile, sample.id=NULL, variant.id=NULL,
-    samp.sel=NULL, variant.sel=NULL,
-    action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
-    verbose=TRUE)
-{
-    # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.logical(verbose))
+setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
+    function(object, sample.id=NULL, variant.id=NULL, samp.sel=NULL,
+        variant.sel=NULL, action=c("set", "intersect", "push", "push+set",
+        "push+intersect", "pop"), verbose=TRUE)
+    {
+        # check
+        action <- match.arg(action)
+        stopifnot(is.logical(verbose))
 
-    action <- match.arg(action)
-    intersect.flag <- FALSE
-    switch(action,
-        "set" = NULL,
-        "intersect" = { intersect.flag <- TRUE },
-        "push" = {
-            if (!all(is.null(sample.id), is.null(variant.id),
-                    is.null(samp.sel), is.null(variant.sel)))
-            {
-                stop("The arguments 'sample.id', 'variant.id', ",
-                    "'samp.sel' and 'variant.sel' should be NULL.")
+        setflag <- FALSE
+        switch(action,
+            "set" = NULL,
+            "intersect" = { setflag <- TRUE },
+            "push" = {
+                if (!all(is.null(sample.id), is.null(variant.id),
+                        is.null(samp.sel), is.null(variant.sel)))
+                {
+                    stop("The arguments 'sample.id', 'variant.id', ",
+                        "'samp.sel' and 'variant.sel' should be NULL.")
+                }
+                .Call(SEQ_FilterPushLast, object)
+            },
+            "push+set" = {
+                .Call(SEQ_FilterPushEmpty, object)
+            },
+            "push+intersect" = {
+                .Call(SEQ_FilterPushEmpty, object)
+                setflag <- TRUE
+            },
+            "pop" = {
+                if (!all(is.null(sample.id), is.null(variant.id),
+                        is.null(samp.sel), is.null(variant.sel)))
+                {
+                    stop("The arguments 'sample.id', 'variant.id', ",
+                        "'samp.sel' and 'variant.sel' should be NULL.")
+                }
+                .Call(SEQ_FilterPop, object)
+                return(invisible())
             }
-            .Call(SEQ_FilterPushLast, gdsfile)
-        },
-        "push+set" = {
-            .Call(SEQ_FilterPushEmpty, gdsfile)
-        },
-        "push+intersect" = {
-            .Call(SEQ_FilterPushEmpty, gdsfile)
-            intersect.flag <- TRUE
-        },
-        "pop" = {
-            if (!all(is.null(sample.id), is.null(variant.id),
-                    is.null(samp.sel), is.null(variant.sel)))
-            {
-                stop("The arguments 'sample.id', 'variant.id', ",
-                    "'samp.sel' and 'variant.sel' should be NULL.")
-            }
-            .Call(SEQ_FilterPop, gdsfile)
-            return(invisible())
-        }
-    )
+        )
 
-    if (!is.null(sample.id))
-    {
-        stopifnot(is.vector(sample.id))
-        stopifnot(is.numeric(sample.id) | is.character(sample.id))
-        .Call(SEQ_SetSpaceSample, gdsfile, sample.id, intersect.flag, verbose)
-    } else if (!is.null(samp.sel))
-    {
-        stopifnot(is.vector(samp.sel) & is.logical(samp.sel))
-        .Call(SEQ_SetSpaceSample, gdsfile, samp.sel, intersect.flag, verbose)
-    }
-
-    if (!is.null(variant.id))
-    {
-        stopifnot(is.vector(variant.id))
-        stopifnot(is.numeric(variant.id) | is.character(variant.id))
-        .Call(SEQ_SetSpaceVariant, gdsfile, variant.id, intersect.flag, verbose)
-    } else if (!is.null(variant.sel))
-    {
-        stopifnot(is.vector(variant.sel) & is.logical(variant.sel))
-        .Call(SEQ_SetSpaceVariant, gdsfile, variant.sel, intersect.flag, verbose)
-    } else {
-        if (is.null(sample.id) & is.null(samp.sel))
+        if (!is.null(sample.id))
         {
-            .Call(SEQ_SetSpaceSample, gdsfile, NULL, intersect.flag, verbose)
-            .Call(SEQ_SetSpaceVariant, gdsfile, NULL, intersect.flag, verbose)
+            stopifnot(is.vector(sample.id))
+            stopifnot(is.numeric(sample.id) | is.character(sample.id))
+            .Call(SEQ_SetSpaceSample, object, sample.id, setflag, verbose)
+        } else if (!is.null(samp.sel))
+        {
+            stopifnot(is.vector(samp.sel) & is.logical(samp.sel))
+            .Call(SEQ_SetSpaceSample, object, samp.sel, setflag, verbose)
         }
+
+        if (!is.null(variant.id))
+        {
+            stopifnot(is.vector(variant.id))
+            stopifnot(is.numeric(variant.id) | is.character(variant.id))
+            .Call(SEQ_SetSpaceVariant, object, variant.id, setflag, verbose)
+        } else if (!is.null(variant.sel))
+        {
+            stopifnot(is.vector(variant.sel) & is.logical(variant.sel))
+            .Call(SEQ_SetSpaceVariant, object, variant.sel, setflag, verbose)
+        } else {
+            if (is.null(sample.id) & is.null(samp.sel))
+            {
+                .Call(SEQ_SetSpaceSample, object, NULL, setflag, verbose)
+                .Call(SEQ_SetSpaceVariant, object, NULL, setflag, verbose)
+            }
+        }
+
+        invisible()
     }
+)
+
+
+
+#######################################################################
+# Reset a working space without selected samples and variants
+#
+seqResetFilter <- function(object, sample=TRUE, variant=TRUE, verbose=TRUE)
+{
+    stopifnot(inherits(object, "SeqVarGDSClass"))
+    stopifnot(is.logical(sample), length(sample)==1L)
+    stopifnot(is.logical(variant), length(variant)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (sample)
+        .Call(SEQ_SetSpaceSample, object, NULL, FALSE, verbose)
+    if (variant)
+        .Call(SEQ_SetSpaceVariant, object, NULL, FALSE, verbose)
 
     invisible()
 }
@@ -235,7 +263,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     margin = c("by.variant", "by.sample"), as.is = c("none", "list",
     "integer", "double", "character", "logical", "raw"),
     var.index = c("none", "relative", "absolute"),
-    .useraw=FALSE, .list_duplicate=TRUE, ...)
+    .useraw=FALSE, .list_dup=TRUE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -251,7 +279,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     {
         # C call
         rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
-            var.index, .useraw, .list_duplicate, new.env())
+            var.index, .useraw, .list_dup, new.env())
         if (as.is == "none") return(invisible())
     } else if (margin == "by.sample")
     {
@@ -698,7 +726,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
             {
                 seqApply(f, c("genotype", "allele"), margin="by.variant",
                     as.is="list", FUN = .cfunction("FC_AF_List"),
-                    .list_duplicate=FALSE)
+                    .list_dup=FALSE)
             })
     } else if (is.numeric(ref.allele))
     {

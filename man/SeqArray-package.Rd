@@ -160,7 +160,7 @@ seqApply(f, "allele",
 ################################################################
 
 # remove the sample and variant filters
-seqSetFilter(f)
+seqResetFilter(f)
 
 # calculate the frequency of reference allele,
 #   a faster version could be obtained by C coding

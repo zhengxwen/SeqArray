@@ -6,8 +6,8 @@
 }
 \usage{
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,
-    compress.geno="ZIP_RA.max", compress.annotation="ZIP_RA.max",
-    verbose=TRUE)
+    compress.geno="ZIP_RA", compress.annotation="ZIP_RA",
+    optimize=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{bed.fn}{the file name of binary file, genotype information}
@@ -20,6 +20,8 @@ seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,
     \item{compress.annotation}{the compression method for the GDS variables,
         except "genotype"; optional values are defined in the function
         \code{add.gdsn}}
+    \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
+        \code{\link{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

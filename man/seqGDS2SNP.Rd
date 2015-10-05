@@ -5,8 +5,8 @@
     Converts a sequence GDS file to a SNP GDS file.
 }
 \usage{
-seqGDS2SNP(gdsfile, out.gdsfn, compress.geno="ZIP_RA.max",
-    compress.annotation="ZIP_RA.max", verbose=TRUE)
+seqGDS2SNP(gdsfile, out.gdsfn, compress.geno="ZIP_RA",
+    compress.annotation="ZIP_RA", optimize=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{character (GDS file name), or
@@ -17,6 +17,8 @@ seqGDS2SNP(gdsfile, out.gdsfn, compress.geno="ZIP_RA.max",
     \item{compress.annotation}{the compression method for the GDS variables,
         except "genotype"; optional values are defined in the function
         \code{add.gdsn}}
+    \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
+        \code{\link{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
@@ -37,7 +39,11 @@ the conversion.
 # the GDS file
 gds.fn <- seqExampleFileName("gds")
 
-seqGDS2SNP(gds.fn, "test.gds")
+seqGDS2SNP(gds.fn, "tmp.gds")
+
+
+# delete the temporary file
+unlink("tmp.gds")
 }
 
 \keyword{gds}

@@ -27,6 +27,9 @@
 #include <set>
 #include <algorithm>
 
+#include "ReadByVariant.h"
+#include "ReadBySample.h"
+
 
 
 // ===========================================================
@@ -936,8 +939,6 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern void Register_SNPRelate_Functions();
 
 	extern SEXP SEQ_GetData(SEXP, SEXP);
-	extern SEXP SEQ_Apply_Sample(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-	extern SEXP SEQ_Apply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_ConvBEDFlag(SEXP, SEXP, SEXP);
 	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP);
 
