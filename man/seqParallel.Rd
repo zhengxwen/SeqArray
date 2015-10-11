@@ -36,6 +36,10 @@ used to create a new child process as a copy of the current R process, see
 \code{?parallel::mcfork}. However, forking is not available on Windows, so
 serial processing is used instead. In order to use multiple processes on
 Windows, users have to create a cluster object via \code{\link{makeCluster}}.
+
+    It is strongly suggested to use \code{seqParallel} together with
+\code{seqParallelSetup}. \code{seqParallelSetup} could work around the problem
+of forking on Windows.
 }
 \value{
     A vector or list of values.
@@ -44,25 +48,25 @@ Windows, users have to create a cluster object via \code{\link{makeCluster}}.
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqSetFilter}}, \code{\link{seqGetData}},
-    \code{\link{seqApply}}
+    \code{\link{seqApply}}, \code{\link{seqParallelSetup}}
 }
 
 \examples{
 library(parallel)
 
-# Use option cl.core to choose an appropriate cluster size or number of cores
-cl <- makeCluster(getOption("cl.cores", 2))
+# choose an appropriate cluster size or number of cores
+seqParallelSetup(2)
 
 
 # the GDS file
 (gds.fn <- seqExampleFileName("gds"))
 
 # display
-(f <- seqOpen(gds.fn))
+(gdsfile <- seqOpen(gds.fn))
 
 # the uniprocessor version
-afreq1 <- seqParallel(NULL, f, FUN = function(gdsfile) {
-        seqApply(gdsfile, "genotype", as.is="double",
+afreq1 <- seqParallel(, gdsfile, FUN = function(f) {
+        seqApply(f, "genotype", as.is="double",
             FUN=function(x) mean(x==0, na.rm=TRUE))
     }, split = "by.variant")
 
@@ -71,8 +75,8 @@ summary(afreq1)
 
 
 # run in parallel
-afreq2 <- seqParallel(cl, f, FUN = function(gdsfile) {
-        seqApply(gdsfile, "genotype", as.is="double",
+afreq2 <- seqParallel(, gdsfile, FUN = function(f) {
+        seqApply(f, "genotype", as.is="double",
             FUN=function(x) mean(x==0, na.rm=TRUE))
     }, split = "by.variant")
 
@@ -87,8 +91,8 @@ all(afreq1 == afreq2)
 ################################################################
 # check -- variant splits
 
-seqParallel(cl, f, FUN = function(gdsfile) {
-        v <- seqGetFilter(gdsfile)
+seqParallel(, gdsfile, FUN = function(f) {
+        v <- seqGetFilter(f)
         sum(v$variant.sel)
     }, split = "by.variant")
 # [1] 674 674
@@ -96,10 +100,11 @@ seqParallel(cl, f, FUN = function(gdsfile) {
 
 ################################################################
 
-stopCluster(cl)
-
 # close the GDS file
-seqClose(f)
+seqClose(gdsfile)
+
+
+seqParallelSetup(FALSE)
 }
 
 \keyword{gds}

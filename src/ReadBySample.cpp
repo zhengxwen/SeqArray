@@ -60,8 +60,8 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 		if (Node == NULL)
 		{
 			throw ErrSeqArray(
-				"'%s' is missing! "
-				"Please call 'seqOptimize(..., target=\"by.sample\")'.",
+				"'%s' is missing, please call 'seqOptimize(..., target="
+				"\"by.sample\")' to prepare the data for scan by sample.",
 				s.c_str());
 		}
 	}

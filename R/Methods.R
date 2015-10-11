@@ -249,7 +249,7 @@ seqGetData <- function(gdsfile, var.name)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(var.name) & (length(var.name)==1))
+    stopifnot(is.character(var.name), length(var.name)==1L)
 
     .Call(SEQ_GetData, gdsfile, var.name)
 }
@@ -267,7 +267,7 @@ seqApply <- function(gdsfile, var.name, FUN,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(var.name) & (length(var.name) > 0))
+    stopifnot(is.character(var.name), length(var.name)>0L)
 
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
@@ -302,15 +302,15 @@ seqApply <- function(gdsfile, var.name, FUN,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(var.name) & (length(var.name) > 0))
+    stopifnot(is.character(var.name), length(var.name) > 0L)
 
-    stopifnot(is.numeric(win.size) & (length(win.size)==1))
+    stopifnot(is.numeric(win.size), length(win.size)==1L)
     win.size <- as.integer(win.size)
     stopifnot(is.finite(win.size))
     if (win.size < 1)
         stop("`win.size' should be greater than 0.")
 
-    stopifnot(is.numeric(shift) & (length(shift)==1))
+    stopifnot(is.numeric(shift), length(shift)==1L)
     shift <- as.integer(shift)
     stopifnot(is.finite(shift))
     if (shift < 1)

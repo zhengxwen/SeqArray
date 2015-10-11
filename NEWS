@@ -4,7 +4,7 @@ CHANGES IN VERSION 1.10.0
     o The version number was bumped for the Bioconductor release version 3.2
 
 
-CHANGES IN VERSION 1.9.0-1.9.18
+CHANGES IN VERSION 1.9.0-1.9.19
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -23,14 +23,15 @@ CHANGES IN VERSION 1.9.0-1.9.18
 
     o a new function `seqExport()`
 
-    o new argument `.useraw` in `seqApply()`
+    o new argument ".useraw" in `seqApply()`
 
-    o v1.9.9: fix a bug (https://github.com/zhengxwen/SeqArray/issues/7)
+    o fix a bug for duplicated "variant.id",
+      https://github.com/zhengxwen/SeqArray/issues/7
 
-    o v1.9.11: fix an issue of `seqVCF2GDS()` when there are duplicated format
-      or info ID
+    o fix an issue of `seqVCF2GDS()` when there are duplicated format or
+      info ID
 
-    o v1.9.12: improve access speed (+50%, benchmark on calling
+    o improve access speed (+50%, benchmark on calling
       seqApply(..., FUN=function(x) {}))
 
     o new functions `seqSNP2GDS()`, `seqBED2GDS()`, `seqAlleleCount()` and

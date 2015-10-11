@@ -22,7 +22,7 @@ seqOptimize(gdsfn, target=c("by.sample"), format.var=TRUE, cleanup=TRUE,
 }
 \details{
     Warning: optimizing GDS file for reading data by sample may increase file
-size by up to 2X as genotype data and all format data is duplicated.
+size by up to 2X as genotype data and all format data are duplicated.
 }
 
 \author{Xiuwen Zheng}

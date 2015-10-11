@@ -26,7 +26,7 @@ associated with sequence variants is especially evident with large sample
 and variant sizes, and it requires efficient numerical implementation and
 data management.
 
-    Here I introduce a high-performance C/C++ computing library CoreArray
+    Here I introduce a high-performance C++ computing library CoreArray
 (\url{http://corearray.sourceforge.net}) for big-data management of genome-wide
 variants. CoreArray was designed for developing portable and scalable storage
 technologies for bioinformatics data, allowing parallel computing at the
@@ -38,19 +38,18 @@ are stored in a single file with chunked storage layout. Here, I focus on the
 application of CoreArray for statisticians working in the R environment, and
 developed an R/Bioconductor package SeqArray to address or reduce the
 computational burden associated with data management of sequence variants.
-The kernels of SeqArray are written in C/C++ and highly optimized. Genotypic
+The kernels of SeqArray are written in C++ and highly optimized. Genotypic
 data and annotations are stored in an array-oriented manner, offering efficient
-access of genetic variants using the R language. There are five key functions
+data access using the R language. There are five key functions
 in SeqArray, and most of data analyses could be done using these 6 functions:
 \tabular{ll}{
     \bold{Function} \tab \bold{Description} \cr
     seqVCF2GDS \tab Imports VCF files \cr
-    seqSummary \tab Gets the summary of a sequence GDS file (# of samples,
-        # of variants, INFO/FORMAT variables, etc) \cr
+    seqSummary \tab Gets the summary (# of samples, # of variants,
+        INFO/FORMAT variables, etc) \cr
     seqSetFilter \tab Sets a filter to sample or variant (define a subset
         of data) \cr
-    seqGetData \tab Gets data from a sequence GDS file (from a subset
-        of data) \cr
+    seqGetData \tab Gets data from a GDS file (from a subset of data) \cr
     seqApply \tab Applies a user-defined function over array margins \cr
     seqParallel \tab Applies functions in parallel \cr
 }
@@ -66,10 +65,8 @@ SeqArray will be of great interest to scientists involved in data analyses of
 large-scale genomic sequencing data using R environment, particularly those
 with limited experience of low-level C programming and parallel computing.
 
-    Webpage: \url{http://corearray.sourceforge.net/},
-        \url{http://github.com/zhengxwen/SeqArray}
-
-    Tutorial: \url{http://corearray.sourceforge.net/tutorials/SeqArray/}
+    Webpage: \url{http://github.com/zhengxwen/SeqArray},
+        \url{http://www.bioconductor.org/packages/SeqArray/}
 }
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 

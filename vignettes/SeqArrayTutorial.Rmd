@@ -19,13 +19,13 @@ vignette: >
 
 # Overview
 
-In the era of big data, thousands of gigabyte-size data sets are challenging scientists for data management, even on well-equipped hardware. Currently, next-generation sequencing techniques are being adopted to investigate common and rare variants, making the analyses of large-scale genotypic data challenging. For example, the 1000 Genomes Project has identified approximately 38 million single nucleotide polymorphisms (SNPs), 1.4 million short insertions and deletions, and more than 14,000 larger deletions from whole-genome sequencing technologies [1]. In the near future, new technologies, like third-generation whole-genome sequencing, will be enabling data to be generated at an unprecedented scale [2]. The Variant Call Format (VCF) was developed for the 1000 Genomes Project, which is a generic text format for storing DNA polymorphism data such as SNPs, insertions, deletions and structural variants, together with rich annotations [3]. However, this format is less efficient for large-scale analyses since numeric data have to be parsed from a text VCF file before further analyses. The computational burden associated with sequence variants is especially evident with large sample and variant sizes, and it requires efficient numerical implementation and data management.
+In the era of big data, thousands of gigabyte-size data sets are challenging scientists for data management, even on well-equipped hardware. Currently, next-generation sequencing techniques are being adopted to investigate common and rare variants, making the analyses of large-scale genotypic data challenging. For example, the 1000 Genomes Project Phase 1 has identified approximately 38 million single nucleotide polymorphisms (SNPs), 1.4 million short insertions and deletions, and more than 14,000 larger deletions from whole-genome sequencing technologies [1]. In the near future, new technologies, like third-generation whole-genome sequencing, will be enabling data to be generated at an unprecedented scale [2]. The Variant Call Format (VCF) was developed for the 1000 Genomes Project, which is a generic text format for storing DNA polymorphism data such as SNPs, insertions, deletions and structural variants, together with rich annotations [3]. However, this format is less efficient for large-scale analyses since numeric data have to be parsed from a text VCF file before further analyses. The computational burden associated with sequence variants is especially evident with large sample and variant sizes, and it requires efficient numerical implementation and data management.
 
 Here I introduce a high-performance C++ computing library CoreArray ([http://corearray.sourceforge.net](http://corearray.sourceforge.net)) for big-data management of genome-wide variants [4]. CoreArray was designed for developing portable and scalable storage technologies for bioinformatics data, allowing parallel computing at the multicore and cluster levels. It provides the genomic data structure (GDS) file format for array-oriented data: this is a universal data format to store multiple data variables in a single file. The CoreArray library modules are demonstrated in Figure 1. A hierarchical data structure is used to store multiple extensible data variables in the GDS format, and all datasets are stored in a single file with chunked storage layout. The C++ CoreArray library is implemented in the R/Bioconductor package [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) with a tutorial [http://corearray.sourceforge.net/tutorials/gdsfmt/](http://corearray.sourceforge.net/tutorials/gdsfmt/).
 
-Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) to address or reduce the computational burden associated with data management of sequence variants. The gdsfmt package provides a general R interface for the CoreArray library, and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) is specifically designed for data management of sequence variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are six key functions in SeqArray (Table 1), and most of data analyses could be done using these six functions. The 1000 Genomes Project released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequence variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
+Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) to address or reduce the computational burden associated with data management of sequence variants. The gdsfmt package provides a general R interface for the CoreArray library, and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) is specifically designed for data management of sequence variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are several key functions in SeqArray (Table 1), and most of data analyses could be done using these functions. The 1000 Genomes Project Phase 1 released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequence variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
 
-[SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) will be of great interest to scientists involved in data analyses of large-scale genomic sequencing data using R environment, particularly those with limited experience of low-level C programming and parallel computing.
+[SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) will be of great interest to scientists involved in data analyses of large-scale genomic sequence data using R environment, particularly those with limited experience of low-level C programming and parallel computing.
 
 
 ![Flowchart](CoreArray-Module.png)
@@ -40,9 +40,9 @@ Here, I focus on the application of CoreArray for statisticians working in the R
 | Function     | Description |
 |:-------------|:-------------------------------------------|
 | seqVCF2GDS   | Imports VCF files. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
-| seqSummary   | Gets the summary of a sequence GDS file (Num. of samples, Num. of variants, INFO/FORMAT variables, etc). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSummary.html)  |
+| seqSummary   | Gets the summary (Num. of samples, Num. of variants, INFO/FORMAT variables, etc). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSummary.html)  |
 | seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
-| seqGetData   | Gets data from a sequence GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqGetData   | Gets data from a GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
 | seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
 | seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
 | seqParallelSetup  | Setups a cluster environment for parallel computing. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallelSetup.html)  |
@@ -239,7 +239,7 @@ genofile
 # close the GDS file
 seqClose(genofile)
 
-# clean up the fragments, reduce the file size
+# clean up the fragments to reduce the file size
 cleanup.gds("tmp.gds")
 ```
 
@@ -298,7 +298,7 @@ head(seqGetData(genofile, "annotation/info/GP"))
 head(seqGetData(genofile, "sample.annotation/family"))
 ```
 
-Users can set a filter to sample and/or variant by `seqSetFilter()`. For example, we consider a data subset consisting of three samples and four variants:
+Users can set a filter to samples and/or variants by `seqSetFilter()`. For example, a subset consisting of three samples and four variants:
 ```{r}
 # set sample and variant filters
 seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)])
@@ -331,7 +331,7 @@ seqGetData(genofile, "annotation/format/DP")
 
 ## Apply Functions Over Array Margins
 
-[SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) provides `seqApply()` to apply a user-defined function over array margins, which is coded in C/C++. It is suggested to use `seqApply()` instead of `apply.gdsn()` in the [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) package, since this function can take care of variable-length data and multi-allelic genotypes. For example, read two variables `genotype` and `annotation/id` variant by variant:
+[SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) provides `seqApply()` to apply a user-defined function over array margins, which is coded in C++. It is suggested to use `seqApply()` instead of `apply.gdsn()` in the [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) package, since this function can take care of variable-length data and multi-allelic genotypes. For example, reading the two variables `genotype` and `annotation/id` variant by variant:
 ```{r}
 # set sample and variant filters
 set.seed(100)
@@ -369,8 +369,8 @@ HM3 <- seqGetData(genofile, "annotation/info/HM3")
 seqApply(genofile, c(geno="genotype", id="annotation/id"),
     FUN = function(index, x) {
         p <- mean(x$geno == 0, na.rm=TRUE)  # the frequency of reference allele
-        if ((p < 0.005) & HM3[index]) print(x$id) },
-    as.is="none", var.index="relative", margin="by.variant")
+        if ((p < 0.005) & HM3[index]) print(x$id)
+    }, as.is="none", var.index="relative", margin="by.variant")
 ```
 
 
@@ -390,13 +390,12 @@ A multi-process implementation:
 # load the "parallel" package
 library(parallel)
 
-# Use option cl.core to choose an appropriate cluster size (or # of cores)
-cl <- makeCluster(getOption("cl.cores", 2))
+# choose an appropriate cluster size (or # of cores)
+seqParallelSetup(2)
 
 # run in parallel
-afreq <- seqParallel(cl, genofile, FUN = function(gdsfile) {
-        seqApply(gdsfile, "genotype", as.is="double",
-            FUN=function(x) mean(x==0, na.rm=TRUE))
+afreq <- seqParallel(, genofile, FUN = function(f) {
+        seqApply(f, "genotype", as.is="double", FUN=function(x) mean(x==0, na.rm=TRUE))
     }, split = "by.variant")
 
 length(afreq)
@@ -419,7 +418,7 @@ genofile <- seqOpen(gds.fn)
 
 ## The performance of seqApply
 
-Let us try three approaches to export unphased genotypes: 1) the for loop in R; 2) vectorize the function in R; 3) the for loop in `seqApply()`. The function `seqApply()` has been highly optimized by blocking the computations to exploit the high-speed memory instead of disk. The results of running times (listed as follows) indicate that `seqApply()` works well and is comparable with vectorization in R.
+Let us try three approaches to export unphased genotypes: 1) the for loop in R; 2) vectorize the function in R; 3) the for loop in `seqApply()`. The function `seqApply()` has been highly optimized by blocking the computations to exploit the high-speed memory instead of disk. The results of running times (listed as follows) indicate that `seqApply()` works well and is comparable with vectorization in R (the benchmark in R_v3.0).
 
 1. the for loop in R:
 
@@ -541,11 +540,8 @@ summary(seqMissing(genofile, per.variant=FALSE))
 ### Multi-process Implementation
 
 ```{r eval=FALSE}
-# load the "parallel" package
-library(parallel)
-
-# Use option cl.core to choose an appropriate cluster size (or # of cores)
-cl <- makeCluster(getOption("cl.cores", 2))
+# choose an appropriate cluster size (or # of cores)
+seqParallelSetup(2)
 ```
 
 1. Calculate the missing rate per variant:
@@ -561,9 +557,9 @@ m.variant <- local({
     ploidy <- z$dim[1]
 
     # run in parallel
-    m <- seqParallel(cl, genofile, FUN = function(gdsfile) {
+    m <- seqParallel(, genofile, FUN = function(f) {
         # apply the function marginally
-        seqApply(gdsfile, "genotype", function(x) { sum(is.na(x)) },
+        seqApply(f, "genotype", function(x) { sum(is.na(x)) },
             margin="by.variant", as.is="integer")
     }, split = "by.variant")
 
@@ -579,17 +575,17 @@ summary(m.variant)
 ```{r}
 m.sample <- local({
     # run in parallel
-    m <- seqParallel(cl, genofile, FUN = function(gdsfile)
+    m <- seqParallel(, genofile, FUN = function(f)
         {
             # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-            dm <- seqSummary(gdsfile, "genotype")$seldim
+            dm <- seqSummary(f, "genotype")$seldim
 
             # need a global variable (only available in the bracket of "local")
             n <- integer(dm[1])
 
             # apply the function marginally
             # use "<<-" operator to find "n" in the parent environment
-            seqApply(gdsfile, "genotype", function(x) { n <<- n + colSums(is.na(x)) },
+            seqApply(f, "genotype", function(x) { n <<- n + colSums(is.na(x)) },
                 margin="by.variant", as.is="none")
 
             # output
@@ -632,18 +628,14 @@ summary(seqAlleleFreq(genofile, 0L))
 ### Multi-process Implementation
 
 ```{r eval=FALSE}
-# load the "parallel" package
-library(parallel)
-
-# Use option cl.core to choose an appropriate cluster size (or # of cores)
-cl <- makeCluster(getOption("cl.cores", 2))
+# choose an appropriate cluster size (or # of cores)
+seqParallelSetup(2)
 ```
 
 ```{r}
 # run in parallel
-afreq <- seqParallel(cl, genofile, FUN = function(gdsfile) {
-        seqApply(gdsfile, "genotype", as.is="double",
-            FUN=function(x) mean(x==0, na.rm=TRUE))
+afreq <- seqParallel(, genofile, FUN = function(f) {
+        seqApply(f, "genotype", as.is="double", FUN=function(x) mean(x==0, na.rm=TRUE))
     }, split = "by.variant")
 
 length(afreq)
@@ -701,26 +693,23 @@ plot(eig$vectors[,1], eig$vectors[,2], xlab="PC 1", ylab="PC 2")
 ### Multi-process Implementation
 
 ```{r eval=FALSE}
-# load the "parallel" package
-library(parallel)
-
-# Use option cl.core to choose an appropriate cluster size (or # of cores)
-cl <- makeCluster(getOption("cl.cores", 2))
+# choose an appropriate cluster size (or # of cores)
+seqParallelSetup(2)
 ```
 
 ```{r}
-genmat <- seqParallel(cl, genofile, FUN = function(gdsfile)
+genmat <- seqParallel(, genofile, FUN = function(f)
     {
         # get the number of samples and variants
         # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-        dm <- seqSummary(gdsfile, "genotype")$seldim
+        dm <- seqSummary(f, "genotype")$seldim
 
         # need a global variable (only available in the bracket of "local")
         s <- matrix(0.0, nrow=dm[1], ncol=dm[1])
 
         # apply the function variant by variant
         # use "<<-" operator to find "s" in the parent environment
-        seqApply(gdsfile, "genotype", function(x) {
+        seqApply(f, "genotype", function(x) {
             g <- (x==0)                   # indicator of reference allele
             p <- mean(g, na.rm=TRUE)      # allele frequency
             g2 <- colSums(g) - 2*p        # genotypes adjusted by allele frequency
@@ -787,19 +776,16 @@ summary(coeff)
 ### Multi-process Implementation
 
 ```{r eval=FALSE}
-# load the "parallel" package
-library(parallel)
-
-# Use option cl.core to choose an appropriate cluster size (or # of cores)
-cl <- makeCluster(getOption("cl.cores", 2))
+# choose an appropriate cluster size (or # of cores)
+seqParallelSetup(2)
 ```
 
 ```{r}
-coeff <- seqParallel(cl, genofile, FUN = function(gdsfile)
+coeff <- seqParallel(, genofile, FUN = function(f)
     {
         # get the number of samples and variants
         # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-        dm <- seqSummary(gdsfile, "genotype")$seldim
+        dm <- seqSummary(f, "genotype")$seldim
 
         # need global variables (only available in the bracket)
         n <- integer(dm[1])
@@ -807,7 +793,7 @@ coeff <- seqParallel(cl, genofile, FUN = function(gdsfile)
 
         # apply the function variant by variant
         # use "<<-" operator to find "n" and "s" in the parent environment
-        seqApply(gdsfile, "genotype", function(x) {
+        seqApply(f, "genotype", function(x) {
             p <- mean(x==0, na.rm=TRUE)      # allele frequency
             g <- colSums(x==0)               # genotypes: # of reference allele
             d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
@@ -829,8 +815,8 @@ summary(coeff)
 ```
 
 ```{r}
-# Since we created the cluster manually, we should stop it:
-stopCluster(cl)
+# stop the cluster environment
+seqParallelSetup(FALSE)
 ```
 
 
@@ -863,7 +849,7 @@ cppFunction('double RefAlleleFreq(IntegerMatrix x)
 }')
 ```
 
-Now, "RefAlleleFreq" is a function in R.
+Now, `RefAlleleFreq` is a function in R.
 ```{r}
 RefAlleleFreq
 
