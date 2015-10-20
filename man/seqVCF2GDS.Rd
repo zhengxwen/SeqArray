@@ -22,7 +22,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
         size and access speed, "bit2" is the most efficient when most of
         variants are biallelic.}
     \item{storage.option}{specify the storage and compression options,
-        by default \code{\link{seqStorage.Option}}}
+        by default \code{\link{seqStorage.Option}}, see details}
     \item{info.import}{characters, the variable name(s) in the INFO field
         for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
@@ -56,6 +56,10 @@ format by default. Users can set \code{seqStorage.Option(float.mode="float64")}
 to switch to 64-bit floating point format. Or packed real numbers can be
 adopted by setting
 \code{seqStorage.Option(float.mode="packedreal16:scale=0.0001")}.
+
+    By default, the compression method is "ZIP_RA" (zlib algorithm with default
+compression level + multiple independent data blocks). Users can maximize the
+compression ratio by \code{storage.option=seqStorage.Option("ZIP_RA.max")}.
 }
 \references{
     The variant call format and VCFtools.
@@ -63,8 +67,6 @@ adopted by setting
     Handsaker RE, Lunter G, Marth GT, Sherry ST, McVean G, Durbin R;
     1000 Genomes Project Analysis Group.
     Bioinformatics. 2011 Aug 1;27(15):2156-8. Epub 2011 Jun 7.
-
-    \url{http://corearray.sourceforge.net/}
 }
 
 \author{Xiuwen Zheng}

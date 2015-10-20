@@ -45,7 +45,6 @@ Here, I focus on the application of CoreArray for statisticians working in the R
 | seqGetData   | Gets data from a GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
 | seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
 | seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
-| seqParallelSetup  | Setups a cluster environment for parallel computing. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallelSetup.html)  |
 
 ~
 
@@ -83,7 +82,7 @@ genofile
 For those who would like to know how variable-length genotypic data and annotations are stored in an array-oriented manner, `print(, all=TRUE)` displays all contents including hidden structures:
 ```{r}
 # display all contents of the GDS file
-print(genofile, all=TRUE)
+print(genofile, all=TRUE, attribute=TRUE, attribute.trim=FALSE)
 
 # close the GDS file
 seqClose(genofile)
@@ -653,7 +652,7 @@ In the principal component analysis, we employ the dosage of reference alleles t
 where $g_{j,l}$ is a genotype of individual $j$ at locus $l$ ($\in \{0,1,2\}$, Num. of reference allele), $p_l$ is the frequency of reference allele and there are $L$ loci in total.
 
 ```{r}
-# genetic correlation matrix
+# genetic covariance matrix
 genmat <- local({
     # get the number of samples and variants
     # dm[1] -- # of selected samples, dm[2] -- # of selected variants
@@ -668,7 +667,7 @@ genmat <- local({
         g <- (x==0)                   # indicator of reference allele
         p <- mean(g, na.rm=TRUE)      # allele frequency
         g2 <- colSums(g) - 2*p        # genotypes adjusted by allele frequency
-        m <- (g2 %o% g2) / (p*(1-p))  # genetic correlation matrix
+        m <- (g2 %o% g2) / (p*(1-p))  # genetic covariance matrix
         m[!is.finite(m)] <- 0         # correct missing values
         s <<- s + m                   # output to the global variable "s"
     }, margin="by.variant", as.is="none")
@@ -713,7 +712,7 @@ genmat <- seqParallel(, genofile, FUN = function(f)
             g <- (x==0)                   # indicator of reference allele
             p <- mean(g, na.rm=TRUE)      # allele frequency
             g2 <- colSums(g) - 2*p        # genotypes adjusted by allele frequency
-            m <- (g2 %o% g2) / (p*(1-p))  # genetic correlation matrix
+            m <- (g2 %o% g2) / (p*(1-p))  # genetic covariance matrix
             m[!is.finite(m)] <- 0         # correct missing values
             s <<- s + m                   # output to the global variable "s"
         }, margin="by.variant", as.is="none")

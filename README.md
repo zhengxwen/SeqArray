@@ -14,13 +14,13 @@ Big data management of genome-wide sequence variants with thousands of individua
 
 ## Bioconductor:
 
-Release Version:
+Release Version: v1.10.0
 
 [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [Data Analytics](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/AnalysisTutorial.html)
 
-Development Version:
+Development Version: v1.11.0
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 

@@ -355,7 +355,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 #######################################################################
 # Storage options for the SeqArray GDS file
 #
-seqStorage.Option <- function(compression="ZIP_RA.MAX", float.mode="float32")
+seqStorage.Option <- function(compression="ZIP_RA", float.mode="float32")
 {
     stopifnot(is.character(compression))
     stopifnot(is.character(float.mode))

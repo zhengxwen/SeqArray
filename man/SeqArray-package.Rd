@@ -167,28 +167,6 @@ length(af)
 summary(af)
 
 
-
-################################################################
-# run in parallel
-
-library(parallel)
-
-# Use option cl.core to choose an appropriate cluster size or number of cores
-cl <- makeCluster(getOption("cl.cores", 2))
-
-# run in parallel
-afreq <- seqParallel(cl, f, FUN = function(gdsfile) {
-        seqApply(gdsfile, "genotype", as.is="double",
-            FUN=function(x) mean(x==0, na.rm=TRUE))
-    }, split = "by.variant")
-
-length(afreq)
-summary(afreq)
-
-
-stopCluster(cl)
-
-
 # close the GDS file
 seqClose(f)
 }
