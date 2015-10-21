@@ -752,7 +752,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
                 .selection.flag=TRUE,
                 FUN = function(f, selflag, ref)
                 {
-                    .cfunction("FC_AF_SetIndex")(ref[selflag])
+                    s <- ref[selflag]
+                    .cfunction("FC_AF_SetIndex")(s)
                     seqApply(f, c("genotype", "allele"), margin="by.variant",
                         as.is="double", FUN = .cfunction("FC_AF_Index"))
                 }, ref=ref.allele)
@@ -770,7 +771,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
             .selection.flag=TRUE,
             FUN = function(f, selflag, ref)
             {
-                .cfunction("FC_AF_SetAllele")(ref[selflag])
+                s <- ref[selflag]
+                .cfunction("FC_AF_SetAllele")(s)
                 seqApply(f, c("genotype", "allele"), margin="by.variant",
                     as.is="double", FUN = .cfunction("FC_AF_Allele"))
             }, ref=ref.allele)

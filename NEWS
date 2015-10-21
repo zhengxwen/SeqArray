@@ -1,13 +1,15 @@
 CHANGES IN VERSION 1.11.0
 -------------------------
 
-    o
+    o 
 
 
-CHANGES IN VERSION 1.10.0
+CHANGES IN VERSION 1.10.0-1.10.1
 -------------------------
 
     o The version number was bumped for the Bioconductor release version 3.2
+
+    o fix a memory issue in `seqAlleleFreq()` when 'ref.allele' is a vector
 
 
 CHANGES IN VERSION 1.9.0-1.9.19

@@ -225,8 +225,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 			if (g != NA_INTEGER)
 			{
 				n ++;
-				if (g == idx)
-					m ++;
+				if (g == idx) m ++;
 			}
 		}
 		return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
