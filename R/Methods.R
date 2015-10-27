@@ -131,8 +131,9 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
             .Call(SEQ_SetSpaceSample, object, sample.id, setflag, verbose)
         } else if (!is.null(samp.sel))
         {
-            stopifnot(is.vector(samp.sel) & is.logical(samp.sel))
-            .Call(SEQ_SetSpaceSample, object, samp.sel, setflag, verbose)
+            stopifnot(is.vector(samp.sel))
+            stopifnot(is.logical(samp.sel) | is.raw(samp.sel) | is.numeric(samp.sel))
+            .Call(SEQ_SetSpaceSample2, object, samp.sel, setflag, verbose)
         }
 
         if (!is.null(variant.id))
@@ -142,8 +143,9 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
             .Call(SEQ_SetSpaceVariant, object, variant.id, setflag, verbose)
         } else if (!is.null(variant.sel))
         {
-            stopifnot(is.vector(variant.sel) & is.logical(variant.sel))
-            .Call(SEQ_SetSpaceVariant, object, variant.sel, setflag, verbose)
+            stopifnot(is.vector(variant.sel))
+            stopifnot(is.logical(variant.sel) | is.raw(variant.sel) | is.numeric(variant.sel))
+            .Call(SEQ_SetSpaceVariant2, object, variant.sel, setflag, verbose)
         } else {
             if (is.null(sample.id) & is.null(samp.sel))
             {

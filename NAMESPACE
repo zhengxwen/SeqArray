@@ -2,7 +2,8 @@
 useDynLib(SeqArray,
     SEQ_File_Init, SEQ_File_Done,
     SEQ_FilterPushEmpty, SEQ_FilterPushLast, SEQ_FilterPop,
-    SEQ_SetSpaceSample, SEQ_SetSpaceVariant, SEQ_SplitSelection,
+    SEQ_SetSpaceSample, SEQ_SetSpaceSample2,
+    SEQ_SetSpaceVariant, SEQ_SetSpaceVariant2, SEQ_SplitSelection,
     SEQ_SetChrom, SEQ_GetSpace,
     SEQ_Summary,
 

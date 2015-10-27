@@ -18,8 +18,10 @@ seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
     \item{sample.id}{IDs of selected samples}
     \item{variant.id}{IDs of selected variants}
-    \item{samp.sel}{a logical/raw vector indicating the selected samples}
-    \item{variant.sel}{a logical/raw vector indicating the selected variants}
+    \item{samp.sel}{a logical/raw/index vector indicating the selected
+        samples}
+    \item{variant.sel}{a logical/raw/index vector indicating the selected
+        variants}
     \item{action}{\code{"set"} -- set the current filter via \code{sample.id},
             \code{variant.id}, \code{samp.sel} or \code{variant.sel};
         \code{"intersect"} -- set the current filter to the intersection of
@@ -75,9 +77,19 @@ head(seqGetData(f, "allele"))
 
 
 # set sample and variant filters
-seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)])
+seqSetFilter(f, sample.id=samp.id[c(2,4,6,8)])
 set.seed(100)
-seqSetFilter(f, variant.id=sample(variant.id, 10))
+seqSetFilter(f, variant.id=sample(variant.id, 5))
+
+# get genotypic data
+seqGetData(f, "genotype")
+
+
+## OR
+# set sample and variant filters
+seqSetFilter(f, samp.sel=c(2,4,6,8))
+set.seed(100)
+seqSetFilter(f, variant.sel=sample.int(length(variant.id), 5))
 
 # get genotypic data
 seqGetData(f, "genotype")

@@ -262,7 +262,107 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPop(SEXP gdsfile)
 
 
 /// set a working space with selected sample id
-COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_sel,
+COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_id,
+	SEXP intersect, SEXP verbose)
+{
+	int intersect_flag = Rf_asLogical(intersect);
+
+	COREARRAY_TRY
+
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
+		PdAbstractArray varSamp = GDS_Node_Path(Root, "sample.id", TRUE);
+		int Count = GetGDSObjCount(varSamp, "sample.id");
+
+		vector<C_BOOL> &flag_array = Init.Selection(gdsfile).Sample;
+		if (flag_array.empty())
+			flag_array.resize(Count, TRUE);
+		C_BOOL *pArray = &flag_array[0];
+
+		if (Rf_isInteger(samp_id))
+		{
+			// initialize
+			set<int> set_id;
+			set_id.insert(INTEGER(samp_id), INTEGER(samp_id) + XLENGTH(samp_id));
+			// sample id
+			vector<int> sample_id(Count);
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Array_ReadData(varSamp, &_st, &_cnt, &sample_id[0], svInt32);
+
+			// set selection
+			if (!intersect_flag)
+			{
+				for (int i=0; i < Count; i++)
+					*pArray++ = (set_id.find(sample_id[i]) != set_id.end());
+			} else {
+				for (int i=0; i < Count; i++, pArray++)
+				{
+					if (*pArray)
+						*pArray = (set_id.find(sample_id[i]) != set_id.end());
+				}
+			}
+		} else if (Rf_isReal(samp_id))
+		{
+			// initialize
+			set<double> set_id;
+			set_id.insert(REAL(samp_id), REAL(samp_id) + XLENGTH(samp_id));
+			// sample id
+			vector<double> sample_id(Count);
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Array_ReadData(varSamp, &_st, &_cnt, &sample_id[0], svFloat64);
+
+			// set selection
+			if (!intersect_flag)
+			{
+				for (int i=0; i < Count; i++)
+					*pArray++ = (set_id.find(sample_id[i]) != set_id.end());
+			} else {
+				for (int i=0; i < Count; i++, pArray++)
+				{
+					if (*pArray)
+						*pArray = (set_id.find(sample_id[i]) != set_id.end());
+				}
+			}
+		} else if (Rf_isString(samp_id))
+		{
+			// initialize
+			set<string> set_id;
+			R_xlen_t m = XLENGTH(samp_id);
+			for (R_xlen_t i=0; i < m; i++)
+				set_id.insert(string(CHAR(STRING_ELT(samp_id, i))));
+			// sample id
+			vector<string> sample_id(Count);
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Array_ReadData(varSamp, &_st, &_cnt, &sample_id[0], svStrUTF8);
+
+			// set selection
+			if (!intersect_flag)
+			{
+				for (int i=0; i < Count; i++)
+					*pArray++ = (set_id.find(sample_id[i]) != set_id.end());
+			} else {
+				for (int i=0; i < Count; i++, pArray++)
+				{
+					if (*pArray)
+						*pArray = (set_id.find(sample_id[i]) != set_id.end());
+				}
+			}
+		} else if (Rf_isNull(samp_id))
+		{
+			flag_array.clear();
+		} else
+			throw ErrSeqArray("Invalid type of 'sample.id'.");
+
+		int n = GetNumOfTRUE(&flag_array[0], flag_array.size());
+		if (Rf_isNull(samp_id)) n = Count;
+		if (Rf_asLogical(verbose) == TRUE)
+			Rprintf("# of selected samples: %d\n", n);
+
+	COREARRAY_CATCH
+}
+
+
+/// set a working space with selected sample id (logical/raw vector, or index)
+COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 	SEXP intersect, SEXP verbose)
 {
 	int intersect_flag = Rf_asLogical(intersect);
@@ -321,79 +421,62 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_sel,
 					}
 				}
 			}
-		} else if (Rf_isInteger(samp_sel))
+		} else if (Rf_isInteger(samp_sel) || Rf_isReal(samp_sel))
 		{
-			// initialize
-			set<int> set_id;
-			set_id.insert(INTEGER(samp_sel), INTEGER(samp_sel) + XLENGTH(samp_sel));
-			// sample id
-			vector<int> sample_id(Count);
-			C_Int32 _st=0, _cnt=Count;
-			GDS_Array_ReadData(varSamp, &_st, &_cnt, &sample_id[0], svInt32);
+			if (Rf_isReal(samp_sel))
+				samp_sel = AS_INTEGER(samp_sel);
 
-			// set selection
 			if (!intersect_flag)
 			{
-				for (int i=0; i < Count; i++)
-					*pArray++ = (set_id.find(sample_id[i]) != set_id.end());
-			} else {
-				for (int i=0; i < Count; i++, pArray++)
+				int *pI = INTEGER(samp_sel);
+				R_xlen_t N = XLENGTH(samp_sel);
+				// check
+				for (R_xlen_t i=0; i < N; i++)
 				{
-					if (*pArray)
-						*pArray = (set_id.find(sample_id[i]) != set_id.end());
+					int I = *pI ++;
+					if ((I != NA_INTEGER) && (I < 1) && (I > Count))
+						throw ErrSeqArray("Invalid type of 'samp.sel'.");
 				}
-			}
-		} else if (Rf_isReal(samp_sel))
-		{
-			// initialize
-			set<double> set_id;
-			set_id.insert(REAL(samp_sel), REAL(samp_sel) + XLENGTH(samp_sel));
-			// sample id
-			vector<double> sample_id(Count);
-			C_Int32 _st=0, _cnt=Count;
-			GDS_Array_ReadData(varSamp, &_st, &_cnt, &sample_id[0], svFloat64);
-
-			// set selection
-			if (!intersect_flag)
-			{
-				for (int i=0; i < Count; i++)
-					*pArray++ = (set_id.find(sample_id[i]) != set_id.end());
-			} else {
-				for (int i=0; i < Count; i++, pArray++)
+				// set values
+				memset((void*)pArray, 0, Count);
+				pI = INTEGER(samp_sel);
+				for (R_xlen_t i=0; i < N; i++)
 				{
-					if (*pArray)
-						*pArray = (set_id.find(sample_id[i]) != set_id.end());
+					int I = *pI ++;
+					if (I != NA_INTEGER) pArray[I-1] = TRUE;
 				}
-			}
-		} else if (Rf_isString(samp_sel))
-		{
-			// initialize
-			set<string> set_id;
-			R_xlen_t m = XLENGTH(samp_sel);
-			for (R_xlen_t i=0; i < m; i++)
-				set_id.insert(string(CHAR(STRING_ELT(samp_sel, i))));
-			// sample id
-			vector<string> sample_id(Count);
-			C_Int32 _st=0, _cnt=Count;
-			GDS_Array_ReadData(varSamp, &_st, &_cnt, &sample_id[0], svStrUTF8);
-
-			// set selection
-			if (!intersect_flag)
-			{
-				for (int i=0; i < Count; i++)
-					*pArray++ = (set_id.find(sample_id[i]) != set_id.end());
 			} else {
-				for (int i=0; i < Count; i++, pArray++)
+				int Cnt = GetNumOfTRUE(&flag_array[0], flag_array.size());
+				int *pI = INTEGER(samp_sel);
+				R_xlen_t N = XLENGTH(samp_sel);
+				// check
+				for (R_xlen_t i=0; i < N; i++)
 				{
-					if (*pArray)
-						*pArray = (set_id.find(sample_id[i]) != set_id.end());
+					int I = *pI ++;
+					if ((I != NA_INTEGER) && (I < 1) && (I > Cnt))
+						throw ErrSeqArray("Invalid type of 'samp.sel'.");
+				}
+				// get the current index
+				vector<int> Idx;
+				Idx.reserve(Cnt);
+				for (int i=0; i < Count; i++)
+				{
+					if (pArray[i]) Idx.push_back(i);
+				}
+				// set values
+				memset((void*)pArray, 0, Count);
+				pI = INTEGER(samp_sel);
+				for (R_xlen_t i=0; i < N; i++)
+				{
+					int I = *pI ++;
+					if (I != NA_INTEGER) pArray[Idx[I-1]] = TRUE;
 				}
 			}
 		} else if (Rf_isNull(samp_sel))
 		{
 			flag_array.clear();
 		} else
-			throw ErrSeqArray("Invalid type of 'samp_sel'.");
+			throw ErrSeqArray("Invalid type of 'samp.sel'.");
 
 		int n = GetNumOfTRUE(&flag_array[0], flag_array.size());
 		if (Rf_isNull(samp_sel)) n = Count;
@@ -405,7 +488,108 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_sel,
 
 
 /// set a working space with selected variant id
-COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_sel,
+COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_id,
+	SEXP intersect, SEXP verbose)
+{
+	int intersect_flag = Rf_asLogical(intersect);
+
+	COREARRAY_TRY
+
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
+		PdAbstractArray varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
+		int Count = GetGDSObjCount(varVariant, "variant.id");
+
+		vector<C_BOOL> &flag_array = Init.Selection(gdsfile).Variant;
+		if (flag_array.empty())
+			flag_array.resize(Count, TRUE);
+		C_BOOL *pArray = &flag_array[0];
+
+		if (Rf_isInteger(var_id))
+		{
+			// initialize
+			set<int> set_id;
+			set_id.insert(INTEGER(var_id), INTEGER(var_id) + XLENGTH(var_id));
+			// sample id
+			vector<int> var_id(Count);
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Array_ReadData(varVariant, &_st, &_cnt, &var_id[0], svInt32);
+
+			// set selection
+			if (!intersect_flag)
+			{
+				for (int i=0; i < Count; i++)
+					*pArray++ = (set_id.find(var_id[i]) != set_id.end());
+			} else {
+				for (int i=0; i < Count; i++, pArray++)
+				{
+					if (*pArray)
+						*pArray = (set_id.find(var_id[i]) != set_id.end());
+				}
+			}
+		} else if (Rf_isReal(var_id))
+		{
+			// initialize
+			set<double> set_id;
+			set_id.insert(REAL(var_id), REAL(var_id) + XLENGTH(var_id));
+			// variant id
+			vector<double> var_id(Count);
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Array_ReadData(varVariant, &_st, &_cnt, &var_id[0], svFloat64);
+
+			// set selection
+			if (!intersect_flag)
+			{
+				for (int i=0; i < Count; i++)
+					*pArray++ = (set_id.find(var_id[i]) != set_id.end());
+			} else {
+				for (int i=0; i < Count; i++, pArray++)
+				{
+					if (*pArray)
+						*pArray = (set_id.find(var_id[i]) != set_id.end());
+				}
+			}
+		} else if (Rf_isString(var_id))
+		{
+			// initialize
+			set<string> set_id;
+			R_xlen_t m = XLENGTH(var_id);
+			for (R_xlen_t i=0; i < m; i++)
+				set_id.insert(string(CHAR(STRING_ELT(var_id, i))));
+			// sample id
+			vector<string> var_id(Count);
+			C_Int32 _st=0, _cnt=Count;
+			GDS_Array_ReadData(varVariant, &_st, &_cnt, &var_id[0], svStrUTF8);
+
+			// set selection
+			// set selection
+			if (!intersect_flag)
+			{
+				for (int i=0; i < Count; i++)
+					*pArray++ = (set_id.find(var_id[i]) != set_id.end());
+			} else {
+				for (int i=0; i < Count; i++, pArray++)
+				{
+					if (*pArray)
+						*pArray = (set_id.find(var_id[i]) != set_id.end());
+				}
+			}
+		} else if (Rf_isNull(var_id))
+		{
+			flag_array.clear();
+		} else
+			throw ErrSeqArray("Invalid type of 'variant.id'.");
+
+		int n = GetNumOfTRUE(&flag_array[0], flag_array.size());
+		if (Rf_isNull(var_id)) n = Count;
+		if (Rf_asLogical(verbose) == TRUE)
+			Rprintf("# of selected variants: %d\n", n);
+
+	COREARRAY_CATCH
+}
+
+
+/// set a working space with selected variant id (logical/raw vector, or index)
+COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 	SEXP intersect, SEXP verbose)
 {
 	int intersect_flag = Rf_asLogical(intersect);
@@ -464,80 +648,62 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_sel,
 					}
 				}
 			}
-		} else if (Rf_isInteger(var_sel))
+		} else if (Rf_isInteger(var_sel) || Rf_isReal(var_sel))
 		{
-			// initialize
-			set<int> set_id;
-			set_id.insert(INTEGER(var_sel), INTEGER(var_sel) + XLENGTH(var_sel));
-			// sample id
-			vector<int> var_id(Count);
-			C_Int32 _st=0, _cnt=Count;
-			GDS_Array_ReadData(varVariant, &_st, &_cnt, &var_id[0], svInt32);
+			if (Rf_isReal(var_sel))
+				var_sel = AS_INTEGER(var_sel);
 
-			// set selection
 			if (!intersect_flag)
 			{
-				for (int i=0; i < Count; i++)
-					*pArray++ = (set_id.find(var_id[i]) != set_id.end());
-			} else {
-				for (int i=0; i < Count; i++, pArray++)
+				int *pI = INTEGER(var_sel);
+				R_xlen_t N = XLENGTH(var_sel);
+				// check
+				for (R_xlen_t i=0; i < N; i++)
 				{
-					if (*pArray)
-						*pArray = (set_id.find(var_id[i]) != set_id.end());
+					int I = *pI ++;
+					if ((I != NA_INTEGER) && (I < 1) && (I > Count))
+						throw ErrSeqArray("Invalid type of 'variant.sel'.");
 				}
-			}
-		} else if (Rf_isReal(var_sel))
-		{
-			// initialize
-			set<double> set_id;
-			set_id.insert(REAL(var_sel), REAL(var_sel) + XLENGTH(var_sel));
-			// variant id
-			vector<double> var_id(Count);
-			C_Int32 _st=0, _cnt=Count;
-			GDS_Array_ReadData(varVariant, &_st, &_cnt, &var_id[0], svFloat64);
-
-			// set selection
-			if (!intersect_flag)
-			{
-				for (int i=0; i < Count; i++)
-					*pArray++ = (set_id.find(var_id[i]) != set_id.end());
-			} else {
-				for (int i=0; i < Count; i++, pArray++)
+				// set values
+				memset((void*)pArray, 0, Count);
+				pI = INTEGER(var_sel);
+				for (R_xlen_t i=0; i < N; i++)
 				{
-					if (*pArray)
-						*pArray = (set_id.find(var_id[i]) != set_id.end());
+					int I = *pI ++;
+					if (I != NA_INTEGER) pArray[I-1] = TRUE;
 				}
-			}
-		} else if (Rf_isString(var_sel))
-		{
-			// initialize
-			set<string> set_id;
-			R_xlen_t m = XLENGTH(var_sel);
-			for (R_xlen_t i=0; i < m; i++)
-				set_id.insert(string(CHAR(STRING_ELT(var_sel, i))));
-			// sample id
-			vector<string> var_id(Count);
-			C_Int32 _st=0, _cnt=Count;
-			GDS_Array_ReadData(varVariant, &_st, &_cnt, &var_id[0], svStrUTF8);
-
-			// set selection
-			// set selection
-			if (!intersect_flag)
-			{
-				for (int i=0; i < Count; i++)
-					*pArray++ = (set_id.find(var_id[i]) != set_id.end());
 			} else {
-				for (int i=0; i < Count; i++, pArray++)
+				int Cnt = GetNumOfTRUE(&flag_array[0], flag_array.size());
+				int *pI = INTEGER(var_sel);
+				R_xlen_t N = XLENGTH(var_sel);
+				// check
+				for (R_xlen_t i=0; i < N; i++)
 				{
-					if (*pArray)
-						*pArray = (set_id.find(var_id[i]) != set_id.end());
+					int I = *pI ++;
+					if ((I != NA_INTEGER) && (I < 1) && (I > Cnt))
+						throw ErrSeqArray("Invalid type of 'variant.sel'.");
+				}
+				// get the current index
+				vector<int> Idx;
+				Idx.reserve(Cnt);
+				for (int i=0; i < Count; i++)
+				{
+					if (pArray[i]) Idx.push_back(i);
+				}
+				// set values
+				memset((void*)pArray, 0, Count);
+				pI = INTEGER(var_sel);
+				for (R_xlen_t i=0; i < N; i++)
+				{
+					int I = *pI ++;
+					if (I != NA_INTEGER) pArray[Idx[I-1]] = TRUE;
 				}
 			}
 		} else if (Rf_isNull(var_sel))
 		{
 			flag_array.clear();
 		} else
-			throw ErrSeqArray("Invalid type of 'samp_sel'.");
+			throw ErrSeqArray("Invalid type of 'variant.sel'.");
 
 		int n = GetNumOfTRUE(&flag_array[0], flag_array.size());
 		if (Rf_isNull(var_sel)) n = Count;
@@ -951,7 +1117,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_File_Init, 1),             CALL(SEQ_File_Done, 1),
 		CALL(SEQ_FilterPushEmpty, 1),       CALL(SEQ_FilterPushLast, 1),
 		CALL(SEQ_FilterPop, 1),
-		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceVariant, 4),
+		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 4),
+		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 3),
 		CALL(SEQ_GetSpace, 1),
 
