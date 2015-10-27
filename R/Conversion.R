@@ -164,15 +164,15 @@ seqVCF.Header <- function(vcf.fn)
             simplify=TRUE, USE.NAMES=FALSE))
         num <- sapply(strsplit(txt, "[|/]"), function(x) length(x) )
         tab <- table(num)
-        num.ploidy <- as.integer(names(which.max(tab)))
+        ploidy <- as.integer(names(which.max(tab)))
     } else
-        num.ploidy <- as.integer(NA)
+        ploidy <- as.integer(NA)
 
     if (is.null(ans))
     {
         rv <- list(fileformat="unknown", info=NULL, filter=NULL, format=NULL,
             alt=NULL, contig=NULL, assembly=NULL, header=NULL,
-            num.ploidy = num.ploidy)
+            ploidy = ploidy)
         class(rv) <- "SeqVCFHeaderClass"
         return(rv)
     }
@@ -311,7 +311,7 @@ seqVCF.Header <- function(vcf.fn)
 
     rv <- list(fileformat=fileformat, info=INFO, filter=FILTER, format=FORMAT,
         alt=ALT, contig=contig, assembly=assembly, header=ans,
-        num.ploidy = num.ploidy)
+        ploidy = ploidy)
     class(rv) <- "SeqVCFHeaderClass"
     rv
 }
@@ -495,7 +495,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         cat("The Variant Call Format (VCF) header:\n")
         cat("\tfile format: ", header$fileformat, "\n", sep="")
         cat("\tthe number of sets of chromosomes (ploidy): ",
-            header$num.ploidy, "\n", sep="")
+            header$ploidy, "\n", sep="")
         cat("\tthe number of samples: ", length(samp.id), "\n", sep="")
         cat("\tGDS genotype storage: ", genotype.storage, "\n", sep="")
     }
@@ -614,10 +614,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     put.attr.gdsn(varGeno, "Description", geno_format$Description[1L])
 
     # add data to the folder of genotype
-    if (header$num.ploidy > 1L)
+    if (header$ploidy > 1L)
     {
         geno.node <- AddVar(varGeno, "data", storage=genotype.storage,
-            valdim=c(header$num.ploidy, nSamp, 0L), vn=FALSE)
+            valdim=c(header$ploidy, nSamp, 0L), vn=FALSE)
     } else {
         geno.node <- AddVar(varGeno, "data", storage=genotype.storage,
             valdim=c(1L, nSamp, 0L), vn=FALSE)
@@ -633,13 +633,13 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     # add phase folder
     varPhase <- addfolder.gdsn(gfile, "phase")
-    if (header$num.ploidy > 1L)
+    if (header$ploidy > 1L)
     {
         # add data
-        if (header$num.ploidy > 2L)
+        if (header$ploidy > 2L)
         {
             AddVar(varPhase, "data", storage="bit1",
-                valdim=c(header$num.ploidy-1L, nSamp, 0L), vn=FALSE)
+                valdim=c(header$ploidy-1L, nSamp, 0L), vn=FALSE)
         } else {
             AddVar(varPhase, "data", storage="bit1", valdim=c(nSamp, 0L),
                 vn=FALSE)

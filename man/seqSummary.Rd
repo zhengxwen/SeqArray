@@ -17,7 +17,7 @@ seqSummary(gdsfile, varname=NULL, check=c("check", "full.check", "none"),
     \item{verbose}{if \code{TRUE}, display information}
 }
 \value{
-    If \code{varname = NULL}, then return a list:
+    If \code{varname = NULL}, the function returns a list:
         \item{filename}{the file name}
         \item{format.version}{the sequencing format in GDS}
         \item{num.of.sample}{the number of samples}
@@ -29,11 +29,10 @@ seqSummary(gdsfile, varname=NULL, check=c("check", "full.check", "none"),
         \item{sample.annot}{the description of the sample annotation:
             \code{var.name}}
 
-    If \code{varname = "genotype" or "phase"}, then return a list:
-        \item{dim}{dim[1] -- ploidy, dim[2] -- the number of samples,
-            dim[3] -- the number of variants}
-        \item{seldim}{seldim[1] -- the number of selected samples,
-            seldim[2] -- the number of selected variants}
+    If \code{seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)},
+it returns a list with two components:
+    \item{dim}{ploidy, # of samples, # of variants}
+    \item{seldim}{# of selected samples, # of selected variants}
 }
 \details{
     If \code{check = "check"}, this function performs regular checking:

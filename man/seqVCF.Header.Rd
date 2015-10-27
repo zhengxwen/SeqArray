@@ -20,7 +20,7 @@ seqVCF.Header(vcf.fn)
     \item{contig}{the description in the contig field}
     \item{assembly}{the link of assembly}
     \item{header}{the other header lines}
-    \item{num.ploidy}{the number of ploidy, two for humans}
+    \item{ploidy}{ploidy, two for humans}
 }
 \details{
     The ID description contains four columns:

@@ -727,9 +727,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		// bool Verbose = (LOGICAL(GetListElement(param, "verbose"))[0] == TRUE);
 
 		// the number of ploidy
-		int num_ploidy = Rf_asInteger(GetListElement(header, "num.ploidy"));
+		int num_ploidy = Rf_asInteger(GetListElement(header, "ploidy"));
 		if (num_ploidy <= 0)
-			throw ErrSeqArray("Invalid header$num.ploidy: %d.", num_ploidy);
+			throw ErrSeqArray("Invalid header$ploidy: %d.", num_ploidy);
 
 		// filter level list
 		vector<string> filter_list;
