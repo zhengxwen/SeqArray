@@ -9,7 +9,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     genotype.storage=c("bit2", "bit4", "bit8"),
     storage.option=seqStorage.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
-    optimize=TRUE, raise.error=TRUE, verbose=TRUE)
+    reference=NULL, optimize=TRUE, raise.error=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -30,6 +30,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
         chromosome which should be ignored, like "chr"; it is not
         case-sensitive}
+    \item{reference}{genome reference, like "hg19", "GRCh37"}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
@@ -41,7 +42,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
 }
 \details{
     GDS -- Genomic Data Structures used for storing genetic array-oriented
-        data, and the file format used in the \link{gdsfmt} package.
+        data, and the file format defined in the \link{gdsfmt} package.
 
     VCF -- The Variant Call Format (VCF), which is a generic format for
         storing DNA polymorphism data such as SNPs, insertions, deletions and
@@ -60,6 +61,8 @@ adopted by setting
     By default, the compression method is "ZIP_RA" (zlib algorithm with default
 compression level + multiple independent data blocks). Users can maximize the
 compression ratio by \code{storage.option=seqStorage.Option("ZIP_RA.max")}.
+    LZ4 (an extremely fast compression algorithm) is an option via
+\code{storage.option=seqStorage.Option("LZ4_RA")}.
 }
 \references{
     The variant call format and VCFtools.
@@ -67,6 +70,8 @@ compression ratio by \code{storage.option=seqStorage.Option("ZIP_RA.max")}.
     Handsaker RE, Lunter G, Marth GT, Sherry ST, McVean G, Durbin R;
     1000 Genomes Project Analysis Group.
     Bioinformatics. 2011 Aug 1;27(15):2156-8. Epub 2011 Jun 7.
+
+    \url{http://cyan4973.github.io/lz4/}
 }
 
 \author{Xiuwen Zheng}

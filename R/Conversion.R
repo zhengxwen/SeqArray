@@ -307,11 +307,19 @@ seqVCF.Header <- function(vcf.fn)
 
 
     #########################################################
+    # reference=""
+    reference <- NULL
+    s <- ans$value[ans$id == "reference"]
+    if (length(s) > 0L) reference <- s
+    ans <- ans[ans$id != "reference", ]
+
+
+    #########################################################
     # output
 
     rv <- list(fileformat=fileformat, info=INFO, filter=FILTER, format=FORMAT,
-        alt=ALT, contig=contig, assembly=assembly, header=ans,
-        ploidy = ploidy)
+        alt=ALT, contig=contig, assembly=assembly, reference=reference,
+        header=ans, ploidy = ploidy)
     class(rv) <- "SeqVCFHeaderClass"
     rv
 }
@@ -359,7 +367,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
     storage.option=seqStorage.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
-    optimize=TRUE, raise.error=TRUE, verbose=TRUE)
+    reference=NULL, optimize=TRUE, raise.error=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
@@ -375,6 +383,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.null(info.import) | is.character(info.import))
     stopifnot(is.null(fmt.import) | is.character(fmt.import))
     stopifnot(is.character(ignore.chr.prefix), length(ignore.chr.prefix)>0L)
+    stopifnot(is.null(reference) | is.character(reference))
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(raise.error), length(raise.error)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
@@ -568,6 +577,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     put.attr.gdsn(n, "vcf.fileformat", header$fileformat)
     if (!is.null(header$assembly))
         put.attr.gdsn(n, "vcf.assembly", header$assembly)
+    reference <- as.character(unique(c(reference, header$reference)))
+    AddVar(n, "reference", reference, closezip=TRUE, visible=FALSE)
     if (!is.null(header$alt))
     {
         if (nrow(header$alt) > 0L)

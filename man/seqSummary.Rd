@@ -18,21 +18,27 @@ seqSummary(gdsfile, varname=NULL, check=c("check", "full.check", "none"),
 }
 \value{
     If \code{varname = NULL}, the function returns a list:
-        \item{filename}{the file name}
-        \item{format.version}{the sequencing format in GDS}
-        \item{num.of.sample}{the number of samples}
-        \item{num.of.variant}{the number of variants}
-        \item{info}{the description of the INFO field: \code{var.name},
-            \code{number}, \code{type} and \code{description}}
-        \item{format}{the description of the FORMAT field: \code{var.name},
-            \code{number}, \code{type} and \code{description}}
-        \item{sample.annot}{the description of the sample annotation:
-            \code{var.name}}
+    \item{filename}{the file name}
+    \item{format.version}{the sequencing format in GDS}
+    \item{reference}{genome reference, a character vector (0-length for
+        undefined)}
+    \item{ploidy}{the number of sets of chromosomes}
+    \item{num.of.sample}{the number of samples}
+    \item{num.of.variant}{the number of variants}
+    \item{info}{the description of the INFO field: \code{var.name},
+        \code{number}, \code{type} and \code{description}}
+    \item{format}{the description of the FORMAT field: \code{var.name},
+        \code{number}, \code{type} and \code{description}}
+    \item{sample.annot}{the description of the sample annotation:
+        \code{var.name}}
 
     If \code{seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)},
 it returns a list with two components:
     \item{dim}{ploidy, # of samples, # of variants}
     \item{seldim}{# of selected samples, # of selected variants}
+
+    \code{seqSummary(gdsfile, check="none", verbose=FALSE)$reference} refers
+to the genome reference if it is defined.
 }
 \details{
     If \code{check = "check"}, this function performs regular checking:

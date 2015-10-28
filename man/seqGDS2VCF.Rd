@@ -26,7 +26,7 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
 the export.
 
     GDS -- Genomic Data Structures used for storing genetic array-oriented
-        data, and the file format used in the \link{gdsfmt} package.
+        data, and the file format defined in the \link{gdsfmt} package.
 
     VCF -- The Variant Call Format (VCF), which is a generic format for
         storing DNA polymorphism data such as SNPs, insertions, deletions and

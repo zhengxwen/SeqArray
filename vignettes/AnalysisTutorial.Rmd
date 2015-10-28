@@ -51,8 +51,7 @@ library(SeqArray)
 # open a GDS file
 genofile <- seqOpen(gds.fn)
 
-# display the contents of the GDS file in a hierarchical structure
-genofile
+seqSummary(genofile)
 ```
 
 ```{r}

@@ -19,21 +19,23 @@ seqVCF.Header(vcf.fn)
     \item{alt}{the ID description in the ALT field}
     \item{contig}{the description in the contig field}
     \item{assembly}{the link of assembly}
+    \item{reference}{genome reference}
     \item{header}{the other header lines}
     \item{ploidy}{ploidy, two for humans}
 }
 \details{
     The ID description contains four columns:
-    ID -- variable name;
-    Number -- the number of elements, see the webpage of the 1000 Genomes Project;
-    Type -- data type;
-    Description -- a variable description.
+ID -- variable name;
+Number -- the number of elements, see the webpage of the 1000 Genomes Project;
+Type -- data type;
+Description -- a variable description.
 }
 
 \references{
     The variant call format and VCFtools.
-    Danecek P, Auton A, Abecasis G, Albers CA, Banks E, DePristo MA, Handsaker RE,
-    Lunter G, Marth GT, Sherry ST, McVean G, Durbin R; 1000 Genomes Project Analysis Group.
+    Danecek P, Auton A, Abecasis G, Albers CA, Banks E, DePristo MA,
+    Handsaker RE, Lunter G, Marth GT, Sherry ST, McVean G, Durbin R;
+    1000 Genomes Project Analysis Group.
     Bioinformatics. 2011 Aug 1;27(15):2156-8. Epub 2011 Jun 7.
 }
 
