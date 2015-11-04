@@ -432,6 +432,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         fullvarname <- gsub("@", "", fullvarname)
         if (substr(fullvarname, 1L, 12L) == "description/")
             fullvarname <- "description"
+        fmt_flag <- substr(fullvarname, 1L, 18L) == "annotation/format/"
 
         # compression flag
         compress.flag <- ""
@@ -439,16 +440,27 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (is.null(nm))
         {
             if (length(storage.option$compression) > 0L)
-                compress.flag <- storage.option$compression[1L]
+            {
+                if (fmt_flag & varname=="data")
+                    compress.flag <- storage.option$format.data[1L]
+                else
+                    compress.flag <- storage.option$compression[1L]
+            }
         } else {
             i <- match(fullvarname, nm)
             if (is.na(i))
             {
                 i <- match("", nm)
                 if (!is.na(i))
-                    compress.flag <- storage.option$compression[i]
-            } else
+                {
+                    if (fmt_flag & varname=="data")
+                        compress.flag <- storage.option$format.data[1L]
+                    else
+                        compress.flag <- storage.option$compression[i]
+                }
+            } else {
                 compress.flag <- storage.option$compression[i]
+            }
         }
 
         # storage mode
