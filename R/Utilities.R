@@ -55,7 +55,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
         opt <- getOption("seqarray.parallel", NULL)
         if (inherits(opt, "cluster"))
         {
-            .loadparallel()
+            .LoadParallelPackage()
             parallel::stopCluster(opt)
         }
         if (verbose)
@@ -79,7 +79,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             stopifnot(length(cluster) == 1L)
             if (cluster)
             {
-                .loadparallel()
+                .LoadParallelPackage()
                 cl <- parallel::detectCores() - 1L
                 if (cl <= 1L) cl <- 2L
                 cluster <- setup(cl)
@@ -96,7 +96,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             stopifnot(length(cluster) == 1L)
             if (cluster > 1L)
             {
-                .loadparallel()
+                .LoadParallelPackage()
                 cl <- cluster
                 cluster <- setup(cluster)
                 if (verbose)
@@ -110,7 +110,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
         # unix forking technique
         if (identical(cluster, TRUE))
         {
-            .loadparallel()
+            .LoadParallelPackage()
             n <- parallel::detectCores() - 1L
             if (n <= 1L) n <- 2L
             if (verbose)
@@ -123,7 +123,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             stopifnot(length(cluster) == 1L)
             if (cluster > 1L)
             {
-                .loadparallel()
+                .LoadParallelPackage()
                 if (verbose)
                 {
                     cat("Enable the computing cluster with", cluster,
@@ -355,15 +355,34 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 #######################################################################
 # Storage options for the SeqArray GDS file
 #
-seqStorage.Option <- function(compression="ZIP_RA", format.data="ZIP_RA:8M",
-    float.mode="float32")
+seqStorage.Option <- function(compression=c("ZIP_RA", "ZIP_RA.max", "LZ4_RA",
+    "LZ4_RA.max", ""), float.mode="float32",
+    geno.compress=NULL, info.compress=NULL, format.compress=NULL,
+    index.compress=NULL, ...)
 {
-    stopifnot(is.character(compression), length(compression)>=1L)
-    stopifnot(is.character(format.data), length(format.data)==1L)
-    stopifnot(is.character(float.mode), length(float.mode)>=1L)
+    # check
+    compression <- match.arg(compression)
+    stopifnot(is.character(float.mode), length(float.mode) > 0L)
+    if (!is.null(geno.compress))
+        stopifnot(is.character(geno.compress), length(geno.compress)==1L)
+    if (!is.null(info.compress))
+        stopifnot(is.character(info.compress), length(info.compress)==1L)
+    if (!is.null(format.compress))
+        stopifnot(is.character(format.compress), length(format.compress)==1L)
+    if (!is.null(index.compress))
+        stopifnot(is.character(index.compress), length(index.compress)==1L)
 
-    rv <- list(compression=compression, format.data=format.data,
-        float.mode=float.mode)
+    rv <- list(compression = compression, float.mode = float.mode,
+        geno.compress   = ifelse(is.null(geno.compress), compression,
+            geno.compress),
+        info.compress   = ifelse(is.null(info.compress), compression,
+            info.compress),
+        format.compress = ifelse(is.null(format.compress),
+            ifelse(compression=="", "", paste(compression, ":8M", sep="")),
+            format.compress),
+        index.compress = ifelse(is.null(index.compress), compression,
+            index.compress),
+        ...)
     class(rv) <- "SeqGDSStorageClass"
     return(rv)
 }

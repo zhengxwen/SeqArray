@@ -388,7 +388,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(raise.error), length(raise.error)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
-
     if (verbose) message(date())
 
     # check sample id
@@ -414,91 +413,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             }
         }
     }
-
-
-    ## Add variable
-    AddVar <- function(node, varname, val=NULL, storage=storage.mode(val),
-        valdim=NULL, closezip=FALSE, visible=TRUE, vn=TRUE)
-    {
-        # check
-        if (inherits(node, "gds.class"))
-            node <- node$root
-        stopifnot(inherits(node, "gdsn.class"))
-
-        # full variable name
-        fullvarname <- name.gdsn(node, TRUE)
-        if (vn)
-            fullvarname <- paste(fullvarname, varname, sep="/")
-        fullvarname <- gsub("@", "", fullvarname)
-        if (substr(fullvarname, 1L, 12L) == "description/")
-            fullvarname <- "description"
-        fmt_flag <- substr(fullvarname, 1L, 18L) == "annotation/format/"
-
-        # compression flag
-        compress.flag <- ""
-        nm <- names(storage.option$compression)
-        if (is.null(nm))
-        {
-            if (length(storage.option$compression) > 0L)
-            {
-                if (fmt_flag & varname=="data")
-                    compress.flag <- storage.option$format.data[1L]
-                else
-                    compress.flag <- storage.option$compression[1L]
-            }
-        } else {
-            i <- match(fullvarname, nm)
-            if (is.na(i))
-            {
-                i <- match("", nm)
-                if (!is.na(i))
-                {
-                    if (fmt_flag & varname=="data")
-                        compress.flag <- storage.option$format.data[1L]
-                    else
-                        compress.flag <- storage.option$compression[i]
-                }
-            } else {
-                compress.flag <- storage.option$compression[i]
-            }
-        }
-
-        # storage mode
-        storage.param <- ""
-        if (storage == "float")
-        {
-            stm <- "float32"
-            nm <- names(storage.option$float.mode)
-            if (is.null(nm))
-            {
-                if (length(storage.option$float.mode) > 0L)
-                    stm <- storage.option$float.mode[1L]
-            } else {
-                i <- match(fullvarname, nm)
-                if (is.na(i))
-                {
-                    i <- match("", nm)
-                    if (!is.na(i))
-                        stm <- storage.option$float.mode[i]
-                } else
-                    stm <- storage.option$float.mode[i]
-            }
-            s <- unlist(strsplit(stm, ":", fixed=TRUE))
-            if (length(s) > 2L)
-                stop("Invalid 'storage.option$float.mode'.")
-            storage <- s[1L]
-            if (length(s) == 2L)
-                storage.param <- s[2L]
-        }
-
-        # add.gdsn arguments
-        args <- list(node=node, name=varname, val=val, storage=storage,
-            valdim=valdim, compress=compress.flag, closezip=closezip,
-            visible=visible)
-        args <- c(args, eval(parse(text=paste("list(", storage.param, ")"))))
-        do.call(add.gdsn, args)
-    }
-
 
 
     ##################################################
@@ -590,21 +504,31 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (!is.null(header$assembly))
         put.attr.gdsn(n, "vcf.assembly", header$assembly)
     reference <- as.character(unique(c(reference, header$reference)))
-    AddVar(n, "reference", reference, closezip=TRUE, visible=FALSE)
+    .AddVar(storage.option, n, "reference", reference, closezip=TRUE,
+        visible=FALSE)
     if (!is.null(header$alt))
     {
         if (nrow(header$alt) > 0L)
-            AddVar(n, "vcf.alt", header$alt, closezip=TRUE, visible=FALSE)
+        {
+            .AddVar(storage.option, n, "vcf.alt", header$alt, closezip=TRUE,
+                visible=FALSE)
+        }
     }
     if (!is.null(header$contig))
     {
         if (nrow(header$contig) > 0L)
-            AddVar(n, "vcf.contig", header$contig, closezip=TRUE, visible=FALSE)
+        {
+            .AddVar(storage.option, n, "vcf.contig", header$contig,
+                closezip=TRUE, visible=FALSE)
+        }
     }
     if (!is.null(header$header))
     {
         if (nrow(header$header) > 0L)
-            AddVar(n, "vcf.header", header$header, closezip=TRUE, visible=FALSE)
+        {
+            .AddVar(storage.option, n, "vcf.header", header$header,
+                closezip=TRUE, visible=FALSE)
+        }
     }
 
 
@@ -612,24 +536,24 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # add sample.id
 
     nSamp <- length(samp.id)
-    AddVar(gfile, "sample.id", samp.id, closezip=TRUE)
+    .AddVar(storage.option, gfile, "sample.id", samp.id, closezip=TRUE)
 
 
     ##################################################
     # add basic site information
 
     # add variant.id
-    AddVar(gfile, "variant.id", storage="int32")
+    .AddVar(storage.option, gfile, "variant.id", storage="int32")
 
     # add position
     # TODO: need to check whether position can be stored in 'int32'
-    AddVar(gfile, "position", storage="int32")
+    .AddVar(storage.option, gfile, "position", storage="int32")
 
     # add chromosome
-    AddVar(gfile, "chromosome", storage="string")
+    .AddVar(storage.option, gfile, "chromosome", storage="string")
 
     # add allele
-    AddVar(gfile, "allele", storage="string")
+    .AddVar(storage.option, gfile, "allele", storage="string")
 
     # add a folder for genotypes
     varGeno <- addfolder.gdsn(gfile, "genotype")
@@ -639,19 +563,20 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # add data to the folder of genotype
     if (header$ploidy > 1L)
     {
-        geno.node <- AddVar(varGeno, "data", storage=genotype.storage,
-            valdim=c(header$ploidy, nSamp, 0L), vn=FALSE)
+        geno.node <- .AddVar(storage.option, varGeno, "data",
+            storage=genotype.storage, valdim=c(header$ploidy, nSamp, 0L))
     } else {
-        geno.node <- AddVar(varGeno, "data", storage=genotype.storage,
-            valdim=c(1L, nSamp, 0L), vn=FALSE)
+        geno.node <- .AddVar(storage.option, varGeno, "data",
+            storage=genotype.storage, valdim=c(1L, nSamp, 0L))
     }
-    node <- AddVar(varGeno, "@data", storage="uint8", visible=FALSE, vn=FALSE)
+    node <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
+        visible=FALSE)
 
-    node <- AddVar(varGeno, "extra.index", storage="int32", valdim=c(3L,0L),
-        vn=FALSE)
+    node <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
+        valdim=c(3L,0L))
     put.attr.gdsn(node, "R.colnames",
         c("sample.index", "variant.index", "length"))
-    AddVar(varGeno, "extra", storage="int16", vn=FALSE)
+    .AddVar(storage.option, varGeno, "extra", storage="int16")
 
 
     # add phase folder
@@ -661,18 +586,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         # add data
         if (header$ploidy > 2L)
         {
-            AddVar(varPhase, "data", storage="bit1",
-                valdim=c(header$ploidy-1L, nSamp, 0L), vn=FALSE)
+            .AddVar(storage.option, varPhase, "data", storage="bit1",
+                valdim=c(header$ploidy-1L, nSamp, 0L))
         } else {
-            AddVar(varPhase, "data", storage="bit1", valdim=c(nSamp, 0L),
-                vn=FALSE)
+            .AddVar(storage.option, varPhase, "data", storage="bit1",
+                valdim=c(nSamp, 0L))
         }
 
-        node <- AddVar(varPhase, "extra.index", storage="int32",
-            valdim=c(3L,0L), vn=FALSE)
+        node <- .AddVar(storage.option, varPhase, "extra.index",
+            storage="int32", valdim=c(3L,0L))
         put.attr.gdsn(node, "R.colnames",
             c("sample.index", "variant.index", "length"))
-        AddVar(varPhase, "extra", storage="bit1", vn=FALSE)
+        .AddVar(storage.option, varPhase, "extra", storage="bit1")
     }
 
 
@@ -682,11 +607,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     varAnnot <- addfolder.gdsn(gfile, "annotation")
 
     # add id
-    AddVar(varAnnot, "id", storage="string")
+    .AddVar(storage.option, varAnnot, "id", storage="string")
     # add qual
-    AddVar(varAnnot, "qual", storage="float")
+    .AddVar(storage.option, varAnnot, "qual", storage="float")
     # add filter
-    varFilter <- AddVar(varAnnot, "filter", storage="int32")
+    varFilter <- .AddVar(storage.option, varAnnot, "filter", storage="int32")
 
 
     ##################################################
@@ -765,8 +690,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 # add
                 if (import.flag[i])
                 {
-                    node <- AddVar(varInfo, header$info$ID[i], storage=mode,
-                        valdim=initdim)
+                    node <- .AddVar(storage.option, varInfo, header$info$ID[i],
+                        storage=mode, valdim=initdim)
                     put.attr.gdsn(node, "Number", header$info$Number[i])
                     put.attr.gdsn(node, "Type", header$info$Type[i])
                     put.attr.gdsn(node, "Description", header$info$Description[i])
@@ -777,7 +702,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
                     if (s %in% c(".", "A", "G"))
                     {
-                        node <- AddVar(varInfo,
+                        node <- .AddVar(storage.option, varInfo,
                             paste("@", header$info$ID[i], sep=""),
                             storage="int32", visible=FALSE)
                     }
@@ -855,8 +780,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             put.attr.gdsn(node, "Type", header$format$Type[i])
             put.attr.gdsn(node, "Description", header$format$Description[i])
 
-            AddVar(node, "data", storage=mode, valdim=initdim, vn=FALSE)
-            AddVar(node, "@data", storage="int32", visible=FALSE, vn=FALSE)
+            .AddVar(storage.option, node, "data", storage=mode, valdim=initdim)
+            .AddVar(storage.option, node, "@data", storage="int32", visible=FALSE)
         }
     }
 

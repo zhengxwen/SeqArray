@@ -60,10 +60,10 @@ adopted by setting
 
     By default, the compression method is "ZIP_RA" (zlib algorithm with default
 compression level + multiple independent data blocks). Users can maximize the
-compression ratio by \code{seqStorage.Option("ZIP_RA.max", "ZIP_RA.max:8M")}.
+compression ratio by \code{seqStorage.Option("ZIP_RA.max")}.
     LZ4 (an extremely fast compression algorithm,
 \url{http://cyan4973.github.io/lz4/}) is an option via
-\code{storage.option=seqStorage.Option("LZ4_RA", "LZ4_RA:8M")}.
+\code{storage.option=seqStorage.Option("LZ4_RA")}.
 }
 \references{
     The variant call format and VCFtools.

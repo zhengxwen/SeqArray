@@ -227,7 +227,7 @@
 # Load Parallel package
 #
 
-.loadparallel <- function()
+.LoadParallelPackage <- function()
 {
     if (!requireNamespace("parallel"))
         stop("The 'parallel' package should be installed.")
@@ -362,4 +362,97 @@
     }
 
     ans
+}
+
+
+
+#######################################################################
+# Add a variable with corresponding compression mode
+# See: seqStorage.Option
+#
+
+.AddVar <- function(storage.option, node, varname, val=NULL,
+    storage=storage.mode(val), valdim=NULL, closezip=FALSE, visible=TRUE)
+{
+    # check
+    stopifnot(inherits(storage.option, "SeqGDSStorageClass"))
+    if (inherits(node, "gds.class"))
+        node <- node$root
+    stopifnot(inherits(node, "gdsn.class"))
+
+    # full variable name
+    path <- name.gdsn(node, TRUE)
+    fullvarname <- paste(path, varname, sep="/")
+    info_flag <- substr(fullvarname, 1L, 16L) == "annotation/info/"
+    fmt_flag  <- substr(fullvarname, 1L, 18L) == "annotation/format/"
+    idx_flag <- substr(varname, 1L, 1L) == "@"
+    varname2 <- fullvarname
+    if (substr(fullvarname, 1L, 12L) == "description/")
+    {
+        varname2 <- "description"
+    } else {
+        if (path == "genotype")
+            varname2 <- "genotype"
+        else if (fmt_flag)
+            varname2 <- path
+    }
+
+    # compression flag
+    compress.flag <- storage.option$compression
+    if (is.null(compress.flag)) compress.flag <- ""
+    nm <- names(storage.option)
+    if (!is.null(nm))
+    {
+        i <- match(fullvarname, nm)
+        j <- match(varname2, nm)
+        if (is.na(i)) i <- j
+        if (is.na(i))
+        {
+            if (path == "genotype")
+                compress.flag <- storage.option$geno.compress
+            else if (idx_flag)
+                compress.flag <- storage.option$index.compress
+            else if (info_flag)
+                compress.flag <- storage.option$info.compress
+            else if (fmt_flag)
+                compress.flag <- storage.option$format.compress
+        } else {
+            compress.flag <- storage.option[[i]]
+        }
+    }
+
+    # storage mode
+    storage.param <- ""
+    if (storage == "float")
+    {
+        stm <- "float32"
+        nm <- names(storage.option$float.mode)
+        if (is.null(nm))
+        {
+            if (length(storage.option$float.mode) > 0L)
+                stm <- storage.option$float.mode[1L]
+        } else {
+            i <- match(fullvarname, nm)
+            if (is.na(i))
+            {
+                i <- match("", nm)
+                if (!is.na(i))
+                    stm <- storage.option$float.mode[i]
+            } else
+                stm <- storage.option$float.mode[i]
+        }
+        s <- unlist(strsplit(stm, ":", fixed=TRUE))
+        if (length(s) > 2L)
+            stop("Invalid 'storage.option$float.mode'.")
+        storage <- s[1L]
+        if (length(s) == 2L)
+            storage.param <- s[2L]
+    }
+
+    # add.gdsn arguments
+    args <- list(node=node, name=varname, val=val, storage=storage,
+        valdim=valdim, compress=compress.flag, closezip=closezip,
+        visible=visible)
+    args <- c(args, eval(parse(text=paste("list(", storage.param, ")"))))
+    do.call(add.gdsn, args)
 }
