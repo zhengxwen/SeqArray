@@ -9,7 +9,8 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     genotype.storage=c("bit2", "bit4", "bit8"),
     storage.option=seqStorage.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
-    reference=NULL, optimize=TRUE, raise.error=TRUE, verbose=TRUE)
+    reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
+    verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -30,7 +31,12 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
         chromosome which should be ignored, like "chr"; it is not
         case-sensitive}
-    \item{reference}{genome reference, like "hg19", "GRCh37"}
+    \item{reference}{genome reference, like "hg19", "GRCh37"; if the genome
+        reference is not available in VCF files, users could specify the
+        reference here}
+    \item{start}{the starting variant if importing part of VCF files}
+    \item{count}{the maximum count of variant if importing part of VCF files,
+        -1 indicates importing to the end}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
@@ -76,7 +82,7 @@ compression ratio by \code{seqStorage.Option("ZIP_RA.max")}.
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqVCF.Header}}, \code{\link{seqStorage.Option}},
-    \code{\link{seqGDS2VCF}}
+    \code{\link{seqMerge}}, \code{\link{seqGDS2VCF}}
 }
 
 \examples{

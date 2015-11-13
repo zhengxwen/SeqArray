@@ -153,6 +153,9 @@ seqVCF2GDS(vcf.fn, "tmp.gds")
 # maximize the compression level
 seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorage.Option("ZIP_RA.max"))
 
+# maximize the access speed with LZ4 fast compression algorithm
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorage.Option("LZ4_RA.max"))
+
 seqSummary("tmp.gds")
 ```
 

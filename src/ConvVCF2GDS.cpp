@@ -139,6 +139,13 @@ public:
 		buffer.assign(str_begin, str_end);
 	}
 
+	/// skip the current line
+	void SkipLine()
+	{
+		_cur_char = ReadLine();
+		_column_no = 0;
+	}
+
 	/// return true, if it is of the end
 	bool IfEnd()
 	{
@@ -723,6 +730,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		string geno_id = CHAR(STRING_ELT(GetListElement(param, "genotype.var.name"), 0));
 		// raise an error
 		bool RaiseError = (Rf_asLogical(GetListElement(param, "raise.error")) == TRUE);
+		// variant start
+		int variant_start = Rf_asInteger(GetListElement(param, "start"));
+		// variant count
+		int variant_count = Rf_asInteger(GetListElement(param, "count"));
 		// verbose
 		// bool Verbose = (LOGICAL(GetListElement(param, "verbose"))[0] == TRUE);
 
@@ -911,14 +922,24 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			// scan line by line
 
 			// -----------------------------------------------------
-			// variant id
-			variant_index ++;
-			GDS_Array_AppendData(varIdx, 1, &variant_index, svInt32);
-
-
-			// -----------------------------------------------------
 			// column 1: CHROM
 			RL.GetCell(cell, false);
+
+			// -----------------------------------------------------
+			// variant id
+			variant_index ++;
+			if (variant_index < variant_start)
+			{
+				RL.SkipLine();
+				continue;
+			} else if (variant_count >= 0)
+			{
+				if (variant_index >= variant_start+variant_count)
+					break;
+			}
+			GDS_Array_AppendData(varIdx, 1, &variant_index, svInt32);
+
+			// column 1: CHROM
 			{
 				const char *s = cell.c_str();
 				vector<string>::iterator it = ChrPref.begin();

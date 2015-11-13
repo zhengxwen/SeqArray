@@ -17,19 +17,22 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
-seqVCF.Header <- function(vcf.fn)
+seqVCF.Header <- function(vcf.fn, get.num=FALSE)
 {
     # check
     stopifnot(is.character(vcf.fn))
+    stopifnot(is.logical(get.num), length(get.num)==1L)
 
     #########################################################
     # open the vcf file
 
     # parse and determine how many copies of genomes: haploid, diploid or others
     geno.text <- NULL
+    nSample <- 0L
+    nVariant <- 0L
 
     n <- 0L
-    for (i in seq_len(length(vcf.fn)))
+    for (i in seq_along(vcf.fn))
     {
         opfile <- file(vcf.fn[i], open="rt")
         on.exit(close(opfile))
@@ -44,12 +47,19 @@ seqVCF.Header <- function(vcf.fn)
                 s <- substring(s, 3L)
                 ans <- c(ans, s)
             } else {
+                if (get.num)
+                {
+                    s <- scan(text=s, what=character(0), sep="\t",
+                        quiet=TRUE)[-seq_len(9)]
+                    if (length(s) > nSample) nSample <- length(s)
+                }
                 s <- readLines(opfile, n=1L)
                 if (length(s) > 0L)
                 {
                     ss <- scan(text=s, what=character(), sep="\t", quiet=TRUE)
                     geno.text <- c(geno.text, ss[-seq_len(9L)])
                 }
+                nVariant <- nVariant + 1L + length(count.fields(opfile))
                 break
             }
             if ((n %% 10000L) == 0L)
@@ -320,6 +330,11 @@ seqVCF.Header <- function(vcf.fn)
     rv <- list(fileformat=fileformat, info=INFO, filter=FILTER, format=FORMAT,
         alt=ALT, contig=contig, assembly=assembly, reference=reference,
         header=ans, ploidy = ploidy)
+    if (get.num)
+    {
+        rv$num.sample <- nSample
+        rv$num.variant <- nVariant
+    }
     class(rv) <- "SeqVCFHeaderClass"
     rv
 }
@@ -367,7 +382,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
     storage.option=seqStorage.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
-    reference=NULL, optimize=TRUE, raise.error=TRUE, verbose=TRUE)
+    reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
@@ -384,11 +400,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.null(fmt.import) | is.character(fmt.import))
     stopifnot(is.character(ignore.chr.prefix), length(ignore.chr.prefix)>0L)
     stopifnot(is.null(reference) | is.character(reference))
+
+    stopifnot(is.numeric(start), length(start)==1L)
+    stopifnot(is.numeric(count), length(count)==1L)
+
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(raise.error), length(raise.error)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
-    if (verbose) message(date())
+    if (verbose) cat(date(), "\n", sep="")
 
     # check sample id
     samp.id <- NULL
@@ -822,6 +842,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             list(sample.num = as.integer(length(samp.id)),
                 genotype.var.name = genotype.var.name,
                 raise.error = raise.error, filter.levels = filterlevels,
+                start = start, count = count,
                 verbose = verbose),
             readLines, opfile, 512L,  # readLines(opfile, 512L)
             ignore.chr.prefix, new.env())
@@ -863,14 +884,14 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (verbose)
     {
         cat("Done.\n")
-        message(date())
+        cat(date(), "\n", sep="")
     }
     if (optimize)
     {
         if (verbose)
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.fn, verbose=verbose)
-        if (verbose) message(date())
+        if (verbose) cat(date(), "\n", sep="")
     }
 
     # output
@@ -952,7 +973,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     if (verbose)
     {
-        message(date())
+        cat(date(), "\n", sep="")
         cat("Output: ", vcf.fn, "\n", sep="")
         cat("The INFO field: ", paste(z$info$var.name, collapse=", "),
             "\n", sep="")
@@ -1132,7 +1153,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     if (verbose)
     {
         cat("Done.\n")
-        message(date())
+        cat(date(), "\n", sep="")
     }
 
     # output
@@ -1142,7 +1163,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
 
 #######################################################################
-# Convert a Sequence GDS file to a SNP GDS file
+# Convert a SeqArray GDS file to a SNP GDS file
 #
 
 seqGDS2SNP <- function(gdsfile, out.gdsfn,
@@ -1159,8 +1180,8 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 
     if (verbose)
     {
-        message(date())
-        cat("Sequence GDS to SNP GDS Format:\n")
+        cat(date(), "\n", sep="")
+        cat("SeqArray GDS to SNP GDS Format:\n")
     }
 
     # if it is a file name
@@ -1227,14 +1248,14 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
     if (verbose)
     {
         cat("Done.\n")
-        message(date())
+        cat(date(), "\n", sep="")
     }
     if (optimize)
     {
         if (verbose)
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.gdsfn, verbose=verbose)
-        if (verbose) message(date())
+        if (verbose) cat(date(), "\n", sep="")
     }
 
     # output
@@ -1244,7 +1265,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 
 
 #######################################################################
-# Convert a SNP GDS file to a Sequence GDS file
+# Convert a SNP GDS file to a SeqArray GDS file
 #
 
 seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
@@ -1260,8 +1281,8 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
 
     if (verbose)
     {
-        message(date())
-        cat("SNP GDS to Sequence GDS Format:\n")
+        cat(date(), "\n", sep="")
+        cat("SNP GDS to SeqArray GDS Format:\n")
     }
 
     # open the existing SNP GDS
@@ -1431,14 +1452,14 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
     if (verbose)
     {
         cat("Done.\n")
-        message(date())
+        cat(date(), "\n", sep="")
     }
     if (optimize)
     {
         if (verbose)
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.gdsfn, verbose=verbose)
-        if (verbose) message(date())
+        if (verbose) cat(date(), "\n", sep="")
     }
 
     # output
@@ -1448,7 +1469,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
 
 
 #######################################################################
-# Convert a PLINK BED file to a Sequence GDS file
+# Convert a PLINK BED file to a SeqArray GDS file
 #
 
 seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
@@ -1467,8 +1488,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 
     if (verbose)
     {
-        message(date())
-        cat("PLINK BED to Sequence GDS Format:\n")
+        cat(date(), "\n", sep="")
+        cat("PLINK BED to SeqArray GDS Format:\n")
     }
 
     ##  open and detect bed.fn  ##
@@ -1656,7 +1677,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     if (verbose)
     {
         cat("Done.\n")
-        message(date())
+        cat(date(), "\n", sep="")
     }
     on.exit()
     closefn.gds(dstfile)
@@ -1665,7 +1686,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         if (verbose)
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.gdsfn, verbose=verbose)
-        if (verbose) message(date())
+        if (verbose) cat(date(), "\n", sep="")
     }
 
     # output

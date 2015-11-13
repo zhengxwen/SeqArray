@@ -112,6 +112,15 @@
     invisible()
 }
 
+.append_gds <- function(target.node, gdslist, varname)
+{
+    .MergeNodeAttr(target.node, gdslist, varname)
+    for (i in seq_along(gdslist))
+        append.gdsn(target.node, index.gdsn(gdslist[[i]], varname))
+    readmode.gdsn(target.node)
+    invisible()
+}
+
 
 
 #######################################################################
@@ -455,4 +464,63 @@
         visible=visible)
     args <- c(args, eval(parse(text=paste("list(", storage.param, ")"))))
     do.call(add.gdsn, args)
+}
+
+
+
+#######################################################################
+# Merge attributes
+#
+
+.MergeAttr <- function(val)
+{
+    stopifnot(is.list(val), length(val) > 0L)
+    ans <- unlist(val, recursive=FALSE)
+    if (!is.null(ans))
+    {
+        nm <- names(ans)
+        if (is.null(nm)) stop("Invalid attributes.")
+        if (any(nm == "")) stop("Invalid attributes.")
+        while ((k = anyDuplicated(nm)) > 0L)
+        {
+            i <- which(nm[k] == nm)
+            v <- unique(unlist(ans[i]))
+            ans[[ i[1L] ]] <- v
+            ans <- ans[ - i[-1L] ]
+            nm <- nm[ - i[-1L] ]
+        }
+    }
+    ans
+}
+
+.MergeNodeAttr <- function(target.node, srcfile, varname)
+{
+    v <- vector("list", length(srcfile))
+    for (i in seq_along(srcfile))
+        v[[i]] <- get.attr.gdsn(index.gdsn(srcfile[[i]], varname))
+    v <- .MergeAttr(v)
+    if (!is.null(v))
+    {
+        nm <- names(v)
+        for (i in seq_along(v))
+            put.attr.gdsn(target.node, nm[i], v[[i]])
+    }
+    invisible()
+}
+
+
+
+#######################################################################
+# Get the unique data frame
+#
+
+.UniqueDataFrame <- function(val)
+{
+    stopifnot(is.data.frame(val))
+
+    s <- apply(val, 1, FUN=function(x)
+        paste(paste(names(x), x, sep=": "), collapse=", "))
+    i <- duplicated(s)
+    if (any(i)) val <- val[i, ]
+    val
 }

@@ -5,10 +5,11 @@
     Parses the header of a VCF file.
 }
 \usage{
-seqVCF.Header(vcf.fn)
+seqVCF.Header(vcf.fn, get.num=FALSE)
 }
 \arguments{
     \item{vcf.fn}{the file name of VCF}
+    \item{get.num}{if \code{TRUE}, return the number of samples and variants}
 }
 \value{
     Return a list (with a class name "SeqVCFHeaderClass", S3 object):
@@ -22,6 +23,8 @@ seqVCF.Header(vcf.fn)
     \item{reference}{genome reference}
     \item{header}{the other header lines}
     \item{ploidy}{ploidy, two for humans}
+    \item{num.sample}{the number of samples}
+    \item{num.variant}{the number of variants}
 }
 \details{
     The ID description contains four columns:
@@ -50,7 +53,7 @@ Description -- a variable description.
 # or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # get sample id
-seqVCF.Header(vcf.fn)
+seqVCF.Header(vcf.fn, get.num=TRUE)
 }
 
 \keyword{gds}
