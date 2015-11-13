@@ -449,9 +449,11 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         
 
     ## add sample.id
+    if (verbose) cat("sample.id ...\n")
     .AddVar(storage.option, gfile, "sample.id", samp.id, closezip=TRUE)
 
     ## add variant.id
+    if (verbose) cat("variant.id ...\n")
     .AddVar(storage.option, gfile, "variant.id", seq_along(variant.id),
         storage="int32", closezip=TRUE)
 
@@ -461,15 +463,21 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
         ## add position, chromsome, allele
         # TODO: need to check whether position can be stored in 'int32'
+        if (verbose) cat("position ...\n")
         n <- .AddVar(storage.option, gfile, "position", storage="int32")
         .append_gds(n, flist, "position")
+
+        if (verbose) cat("chromosome ...\n")
         n <- .AddVar(storage.option, gfile, "chromosome", storage="string")
         .append_gds(n, flist, "chromosome")
+
+        if (verbose) cat("allele ...\n")
         n <- .AddVar(storage.option, gfile, "allele", storage="string")
         .append_gds(n, flist, "allele")
 
 
         ## add a folder for genotypes
+        if (verbose) cat("genotype, phase ...\n")
         varGeno <- addfolder.gdsn(gfile, "genotype")
         .MergeNodeAttr(varGeno, flist, "genotype")
 
@@ -491,12 +499,22 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         for (i in seq_along(flist))
         {
             sid <- seqGetData(flist[[i]], "sample.id")
+            n3 <- index.gdsn(flist[[i]], "genotype/data")
+            n4 <- index.gdsn(flist[[i]], "phase/data")
             if (identical(sid, samp.id))
             {
-                append.gdsn(n1, index.gdsn(flist[[i]], "genotype/data"))
-                append.gdsn(n2, index.gdsn(flist[[i]], "phase/data"))
+                append.gdsn(n1, n3)
+                append.gdsn(n2, n4)
             } else {
-                stop("not implemented yet!")
+                k <- match(samp.id, sid)
+                s <- vector("list", 3L)
+                s[2L] <- k
+                assign.gdsn(n1, n3, seldim=s, append=TRUE,
+                    .value=NA_integer_, .substitute=3L)
+                s <- vector("list", length(objdesp.gdsn(n4)$dim))
+                s[length(s)-1L] <- k
+                assign.gdsn(n2, n4, seldim=s, append=TRUE,
+                    .value=NA_integer_, .substitute=0)
             }
         }
 
@@ -539,6 +557,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
 
         ## VCF INFO
+        if (verbose) cat("annotation/info ...\n")
         varInfo <- addfolder.gdsn(varAnnot, "info")
         varnm <- NULL
         for (i in seq_along(flist))
@@ -575,6 +594,17 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             }
             if (idx < 1L) stop("internal error, info field.")
 
+            need <- FALSE
+            for (j in seq_along(flist))
+            {
+                n <- index.gdsn(flist[[j]], "annotation/info", silent=TRUE)
+                if (is.null(n))
+                {
+                    need <- TRUE
+                    break
+                }
+            }
+
             n <- index.gdsn(flist[[idx]], paste0("annotation/info/", varnm[i]))
             n1 <- index.gdsn(flist[[idx]],
                 paste0("annotation/info/@", varnm[i]), silent=TRUE)
@@ -586,33 +616,40 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             .MergeNodeAttr(n2, flist[idx], paste0("annotation/info/", varnm[i]))
 
             n3 <- n1
-            if (!is.null(n1))
+            if (!is.null(n1) | need)
             {
                 n3 <- .AddVar(storage.option, varInfo,
                     paste("@", varnm[i], sep=""), storage="int32",
                     visible=FALSE)
             }
 
-            # TODO
             for (j in seq_along(flist))
             {
                 f <- flist[[j]]
                 n4 <- index.gdsn(f, paste0("annotation/info/", varnm[i]),
                     silent=TRUE)
+                n5 <- index.gdsn(f, paste0("annotation/info/@", varnm[i]),
+                    silent=TRUE)
+
                 if (!is.null(n4))
                 {
                     append.gdsn(n2, n4)
+                    if (!is.null(n5))
+                    {
+                        append.gdsn(n3, n5)
+                    } else {
+                        if (!is.null(n3))
+                        {
+                            cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
+                            .repeat_gds(n3, 1L, cnt)
+                        }
+                    }
                 } else {
                     if (is.null(n3))
                         stop(paste0("annotation/info/@", varnm[i]), " error.")
                     cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
                     .repeat_gds(n3, 0L, cnt)
                 }
-
-                n4 <- index.gdsn(f, paste0("annotation/info/@", varnm[i]),
-                    silent=TRUE)
-                if (!is.null(n4) & !is.null(n3))
-                    append.gdsn(n3, n4)
             }
 
             readmode.gdsn(n2)
@@ -621,6 +658,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
 
         ## VCF FORMAT
+        if (verbose) cat("annotation/format ...\n")
         varFormat <- addfolder.gdsn(varAnnot, "format")
         varnm <- NULL
         for (i in seq_along(flist))
@@ -642,6 +680,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         # for-loop
         for (i in seq_along(varnm))
         {
+            if (verbose) cat("\t", varnm[i], "\n", sep="")
             idx <- 0L
             for (j in seq_along(flist))
             {
@@ -674,22 +713,27 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             n5 <- .AddVar(storage.option, n3, "@data", storage="int32",
                 visible=FALSE)
 
-            # TODO
             for (j in seq_along(flist))
             {
                 f <- flist[[j]]
                 n6 <- index.gdsn(f, paste0("annotation/format/", varnm[i]),
                     silent=TRUE)
-                if (!is.null(n4))
+                if (!is.null(n6))
                 {
                     sid <- seqGetData(f, "sample.id")
+                    n7 <- index.gdsn(n6, "data")
                     if (identical(sid, samp.id))
                     {
-                        append.gdsn(n4, index.gdsn(n6, "data"))
-                        append.gdsn(n5, index.gdsn(n6, "@data"))
+                        append.gdsn(n4, n7)
                     } else {
-                        stop("not implemented yet!")
+                        d <- objdesp.gdsn(n7)$dim
+                        if (d[length(d)-1L] != length(sid))
+                            stop("Invalid FORMAT variable.")
+                        s <- vector("list", length(d))
+                        s[length(s)-1L] <- match(samp.id, sid)
+                        assign.gdsn(n4, n7, seldim=s, append=TRUE)
                     }
+                    append.gdsn(n5, index.gdsn(n6, "@data"))
                 } else {
                     cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
                     .repeat_gds(n5, 0L, cnt)
@@ -702,6 +746,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
 
         ## annotation folder
+        if (verbose) cat("sample.annotation ...\n")
         varSamp <- addfolder.gdsn(gfile, "sample.annotation")
         varnm <- NULL
         for (i in seq_along(flist))
@@ -748,7 +793,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
     for (f in flist) seqClose(f)
     flist <- list()
-    closefn.gds(gfile); gfile <- NULL
+    closefn.gds(gfile)
+    on.exit()
 
     if (verbose)
     {
