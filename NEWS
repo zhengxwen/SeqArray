@@ -17,6 +17,8 @@ CHANGES IN VERSION 1.10.0-1.10.4
 
     o `seqStorage.Option()` controls the compression level of FORMAT/DATA
 
+    o `seqVCF2GDS()` allows extract part of VCF files via 'start' and 'count'
+
     o `seqMerge()` combines multiple GDS files with the same samples
 
 

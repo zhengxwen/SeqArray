@@ -337,13 +337,19 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 # Merge multiple GDS files
 #
 seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
-    optimize=TRUE, verbose=TRUE)
+    info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn))
     if (length(gds.fn) <= 1L)
         stop("'gds.fn' should have more than one files.")
     stopifnot(is.character(out.fn), length(out.fn)==1L)
+
+    stopifnot(is.null(info.var) | is.character(info.var))
+    stopifnot(is.null(fmt.var) | is.character(fmt.var))
+    stopifnot(is.null(samp.var) | is.character(samp.var))
+
+    stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose) cat(date(), "\n", sep="")
@@ -541,6 +547,16 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             if (!is.null(n))
                 varnm <- unique(c(varnm, ls.gdsn(n)))
         }
+        if (!is.null(info.var))
+        {
+            s <- setdiff(info.var, varnm)
+            if (length(s) > 0L)
+            {
+                warning("No INFO variable(s): ", paste(s, collapse=", "),
+                    immediate.=TRUE)
+            }
+            varnm <- intersect(varnm, info.var)
+        }
         # for-loop
         for (i in seq_along(varnm))
         {
@@ -613,6 +629,16 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             if (!is.null(n))
                 varnm <- unique(c(varnm, ls.gdsn(n)))
         }
+        if (!is.null(fmt.var))
+        {
+            s <- setdiff(fmt.var, varnm)
+            if (length(s) > 0L)
+            {
+                warning("No FORMAT variable(s): ", paste(s, collapse=", "),
+                    immediate.=TRUE)
+            }
+            varnm <- intersect(varnm, fmt.var)
+        }
         # for-loop
         for (i in seq_along(varnm))
         {
@@ -656,8 +682,14 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
                     silent=TRUE)
                 if (!is.null(n4))
                 {
-                    append.gdsn(n4, index.gdsn(n6, "data"))
-                    append.gdsn(n5, index.gdsn(n6, "@data"))
+                    sid <- seqGetData(f, "sample.id")
+                    if (identical(sid, samp.id))
+                    {
+                        append.gdsn(n4, index.gdsn(n6, "data"))
+                        append.gdsn(n5, index.gdsn(n6, "@data"))
+                    } else {
+                        stop("not implemented yet!")
+                    }
                 } else {
                     cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
                     .repeat_gds(n5, 0L, cnt)
@@ -677,6 +709,16 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             n <- index.gdsn(flist[[i]], "sample.annotation", silent=TRUE)
             if (!is.null(n))
                 varnm <- unique(c(varnm, ls.gdsn(n)))
+        }
+        if (!is.null(samp.var))
+        {
+            s <- setdiff(samp.var, varnm)
+            if (length(s) > 0L)
+            {
+                warning("No SAMPLE variable(s): ", paste(s, collapse=", "),
+                    immediate.=TRUE)
+            }
+            varnm <- intersect(varnm, samp.var)
         }
         # for-loop
         for (i in seq_along(varnm))

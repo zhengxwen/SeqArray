@@ -6,13 +6,19 @@
 }
 \usage{
 seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option(),
-    optimize=TRUE, verbose=TRUE)
+    info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file names of multiple GDS files}
     \item{out.fn}{the output file name}
     \item{storage.option}{specify the storage and compression options,
         by default \code{\link{seqStorage.Option}}}
+    \item{info.var}{characters, the variable name(s) in the INFO field;
+        or \code{NULL} for all variables}
+    \item{fmt.var}{characters, the variable name(s) in the FORMAT field;
+        or \code{NULL} for all variables}
+    \item{samp.var}{characters, the variable name(s) in 'sample.annotation';
+        or \code{NULL} for all variables}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}
