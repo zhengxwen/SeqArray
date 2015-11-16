@@ -6,7 +6,7 @@
 }
 \usage{
 seqStorage.Option(compression=c("ZIP_RA", "ZIP_RA.max", "LZ4_RA",
-    "LZ4_RA.max", ""), float.mode="float32",
+    "LZ4_RA.max", "none"), float.mode="float32",
     geno.compress=NULL, info.compress=NULL, format.compress=NULL,
     index.compress=NULL, ...)
 }

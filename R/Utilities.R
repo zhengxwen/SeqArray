@@ -337,17 +337,507 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 # Merge multiple GDS files
 #
 seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
-    verbose=TRUE)
+    info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn))
     if (length(gds.fn) <= 1L)
         stop("'gds.fn' should have more than one files.")
     stopifnot(is.character(out.fn), length(out.fn)==1L)
+
+    stopifnot(is.null(info.var) | is.character(info.var))
+    stopifnot(is.null(fmt.var) | is.character(fmt.var))
+    stopifnot(is.null(samp.var) | is.character(samp.var))
+
+    stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
+    if (verbose)
+    {
+        cat(date(), "\n", sep="")
+        cat(sprintf("Merging %d GDS files:\n", length(gds.fn)))
+    }
+
+    # open all GDS files
+    flist <- vector("list", length(gds.fn))
+    on.exit({ for (f in flist) seqClose(f) })
+    for (i in seq_along(gds.fn))
+        flist[[i]] <- seqOpen(gds.fn[i])
+
+    # samples
+    samp.id <- samp2.id <- seqGetData(flist[[1L]], "sample.id")
+    for (f in flist[-1L])
+    {
+        s <- seqGetData(f, "sample.id")
+        samp.id <- unique(c(samp.id, s))
+        samp2.id <- intersect(samp2.id, s)
+    }
+
+    if (verbose)
+    {
+        cat(sprintf("\t%d sample(s) in total, %d sample(s) in common\n",
+            length(samp.id), length(samp2.id)))
+    }
+
+    # variants
+    variant <- function(f) {
+        paste(seqGetData(f, "chromosome"), seqGetData(f, "position"), sep="-")
+    }
+    variant.id <- variant2.id <- variant(flist[[1L]])
+    for (f in flist[-1L])
+    {
+        s <- variant(f)
+        variant.id <- unique(c(variant.id, s))
+        variant2.id <- intersect(variant2.id, s)
+    }
+
+    if (verbose)
+    {
+        cat(sprintf("\t%d variant(s) in total, %d variant(s) in common\n",
+            length(variant.id), length(variant2.id)))
+    }
+
+    # common samples
+    if (length(samp2.id) > 0L)
+    {
+        if (length(variant2.id) > 0L)
+            stop("There are overlapping on both samples and variants.")
+    } else {
+        stop("not implemented yet!")
+    }
+
+
+    ## create a GDS file
+    gfile <- createfn.gds(out.fn)
+    on.exit({ if (!is.null(gfile)) closefn.gds(gfile) }, add=TRUE)
+
+    put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
+    put.attr.gdsn(gfile$root, "FileVersion", "v1.0")
+
+    n <- addfolder.gdsn(gfile, "description")
+    .MergeNodeAttr(n, flist, "description")
+
+    v <- vector("list", length(gds.fn))
+    for (i in seq_along(flist))
+        v[[i]] <- seqSummary(flist[[i]], check="none", verbose=FALSE)$reference
+    reference <- as.character(unique(unlist(v)))
+    .AddVar(storage.option, n, "reference", reference, closezip=TRUE,
+        visible=FALSE)
+    
+    alt <- NULL
+    for (i in seq_along(flist))
+    {
+        z <- index.gdsn(flist[[i]], "description/vcf.alt", silent=TRUE)
+        if (!is.null(z))
+            alt <- rbind(alt, read.gdsn(z))
+    }
+    if (!is.null(alt))
+    {
+        .AddVar(storage.option, n, "vcf.alt", .UniqueDataFrame(alt),
+            closezip=TRUE, visible=FALSE)
+    }
+        
+    contig <- NULL
+    for (i in seq_along(flist))
+    {
+        z <- index.gdsn(flist[[i]], "description/vcf.contig", silent=TRUE)
+        if (!is.null(z))
+            contig <- rbind(contig, read.gdsn(z))
+    }
+    if (!is.null(contig))
+    {
+        .AddVar(storage.option, n, "vcf.contig", .UniqueDataFrame(contig),
+            closezip=TRUE, visible=FALSE)
+    }
+
+    header <- NULL
+    for (i in seq_along(flist))
+    {
+        z <- index.gdsn(flist[[i]], "description/vcf.header", silent=TRUE)
+        if (!is.null(z))
+            header <- rbind(header, read.gdsn(z))
+    }
+    if (!is.null(header))
+    {
+        .AddVar(storage.option, n, "vcf.header", .UniqueDataFrame(header),
+            closezip=TRUE, visible=FALSE)
+    }
+        
+
+    ## add sample.id
+    if (verbose) cat("sample.id\n")
+    .AddVar(storage.option, gfile, "sample.id", samp.id, closezip=TRUE)
+
+    ## add variant.id
+    if (verbose) cat("variant.id\n")
+    .AddVar(storage.option, gfile, "variant.id", seq_along(variant.id),
+        storage="int32", closezip=TRUE)
+
+    if (length(samp2.id) > 0L)
+    {
+        nSamp <- length(samp.id)
+
+        ## add position, chromsome, allele
+        # TODO: need to check whether position can be stored in 'int32'
+        if (verbose) cat("position\n")
+        n <- .AddVar(storage.option, gfile, "position", storage="int32")
+        .append_gds(n, flist, "position")
+
+        if (verbose) cat("chromosome\n")
+        n <- .AddVar(storage.option, gfile, "chromosome", storage="string")
+        .append_gds(n, flist, "chromosome")
+
+        if (verbose) cat("allele\n")
+        n <- .AddVar(storage.option, gfile, "allele", storage="string")
+        .append_gds(n, flist, "allele")
+
+
+        ## add a folder for genotypes
+        if (verbose) cat("genotype, phase [")
+        varGeno <- addfolder.gdsn(gfile, "genotype")
+        .MergeNodeAttr(varGeno, flist, "genotype")
+
+        ploidy <- seqSummary(flist[[1L]], check="none", verbose=FALSE)$ploidy
+        for (i in seq_along(gds.fn))
+        {
+            if (!identical(ploidy, seqSummary(flist[[1L]], check="none",
+                    verbose=FALSE)$ploidy))
+                stop("ploidy should be the same!")
+        }
+        n1 <- .AddVar(storage.option, varGeno, "data", storage="bit2",
+            valdim=c(ploidy, nSamp, 0L))
+
+        ## add phase folder
+        varPhase <- addfolder.gdsn(gfile, "phase")
+        n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
+            valdim=c(header$ploidy-1L, nSamp, 0L))
+
+        for (i in seq_along(flist))
+        {
+            if (verbose)
+                cat(ifelse(i > 1L, ", ", ""), i, sep="")
+            sid <- seqGetData(flist[[i]], "sample.id")
+            n3 <- index.gdsn(flist[[i]], "genotype/data")
+            n4 <- index.gdsn(flist[[i]], "phase/data")
+            if (identical(sid, samp.id))
+            {
+                append.gdsn(n1, n3)
+                append.gdsn(n2, n4)
+            } else {
+                k <- match(samp.id, sid)
+                s <- vector("list", 3L)
+                s[2L] <- k
+                assign.gdsn(n1, n3, seldim=s, append=TRUE,
+                    .value=NA_integer_, .substitute=3L)
+                s <- vector("list", length(objdesp.gdsn(n4)$dim))
+                s[length(s)-1L] <- k
+                assign.gdsn(n2, n4, seldim=s, append=TRUE,
+                    .value=NA_integer_, .substitute=0)
+            }
+        }
+
+        readmode.gdsn(n1)
+        readmode.gdsn(n2)
+
+        n <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
+            visible=FALSE)
+        .append_gds(n, flist, "genotype/@data")
+
+        # TODO
+        n <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
+            valdim=c(3L,0L))
+        put.attr.gdsn(n, "R.colnames",
+            c("sample.index", "variant.index", "length"))
+        .AddVar(storage.option, varGeno, "extra", storage="int16", closezip=TRUE)
+
+        n <- .AddVar(storage.option, varPhase, "extra.index",
+            storage="int32", valdim=c(3L,0L))
+        put.attr.gdsn(n, "R.colnames",
+            c("sample.index", "variant.index", "length"))
+        .AddVar(storage.option, varPhase, "extra", storage="bit1", closezip=TRUE)
+
+        # sync file
+        sync.gds(gfile)
+        if (verbose) cat("]\n")
+
+
+        ## add annotation folder
+        varAnnot <- addfolder.gdsn(gfile, "annotation")
+
+        # add id
+        n <- .AddVar(storage.option, varAnnot, "id", storage="string")
+        .append_gds(n, flist, "annotation/id")
+        # add qual
+        n <- .AddVar(storage.option, varAnnot, "qual", storage="float")
+        .append_gds(n, flist, "annotation/qual")
+        # add filter
+        n <- .AddVar(storage.option, varAnnot, "filter", storage="int32")
+        .append_gds(n, flist, "annotation/filter")
+
+
+        ## VCF INFO
+        if (verbose) cat("annotation/info\n")
+        varInfo <- addfolder.gdsn(varAnnot, "info")
+        varnm <- NULL
+        for (i in seq_along(flist))
+        {
+            n <- index.gdsn(flist[[i]], "annotation/info", silent=TRUE)
+            if (!is.null(n))
+                varnm <- unique(c(varnm, ls.gdsn(n)))
+        }
+        if (!is.null(info.var))
+        {
+            s <- setdiff(info.var, varnm)
+            if (length(s) > 0L)
+            {
+                warning("No INFO variable(s): ", paste(s, collapse=", "),
+                    immediate.=TRUE)
+            }
+            varnm <- intersect(varnm, info.var)
+        }
+        # for-loop
+        for (i in seq_along(varnm))
+        {
+            idx <- 0L
+            for (j in seq_along(flist))
+            {
+                n <- index.gdsn(flist[[j]], "annotation/info", silent=TRUE)
+                if (!is.null(n))
+                {
+                    if (varnm[i] %in% ls.gdsn(n))
+                    {
+                        idx <- j
+                        break
+                    }
+                }
+            }
+            if (idx < 1L) stop("internal error, info field.")
+
+            need <- FALSE
+            for (j in seq_along(flist))
+            {
+                n <- index.gdsn(flist[[j]], "annotation/info", silent=TRUE)
+                if (is.null(n))
+                {
+                    need <- TRUE
+                    break
+                }
+            }
+
+            n <- index.gdsn(flist[[idx]], paste0("annotation/info/", varnm[i]))
+            n1 <- index.gdsn(flist[[idx]],
+                paste0("annotation/info/@", varnm[i]), silent=TRUE)
+
+            dp <- objdesp.gdsn(n)
+            dp$dim[length(dp$dim)] <- 0L
+            n2 <- .AddVar(storage.option, varInfo, varnm[i], storage=dp$storage,
+                valdim=dp$dim)
+            .MergeNodeAttr(n2, flist[idx], paste0("annotation/info/", varnm[i]))
+
+            n3 <- n1
+            if (!is.null(n1) | need)
+            {
+                n3 <- .AddVar(storage.option, varInfo,
+                    paste("@", varnm[i], sep=""), storage="int32",
+                    visible=FALSE)
+            }
+
+            for (j in seq_along(flist))
+            {
+                f <- flist[[j]]
+                n4 <- index.gdsn(f, paste0("annotation/info/", varnm[i]),
+                    silent=TRUE)
+                n5 <- index.gdsn(f, paste0("annotation/info/@", varnm[i]),
+                    silent=TRUE)
+
+                if (!is.null(n4))
+                {
+                    append.gdsn(n2, n4)
+                    if (!is.null(n5))
+                    {
+                        append.gdsn(n3, n5)
+                    } else {
+                        if (!is.null(n3))
+                        {
+                            cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
+                            .repeat_gds(n3, 1L, cnt)
+                        }
+                    }
+                } else {
+                    if (is.null(n3))
+                        stop(paste0("annotation/info/@", varnm[i]), " error.")
+                    cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
+                    .repeat_gds(n3, 0L, cnt)
+                }
+            }
+
+            readmode.gdsn(n2)
+            if (!is.null(n3)) readmode.gdsn(n3)
+        }
+
+
+        ## VCF FORMAT
+        if (verbose) cat("annotation/format\n")
+        varFormat <- addfolder.gdsn(varAnnot, "format")
+        varnm <- NULL
+        for (i in seq_along(flist))
+        {
+            n <- index.gdsn(flist[[i]], "annotation/format", silent=TRUE)
+            if (!is.null(n))
+                varnm <- unique(c(varnm, ls.gdsn(n)))
+        }
+        if (!is.null(fmt.var))
+        {
+            s <- setdiff(fmt.var, varnm)
+            if (length(s) > 0L)
+            {
+                warning("No FORMAT variable(s): ", paste(s, collapse=", "),
+                    immediate.=TRUE)
+            }
+            varnm <- intersect(varnm, fmt.var)
+        }
+        # for-loop
+        for (i in seq_along(varnm))
+        {
+            if (verbose) cat("\t", varnm[i], " [", sep="")
+            idx <- 0L
+            for (j in seq_along(flist))
+            {
+                n <- index.gdsn(flist[[j]], "annotation/format", silent=TRUE)
+                if (!is.null(n))
+                {
+                    if (varnm[i] %in% ls.gdsn(n))
+                    {
+                        idx <- j
+                        break
+                    }
+                }
+            }
+            if (idx < 1L) stop("internal error, format field.")
+
+            n <- index.gdsn(flist[[idx]],
+                paste0("annotation/format/", varnm[i]))
+            n1 <- index.gdsn(flist[[idx]],
+                paste0("annotation/format/", varnm[i], "/data"))
+            n2 <- index.gdsn(flist[[idx]],
+                paste0("annotation/format/", varnm[i], "/@data"))
+
+            n3 <- addfolder.gdsn(varFormat, varnm[i])
+            .MergeNodeAttr(n3, flist[idx],
+                paste0("annotation/format/", varnm[i]))
+            dp <- objdesp.gdsn(n1)
+            dp$dim[length(dp$dim)] <- 0L
+            n4 <- .AddVar(storage.option, n3, "data", storage=dp$storage,
+                valdim=dp$dim)
+            n5 <- .AddVar(storage.option, n3, "@data", storage="int32",
+                visible=FALSE)
+
+            for (j in seq_along(flist))
+            {
+                if (verbose)
+                    cat(ifelse(j > 1L, ", ", ""), j, sep="")
+                f <- flist[[j]]
+                n6 <- index.gdsn(f, paste0("annotation/format/", varnm[i]),
+                    silent=TRUE)
+                if (!is.null(n6))
+                {
+                    sid <- seqGetData(f, "sample.id")
+                    n7 <- index.gdsn(n6, "data")
+                    if (identical(sid, samp.id))
+                    {
+                        append.gdsn(n4, n7)
+                    } else {
+                        d <- objdesp.gdsn(n7)$dim
+                        if (d[length(d)-1L] != length(sid))
+                            stop("Invalid FORMAT variable.")
+                        s <- vector("list", length(d))
+                        s[length(s)-1L] <- match(samp.id, sid)
+                        assign.gdsn(n4, n7, seldim=s, append=TRUE)
+                    }
+                    append.gdsn(n5, index.gdsn(n6, "@data"))
+                } else {
+                    cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
+                    .repeat_gds(n5, 0L, cnt)
+                }
+            }
+
+            readmode.gdsn(n4)
+            readmode.gdsn(n5)
+            if (verbose) cat("]\n")
+        }
+
+
+        ## annotation folder
+        if (verbose) cat("sample.annotation\n")
+        varSamp <- addfolder.gdsn(gfile, "sample.annotation")
+        varnm <- NULL
+        for (i in seq_along(flist))
+        {
+            n <- index.gdsn(flist[[i]], "sample.annotation", silent=TRUE)
+            if (!is.null(n))
+                varnm <- unique(c(varnm, ls.gdsn(n)))
+        }
+        if (!is.null(samp.var))
+        {
+            s <- setdiff(samp.var, varnm)
+            if (length(s) > 0L)
+            {
+                warning("No SAMPLE variable(s): ", paste(s, collapse=", "),
+                    immediate.=TRUE)
+            }
+            varnm <- intersect(varnm, samp.var)
+        }
+        # for-loop
+        for (i in seq_along(varnm))
+        {
+            idx <- 0L
+            for (j in seq_along(flist))
+            {
+                n <- index.gdsn(flist[[j]], "annotation/format", silent=TRUE)
+                if (!is.null(n))
+                {
+                    if (varnm[i] %in% ls.gdsn(n))
+                    {
+                        idx <- j
+                        break
+                    }
+                }
+            }
+            if (idx < 1L) stop("internal error, format field.")
+
+            copyto.gdsn(varSamp, index.gdsn(flist[[idx]],
+                paste0("sample.annotation/", varnm[i])))
+        }
+
+    } else {
+        stop("not implemented yet!")
+    }
+
+    for (f in flist) seqClose(f)
+    flist <- list()
+    closefn.gds(gfile)
+    on.exit()
+
+    if (verbose)
+    {
+        cat("Done.\n")
+        cat(date(), "\n", sep="")
+    }
+
+
+    ##################################################
+    # optimize access efficiency
+
+    if (optimize)
+    {
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
+        cleanup.gds(out.fn, verbose=verbose)
+        if (verbose) cat(date(), "\n", sep="")
+    }
+
     # return
-    invisible()
+    invisible(normalizePath(out.fn))
 }
 
 
@@ -356,12 +846,14 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 # Storage options for the SeqArray GDS file
 #
 seqStorage.Option <- function(compression=c("ZIP_RA", "ZIP_RA.max", "LZ4_RA",
-    "LZ4_RA.max", ""), float.mode="float32",
+    "LZ4_RA.max", "none"), float.mode="float32",
     geno.compress=NULL, info.compress=NULL, format.compress=NULL,
     index.compress=NULL, ...)
 {
     # check
     compression <- match.arg(compression)
+    if (compression == "none") compression <- ""
+
     stopifnot(is.character(float.mode), length(float.mode) > 0L)
     if (!is.null(geno.compress))
         stopifnot(is.character(geno.compress), length(geno.compress)==1L)

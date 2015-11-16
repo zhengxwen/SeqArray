@@ -14,14 +14,14 @@ Big data management of genome-wide sequence variants with thousands of individua
 
 ## Bioconductor:
 
-Release Version: v1.10.3
+Release Version: v1.10.4
 
 [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 
 * [Help Documents](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [Data Analytics](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/AnalysisTutorial.html)
 
-Development Version: v1.11.1
+Development Version: v1.11.2
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
@@ -59,4 +59,65 @@ curl -L https://github.com/zhengxwen/gdsfmt/tarball/master/ -o gdsfmt_latest.tar
 curl -L https://github.com/zhengxwen/SeqArray/tarball/master/ -o SeqArray_latest.tar.gz
 R CMD INSTALL gdsfmt_latest.tar.gz
 R CMD INSTALL SeqArray_latest.tar.gz
+```
+
+
+
+## Examples
+
+```R
+library(SeqArray)
+
+gds.fn <- seqExampleFileName("gds")
+
+# open a GDS file
+f <- seqOpen(gds.fn)
+
+# display the contents of the GDS file
+f
+
+# close the file
+seqClose(f)
+```
+
+```R
+## Object of class "SeqVarGDSClass"
+## File: SeqArray/extdata/CEU_Exon.gds (396.3 KB)
+## +    [  ] *
+## |--+ description   [  ] *
+## |--+ sample.id   { VStr8 90 ZIP_RA(30.83%), 222 bytes }
+## |--+ variant.id   { Int32 1348 ZIP_RA(35.72%), 1.9 KB }
+## |--+ position   { Int32 1348 ZIP_RA(86.44%), 4.7 KB }
+## |--+ chromosome   { VStr8 1348 ZIP_RA(2.66%), 91 bytes }
+## |--+ allele   { VStr8 1348 ZIP_RA(17.19%), 928 bytes }
+## |--+ genotype   [  ] *
+## |  |--+ data   { Bit2 2x90x1348 ZIP_RA(28.39%), 17.2 KB }
+## |  |--+ ~data   { Bit2 2x1348x90 ZIP_RA(36.04%), 21.9 KB }
+## |  |--+ extra.index   { Int32 3x0 ZIP_RA, 17 bytes } *
+## |  |--+ extra   { Int16 0 ZIP_RA, 17 bytes }
+## |--+ phase   [  ]
+## |  |--+ data   { Bit1 90x1348 ZIP_RA(0.36%), 55 bytes }
+## |  |--+ ~data   { Bit1 1348x90 ZIP_RA(0.36%), 55 bytes }
+## |  |--+ extra.index   { Int32 3x0 ZIP_RA, 17 bytes } *
+## |  |--+ extra   { Bit1 0 ZIP_RA, 17 bytes }
+## |--+ annotation   [  ]
+## |  |--+ id   { VStr8 1348 ZIP_RA(41.02%), 6.0 KB }
+## |  |--+ qual   { Float32 1348 ZIP_RA(0.91%), 49 bytes }
+## |  |--+ filter   { Int32,factor 1348 ZIP_RA(0.89%), 48 bytes } *
+## |  |--+ info   [  ]
+## |  |  |--+ AA   { VStr8 1348 ZIP_RA(24.22%), 653 bytes } *
+## |  |  |--+ AC   { Int32 1348 ZIP_RA(27.23%), 1.5 KB } *
+## |  |  |--+ AN   { Int32 1348 ZIP_RA(20.62%), 1.1 KB } *
+## |  |  |--+ DP   { Int32 1348 ZIP_RA(62.57%), 3.4 KB } *
+## |  |  |--+ HM2   { Bit1 1348 ZIP_RA(117.16%), 198 bytes } *
+## |  |  |--+ HM3   { Bit1 1348 ZIP_RA(117.16%), 198 bytes } *
+## |  |  |--+ OR   { VStr8 1348 ZIP_RA(13.98%), 238 bytes } *
+## |  |  |--+ GP   { VStr8 1348 ZIP_RA(34.36%), 5.4 KB } *
+## |  |  |--+ BN   { Int32 1348 ZIP_RA(21.64%), 1.2 KB } *
+## |  |--+ format   [  ]
+## |  |  |--+ DP   [  ] *
+## |  |  |  |--+ data   { Int32 90x1348 ZIP_RA(33.83%), 164.2 KB }
+## |  |  |  |--+ ~data   { Int32 1348x90 ZIP_RA(32.23%), 156.4 KB }
+## |--+ sample.annotation   [  ]
+## |  |--+ family   { VStr8 90 ZIP_RA(34.70%), 135 bytes }
 ```
