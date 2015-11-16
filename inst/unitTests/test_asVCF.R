@@ -26,7 +26,7 @@
   ## The META DataFrame is now one element of the DataFrameList.
   ## tags with non-alphanumeric characters get ignored by scanBcfHeader
   meta.hdg <- meta(hdg)$META[grep("^[[:alnum:]]+$", row.names(meta(hdg)$META)),,drop=FALSE]
-  checkIdentical(meta(hdv)$META, meta.hdg)
+  checkIdentical(meta(hdv)$META[rownames(meta.hdg),,drop=FALSE], meta.hdg)
   checkIdentical(fixed(hdv), fixed(hdg))
   checkIdentical(info(hdv), info(hdg))
   checkIdentical(geno(hdv), geno(hdg))
@@ -60,11 +60,11 @@
   vcf <- readVcf(vcffile, genome="hg19")
   gdsobj <- seqOpen(gdsfile)
 
-##   .test_rowRanges(rowRanges(vcf), .rowRanges(gdsobj))
-##   .test_colData(colData(vcf), .colData(gdsobj))
-##   .test_header(header(vcf), .header(gdsobj))
-##   .test_info(info(vcf), .info(gdsobj))
-##   .test_geno(geno(vcf), .geno(gdsobj))
+  ## .test_rowRanges(rowRanges(vcf), rowRanges(gdsobj))
+  ## .test_colData(colData(vcf), colData(gdsobj))
+  ## .test_header(header(vcf), header(gdsobj))
+  ## .test_info(info(vcf), .info(gdsobj))
+  ## .test_geno(geno(vcf), .geno(gdsobj))
 
   vcfg <- asVCF(gdsobj)
   .test_rowRanges(rowRanges(vcf), rowRanges(vcfg))
@@ -100,13 +100,13 @@ test_asVCF_altInHead <- function() {
 }
 
 ## takes too long - use for development only
-## test_asVCF_c22 <- function() {
-##   vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
-##   gdsfile <- tempfile()
-##   seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
-##   .test_asVCF(vcffile, gdsfile)
-##   unlink(gdsfile)
-## }
+test_asVCF_c22 <- function() {
+  vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+  gdsfile <- tempfile()
+  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+  .test_asVCF(vcffile, gdsfile)
+  unlink(gdsfile)
+}
 
 test_info_geno <- function() {
   vcffile <- system.file("extdata", "gl_chr1.vcf", package="VariantAnnotation")
