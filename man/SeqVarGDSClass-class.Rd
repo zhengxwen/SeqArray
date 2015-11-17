@@ -8,6 +8,13 @@
 \alias{alt,SeqVarGDSClass-method}
 \alias{filt,SeqVarGDSClass-method}
 \alias{qual,SeqVarGDSClass-method}
+\alias{fixed,SeqVarGDSClass-method}
+\alias{header,SeqVarGDSClass-method}
+\alias{info,SeqVarGDSClass-method}
+\alias{geno,SeqVarGDSClass-method}
+\alias{geno,SeqVarGDSClass,ANY-method}
+\alias{rowRanges,SeqVarGDSClass-method}
+\alias{colData,SeqVarGDSClass-method}
 \alias{asVCF,SeqVarGDSClass-method}
 
 \title{SeqVarGDSClass}
@@ -40,12 +47,36 @@ to create a \code{SeqVarGDSClass} object.
 			Returns the alternate alleles as a \code{\link{DNAStringSetList}}.
 		}
 		\item{}{
+			\code{qual(x)}:
+			Returns the quality scores.
+		}
+		\item{}{
 			\code{filt(x)}:
 			Returns the filter data.
 		}
 		\item{}{
-			\code{qual(x)}:
-			Returns the quality scores.
+			\code{fixed(x)}:
+			Returns the fixed fields (ref, alt, qual, filt).
+		}
+		\item{}{
+			\code{header(x)}:
+			Returns the header.
+		}
+		\item{}{
+			\code{rowRanges(x)}:
+			Returns a \code{GRanges} object with metadata.
+		}
+		\item{}{
+			\code{colData(x)}:
+			Returns a \code{DataFrame} with sample identifiers.
+		}
+		\item{}{
+			\code{info(x, info=NULL)}:
+			Returns the info fields as a \code{DataFrame}. \code{info} is a character vector with the names of fields to return (default is to return all).
+		}
+		\item{}{
+			\code{geno(x, geno=NULL)}:
+			Returns the geno (format) fields as a \code{SimpleList}. \code{geno} is a character vector with the names of fields to return (default is to return all).
 		}
 	}
 

@@ -27,7 +27,9 @@ import(GenomicRanges)
 
 importFrom(VariantAnnotation, VCF, VCFHeader, readVcf)
 importClassesFrom(VariantAnnotation, VCF, CollapsedVCF, VCFHeader)
-importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF)
+importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF,
+                  header, fixed, info, geno)
+importMethodsFrom(SummarizedExperiment, colData, rowRanges)
 
 # Export all names
 exportPattern("^seq*")
@@ -36,5 +38,6 @@ export(.Last.lib)
 exportClasses(SeqVarGDSClass)
 
 
-exportMethods(granges, ref, alt, qual, filt, asVCF)
+exportMethods(granges, ref, alt, qual, filt, asVCF, header, fixed,
+              info, geno, colData, rowRanges)
 exportMethods(seqClose, seqSetFilter)
