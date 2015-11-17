@@ -91,8 +91,8 @@ setMethod("asVCF",
                 colData=colData(x),
                 exptData=SimpleList(header=header(x)),
                 fixed=fixed(x),
-                info=.info(x, info),
-                geno=.geno(x, geno))
+                info=info(x, info),
+                geno=geno(x, geno))
           })
 
 setMethod("rowRanges",
@@ -198,42 +198,44 @@ setMethod("fixed",
          Float=NumericList(x))
 }
 
-.info <- function(x, info=NULL) {
-  des <- seqSummary(x, check="none", verbose=FALSE)$info
-  if (!is.null(info)) {
-    des <- des[des$var.name %in% info,]
-  }
-  infoDf <- DataFrame(row.names=seqGetData(x, "variant.id"))
-  if (nrow(des) > 0) {
-    for (i in 1:nrow(des)) {
-      v <- seqGetData(x, paste("annotation/info/", des$var.name[i], sep=""))
-      ## deal with variable length fields
-      if (!is.null(names(v))) {
-        vl <- .variableLengthToList(v)
-        ## each element should have length number of alt alleles, even for NAs
-        if (des$number[i] == "A") {
-          nAlt <- elementLengths(alt(x))
-          addNA <- which(nAlt > 1 & is.na(vl))
-          for (ind in addNA) {
-            vl[[ind]] <- rep(NA, nAlt[ind])
-          }
-        }
-        v <- .toAtomicList(vl, des$type[i])
-      } else if (!is.null(dim(v))) {
-        ## v is a matrix with nrow="Number"
-        vl <- list()
-        for (j in 1:ncol(v)) {
-          vl[[j]] <- v[,j]
-        }
-        v <- .toAtomicList(vl, des$type[i])
-      }
-      v[is.na(v)] <- NA # change NaN to NA
-      v[v %in% ""] <- NA
-      infoDf[[des$var.name[i]]] <- v
-    }
-  }
-  infoDf
-}
+setMethod("info",
+          "SeqVarGDSClass",
+          function(x, info=NULL) {
+              des <- seqSummary(x, check="none", verbose=FALSE)$info
+              if (!is.null(info)) {
+                  des <- des[des$var.name %in% info,]
+              }
+              infoDf <- DataFrame(row.names=seqGetData(x, "variant.id"))
+              if (nrow(des) > 0) {
+                  for (i in 1:nrow(des)) {
+                      v <- seqGetData(x, paste("annotation/info/", des$var.name[i], sep=""))
+                      ## deal with variable length fields
+                      if (!is.null(names(v))) {
+                          vl <- .variableLengthToList(v)
+                          ## each element should have length number of alt alleles, even for NAs
+                          if (des$number[i] == "A") {
+                              nAlt <- elementLengths(alt(x))
+                              addNA <- which(nAlt > 1 & is.na(vl))
+                              for (ind in addNA) {
+                                  vl[[ind]] <- rep(NA, nAlt[ind])
+                              }
+                          }
+                          v <- .toAtomicList(vl, des$type[i])
+                      } else if (!is.null(dim(v))) {
+                          ## v is a matrix with nrow="Number"
+                          vl <- list()
+                          for (j in 1:ncol(v)) {
+                              vl[[j]] <- v[,j]
+                          }
+                          v <- .toAtomicList(vl, des$type[i])
+                      }
+                      v[is.na(v)] <- NA # change NaN to NA
+                      v[v %in% ""] <- NA
+                      infoDf[[des$var.name[i]]] <- v
+                  }
+              }
+              infoDf
+          })
 
 .variableLengthToMatrix <- function(x) {
   xl <- list()
@@ -247,64 +249,66 @@ setMethod("fixed",
   matrix(xl, nrow=nrow(x[[1]]), ncol=length(x))
 }
 
-.geno <- function(x, geno=NULL) {
-  ## genotype
-  sample.id <- seqGetData(x, "sample.id")
-  variant.id <- seqGetData(x, "variant.id")
+setMethod("geno",
+          "SeqVarGDSClass",
+          function(x, geno=NULL) {
+              ## genotype
+              sample.id <- seqGetData(x, "sample.id")
+              variant.id <- seqGetData(x, "variant.id")
 
-  if (is.null(geno) || "GT" %in% geno) {
-    gt <- seqApply(x, c(geno="genotype", phase="phase"),
-                   function(x) {sep=ifelse(x$phase, "|", "/")
-                                paste(x$geno[1,], sep, x$geno[2,], sep="")},
-                   as.is="list", margin="by.variant")
-    gt <- matrix(unlist(gt), ncol=length(gt),
-                 dimnames=list(sample.id, variant.id))
-    gt[gt == "NA/NA"] <- "."
-    gt <- t(gt)
+              if (is.null(geno) || "GT" %in% geno) {
+                  gt <- seqApply(x, c(geno="genotype", phase="phase"),
+                                 function(x) {sep=ifelse(x$phase, "|", "/")
+                                              paste(x$geno[1,], sep, x$geno[2,], sep="")},
+                                 as.is="list", margin="by.variant")
+                  gt <- matrix(unlist(gt), ncol=length(gt),
+                               dimnames=list(sample.id, variant.id))
+                  gt[gt == "NA/NA"] <- "."
+                  gt <- t(gt)
 
-    genoSl <- SimpleList(GT=gt)
-  } else {
-    genoSl <- SimpleList()
-  }
+                  genoSl <- SimpleList(GT=gt)
+              } else {
+                  genoSl <- SimpleList()
+              }
 
-  ## all other fields
-  des <- seqSummary(x, check="none", verbose=FALSE)$format
-  if (!is.null(geno)) {
-    des <- des[des$var.name %in% geno,]
-  }
-  if (nrow(des) > 0) {
-    for (i in 1:nrow(des)) {
-      var.name <- paste("annotation/format/", des$var.name[i], sep="")
-      number <- suppressWarnings(as.integer(des$number[i]))
-      if (!is.na(number) && number > 1) {
-        v <- seqApply(x, var.name, function(v) {v},
-                      as.is="list", margin="by.variant")
-        vm <- array(dim=c(length(variant.id), length(sample.id), number),
-                    dimnames=list(variant.id, sample.id, NULL))
-        for (j in 1:length(v)) {
-          if (is.null(v[[j]])) {
-            vm[j,,] <- NA
-          } else {
-            vm[j,,] <- t(v[[j]][,,1])
-          }
-        }
-        v <- vm
-      } else {
-        v <- seqGetData(x, var.name)
-        if (!is.null(names(v))) {
-          if (all(v$length == 1) && !is.na(number) && number == 1) {
-            v <- v$data
-          } else {
-            v <- seqApply(x, var.name, function(v) {v},
-                          as.is="list", margin="by.variant")
-            v <- .variableLengthToMatrix(v)
-          }
-        }
-        dimnames(v) <- list(sample.id, variant.id)
-        v <- t(v)
-      }
-      genoSl[[des$var.name[i]]] <- v
-    }
-  }
-  genoSl
-}
+              ## all other fields
+              des <- seqSummary(x, check="none", verbose=FALSE)$format
+              if (!is.null(geno)) {
+                  des <- des[des$var.name %in% geno,]
+              }
+              if (nrow(des) > 0) {
+                  for (i in 1:nrow(des)) {
+                      var.name <- paste("annotation/format/", des$var.name[i], sep="")
+                      number <- suppressWarnings(as.integer(des$number[i]))
+                      if (!is.na(number) && number > 1) {
+                          v <- seqApply(x, var.name, function(v) {v},
+                                        as.is="list", margin="by.variant")
+                          vm <- array(dim=c(length(variant.id), length(sample.id), number),
+                                      dimnames=list(variant.id, sample.id, NULL))
+                          for (j in 1:length(v)) {
+                              if (is.null(v[[j]])) {
+                                  vm[j,,] <- NA
+                              } else {
+                                  vm[j,,] <- t(v[[j]][,,1])
+                              }
+                          }
+                          v <- vm
+                      } else {
+                          v <- seqGetData(x, var.name)
+                          if (!is.null(names(v))) {
+                              if (all(v$length == 1) && !is.na(number) && number == 1) {
+                                  v <- v$data
+                              } else {
+                                  v <- seqApply(x, var.name, function(v) {v},
+                                                as.is="list", margin="by.variant")
+                                  v <- .variableLengthToMatrix(v)
+                              }
+                          }
+                          dimnames(v) <- list(sample.id, variant.id)
+                          v <- t(v)
+                      }
+                      genoSl[[des$var.name[i]]] <- v
+                  }
+              }
+              genoSl
+          })
