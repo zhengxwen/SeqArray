@@ -17,11 +17,11 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
-seqVCF.Header <- function(vcf.fn, get.num=FALSE)
+seqVCF.Header <- function(vcf.fn, getnum=FALSE)
 {
     # check
     stopifnot(is.character(vcf.fn))
-    stopifnot(is.logical(get.num), length(get.num)==1L)
+    stopifnot(is.logical(getnum), length(getnum)==1L)
 
     #########################################################
     # open the vcf file
@@ -47,7 +47,7 @@ seqVCF.Header <- function(vcf.fn, get.num=FALSE)
                 s <- substring(s, 3L)
                 ans <- c(ans, s)
             } else {
-                if (get.num)
+                if (getnum)
                 {
                     s <- scan(text=s, what=character(0), sep="\t",
                         quiet=TRUE)[-seq_len(9)]
@@ -330,7 +330,7 @@ seqVCF.Header <- function(vcf.fn, get.num=FALSE)
     rv <- list(fileformat=fileformat, info=INFO, filter=FILTER, format=FORMAT,
         alt=ALT, contig=contig, assembly=assembly, reference=reference,
         header=ans, ploidy = ploidy)
-    if (get.num)
+    if (getnum)
     {
         rv$num.sample <- nSample
         rv$num.variant <- nVariant

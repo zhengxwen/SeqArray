@@ -32,13 +32,23 @@ seqSummary(gdsfile, varname=NULL, check=c("check", "full.check", "none"),
     \item{sample.annot}{the description of the sample annotation:
         \code{var.name}}
 
-    If \code{seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)},
-it returns a list with two components:
+    ---
+    \code{seqSummary(gdsfile, "annotation/filter", verbose=FALSE)}
+returns a list with components:
+    \item{id}{ploidy, # of samples, # of variants}
+    \item{description}{# of selected samples, # of selected variants}
+    \item{tab}{cross tabulation for the variable 'filter', if
+        \code{check="check"} or \code{"full.check"}}
+
+    ---
+    \code{seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)} returns
+a list with components:
     \item{dim}{ploidy, # of samples, # of variants}
     \item{seldim}{# of selected samples, # of selected variants}
 
-    \code{seqSummary(gdsfile, check="none", verbose=FALSE)$reference} refers
-to the genome reference if it is defined.
+    ---
+    \code{seqSummary(gdsfile, check="none", verbose=FALSE)$reference} returns
+the genome reference if it is defined.
 }
 \details{
     If \code{check = "check"}, this function performs regular checking:
@@ -59,6 +69,8 @@ are in a valid range or not, etc.
 seqSummary(gds.fn)
 
 seqSummary(gds.fn, "genotype")
+
+seqSummary(gds.fn, "annotation/filter")
 
 
 # open a GDS file

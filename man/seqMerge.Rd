@@ -42,7 +42,7 @@ files in \code{\link{seqVCF2GDS}} to export a single GDS file.
 vcf.fn <- seqExampleFileName("vcf")
 
 # the number of variants
-total.count <- seqVCF.Header(vcf.fn, get.num=TRUE)$num.variant
+total.count <- seqVCF.Header(vcf.fn, getnum=TRUE)$num.variant
 
 split.cnt <- 5
 start <- integer(split.cnt)

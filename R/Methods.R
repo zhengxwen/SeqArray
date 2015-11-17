@@ -678,8 +678,32 @@ seqSummary <- function(gdsfile, varname=NULL,
 
     } else {
 
-        # get a description of variable
-        .Call(SEQ_Summary, gds, varname)
+        if (varname == "annotation/filter")
+        {
+            at <- get.attr.gdsn(index.gdsn(gds, "annotation/filter"))
+            id <- at$R.levels
+            dp <- at$Description
+            if (is.null(dp))
+            {
+                # old version
+                n <- index.gdsn(gds, "description/vcf.filter", silent=TRUE)
+                if (!is.null(n))
+                {
+                    at <- read.gdsn(n)
+                    dp <- at$Description[match(id, at$ID)]
+                } else
+                    dp <- rep(NA_character_, length(id))
+            }
+            ans <- list(id=id, description=dp)
+            if (check %in% c("check", "full.check"))
+            {
+                ans$tab <- table(seqGetData(gds, "annotation/filter"))
+            }
+            ans
+        } else {
+            # get a description of variable
+            .Call(SEQ_Summary, gds, varname)
+        }
     }
 }
 
