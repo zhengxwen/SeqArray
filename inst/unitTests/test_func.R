@@ -35,6 +35,8 @@ Valid <- get(load(system.file("unitTests", "data", "Valid.RData",
 
 test_allele_freq <- function()
 {
+	num.cores <- 2L
+
 	# open the GDS file
 	gds.fn <- seqExampleFileName("gds")
 	f <- seqOpen(gds.fn)
@@ -43,31 +45,31 @@ test_allele_freq <- function()
 	variant.id <- seqGetData(f, "variant.id")
 
 	# get results
-	for (p in 1:4)
+	for (p in 1L:num.cores)
 	{
 		d <- seqAlleleFreq(f, NULL, parallel=p)
-		checkIdentical(Valid$fcAlleleFreq$d1, d, paste0("seqAlleleFreq 1:", i))
+		checkEquals(Valid$fcAlleleFreq$d1, d, paste0("seqAlleleFreq 1:", p))
 	}
 
-	for (p in 1:4)
+	for (p in 1L:num.cores)
 	{
 		d <- seqAlleleFreq(f, 0L, parallel=p)
-		checkIdentical(Valid$fcAlleleFreq$d2, d, paste0("seqAlleleFreq 2:", i))
+		checkEquals(Valid$fcAlleleFreq$d2, d, paste0("seqAlleleFreq 2:", p))
 	}
 
-	for (p in 1:4)
+	for (p in 1L:num.cores)
 	{
 		set.seed(1000)
 		d <- seqAlleleFreq(f, sample(c(0L,1L), length(variant.id),
 			replace=TRUE), parallel=p)
-		checkIdentical(Valid$fcAlleleFreq$d3, d, paste0("seqAlleleFreq 3:", i))
+		checkEquals(Valid$fcAlleleFreq$d3, d, paste0("seqAlleleFreq 3:", p))
 	}
 
-	for (p in 1:4)
+	for (p in 1L:num.cores)
 	{
 		d <- seqAlleleFreq(f, toupper(seqGetData(f, "annotation/info/AA")$data),
 			parallel=p)
-		checkIdentical(Valid$fcAlleleFreq$d4, d, paste0("seqAlleleFreq 4:", i))
+		checkEquals(Valid$fcAlleleFreq$d4, d, paste0("seqAlleleFreq 4:", p))
 	}
 
 	# close the GDS file
