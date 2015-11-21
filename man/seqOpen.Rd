@@ -1,15 +1,17 @@
 \name{seqOpen}
 \alias{seqOpen}
-\title{Open a Sequence GDS File}
+\title{Open a SeqArray GDS File}
 \description{
-    Opens a sequence GDS file.
+    Opens a SeqArray GDS file.
 }
 \usage{
-seqOpen(gds.fn, readonly=TRUE)
+seqOpen(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
 }
 \arguments{
     \item{gds.fn}{the file name}
     \item{readonly}{whether read-only or not}
+    \item{allow.duplicate}{if \code{TRUE}, it is allowed to open a GDS file
+        with read-only mode when it has been opened in the same R session}
 }
 \value{
     Return an object of class \code{\link[gdsfmt]{gds.class}}.

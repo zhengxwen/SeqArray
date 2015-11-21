@@ -90,7 +90,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
         # split by "="
         x <- as.integer(regexpr("=", txt, fixed=TRUE))
         rv <- matrix("", nrow=length(txt), ncol=2L)
-        for (i in seq_len(length(txt)))
+        for (i in seq_along(txt))
         {
             if (x[i] > 0L)
             {
@@ -124,7 +124,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
             else
                 flag <- (names(check.name) == "T")
 
-            for (i in seq_len(length(check.name)))
+            for (i in seq_along(check.name))
             {
                 j <- match(check.name[i], v[,1L])
                 if (is.na(j))
@@ -226,7 +226,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
 
     INFO <- NULL
     s <- ans$value[ans$id == "INFO"]
-    for (i in seq_len(length(s)))
+    for (i in seq_along(s))
     {
         v <- AsDataFrame(s[i], c(T="ID", T="Number", T="Type", T="Description",
             F="Source", F="Version"))
@@ -249,7 +249,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
 
     FILTER <- NULL
     s <- ans$value[ans$id == "FILTER"]
-    for (i in seq_len(length(s)))
+    for (i in seq_along(s))
     {
         v <- AsDataFrame(s[i], c("ID", "Description"))
         if (!is.null(v))
@@ -265,7 +265,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
 
     FORMAT <- NULL
     s <- ans$value[ans$id == "FORMAT"]
-    for (i in seq_len(length(s)))
+    for (i in seq_along(s))
     {
         v <- AsDataFrame(s[i], c("ID", "Number", "Type", "Description"))
         if (!is.null(v))
@@ -287,7 +287,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
 
     ALT <- NULL
     s <- ans$value[ans$id == "ALT"]
-    for (i in seq_len(length(s)))
+    for (i in seq_along(s))
     {
         v <- AsDataFrame(s[i], c("ID", "Description"))
         if (!is.null(v))
@@ -304,7 +304,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
 
     contig <- NULL
     s <- ans$value[ans$id == "contig"]
-    for (i in seq_len(length(s)))
+    for (i in seq_along(s))
     {
         v <- AsDataFrame(s[i], NULL)
         if (!is.null(v))
@@ -412,7 +412,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     # check sample id
     samp.id <- NULL
-    for (i in seq_len(length(vcf.fn)))
+    for (i in seq_along(vcf.fn))
     {
         if (is.null(samp.id))
         {
@@ -756,7 +756,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         import.flag <- logical()
     }
 
-    for (i in seq_len(length(int_type)))
+    for (i in seq_along(int_type))
     {
         # FORMAT Type
         switch(tolower(header$format$Type[i]),
@@ -829,7 +829,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     filterlevels <- header$filter$ID
 
-    for (i in seq_len(length(vcf.fn)))
+    for (i in seq_along(vcf.fn))
     {
         opfile <- file(vcf.fn[i], open="rt")
         on.exit({ closefn.gds(gfile); close(opfile) })
@@ -1049,7 +1049,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         at <- get.attr.gdsn(n)
         id <- at$R.levels; dp <- at$Description
-        for (i in seq_len(length(id)))
+        for (i in seq_along(id))
         {
             cat(sprintf("##FILTER=<ID=%s,Description=%s>\n",
                 dq(id[i]), dq(dp[i], TRUE)), file=ofile)

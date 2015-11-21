@@ -101,7 +101,7 @@ to create a \code{SeqVarGDSClass} object.
 }
 
 
-\author{Xiuwen Zheng, Stephanie Gogarten}
+\author{Stephanie Gogarten, Xiuwen Zheng}
 
 \seealso{
   \code{\link[gdsfmt]{gds.class}},
@@ -127,7 +127,7 @@ head(seqGetData(gds, "allele"))
 
 ## alleles as DNAStringSet or DNAStringSetList
 ref(gds)
-alt(gds)
+v <- alt(gds)
 
 ## genotype
 geno <- seqGetData(gds, "genotype")

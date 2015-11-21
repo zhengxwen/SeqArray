@@ -9,14 +9,16 @@
 #######################################################################
 # Open a SeqArray GDS file
 #
-seqOpen <- function(gds.fn, readonly=TRUE)
+seqOpen <- function(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
 {
     # check
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
     stopifnot(is.logical(readonly), length(readonly)==1L)
+    stopifnot(is.logical(allow.duplicate), length(allow.duplicate)==1L)
 
     # open the file
-    ans <- openfn.gds(gds.fn, readonly=readonly, allow.fork=TRUE)
+    ans <- openfn.gds(gds.fn, readonly=readonly, allow.fork=TRUE,
+        allow.duplicate=allow.duplicate)
 
     # FileFormat
     at <- get.attr.gdsn(ans$root)

@@ -1011,7 +1011,7 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             library("SeqArray")
 
             # open the file
-            gfile <- seqOpen(.gds.fn)
+            gfile <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
             on.exit({ closefn.gds(gfile) })
 
             # set filter
@@ -1197,7 +1197,7 @@ seqOptimize <- function(gdsfn, target=c("by.sample"),
     stopifnot(is.logical(cleanup))
     stopifnot(is.logical(verbose))
 
-    gdsfile <- seqOpen(gdsfn, FALSE)
+    gdsfile <- seqOpen(gdsfn, readonly=FALSE)
     on.exit({ seqClose(gdsfile) })
 
     if (target == "by.sample")
