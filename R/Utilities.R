@@ -890,7 +890,7 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
 {
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) | inherits(cl, "cluster"))
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.null(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.function(FUN))
     split <- match.arg(split)
     stopifnot(is.character(.combine) | is.function(.combine))
@@ -901,6 +901,12 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         stopifnot(length(.combine) == 1L)
         if (!(.combine %in% c("unlist", "list", "none")))
             .combine <- match.fun(.combine)
+    }
+
+    if (is.null(gdsfile))
+    {
+        if (split != "none")
+            stop("'split' should be 'none' if 'gdsfile=NULL'.")
     }
 
     if (is.null(cl) | identical(cl, FALSE) | identical(cl, 1L) | identical(cl, 1))
@@ -958,13 +964,24 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             mc.preschedule=FALSE, mc.cores=cl, mc.cleanup=TRUE,
             FUN = function(i, .fun)
             {
-                sel <- .Call(SEQ_SplitSelection, gdsfile, split, i, cl,
-                    .selection.flag)
-                # call the user-defined function
-                if (.selection.flag)
-                    FUN(gdsfile, sel, ...)
-                else
-                    FUN(gdsfile, ...)
+                # export to global variables
+                assign(".process_index", i, envir = .GlobalEnv)
+                assign(".process_count", cl, envir = .GlobalEnv)
+
+                if (!is.null(gdsfile))
+                {
+                    sel <- .Call(SEQ_SplitSelection, gdsfile, split, i, cl,
+                        .selection.flag)
+
+                    # call the user-defined function
+                    if (.selection.flag)
+                        FUN(gdsfile, sel, ...)
+                    else
+                        FUN(gdsfile, ...)
+                } else {
+                    # call the user-defined function
+                    FUN(...)
+                }
             }, .fun = FUN)
 
         if (is.list(ans))
@@ -1002,37 +1019,44 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                 if (dm[1L] <= 0) stop("No samples selected.")
                 if (length(cl) > dm[1L]) cl <- cl[seq_len(dm[1L])]
             }
-        }
 
-        sel <- seqGetFilter(gdsfile, .useraw=TRUE)
+            sel <- seqGetFilter(gdsfile, .useraw=TRUE)
+        } else {
+            sel <- list(sample.sel=raw(), variant.sel=raw())
+        }
 
         ans <- .DynamicClusterCall(cl, length(cl), .fun =
             function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample, .sel_variant,
                 FUN, .split, .selection.flag, ...)
         {
-            # load the package
-            library("SeqArray")
-
-            # open the file
-            .file <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
-            on.exit({ seqClose(.file) })
-
-            # set filter
-            seqSetFilter(.file,
-                samp.sel = memDecompress(.sel_sample, type="gzip"),
-                variant.sel = memDecompress(.sel_variant, type="gzip"))
-            .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
-                .proc_cnt, .selection.flag)
-
             # export to global variables
             assign(".process_index", .proc_idx, envir = .GlobalEnv)
             assign(".process_count", .proc_cnt, envir = .GlobalEnv)
 
-            # call the user-defined function
-            if (.selection.flag)
-                FUN(.file, .ss, ...)
-            else
-                FUN(.file, ...)
+            # load the package
+            library("SeqArray")
+
+            if (!is.null(.gds.fn))
+            {
+                # open the file
+                .file <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
+                on.exit({ seqClose(.file) })
+
+                # set filter
+                seqSetFilter(.file,
+                    samp.sel = memDecompress(.sel_sample, type="gzip"),
+                    variant.sel = memDecompress(.sel_variant, type="gzip"))
+                .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
+                    .proc_cnt, .selection.flag)
+
+                # call the user-defined function
+                if (.selection.flag)
+                    FUN(.file, .ss, ...)
+                else
+                    FUN(.file, ...)
+            } else {
+                FUN(...)
+            }
 
         }, .combinefun = .combine, .stopcluster=FALSE,
             .proc_cnt = length(cl), .gds.fn = gdsfile$filename,

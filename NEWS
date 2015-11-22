@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.11.0-1.11.2
+CHANGES IN VERSION 1.11.0-1.11.3
 -------------------------
 
     o version was bumped
@@ -30,6 +30,8 @@ CHANGES IN VERSION 1.10.0-1.10.6
     o fix a bug in `seqParallel()`
       (https://github.com/zhengxwen/SeqArray/issues/11) and optimize
       its performance
+
+    o 'gdsfile' could be NULL in `seqParallel()`
 
 
 CHANGES IN VERSION 1.9.0-1.9.19
