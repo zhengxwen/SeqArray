@@ -40,6 +40,10 @@ Windows, users have to create a cluster object via \code{\link{makeCluster}}.
     It is strongly suggested to use \code{seqParallel} together with
 \code{seqParallelSetup}. \code{seqParallelSetup} could work around the problem
 of forking on Windows.
+
+    The user-defined function could use two predefined variables
+\code{.process_count} and \code{.process_index} to tell the total number of
+cluster nodes and which cluster node being used.
 }
 \value{
     A vector or list of values.

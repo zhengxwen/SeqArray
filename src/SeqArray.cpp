@@ -770,58 +770,84 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include, SEXP is_num)
 
 
 /// set a working space flag with selected variant id
-COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile)
+COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile, SEXP UseRaw)
 {
+	int use_raw_flag = Rf_asLogical(UseRaw);
+	if (use_raw_flag == NA_LOGICAL)
+		error("'.useraw' must be TRUE or FALSE.");
+
 	COREARRAY_TRY
 
-		TInitObject::TSelection &s = Init.Selection(gdsfile);
-
 		// the GDS root node
+		TInitObject::TSelection &sel = Init.Selection(gdsfile);
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
-		PdAbstractArray varSample = GDS_Node_Path(Root, "sample.id", TRUE);
-		PdAbstractArray varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 
-		int nProtected = 0;
+		// output
+		PROTECT(rv_ans = NEW_LIST(2));
 		SEXP tmp;
 
-		PROTECT(rv_ans = NEW_LIST(2));
-		nProtected ++;
-
-		if (s.Sample.empty())
+		if (sel.Sample.empty())
 		{
-			int L = GDS_Array_GetTotalCount(varSample);
-			PROTECT(tmp = NEW_LOGICAL(L));
-			nProtected ++;
-			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
+			PdAbstractArray var = GDS_Node_Path(Root, "sample.id", TRUE);
+			size_t n = GDS_Array_GetTotalCount(var);
+			if (use_raw_flag)
+			{
+				PROTECT(tmp = NEW_RAW(n));
+				memset(RAW(tmp), TRUE, n);
+			} else {
+				PROTECT(tmp = NEW_LOGICAL(n));
+				int *p = LOGICAL(tmp);
+				for (; n > 0; n--) *p++ = TRUE;
+			}
 		} else {
-			PROTECT(tmp = NEW_LOGICAL(s.Sample.size()));
-			nProtected ++;
-			for (int i=0; i < (int)s.Sample.size(); i++)
-				LOGICAL(tmp)[i] = (s.Sample[i] != 0);
+			size_t n = sel.Sample.size();
+			if (use_raw_flag)
+			{
+				PROTECT(tmp = NEW_RAW(n));
+				memcpy(RAW(tmp), &sel.Sample[0], n);
+			} else {
+				PROTECT(tmp = NEW_LOGICAL(n));
+				int *p = LOGICAL(tmp);
+				C_BOOL *s = &(sel.Sample[0]);
+				for (; n > 0; n--) *p++ = *s++;
+			}
 		}
 		SET_ELEMENT(rv_ans, 0, tmp);
 
-		if (s.Variant.empty())
+		if (sel.Variant.empty())
 		{
-			int L = GDS_Array_GetTotalCount(varVariant);
-			PROTECT(tmp = NEW_LOGICAL(L));
-			nProtected ++;
-			for (int i=0; i < L; i++) LOGICAL(tmp)[i] = TRUE;
+			PdAbstractArray var = GDS_Node_Path(Root, "variant.id", TRUE);
+			size_t n = GDS_Array_GetTotalCount(var);
+			if (use_raw_flag)
+			{
+				PROTECT(tmp = NEW_RAW(n));
+				memset(RAW(tmp), TRUE, n);
+			} else {
+				PROTECT(tmp = NEW_LOGICAL(n));
+				int *p = LOGICAL(tmp);
+				for (; n > 0; n--) *p++ = TRUE;
+			}
 		} else {
-			PROTECT(tmp = NEW_LOGICAL(s.Variant.size()));
-			nProtected ++;
-			for (int i=0; i < (int)s.Variant.size(); i++)
-				LOGICAL(tmp)[i] = (s.Variant[i] != 0);
+			size_t n = sel.Variant.size();
+			if (use_raw_flag)
+			{
+				PROTECT(tmp = NEW_RAW(n));
+				memcpy(RAW(tmp), &sel.Variant[0], n);
+			} else {
+				PROTECT(tmp = NEW_LOGICAL(n));
+				int *p = LOGICAL(tmp);
+				C_BOOL *s = &(sel.Variant[0]);
+				for (; n > 0; n--) *p++ = *s++;
+			}
 		}
 		SET_ELEMENT(rv_ans, 1, tmp);
 
 		PROTECT(tmp = NEW_CHARACTER(2));
-		nProtected ++;
 			SET_STRING_ELT(tmp, 0, mkChar("sample.sel"));
 			SET_STRING_ELT(tmp, 1, mkChar("variant.sel"));
 		SET_NAMES(rv_ans, tmp);
 
-		UNPROTECT(nProtected);
+		UNPROTECT(4);
 
 	COREARRAY_CATCH
 }
@@ -1120,7 +1146,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 4),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 3),
-		CALL(SEQ_GetSpace, 1),
+		CALL(SEQ_GetSpace, 2),
 
 		CALL(SEQ_Summary, 2),
 

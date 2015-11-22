@@ -236,12 +236,12 @@ seqSetFilterChrom <- function(gdsfile, include=NULL, is.num=NA,
 #######################################################################
 # To get a working space
 #
-seqGetFilter <- function(gdsfile)
+seqGetFilter <- function(gdsfile, .useraw=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
 
-    .Call(SEQ_GetSpace, gdsfile)
+    .Call(SEQ_GetSpace, gdsfile, .useraw)
 }
 
 

@@ -1004,32 +1004,42 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             }
         }
 
+        sel <- seqGetFilter(gdsfile, .useraw=TRUE)
+
         ans <- .DynamicClusterCall(cl, length(cl), .fun =
-            function(.idx, .n_process, .gds.fn, .selection, FUN, .split, .selection.flag, ...)
+            function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample, .sel_variant,
+                FUN, .split, .selection.flag, ...)
         {
             # load the package
             library("SeqArray")
 
             # open the file
-            gfile <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
-            on.exit({ closefn.gds(gfile) })
+            .file <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
+            on.exit({ seqClose(.file) })
 
             # set filter
-            seqSetFilter(gfile, samp.sel=.selection$sample.sel,
-                variant.sel=.selection$variant.sel)
+            seqSetFilter(.file,
+                samp.sel = memDecompress(.sel_sample, type="gzip"),
+                variant.sel = memDecompress(.sel_variant, type="gzip"))
+            .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
+                .proc_cnt, .selection.flag)
 
-            sel <- .Call(SEQ_SplitSelection, gfile, .split, .idx, .n_process,
-                .selection.flag)
+            # export to global variables
+            assign(".process_index", .proc_idx, envir = .GlobalEnv)
+            assign(".process_count", .proc_cnt, envir = .GlobalEnv)
+
             # call the user-defined function
             if (.selection.flag)
-                FUN(gdsfile, sel, ...)
+                FUN(.file, .ss, ...)
             else
-                FUN(gdsfile, ...)
+                FUN(.file, ...)
 
         }, .combinefun = .combine, .stopcluster=FALSE,
-            .n_process = length(cl), .gds.fn = gdsfile$filename,
-            .selection = seqGetFilter(gdsfile), FUN = FUN,
-            .split = split, .selection.flag=.selection.flag, ...
+            .proc_cnt = length(cl), .gds.fn = gdsfile$filename,
+            .sel_sample = memCompress(sel$sample.sel, type="gzip"),
+            .sel_variant = memCompress(sel$variant.sel, type="gzip"),
+            FUN = FUN, .split = split, .selection.flag=.selection.flag,
+            ...
         )
 
         if (is.list(ans) & identical(.combine, "unlist"))

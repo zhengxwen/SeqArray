@@ -5,25 +5,22 @@
     Gets the filter of samples and variants.
 }
 \usage{
-seqGetFilter(gdsfile)
+seqGetFilter(gdsfile, .useraw=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{.useraw}{returns logical vectors if \code{FALSE}, and returns
+        raw vectors if \code{TRUE}}
 }
 \value{
     Return a list:
-    \item{sample.sel}{a logical vector for selected samples}
-    \item{variant.sel}{a logical vector for selected variants}
-}
-\details{
-    It is strongly suggested to call \code{seqOpen} instead of
-\code{\link[gdsfmt]{openfn.gds}}, since \code{seqOpen} will initialize the
-internal data for \code{seqGetData}, \code{seqApply}, etc.
+    \item{sample.sel}{a logical/raw vector indicating selected samples}
+    \item{variant.sel}{a logical/raw vector indicating selected variants}
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqGetData}}, \code{\link{seqApply}}
+    \code{\link{seqSetFilter}}
 }
 
 \examples{
@@ -53,6 +50,11 @@ z <- seqGetFilter(f)
 sum(z$sample.sel)
 # the number of selected variants
 sum(z$variant.sel)
+
+
+z <- seqGetFilter(f, .useraw=TRUE)
+head(z$sample.sel)
+head(z$variant.sel)
 
 
 # close the GDS file
