@@ -6,7 +6,7 @@
 }
 \usage{
 seqDelete(gdsfile, info.varname=character(), format.varname=character(),
-    verbose=TRUE)
+    samp.varname=character(), verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -14,6 +14,8 @@ seqDelete(gdsfile, info.varname=character(), format.varname=character(),
         "annotation/info/VARIABLE_NAME"}
     \item{format.varname}{the variables in the FORMAT field, i.e.,
         "annotation/format/VARIABLE_NAME"}
+    \item{samp.varname}{the variables in the sample annotation field, i.e.,
+        "sample.annotation/VARIABLE_NAME"}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

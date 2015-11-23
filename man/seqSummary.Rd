@@ -49,6 +49,14 @@ a list with components:
     ---
     \code{seqSummary(gdsfile, check="none", verbose=FALSE)$reference} returns
 the genome reference if it is defined.
+
+    ---
+    \code{seqSummary(gdsfile, "annotation/info")} returns a \code{data.frame}
+describing VCF INFO header.
+
+    ---
+    \code{seqSummary(gdsfile, "annotation/format")} returns a \code{data.frame}
+describing VCF FORMAT header.
 }
 \details{
     If \code{check = "check"}, this function performs regular checking:
@@ -63,6 +71,8 @@ are in a valid range or not, etc.
 }
 
 \examples{
+library(SeqArray)
+
 # the GDS file
 (gds.fn <- seqExampleFileName("gds"))
 
@@ -70,7 +80,13 @@ seqSummary(gds.fn)
 
 seqSummary(gds.fn, "genotype")
 
+seqSummary(gds.fn, "allele")
+
 seqSummary(gds.fn, "annotation/filter")
+
+seqSummary(gds.fn, "annotation/info")
+
+seqSummary(gds.fn, "annotation/format")
 
 
 # open a GDS file

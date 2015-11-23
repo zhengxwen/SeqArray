@@ -1090,7 +1090,7 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
 #
 
 seqDelete <- function(gdsfile, info.varname=character(),
-    format.varname=character(), verbose=TRUE)
+    format.varname=character(), samp.varname=character(), verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -1099,7 +1099,8 @@ seqDelete <- function(gdsfile, info.varname=character(),
 
     stopifnot(is.character(info.varname))
     stopifnot(is.character(format.varname))
-    stopifnot(is.logical(verbose))
+    stopifnot(is.character(samp.varname))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose) cat("Delete INFO variable(s):")
     for (nm in info.varname)
@@ -1117,6 +1118,15 @@ seqDelete <- function(gdsfile, info.varname=character(),
     for (nm in format.varname)
     {
         n <- index.gdsn(gdsfile, paste0("annotation/format/", nm))
+        delete.gdsn(n, force=TRUE)
+        if (verbose) cat("", nm)
+    }
+    if (verbose) cat("\n")
+
+    if (verbose) cat("Delete Sample Annotation variable(s):")
+    for (nm in samp.varname)
+    {
+        n <- index.gdsn(gdsfile, paste0("sample.annotation/", nm))
         delete.gdsn(n, force=TRUE)
         if (verbose) cat("", nm)
     }
