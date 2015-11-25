@@ -131,7 +131,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
                 {
                     if (flag[i])
                         stop("No '", check.name[i], "'.")
-                    a <- NA
+                    a <- NA_character_
                 } else
                     a <- v[i,2L]
 
@@ -919,12 +919,12 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # the INFO field
     if (!is.null(info.var))
     {
-        s <- z$info$var.name
+        s <- z$info$ID
         if (is.null(s)) s <- character()
         if (length(setdiff(info.var, s)) > 0L)
             stop(paste("Not exist:", paste(setdiff(info.var, s), collapse=",")))
         if (length(info.var) > 0L)
-            z$info <- z$info[match(info.var, z$info$var.name), ]
+            z$info <- z$info[match(info.var, z$info$ID), ]
         else
             z$info <- list()
     }
@@ -932,14 +932,16 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # the FORMAT field
     if (!is.null(fmt.var))
     {
-        s <- z$format$var.name
+        s <- z$format$ID[-1L]
         if (is.null(s)) s <- character()
         if (length(setdiff(fmt.var, s)) > 0L)
             stop(paste("Not exist:", paste(setdiff(fmt.var, s), collapse=",")))
         if (length(fmt.var) > 0L)
-            z$format <- z$format[match(fmt.var, z$format$var.name), ]
+            z$format <- z$format[match(fmt.var, z$format$ID), ]
         else
             z$format <- list()
+    } else {
+        z$format <- z$format[-1L, ]
     }
 
 
@@ -975,9 +977,9 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         cat(date(), "\n", sep="")
         cat("Output: ", vcf.fn, "\n", sep="")
-        cat("The INFO field: ", paste(z$info$var.name, collapse=", "),
+        cat("The INFO field: ", paste(z$info$ID, collapse=", "),
             "\n", sep="")
-        cat("The FORMAT field: ", paste(z$format$var.name, collapse=", "),
+        cat("The FORMAT field: ", paste(z$format$ID, collapse=", "),
             "\n", sep="")
     }
 
@@ -1030,7 +1032,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     }
 
     # the INFO field
-    for (nm in z$info$var.name)
+    for (nm in z$info$ID)
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile,
             paste("annotation/info/", nm, sep="")))
@@ -1060,7 +1062,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
     cat(sprintf("##FORMAT=<ID=%s,Number=1,Type=String,Description=%s>\n",
         a$VariableName, dq(a$Description, TRUE)), file=ofile)
-    for (nm in z$format$var.name)
+    for (nm in z$format$ID)
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile,
             paste("annotation/format/", nm, sep="")))
@@ -1094,13 +1096,13 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # write the contents
 
     # the INFO field
-    if (!is.null(z$info$var.name))
-        nm.info <- paste("annotation/info/", z$info$var.name, sep="")
+    if (!is.null(z$info$ID))
+        nm.info <- paste("annotation/info/", z$info$ID, sep="")
     else
         nm.info <- c()
     # the FORMAT field
-    if (!is.null(z$format$var.name))
-        nm.format <- paste("annotation/format/", z$format$var.name, sep="")
+    if (!is.null(z$format$ID))
+        nm.format <- paste("annotation/format/", z$format$ID, sep="")
     else
         nm.format <- c()
 
@@ -1137,10 +1139,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     s <- c("chr", "pos", "id", "allele", "qual", "filter", "geno", "phase")
     # the INFO field
     if (length(nm.info) > 0L)
-        s <- c(s, paste("info.", z$info$var.name, sep=""))
+        s <- c(s, paste("info.", z$info$ID, sep=""))
     # the FORMAT field
     if (length(nm.format) > 0L)
-        s <- c(s, paste("fmt.", z$format$var.name, sep=""))
+        s <- c(s, paste("fmt.", z$format$ID, sep=""))
     names(nm) <- s
 
     # output lines variant by variant

@@ -1022,6 +1022,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 				SET_STRING_ELT(tmp, 1, mkChar("seldim"));
 				SET_NAMES(rv_ans, tmp);
 			UNPROTECT(4);
+
+		} else if ((vn=="sample.id") || (vn=="variant.id") || (vn=="position"))
+		{
+			PdGDSObj var = GDS_Node_Path(Root, vn.c_str(), TRUE);
+			rv_ans = ScalarInteger(GDS_Array_GetTotalCount(var));
 		}
 
 	COREARRAY_CATCH
