@@ -13,9 +13,9 @@
 
 .seldim <- function(gdsfile)
 {
-    # seldim[1] -- # of selected samples
-    # seldim[2] -- # of selected variants
-    seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)$seldim
+    # seldim[1L] -- # of selected samples
+    # seldim[2L] -- # of selected variants
+    .Call(SEQ_Summary, gdsfile, "genotype")$seldim
 }
 
 

@@ -1023,8 +1023,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 				SET_NAMES(rv_ans, tmp);
 			UNPROTECT(4);
 
-		} else if ((vn=="sample.id") || (vn=="variant.id") || (vn=="position"))
-		{
+		} else {
 			PdGDSObj var = GDS_Node_Path(Root, vn.c_str(), TRUE);
 			rv_ans = ScalarInteger(GDS_Array_GetTotalCount(var));
 		}

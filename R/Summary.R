@@ -10,7 +10,7 @@
 
 .str <- function(s)
 {
-    s <- as.character(s)
+    mode(s) <- "character"
     s[is.na(s)] <- "<NA>"
     s
 }
@@ -138,33 +138,6 @@
     .Call(SEQ_Summary, gdsfile, "variant.id")
 }
 
-.summary_reference <- function(gdsfile, check, verbose)
-{
-    n <- index.gdsn(gdsfile, "description/reference", silent=TRUE)
-    if (is.null(n))
-        ans <- character()
-    else
-        ans <- as.character(read.gdsn(n))
-    n <- index.gdsn(gdsfile, "description/vcf.header", silent=TRUE)
-    if (!is.null(n))
-    {
-        tmp <- read.gdsn(n)
-        if (is.data.frame(tmp))
-            ans <- c(ans, tmp$value[tmp$id == "reference"])
-        else
-            message("Invalid 'description/vcf.header'.")
-    }
-    ans <- unique(ans)
-    if (verbose)
-    {
-        if (length(ans) > 0)
-            cat("Reference: ", paste(ans, collapse=", "), "\n", sep="")
-        else
-            cat("Reference: unknown\n")
-    }
-    ans
-}
-
 .summary_position <- function(gdsfile, check, verbose)
 {
     if (check != "none")
@@ -176,6 +149,25 @@
         dm
     } else
         .Call(SEQ_Summary, gdsfile, "position")
+}
+
+.summary_chrom <- function(gdsfile, check, verbose)
+{
+    if (check != "none")
+    {
+        n <- index.gdsn(gdsfile, "chromosome")
+        dm <- .check_dim(n, 1L)
+        if (dm != .Call(SEQ_Summary, gdsfile, "variant.id"))
+            message("Invalid dimension of 'chromosome'.")
+        tab <- table(seqGetData(gdsfile, "chromosome"), exclude=NULL)
+        if (verbose)
+        {
+            names(dimnames(tab)) <- "Chromosomes:"
+            print(tab)
+        }
+        dm
+    } else
+        .Call(SEQ_Summary, gdsfile, "chromosome")
 }
 
 .summary_allele <- function(gdsfile, check, verbose)
@@ -211,6 +203,23 @@
     }
 
     invisible(ans)
+}
+
+.summary_var <- function(gdsfile, varname, check, verbose)
+{
+    n <- index.gdsn(gdsfile, varname, silent=TRUE)
+    if (!is.null(n))
+    {
+        if (check != "none")
+        {
+            dm <- .check_dim(n, 1L)
+            if (dm != .Call(SEQ_Summary, gdsfile, "variant.id"))
+                message("Invalid dimension of '", varname, "'.")
+            dm
+        } else
+            .Call(SEQ_Summary, gdsfile, varname)
+    } else
+        NULL
 }
 
 .summary_filter <- function(gdsfile, check, verbose)
@@ -328,9 +337,9 @@
     # genotype
     a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
     if (is.null(a$VariableName)) a$VariableName <- "GT"
-    if (is.null(a$Description)) a$Description <- ""
+    if (is.null(a$Description)) a$Description <- NA_character_
     ans <- data.frame(ID=a$VariableName, Number=1, Type="String",
-        Description=a$Description, stringsAsFactors=FALSE)
+        Description=a$Description[1L], stringsAsFactors=FALSE)
 
     # the FORMAT field
     fmt <- index.gdsn(gdsfile, "annotation/format")
@@ -338,11 +347,11 @@
     {
         a <- get.attr.gdsn(index.gdsn(fmt, nm))
         if (is.null(a$Number)) a$Number <- "."
-        if (is.null(a$Type)) a$Type <- .vcf_type(index.gdsn(info, nm))
-        if (is.null(a$Description)) a$Description <- ""
+        if (is.null(a$Type)) a$Type <- .vcf_type(index.gdsn(fmt, nm))
+        if (is.null(a$Description)) a$Description <- NA_character_
 
-        d <- data.frame(ID=nm, Number=a$Number, Type=a$Type,
-            Description=a$Description, stringsAsFactors=FALSE)
+        d <- data.frame(ID=nm, Number=a$Number[1L], Type=a$Type[1L],
+            Description=a$Description[1L], stringsAsFactors=FALSE)
         ans <- rbind(ans, d)
     }
 
@@ -351,12 +360,106 @@
         if (nrow(ans) > 0L)
         {
             cat(paste0("    ", ans$ID, ", ", ans$Number, ", ", ans$Type,
-                ", ", a$Description, "\n"), sep="")
+                ", ", .str(ans$Description), "\n"), sep="")
         } else
             cat("    <None>\n")
     }
     invisible(ans)
 }
+
+.summary_samp_annot <- function(gdsfile, check, verbose)
+{
+    folder <- index.gdsn(gdsfile, "sample.annotation", silent=TRUE)
+    if (!is.null(folder))
+    {
+        if (verbose)
+            cat("Annotation, sample variable(s):\n")
+        ID <- ls.gdsn(folder)
+        Types <- character(length(ID))
+        Desp <- rep(NA_character_, length(ID))
+        for (i in seq_len(length(ID)))
+        {
+            n <- index.gdsn(folder, ID[i])
+            Types[i] <- .vcf_type(n)
+            at <- get.attr.gdsn(n)
+            if (!is.null(at$Description))
+                Desp[i] <- as.character(at$Description)[1L]
+        }
+        if (verbose)
+        {
+            if (length(ID) > 0L)
+            {
+                cat(paste0("    ", ID, ", ", Types, ", ", .str(Desp), "\n"),
+                    sep="")
+            } else
+                cat("    <None>\n")
+        }
+        ans <- data.frame(ID=ID, Type=Types, Description=Desp,
+            stringsAsFactors=FALSE)
+    } else {
+        s <- character()
+        ans <- data.frame(ID=s, Type=s, Description=s, stringsAsFactors=FALSE)
+    }
+
+    invisible(ans)
+}
+
+.summary_reference <- function(gdsfile, check, verbose)
+{
+    n <- index.gdsn(gdsfile, "description/reference", silent=TRUE)
+    if (is.null(n))
+        ans <- character()
+    else
+        ans <- as.character(read.gdsn(n))
+    n <- index.gdsn(gdsfile, "description/vcf.header", silent=TRUE)
+    if (!is.null(n))
+    {
+        tmp <- read.gdsn(n)
+        if (is.data.frame(tmp))
+            ans <- c(ans, tmp$value[tmp$id == "reference"])
+        else
+            message("Invalid 'description/vcf.header'.")
+    }
+    ans <- unique(ans)
+    if (verbose)
+    {
+        if (length(ans) > 0)
+            cat("Reference: ", paste(ans, collapse=", "), "\n", sep="")
+        else
+            cat("Reference: unknown\n")
+    }
+    invisible(ans)
+}
+
+.summary_contig <- function(gdsfile, check, verbose)
+{
+    n <- index.gdsn(gdsfile, "description/vcf.contig", silent=TRUE)
+    if (!is.null(n))
+    {
+        ans <- read.gdsn(n)
+        if (check != "none" & !is.data.frame(ans))
+            message("'description/vcf.contig' should be data.frame.")
+        if (verbose)
+        {
+            cat("Contigs:\n")
+            if (is.data.frame(ans))
+            {
+                if (nrow(ans) > 0L)
+                {
+                    s <- paste0("    ", .str(ans[, 1L]))
+                    for (i in seq_len(ncol(ans))[-1L])
+                        s <- paste0(s, ", ", .str(ans[, i]))
+                    s <- paste0(s, "\n")
+                    cat(s, sep="")
+                } else
+                    cat("    <None>\n")
+            }
+        }
+        invisible(ans)
+    } else
+        NULL
+}
+
 
 
 #######################################################################
@@ -380,41 +483,13 @@ seqSummary <- function(gdsfile, varname=NULL,
         on.exit(seqClose(gdsfile))   
     }
 
-    # whether specify the variable name or not
     if (is.null(varname))
     {
-        ########
-        check_dim <- function(node, dimlen)
-        {
-            dm <- objdesp.gdsn(node)$dim
-            if (check != "none")
-            {
-                if (length(dm) != dimlen)
-                {
-                    print(node)
-                    stop("Error in dimension!")
-                }
-            }
-            dm
-        }
-
-        STOP <- function(...)
-        {
-            if (check != "none") stop(...)
-        }
-        STOP2 <- function(node, ...)
-        {
-            if (check != "none")
-                { print(node); stop(...) }
-        }
-
-
         ## initialize
         ans <- list()
         ans$filename <- gdsfile$filename
         if (verbose)
             cat("File: ", ans$filename, "\n", sep="")
-
 
         ## version
         at <- get.attr.gdsn(gdsfile$root)
@@ -424,7 +499,6 @@ seqSummary <- function(gdsfile, varname=NULL,
             if (verbose)
                 cat("Format Version: ", ans$version, "\n", sep="")
         }
-
 
         ## reference
         ans$reference <- .summary_reference(gdsfile, check, verbose)
@@ -441,57 +515,26 @@ seqSummary <- function(gdsfile, varname=NULL,
         ans$num.sample <- at$dim[2L]
         ans$num.variant <- at$dim[3L]
 
-n.variant <- ans$num.variant
-
         ## phase
         .summary_phase(gdsfile, check, FALSE)
 
         ## position
         .summary_position(gdsfile, check, verbose)
 
+        ## chromosome
+        .summary_chrom(gdsfile, check, verbose)
 
-
-        ########
-        # chromosome
-        n <- index.gdsn(gdsfile, "chromosome")
-        dm <- check_dim(n, 1L)
-        if (dm != n.variant)
-            STOP("Error: the length of the 'chromosome' variable.")
-        if (verbose & (check != "none"))
-        {
-            chr <- seqGetData(gdsfile, "chromosome")
-            tab <- table(chr, exclude=NULL)
-            names(dimnames(tab)) <- "Chromosomes:"
-            print(tab)
-            rm(chr)
-        }
-
+        ## contigs
+        .summary_contig(gdsfile, check, verbose)
 
         ## allele
         .summary_allele(gdsfile, check, verbose)
 
+        ## annotation/id
+        .summary_var(gdsfile, "annotation/id", check, verbose)
 
-
-        ########
-        # annotation/id
-        n <- index.gdsn(gdsfile, "annotation/id", silent=TRUE)
-        if (!is.null(n))
-        {
-            dm <- check_dim(n, 1L)
-            if (dm != n.variant)
-                STOP2(n, "Invalid number of variants.")
-        }
-
-        ########
-        # annotation/qual
-        n <- index.gdsn(gdsfile, "annotation/qual", silent=TRUE)
-        if (!is.null(n))
-        {
-            dm <- check_dim(n, 1L)
-            if (dm != n.variant)
-                STOP2(n, "Invalid number of variants.")
-        }
-
+        ## annotation/qual
+        .summary_var(gdsfile, "annotation/qual", check, verbose)
 
         ## annotation/filter
         n <- index.gdsn(gdsfile, "annotation/filter", silent=TRUE)
@@ -508,24 +551,10 @@ n.variant <- ans$num.variant
         if (!is.null(n))
             ans$format <- .summary_format(gdsfile, check, verbose)
 
-
-        ########
-        # sample.annotation
+        ## sample.annotation
         n <- index.gdsn(gdsfile, "sample.annotation", silent=TRUE)
         if (!is.null(n))
-        {
-            vars <- ls.gdsn(n)
-            dat <- data.frame(var.name=vars, type=rep(".", length(vars)),
-                stringsAsFactors=FALSE)
-            for (i in seq_len(length(vars)))
-                dat$type[i] <- .vcf_type(index.gdsn(n, vars[i]))
-            if (verbose)
-            {
-                cat("Annotation, sample variable(s):\n")
-                cat(paste0("    ", vars), sep="\n")
-            }
-            ans$sample.annot <- dat
-        }
+            .summary_samp_annot(gdsfile, check, verbose)
 
         # output
         invisible(ans)
@@ -541,7 +570,9 @@ n.variant <- ans$num.variant
             `annotation/filter` = .summary_filter(gdsfile, check, verbose),
             `annotation/info` = .summary_info(gdsfile, check, verbose),
             `annotation/format` = .summary_format(gdsfile, check, verbose),
+            `sample.annotation` = .summary_samp_annot(gdsfile, check, verbose),
             `$reference` = .summary_reference(gdsfile, check, verbose),
+            `$contig` = .summary_contig(gdsfile, check, verbose),
 
             .Call(SEQ_Summary, gdsfile, varname)  # others
         )

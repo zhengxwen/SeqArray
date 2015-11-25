@@ -72,7 +72,7 @@ setMethod("asVCF",
           function(x, info=NULL, geno=NULL) {
             seqsum <- seqSummary(x, check="none", verbose=FALSE)
             if (!is.null(info)) {
-              validInfo <- seqsum$info$var.name
+              validInfo <- seqsum$info$ID
               infoDiff <- setdiff(info, c(validInfo, NA))
               if (length(infoDiff) > 0) {
                 warning(paste("info fields not present:", infoDiff))
@@ -80,7 +80,7 @@ setMethod("asVCF",
               }
             }
             if (!is.null(geno)) {
-              validGeno <- c("GT", seqsum$format$var.name)
+              validGeno <- seqsum$format$ID
               genoDiff <- setdiff(geno, c(validGeno, NA))
               if (length(genoDiff) > 0) {
                 warning(paste("geno fields not present:", genoDiff))
@@ -128,9 +128,6 @@ setMethod("header",
               genoHd <- seqsum$format
               names(genoHd)[2:4] <- c("Number", "Type", "Description")
               genoHd <- DataFrame(genoHd[,2:4], row.names=genoHd[,1])
-              gt <- DataFrame(Number="1", Type="String", Description="Genotype",
-                              row.names="GT")
-              genoHd <- rbind(gt, genoHd)
 
               ## meta
               des <- get.attr.gdsn(index.gdsn(x, "description"))
@@ -201,37 +198,37 @@ setMethod("fixed",
 setMethod("info",
           "SeqVarGDSClass",
           function(x, info=NULL) {
-              des <- seqSummary(x, check="none", verbose=FALSE)$info
+              des <- seqSummary(x, "annotation/info", check="none", verbose=FALSE)
               if (!is.null(info)) {
-                  des <- des[des$var.name %in% info,]
+                  des <- des[des$ID %in% info,]
               }
               infoDf <- DataFrame(row.names=seqGetData(x, "variant.id"))
               if (nrow(des) > 0) {
                   for (i in 1:nrow(des)) {
-                      v <- seqGetData(x, paste("annotation/info/", des$var.name[i], sep=""))
+                      v <- seqGetData(x, paste("annotation/info/", des$ID[i], sep=""))
                       ## deal with variable length fields
                       if (!is.null(names(v))) {
                           vl <- .variableLengthToList(v)
                           ## each element should have length number of alt alleles, even for NAs
-                          if (des$number[i] == "A") {
+                          if (des$Number[i] == "A") {
                               nAlt <- elementLengths(alt(x))
                               addNA <- which(nAlt > 1 & is.na(vl))
                               for (ind in addNA) {
                                   vl[[ind]] <- rep(NA, nAlt[ind])
                               }
                           }
-                          v <- .toAtomicList(vl, des$type[i])
+                          v <- .toAtomicList(vl, des$Type[i])
                       } else if (!is.null(dim(v))) {
                           ## v is a matrix with nrow="Number"
                           vl <- list()
                           for (j in 1:ncol(v)) {
                               vl[[j]] <- v[,j]
                           }
-                          v <- .toAtomicList(vl, des$type[i])
+                          v <- .toAtomicList(vl, des$Type[i])
                       }
                       v[is.na(v)] <- NA # change NaN to NA
                       v[v %in% ""] <- NA
-                      infoDf[[des$var.name[i]]] <- v
+                      infoDf[[des$ID[i]]] <- v
                   }
               }
               infoDf
@@ -272,14 +269,14 @@ setMethod("geno",
               }
 
               ## all other fields
-              des <- seqSummary(x, check="none", verbose=FALSE)$format
+              des <- seqSummary(x, "annotation/format", check="none", verbose=FALSE)[-1, ]
               if (!is.null(geno)) {
-                  des <- des[des$var.name %in% geno,]
+                  des <- des[des$ID %in% geno,]
               }
               if (nrow(des) > 0) {
                   for (i in 1:nrow(des)) {
-                      var.name <- paste("annotation/format/", des$var.name[i], sep="")
-                      number <- suppressWarnings(as.integer(des$number[i]))
+                      var.name <- paste("annotation/format/", des$ID[i], sep="")
+                      number <- suppressWarnings(as.integer(des$Number[i]))
                       if (!is.na(number) && number > 1) {
                           v <- seqApply(x, var.name, function(v) {v},
                                         as.is="list", margin="by.variant")
@@ -307,7 +304,7 @@ setMethod("geno",
                           dimnames(v) <- list(sample.id, variant.id)
                           v <- t(v)
                       }
-                      genoSl[[des$var.name[i]]] <- v
+                      genoSl[[des$ID[i]]] <- v
                   }
               }
               genoSl
