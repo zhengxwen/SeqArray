@@ -269,7 +269,7 @@ setMethod("geno",
               }
 
               ## all other fields
-              des <- seqSummary(x, "annotation/format", check="none", verbose=FALSE)[-1, ]
+              des <- seqSummary(x, "annotation/format", check="none", verbose=FALSE)
               if (!is.null(geno)) {
                   des <- des[des$ID %in% geno,]
               }

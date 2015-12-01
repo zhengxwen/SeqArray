@@ -2,7 +2,7 @@
 \alias{seqBED2GDS}
 \title{Convert PLINK BED Format to SeqArray Format}
 \description{
-    Converts a PLINK BED file to a sequence GDS file.
+    Converts a PLINK BED file to a SeqArray GDS file.
 }
 \usage{
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,

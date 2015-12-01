@@ -1,8 +1,8 @@
 \name{seqMerge}
 \alias{seqMerge}
-\title{Merge Multiple Sequence GDS Files}
+\title{Merge Multiple SeqArray GDS Files}
 \description{
-    Merges multiple sequence GDS files.
+    Merges multiple SeqArray GDS files.
 }
 \usage{
 seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option(),

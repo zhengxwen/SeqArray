@@ -2,7 +2,7 @@
 \alias{seqGDS2VCF}
 \title{Convert to a VCF File}
 \description{
-    Converts a sequence GDS file to a VCF file.
+    Converts a SeqArray GDS file to a VCF file.
 }
 \usage{
 seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
@@ -35,10 +35,9 @@ the export.
 \references{
     The variant call format and VCFtools.
     Danecek P, Auton A, Abecasis G, Albers CA, Banks E, DePristo MA, Handsaker RE,
-    Lunter G, Marth GT, Sherry ST, McVean G, Durbin R; 1000 Genomes Project Analysis Group.
+    Lunter G, Marth GT, Sherry ST, McVean G, Durbin R;
+    1000 Genomes Project Analysis Group.
     Bioinformatics. 2011 Aug 1;27(15):2156-8. Epub 2011 Jun 7.
-
-    \url{http://corearray.sourceforge.net/}
 }
 
 \author{Xiuwen Zheng}

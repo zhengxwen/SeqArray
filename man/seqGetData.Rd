@@ -2,7 +2,7 @@
 \alias{seqGetData}
 \title{Get Data}
 \description{
-    Gets data from a sequence GDS file.
+    Gets data from a SeqArray GDS file.
 }
 \usage{
 seqGetData(gdsfile, var.name)

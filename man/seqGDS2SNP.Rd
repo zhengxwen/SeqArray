@@ -2,7 +2,7 @@
 \alias{seqGDS2SNP}
 \title{Convert to a SNP GDS File}
 \description{
-    Converts a sequence GDS file to a SNP GDS file.
+    Converts a SeqArray GDS file to a SNP GDS file.
 }
 \usage{
 seqGDS2SNP(gdsfile, out.gdsfn, compress.geno="ZIP_RA",

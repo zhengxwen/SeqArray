@@ -1,7 +1,7 @@
-CHANGES IN VERSION 1.11.0-1.11.3
+CHANGES IN VERSION 1.11.0-1.11.4
 -------------------------
 
-    o version was bumped
+    o rewrite `seqSummary()`
 
 
 CHANGES IN VERSION 1.10.0-1.10.6

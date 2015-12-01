@@ -4,7 +4,7 @@
 \alias{seqClose,gds.class-method}
 \title{Close the SeqArray GDS File}
 \description{
-    Closes a sequence GDS file which is open.
+    Closes a SeqArray GDS file which is open.
 }
 
 \usage{

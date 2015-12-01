@@ -329,17 +329,24 @@
     invisible(ans)
 }
 
-.summary_format <- function(gdsfile, check, verbose)
+.summary_format <- function(gdsfile, check, verbose, GT=TRUE)
 {
     if (verbose)
         cat("Annotation, FORMAT variable(s):\n")
 
     # genotype
-    a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
-    if (is.null(a$VariableName)) a$VariableName <- "GT"
-    if (is.null(a$Description)) a$Description <- NA_character_
-    ans <- data.frame(ID=a$VariableName, Number=1, Type="String",
-        Description=a$Description[1L], stringsAsFactors=FALSE)
+    if (GT)
+    {
+        a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
+        if (is.null(a$VariableName)) a$VariableName <- "GT"
+        if (is.null(a$Description)) a$Description <- NA_character_
+        ans <- data.frame(ID=a$VariableName, Number=1, Type="String",
+            Description=a$Description[1L], stringsAsFactors=FALSE)
+    } else {
+        s <- character()
+        ans <- data.frame(ID=s, Number=integer(), Type=s, Description=s,
+            stringsAsFactors=FALSE)
+    }
 
     # the FORMAT field
     fmt <- index.gdsn(gdsfile, "annotation/format")
@@ -528,7 +535,7 @@ seqSummary <- function(gdsfile, varname=NULL,
         .summary_contig(gdsfile, check, verbose)
 
         ## allele
-        .summary_allele(gdsfile, check, verbose)
+        ans$allele <- .summary_allele(gdsfile, check, verbose)
 
         ## annotation/id
         .summary_var(gdsfile, "annotation/id", check, verbose)
@@ -554,7 +561,7 @@ seqSummary <- function(gdsfile, varname=NULL,
         ## sample.annotation
         n <- index.gdsn(gdsfile, "sample.annotation", silent=TRUE)
         if (!is.null(n))
-            .summary_samp_annot(gdsfile, check, verbose)
+            ans$sample.annot <- .summary_samp_annot(gdsfile, check, verbose)
 
         # output
         invisible(ans)
@@ -569,10 +576,14 @@ seqSummary <- function(gdsfile, varname=NULL,
             `allele` = .summary_allele(gdsfile, check, verbose),
             `annotation/filter` = .summary_filter(gdsfile, check, verbose),
             `annotation/info` = .summary_info(gdsfile, check, verbose),
-            `annotation/format` = .summary_format(gdsfile, check, verbose),
+            `annotation/format` = .summary_format(gdsfile, check, verbose, FALSE),
             `sample.annotation` = .summary_samp_annot(gdsfile, check, verbose),
             `$reference` = .summary_reference(gdsfile, check, verbose),
             `$contig` = .summary_contig(gdsfile, check, verbose),
+            `$filter` = .summary_filter(gdsfile, check, verbose),
+            `$alt` = .summary_allele(gdsfile, "none", verbose),
+            `$info` = .summary_info(gdsfile, check, verbose),
+            `$format` = .summary_format(gdsfile, check, verbose),
 
             .Call(SEQ_Summary, gdsfile, varname)  # others
         )

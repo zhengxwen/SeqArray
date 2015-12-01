@@ -25,9 +25,12 @@ seqSummary(gdsfile, varname=NULL, check=c("default", "none", "full"),
     \item{ploidy}{the number of sets of chromosomes}
     \item{num.sample}{the total number of samples}
     \item{num.variant}{the total number of variants}
+    \item{allele}{allele information, see \code{seqSummary(gdsfile, "allele")}}
+    \item{filter}{filter information, see
+        \code{seqSummary(gdsfile, "annotation/filter")}}
     \item{info}{a \code{data.frame} of INFO field: ID, Number, Type,
-        Description, Source, Version}
-    \item{format}{a \code{data.frame} of FORMAT field: ID, Number, Type,
+        Description, Source and Version}
+    \item{format}{a \code{data.frame} of FORMAT field: ID, Number, Type and
         Description}
     \item{sample.annot}{a \code{data.frame} of sample annotation with ID,
         Type and Description}
@@ -45,20 +48,26 @@ descriptions (\code{check="none"}), or a list with components:
     \item{table}{cross tabulation for the number of alleles per site}
 
     ---
-    \code{seqSummary(gdsfile, "annotation/filter")} returns a data.frame with
-ID and description (\code{check="none"}), or a list with components:
+    \code{seqSummary(gdsfile, "$alt")} returns a data.frame with ID and
+Description for describing the alternative alleles.
+
+    ---
+    \code{seqSummary(gdsfile, "annotation/filter")} or
+\code{seqSummary(gdsfile, "$filter")} returns a data.frame with ID and
+description (\code{check="none"}), or a list with components:
     \item{value}{a data.frame with ID and Description}
     \item{table}{cross tabulation for the variable 'filter'}
 
     ---
-    \code{seqSummary(gdsfile, "annotation/info")} returns a \code{data.frame}
-describing VCF INFO header with ID, Number, Type, Description, Source and
-Version.
+    \code{seqSummary(gdsfile, "annotation/info")} or
+\code{seqSummary(gdsfile, "$info")} returns a \code{data.frame} describing
+the variables in the folder "annotation/info" with ID, Number, Type,
+Description, Source and Version.
 
     ---
     \code{seqSummary(gdsfile, "annotation/format")} returns a \code{data.frame}
-describing VCF FORMAT header with ID, Number, Type and Description. The first
-row is used for genotypes.
+describing the variables in the folder "annotation/format" with ID, Number,
+Type and Description.
 
     ---
     \code{seqSummary(gdsfile, "sample.annotation")} returns a \code{data.frame}
@@ -71,10 +80,15 @@ if it is defined (a 0-length character vector if undefined).
     ---
     \code{seqSummary(gdsfile, "$contig")} returns the contig information,
 a \code{data.frame} including ID.
+
+    ---
+    \code{seqSummary(gdsfile, "$format")} returns a \code{data.frame}
+describing VCF FORMAT header with ID, Number, Type and Description. The first
+row is used for genotypes.
 }
 \details{
-    If \code{check = "default"}, the function performs regular checking, like
-variable dimensions. If \code{check = "full"}, it performs more checking, e.g.,
+    If \code{check="default"}, the function performs regular checking, like
+variable dimensions. If \code{check="full"}, it performs more checking, e.g.,
 unique sample id, unique variant id, whether genotypic data are in a valid
 range or not.
 }
@@ -85,28 +99,24 @@ range or not.
 }
 
 \examples{
-library(SeqArray)
-
 # the GDS file
 (gds.fn <- seqExampleFileName("gds"))
 
 seqSummary(gds.fn)
 
 seqSummary(gds.fn, "genotype")
-
 seqSummary(gds.fn, "allele")
-
 seqSummary(gds.fn, "annotation/filter")
-
 seqSummary(gds.fn, "annotation/info")
-
 seqSummary(gds.fn, "annotation/format")
-
 seqSummary(gds.fn, "sample.annotation")
 
 seqSummary(gds.fn, "$reference")
-
 seqSummary(gds.fn, "$contig")
+seqSummary(gds.fn, "$filter")
+seqSummary(gds.fn, "$alt")
+seqSummary(gds.fn, "$info")
+seqSummary(gds.fn, "$format")
 
 
 # open a GDS file
