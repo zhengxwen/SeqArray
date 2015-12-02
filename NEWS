@@ -3,6 +3,11 @@ CHANGES IN VERSION 1.11.0-1.11.4
 
     o rewrite `seqSummary()`
 
+    o a new vignette file with Rmarkdown format (replacing SeqArray-JSM2013.pdf)
+
+    o bug fix in `seqBED2GDS()` if the total number of genotypes > 2^31
+      (integer overflow)
+
 
 CHANGES IN VERSION 1.10.0-1.10.6
 -------------------------

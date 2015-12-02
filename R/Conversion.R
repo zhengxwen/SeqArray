@@ -1383,7 +1383,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
 
     n1 <- add.gdsn(n, "data", storage="bit1", valdim=c(nSamp, 0L),
         compress=compress.annotation)
-    .repeat_gds(n1, 0L, nSNP*nSamp)
+    .repeat_gds(n1, 0L, as.double(nSNP)*nSamp)
     readmode.gdsn(n1)
 
     n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
@@ -1526,7 +1526,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             stop("IDs in PLINK BED are not unique!")
     }
     if (verbose)
-        cat("\tFAM file: \"", fam.fn, "\" (", nrow(famD), "samples)\n", sep="")
+        cat("\tFAM file: \"", fam.fn, "\" (", nrow(famD), " samples)\n", sep="")
 
     ##  read bim.fn  ##
 
@@ -1535,7 +1535,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     .close_conn(f)
     names(bimD) <- c("chr", "snp.id", "map", "pos", "allele1", "allele2")
     if (verbose)
-        cat("\tBIM file: \"", bim.fn, "\" (", nrow(bimD), "variants)\n", sep="")
+        cat("\tBIM file: \"", bim.fn, "\" (", nrow(bimD), " variants)\n", sep="")
 
 
     ##  create GDS file  ##
@@ -1618,7 +1618,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 
     n1 <- add.gdsn(n, "data", storage="bit1", valdim=c(nrow(famD), 0L),
         compress=compress.annotation)
-    .repeat_gds(n1, 0L, nrow(bimD)*nrow(famD))
+    .repeat_gds(n1, 0L, as.double(nrow(bimD))*nrow(famD))
     readmode.gdsn(n1)
 
     n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
