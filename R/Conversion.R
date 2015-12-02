@@ -1001,6 +1001,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         aa$FileVersion <- "v1.0"
     cat("##source=SeqArray_Format_", aa$FileVersion, "\n", sep="", file=ofile)
 
+    # reference
+    if (length(z$reference) > 0L)
+        cat("##reference=", z$reference[1L], "\n", sep="", file=ofile)
+
     # assembly
     if (!is.null(a$vcf.assembly))
         cat("##assembly=", dq(a$vcf.assembly), "\n", sep="", file=ofile)

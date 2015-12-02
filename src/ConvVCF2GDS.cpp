@@ -38,7 +38,7 @@ static const string BlackString;
 // ===========================================================
 
 /// a class of parsing text
-class CReadLine
+class COREARRAY_DLL_LOCAL CReadLine
 {
 public:
 	/// constructor
@@ -207,7 +207,7 @@ protected:
 
 
 // ===========================================================
-// VCF strcture
+// VCF structure
 // ===========================================================
 
 const static int FIELD_TYPE_INT      = 1;
@@ -217,7 +217,7 @@ const static int FIELD_TYPE_STRING   = 4;
 
 
 /// the structure of INFO field
-struct TVCF_Field_Info
+struct COREARRAY_DLL_LOCAL TVCF_Field_Info
 {
 	string name;         //< INFO ID
 	int type;            //< 1: integer, 2: float, 3: flag, 4: character,
@@ -300,7 +300,7 @@ struct TVCF_Field_Info
 
 
 /// the structure of FORMAT field
-struct TVCF_Field_Format
+struct COREARRAY_DLL_LOCAL TVCF_Field_Format
 {
 	string name;         //< FORMAT ID
 	int type;            //< 1: integer, 2: float, 3: flag, 4: character,

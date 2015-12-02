@@ -1,0 +1,209 @@
+---
+title: "SeqArray -- Big Data Management of Genome-Wide Sequence Variants"
+author: "Dr. Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
+date: "Dec 2, 2015 (JSM 2013 / Updated in 2015)"
+output: slidy_presentation
+vignette: >
+  %\VignetteIndexEntry{SeqArray Overview}
+  %\VignetteDepends{gdsfmt}
+  %\VignetteKeywords{GWAS, whole-genome, sequencing, SNV}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+## Introduction
+
+Thousands of gigabyte genetic data sets provide significant challenges in data management, even on well-equipped hardware
+
+- The 1000 Genomes Project Phase 1 (1KG): ~39 million variants (SNPs, indels and structural variants) of 1092 individuals (http://www.1000genomes.org)
+- Variant Call Format (VCF) files: genotypes + annotation, totaling ~146.7GB in a compressed manner (gz files)
+
+
+## Methods
+
+**CoreArray (C++ library)**
+
+- designed for large-scale data management of genome-wide variants
+- data format (GDS) to store multiple array-oriented datasets in a single file
+
+**Two R packages**
+
+- gdsfmt -- R interface to CoreArray Genomic Data Structure (GDS) files
+- SeqArray -- specifically designed for data management of genome-wide sequence variants from Variant Call Format (VCF) files
+
+
+## Advantages
+
+1. Direct access of data without parsing VCF text files
+
+2. Stored in a binary and array-oriented manner
+    - 2 bits are employed as a primitive type to store alleles (e.g., A, G, C, T)
+    - efficient access of variants using R language
+
+3. Genotypic data stored in a compressed manner
+    - rare variants: highly compressed without sacrificing access efficiency
+    - e.g., 1KG, 26G raw genotypes: 1.5G by the zlib algorithm (5.8%!)
+
+4. Run in parallel!
+
+
+## File Contents
+
+```
+File: SeqArray/extdata/CEU_Exon.gds (396.3 KB)
++    [  ] *
+|--+ description   [  ] *
+|--+ sample.id   { VStr8 90 ZIP_RA(30.83%), 222 bytes }
+|--+ variant.id   { Int32 1348 ZIP_RA(35.72%), 1.9 KB }
+|--+ position   { Int32 1348 ZIP_RA(86.44%), 4.7 KB }
+|--+ chromosome   { VStr8 1348 ZIP_RA(2.66%), 91 bytes }
+|--+ allele   { VStr8 1348 ZIP_RA(17.19%), 928 bytes }
+|--+ genotype   [  ] *
+|  |--+ data   { Bit2 2x90x1348 ZIP_RA(28.39%), 17.2 KB }
+|--+ phase   [  ]
+|  |--+ data   { Bit1 90x1348 ZIP_RA(0.36%), 55 bytes }
+|--+ annotation   [  ]
+|  |--+ id   { VStr8 1348 ZIP_RA(41.02%), 6.0 KB }
+|  |--+ qual   { Float32 1348 ZIP_RA(0.91%), 49 bytes }
+|  |--+ filter   { Int32,factor 1348 ZIP_RA(0.89%), 48 bytes } *
+|  |--+ info   [  ]
+|  |  |--+ AA   { VStr8 1348 ZIP_RA(24.22%), 653 bytes } *
+|  |  |--+ HM2   { Bit1 1348 ZIP_RA(117.16%), 198 bytes } *
+|  |--+ format   [  ]
+|  |  |--+ DP   [  ] *
+|  |  |  |--+ data   { Int32 90x1348 ZIP_RA(33.83%), 164.2 KB }
+|--+ sample.annotation   [  ]
+|  |--+ family   { VStr8 90 ZIP_RA(34.70%), 135 bytes }
+```
+
+
+## Key Functions
+
+**Table 1**: The key functions in the SeqArray package.
+
+| Function     | Description |
+|:-------------|:-------------------------------------------|
+| seqVCF2GDS   | Reformats VCF files to GDS format |
+| seqSummary   | Gets the summary (# of samples, # of variants, INFO/FORMAT variables, etc) |
+| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data) |
+| seqGetData   | Gets data from a sequencing file (from a subset of data) |
+| seqApply     | Applies a user-defined function over array margins |
+| seqParallel  | Applies functions in parallel |
+
+
+## Benchmark
+
+**Dataset:**
+
+- 1000 Genomes Project Phase 1, chromosome 1
+- 3,007,196 variants, 1092 individuals
+- the original VCF file: 10.7G (compressed)
+    * genotypes + annotations
+- reformat to a single SeqArray file: 10.6G
+
+**Calculate the frequencies of reference alleles**
+
+1. R code (sequential version)
+2. R code (parallel version)
+3. Seamless R and C++ integration via the Rcpp package (sequential version)
+
+
+## Benchmark -- Test 1 (sequentially)
+
+```R
+# load the R package
+library(SeqArray)
+# open the file
+genofile <- seqOpen("1KG_chr1.gds")
+
+# apply the user-defined function variant by variant
+system.time(
+    afreq <- seqApply(genofile, "genotype", as.is="double", margin="by.variant",
+        FUN = function(x) { mean(x==0L, na.rm=TRUE) }))
+```
+
+**189.8 seconds** on a Linux system with two quad-core Intel processors (2.27GHz) and 32 GB RAM
+
+`function(x) { mean(x==0L, na.rm=TRUE) }` is the user-defined function, where `x` looks like:
+
+```R
+                           sample
+  allele [,1] [,2] [,3] [,4] [,5]
+    [1,]    0    1    0   NA    1
+    [2,]    0    0    0    1    0
+```
+
+0 -- reference allele, 1 -- the first alternative allele
+
+
+## Benchmark -- Test 2 (in parallel)
+
+`seqParallel()` splits genotypes into 4 non-overlapping parts according to different cores.
+
+```R
+# load the R package
+library(parallel)
+
+# create a computing cluster with 4 cores
+seqParallelSetup(4)
+
+# run in parallel
+system.time(afreq <- seqParallel(gdsfile=genofile,
+    FUN = function(f) {
+        seqApply(f, "genotype", as.is="double", margin="by.variant",
+            FUN = function(x) mean(x==0L, na.rm=TRUE))
+    }, split = "by.variant")
+)
+```
+
+**50.3 seconds** (vs 189.8s in Test 1)
+
+
+## Benchmark -- Test 3 (C++ Integration)
+
+```R
+library(Rcpp)
+
+# dynamically define an inline C/C++ function in R
+cppFunction('double RefAlleleFreq(IntegerMatrix x) {
+    int nrow = x.nrow(), ncol = x.ncol();
+    int cnt=0, zero_cnt=0, g;
+    for (int i = 0; i < nrow; i++) {
+            for (int j = 0; j < ncol; j++) {
+                if ((g = x(i, j)) != NA_INTEGER) {
+                    cnt ++;
+                    if (g == 0) zero_cnt ++;
+                }
+    }}
+    return double(zero_cnt) / cnt;
+}')
+
+system.time(
+    afreq <- seqApply(genofile, "genotype", RefAlleleFreq,
+        as.is="double", margin="by.variant")
+)
+```
+
+**33.9 seconds** (fastest! vs 189.8s in Test 1 and 50.3s in Test 2)
+
+
+## Conclusion
+
+**SeqArray will be of great interest to**
+
+- R users involved in data analyses of large-scale sequencing variants
+- particularly those with limited experience of parallel / high-performance computing
+
+**SeqVarTools (Bioconductor)**
+
+- variant analysis, such like allele frequencies, HWE, Mendelian errors, etc
+- functions to display genotypes / annotations in a readable format
+
+
+## Acknowledgements
+
+Department of Biostatistics at University of Washington -- Seattle, 
+
+Genetic Analysis Center:
+
+- Dr. Stephanie M. Gogarten
+- Dr. Cathy Laurie

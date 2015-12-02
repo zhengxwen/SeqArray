@@ -196,10 +196,10 @@ seqClose(genofile)
 Users can use `diff`, a command line tool in Unix-like systems, to compare files line by line, in order to confirm data consistency.
 ```sh
 # assuming the original VCF file is old.vcf.gz,
-# call "seqVCF2GDS" for the import and "seqGDS2VCF" for the export to create a new VCF file new.vcf.gz
-$ diff <(zcat old.vcf.gz) <(zcat new.vcf.gz)
+# call "seqVCF2GDS" for the import and "seqGDS2VCF" for the export to create a new VCF file tmp.vcf.gz
+$ diff <(zcat old.vcf.gz) <(zcat tmp.vcf.gz)
 # OR
-$ diff <(gunzip -c old.vcf.gz) <(gunzip -c new.vcf.gz)
+$ diff <(gunzip -c old.vcf.gz) <(gunzip -c tmp.vcf.gz)
 ```
 
 ```
