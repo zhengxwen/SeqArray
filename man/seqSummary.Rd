@@ -1,6 +1,6 @@
 \name{seqSummary}
 \alias{seqSummary}
-\title{Summarize the SeqArray GDS File}
+\title{Summarize a SeqArray GDS File}
 \description{
     Gets the summary of SeqArray GDS file.
 }
@@ -91,7 +91,7 @@ row is used for genotypes.
 
     ---
     \code{seqSummary(gdsfile, "$digest")} returns a \code{data.frame} with
-the full names of GDS variables, digest codes and error (FALSE/TRUE).
+the full names of GDS variables, digest codes and validation (FALSE/TRUE).
 }
 \details{
     If \code{check="default"}, the function performs regular checking, like

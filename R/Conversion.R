@@ -61,7 +61,8 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
                 }
                 if (getnum)
                 {
-                    nVariant <- nVariant + length(count.fields(opfile))
+                    nVariant <- nVariant + length(s) +
+                        length(count.fields(opfile))
                 }
                 break
             }

@@ -610,7 +610,7 @@
                 err <- any(v==FALSE, na.rm=TRUE)
                 d <- data.frame(varname = dp$fullname,
                     digest = toString(paste(names(at), at, sep=": ")),
-                    error = err, stringsAsFactors=FALSE)
+                    validation = !err, stringsAsFactors=FALSE)
                 ans <- rbind(ans, d)
             }
         }

@@ -377,7 +377,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
     if (verbose)
     {
-        cat(sprintf("\t%d sample(s) in total, %d sample(s) in common\n",
+        cat(sprintf("    %d sample(s) in total, %d sample(s) in common\n",
             length(samp.id), length(samp2.id)))
     }
 
@@ -395,7 +395,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
     if (verbose)
     {
-        cat(sprintf("\t%d variant(s) in total, %d variant(s) in common\n",
+        cat(sprintf("    %d variant(s) in total, %d variant(s) in common\n",
             length(variant.id), length(variant2.id)))
     }
 
@@ -467,13 +467,15 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         
 
     ## add sample.id
-    if (verbose) cat("sample.id\n")
-    .AddVar(storage.option, gfile, "sample.id", samp.id, closezip=TRUE)
+    if (verbose) cat("Variables:\n    sample.id")
+    n <- .AddVar(storage.option, gfile, "sample.id", samp.id, closezip=TRUE)
+    .DigestCode(n, digest, verbose)
 
     ## add variant.id
-    if (verbose) cat("variant.id\n")
-    .AddVar(storage.option, gfile, "variant.id", seq_along(variant.id),
+    if (verbose) cat("    variant.id")
+    n <- .AddVar(storage.option, gfile, "variant.id", seq_along(variant.id),
         storage="int32", closezip=TRUE)
+    .DigestCode(n, digest, verbose)
 
     if (length(samp2.id) > 0L)
     {
@@ -481,21 +483,24 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
         ## add position, chromsome, allele
         # TODO: need to check whether position can be stored in 'int32'
-        if (verbose) cat("position\n")
+        if (verbose) cat("    position")
         n <- .AddVar(storage.option, gfile, "position", storage="int32")
         .append_gds(n, flist, "position")
+        .DigestCode(n, digest, verbose)
 
-        if (verbose) cat("chromosome\n")
+        if (verbose) cat("    chromosome")
         n <- .AddVar(storage.option, gfile, "chromosome", storage="string")
         .append_gds(n, flist, "chromosome")
+        .DigestCode(n, digest, verbose)
 
-        if (verbose) cat("allele\n")
+        if (verbose) cat("    allele")
         n <- .AddVar(storage.option, gfile, "allele", storage="string")
         .append_gds(n, flist, "allele")
+        .DigestCode(n, digest, verbose)
 
 
         ## add a folder for genotypes
-        if (verbose) cat("genotype, phase [")
+        if (verbose) cat("    genotype, phase [")
         varGeno <- addfolder.gdsn(gfile, "genotype")
         .MergeNodeAttr(varGeno, flist, "genotype")
 
@@ -541,9 +546,11 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         readmode.gdsn(n1)
         readmode.gdsn(n2)
 
+
         n <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
             visible=FALSE)
         .append_gds(n, flist, "genotype/@data")
+        .DigestCode(n, digest, FALSE)
 
         # TODO
         n <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
@@ -560,25 +567,36 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
         # sync file
         sync.gds(gfile)
-        if (verbose) cat("]\n")
+        if (verbose) cat("]")
+        .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
+        if (verbose) cat("          ")
+        .DigestCode(index.gdsn(gfile, "phase/data"), digest, verbose)
 
 
         ## add annotation folder
         varAnnot <- addfolder.gdsn(gfile, "annotation")
 
         # add id
+        if (verbose) cat("    annotation/id")
         n <- .AddVar(storage.option, varAnnot, "id", storage="string")
         .append_gds(n, flist, "annotation/id")
+        .DigestCode(n, digest, verbose)
+
         # add qual
+        if (verbose) cat("    annotation/qual")
         n <- .AddVar(storage.option, varAnnot, "qual", storage="float")
         .append_gds(n, flist, "annotation/qual")
-        # add filter
+        .DigestCode(n, digest, verbose)
+
+        # add filter, TODO
+        if (verbose) cat("    annotation/filter")
         n <- .AddVar(storage.option, varAnnot, "filter", storage="int32")
         .append_gds(n, flist, "annotation/filter")
+        .DigestCode(n, digest, verbose)
 
 
         ## VCF INFO
-        if (verbose) cat("annotation/info\n")
+        if (verbose) cat("    annotation/info\n")
         varInfo <- addfolder.gdsn(varAnnot, "info")
         varnm <- NULL
         for (i in seq_along(flist))
@@ -600,6 +618,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         # for-loop
         for (i in seq_along(varnm))
         {
+            if (verbose) cat("        ", varnm[i], sep="")
             idx <- 0L
             for (j in seq_along(flist))
             {
@@ -674,12 +693,18 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             }
 
             readmode.gdsn(n2)
-            if (!is.null(n3)) readmode.gdsn(n3)
+            .DigestCode(n2, digest, verbose)
+
+            if (!is.null(n3))
+            {
+                readmode.gdsn(n3)
+                .DigestCode(n3, digest, FALSE)
+            }
         }
 
 
         ## VCF FORMAT
-        if (verbose) cat("annotation/format\n")
+        if (verbose) cat("    annotation/format\n")
         varFormat <- addfolder.gdsn(varAnnot, "format")
         varnm <- NULL
         for (i in seq_along(flist))
@@ -701,7 +726,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         # for-loop
         for (i in seq_along(varnm))
         {
-            if (verbose) cat("\t", varnm[i], " [", sep="")
+            if (verbose) cat("        ", varnm[i], " [", sep="")
             idx <- 0L
             for (j in seq_along(flist))
             {
@@ -765,12 +790,14 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 
             readmode.gdsn(n4)
             readmode.gdsn(n5)
-            if (verbose) cat("]\n")
+            if (verbose) cat("]")
+            .DigestCode(n4, digest, verbose)
+            .DigestCode(n5, digest, FALSE)
         }
 
 
-        ## annotation folder
-        if (verbose) cat("sample.annotation\n")
+        ## sample annotation
+        if (verbose) cat("    sample.annotation\n")
         varSamp <- addfolder.gdsn(gfile, "sample.annotation")
         varnm <- NULL
         for (i in seq_along(flist))
@@ -795,7 +822,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             idx <- 0L
             for (j in seq_along(flist))
             {
-                n <- index.gdsn(flist[[j]], "annotation/format", silent=TRUE)
+                n <- index.gdsn(flist[[j]], "sample.annotation", silent=TRUE)
                 if (!is.null(n))
                 {
                     if (varnm[i] %in% ls.gdsn(n))
@@ -807,8 +834,10 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
             }
             if (idx < 1L) stop("internal error, format field.")
 
+            if (verbose) cat("        ", varnm[i], sep="")
             copyto.gdsn(varSamp, index.gdsn(flist[[idx]],
                 paste0("sample.annotation/", varnm[i])))
+            .DigestCode(index.gdsn(varSamp, varnm[i]), digest, verbose)
         }
 
     } else {
