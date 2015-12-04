@@ -91,8 +91,8 @@ setMethod("asVCF",
                 colData=colData(x),
                 exptData=SimpleList(header=header(x)),
                 fixed=fixed(x),
-                info=info(x, info),
-                geno=geno(x, geno))
+                info=info(x, info=info),
+                geno=geno(x, geno=geno))
           })
 
 setMethod("rowRanges",
