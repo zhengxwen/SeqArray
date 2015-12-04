@@ -10,7 +10,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     storage.option=seqStorage.Option(),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
-    verbose=TRUE)
+    digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -41,6 +41,9 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
         \code{\link{cleanup.gds}}}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
         \code{FALSE}: get missing value if numeric conversion fails}
+    \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
+        "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
+        or a digest algorithm is specified}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

@@ -1,5 +1,5 @@
 ---
-title: "SeqArray -- Big Data Management of Genome-Wide Sequence Variants"
+title: "SeqArray Overview"
 author: "Dr. Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
 date: "JSM 2013 / Updated on Dec 2, 2015"
 output: slidy_presentation

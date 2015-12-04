@@ -6,7 +6,7 @@
 }
 \usage{
 seqSNP2GDS(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
-    compress.annotation="ZIP_RA", optimize=TRUE, verbose=TRUE)
+    compress.annotation="ZIP_RA", optimize=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file name of SNP format}
@@ -18,6 +18,9 @@ seqSNP2GDS(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
         \code{add.gdsn}}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
+    \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
+        "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
+        or a digest algorithm is specified}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
@@ -27,7 +30,7 @@ seqSNP2GDS(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqGDS2SNP}}, \code{\link{seqVCF2GDS}},
-    \code{\link{seqGDS2VCF}}
+    \code{\link{seqGDS2VCF}}, \code{\link{seqBED2GDS}}
 }
 
 \examples{

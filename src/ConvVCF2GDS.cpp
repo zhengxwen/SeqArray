@@ -224,8 +224,10 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Info
 	bool import_flag;    //< true: import, false: not import
 	PdAbstractArray data_obj;  //< the pointer to data object
 	PdAbstractArray len_obj;   //< can be NULL if variable-length object
-	int number;          //< according to 'Number' field, if -1: variable-length, -2: # of alleles, -3: # of genotypes
-	bool used;           //< if TRUE, it has been parsed for the current line
+	int number;  //< according to 'Number=' field
+	             // -1: variable-length (.), -2: # of alternate alleles (A)
+	             // -3: # of possible genotypes (G), -4: # of alleles (R)
+	bool used;   //< if TRUE, it has been parsed for the current line
 
 	TVCF_Field_Info()
 	{
@@ -237,7 +239,7 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Info
 
 	// INFO field
 
-	template<typename TYPE> void Check(vector<TYPE> &array, string &name, int num_allele)
+	template<typename TYPE> void Check(vector<TYPE> &array, int num_allele)
 	{
 		C_Int32 I32;
 		switch (number)
@@ -249,23 +251,37 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Info
 				break;		
 
 			case -2:
-				// # of alleles
+				// # of alternate alleles
 				I32 = array.size();
 				if (I32 != (num_allele-1))
 				{
-					throw ErrSeqArray("INFO ID '%s' should have %d value(s).",
-						name.c_str(), num_allele-1);
+					throw ErrSeqArray(
+						"INFO ID '%s' (Number=A) should have %d value(s), but receives %d.",
+						name.c_str(), num_allele-1, I32);
 				}
 				GDS_Array_AppendData(len_obj, 1, &I32, svInt32);
 				break;		
 
 			case -3:
-				// # of genotypes
+				// # of all possible genotypes
 				I32 = array.size();
 				if (I32 != (num_allele+1)*num_allele/2)
 				{
-					throw ErrSeqArray("INFO ID '%s' should have %d value(s).",
-						name.c_str(), (num_allele+1)*num_allele/2);
+					throw ErrSeqArray(
+						"INFO ID '%s' (Number=G) should have %d value(s), but receives %d.",
+						name.c_str(), (num_allele+1)*num_allele/2, I32);
+				}
+				GDS_Array_AppendData(len_obj, 1, &I32, svInt32);
+				break;		
+
+			case -4:
+				// # of alleles
+				I32 = array.size();
+				if (I32 != num_allele)
+				{
+					throw ErrSeqArray(
+						"INFO ID '%s' (Number=R) should have %d value(s), but receives %d.",
+						name.c_str(), num_allele, I32);
 				}
 				GDS_Array_AppendData(len_obj, 1, &I32, svInt32);
 				break;		
@@ -275,8 +291,9 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Info
 				{
 					if (number != (int)array.size())
 					{
-						throw ErrSeqArray("INFO ID '%s' should have %d value(s).",
-							name.c_str(), number);
+						throw ErrSeqArray(
+							"INFO ID '%s' should have %d value(s), but receives %d.",
+							name.c_str(), number, (int)array.size());
 					}
 				} else
 					throw ErrSeqArray("Invalid value 'number' in TVCF_Field_Info.");
@@ -307,8 +324,10 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Format
 	bool import_flag;    //< true: import, false: not import
 	PdAbstractArray data_obj;  //< the pointer to data object
 	PdAbstractArray len_obj;   //< can be NULL if variable-length object
-	int number;          //< according to 'Number' field, if -1: variable-length, -2: # of alleles, -3: # of genotypes
-	bool used;           //< if TRUE, it has been parsed for the current line
+	int number;  //< according to 'Number=' field
+	             // -1: variable-length (.), -2: # of alternate alleles (A)
+	             // -3: # of possible genotypes (G), -4: # of alleles (R)
+	bool used;   //< if TRUE, it has been parsed for the current line
 
 	/// data -- Int32
 	vector< vector<C_Int32> > I32ss;
@@ -328,8 +347,8 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Format
 
 	// FORMAT field
 
-	template<typename TYPE> void Check(vector<TYPE> &array, string &name,
-		int num_allele, const TYPE &missing)
+	template<typename TYPE> void Check(vector<TYPE> &array, int num_allele,
+		const TYPE &missing)
 	{
 		switch (number)
 		{
@@ -337,25 +356,37 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Format
 				break;
 
 			case -2:
-				// # of alleles
+				// # of alternate alleles
 				if ((int)array.size() > (num_allele-1))
 				{
-					throw ErrSeqArray("FORMAT ID '%s' should have %d value(s).",
-						name.c_str(), num_allele-1);
-				} else {
+					throw ErrSeqArray(
+						"FORMAT ID '%s' (Number=A) should have %d value(s), but receives %d.",
+						name.c_str(), num_allele-1, (int)array.size());
+				} else
 					array.resize(num_allele-1, missing);
-				}
 				break;		
 
 			case -3:
-				// # of genotypes
+				// # of all possible genotypes
 				if ((int)array.size() > (num_allele+1)*num_allele/2)
 				{
-					throw ErrSeqArray("INFO ID '%s' should have %d value(s).",
-						name.c_str(), (num_allele+1)*num_allele/2);
-				} else {
+					throw ErrSeqArray(
+						"FORMAT ID '%s' (Number=G) should have %d value(s), but receives %d.",
+						name.c_str(), (num_allele+1)*num_allele/2,
+						(int)array.size());
+				} else
 					array.resize((num_allele+1)*num_allele/2, missing);
-				}
+				break;		
+
+			case -4:
+				// # of alleles
+				if ((int)array.size() > num_allele)
+				{
+					throw ErrSeqArray(
+						"FORMAT ID '%s' (Number=R) should have %d value(s), but receives %d.",
+						name.c_str(), num_allele, (int)array.size());
+				} else
+					array.resize(num_allele, missing);
 				break;		
 
 			default:
@@ -363,8 +394,9 @@ struct COREARRAY_DLL_LOCAL TVCF_Field_Format
 				{
 					if ((int)array.size() > number)
 					{
-						throw ErrSeqArray("FORMAT ID '%s' should have %d value(s).",
-							name.c_str(), number);
+						throw ErrSeqArray(
+							"FORMAT ID '%s' should have %d value(s), but receives %d.",
+							name.c_str(), number, (int)array.size());
 					} else {
 						array.resize(number, missing);
 					}
@@ -746,11 +778,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		vector<string> filter_list;
 		{
 			SEXP level = GetListElement(param, "filter.levels");
-			if (!isNull(level))
-			{
-				for (int i=0; i < (int)XLENGTH(level); i++)
-					filter_list.push_back(CHAR(STRING_ELT(level, i)));
-			}
+			const int n = GetLength(level);
+			for (int i=0; i < n; i++)
+				filter_list.push_back(CHAR(STRING_ELT(level, i)));
 		}
 
 		// GDS nodes
@@ -886,8 +916,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 
 		// chr prefix
 		vector<string> ChrPref;
-		for (R_xlen_t i=0; i < XLENGTH(ChrPrefix); i++)
-			ChrPref.push_back(CHAR(STRING_ELT(ChrPrefix, i)));
+		{
+			const R_xlen_t n = GetLength(ChrPrefix);
+			for (R_xlen_t i=0; i < n; i++)
+				ChrPref.push_back(CHAR(STRING_ELT(ChrPrefix, i)));
+		}
 
 		// =========================================================
 		// initialize calling
@@ -1022,6 +1055,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			for (pInfo = info_list.begin(); pInfo != info_list.end(); pInfo++)
 				pInfo->used = false;
 			RL.GetCell(cell, false);
+			if (cell == ".") cell.clear();
 
 			// parse
 			pCh = cell.c_str();
@@ -1049,14 +1083,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 						{
 						case FIELD_TYPE_INT:
 							getInt32Array(value, I32s, RaiseError);
-							pInfo->Check(I32s, name, num_allele);
+							pInfo->Check(I32s, num_allele);
 							GDS_Array_AppendData(pInfo->data_obj, I32s.size(),
 								&(I32s[0]), svInt32);
 							break;
 
 						case FIELD_TYPE_FLOAT:
 							getFloatArray(value, F64s, RaiseError);
-							pInfo->Check(F64s, name, num_allele);
+							pInfo->Check(F64s, num_allele);
 							GDS_Array_AppendData(pInfo->data_obj, F64s.size(),
 								&(F64s[0]), svFloat64);
 							break;
@@ -1074,7 +1108,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 
 						case FIELD_TYPE_STRING:
 							getStringArray(value, StrList);
-							pInfo->Check(StrList, name, num_allele);
+							pInfo->Check(StrList, num_allele);
 							for (int k=0; k < (int)StrList.size(); k++)
 							{
 								GDS_Array_AppendString(pInfo->data_obj,
@@ -1295,17 +1329,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 						{
 						case FIELD_TYPE_INT:
 							getInt32Array(value, pFmt->I32ss[samp_idx], RaiseError);
-							pFmt->Check(pFmt->I32ss[samp_idx], name, num_allele, NA_INTEGER);
+							pFmt->Check(pFmt->I32ss[samp_idx], num_allele, NA_INTEGER);
 							break;
 
 						case FIELD_TYPE_FLOAT:
 							getFloatArray(value, pFmt->F64ss[samp_idx], RaiseError);
-							pFmt->Check(pFmt->F64ss[samp_idx], name, num_allele, R_NaN);
+							pFmt->Check(pFmt->F64ss[samp_idx], num_allele, R_NaN);
 							break;
 
 						case FIELD_TYPE_STRING:
 							getStringArray(value, pFmt->UTF8ss[samp_idx]);
-							pFmt->Check(pFmt->UTF8ss[samp_idx], name, num_allele, BlackString);
+							pFmt->Check(pFmt->UTF8ss[samp_idx], num_allele, BlackString);
 							break;
 
 						default:

@@ -100,7 +100,8 @@ COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str)
 {
 	SEXP elmt = R_NilValue;
 	SEXP names = getAttrib(list, R_NamesSymbol);
-	for (R_len_t i = 0; i < XLENGTH(list); i++)
+	const size_t n = GetLength(names);
+	for (size_t i = 0; i < n; i++)
 	{
 		if (strcmp(CHAR(STRING_ELT(names, i)), str) == 0)
 		{

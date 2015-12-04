@@ -20,7 +20,7 @@ seqVCF.Header(vcf.fn, getnum=FALSE)
     \item{alt}{the ID description in the ALT field}
     \item{contig}{the description in the contig field}
     \item{assembly}{the link of assembly}
-    \item{reference}{genome reference}
+    \item{reference}{genome reference, or \code{NULL} if unknown}
     \item{header}{the other header lines}
     \item{ploidy}{ploidy, two for humans}
     \item{num.sample}{the number of samples}

@@ -26,6 +26,9 @@ seqSummary(gdsfile, varname=NULL, check=c("default", "none", "full"),
     \item{num.sample}{the total number of samples}
     \item{num.variant}{the total number of variants}
     \item{allele}{allele information, see \code{seqSummary(gdsfile, "allele")}}
+    \item{annot_qual}{the total number of "annotation/qual" if
+        \code{check="none"}, or a summary object including min, max, median,
+        mean}
     \item{filter}{filter information, see
         \code{seqSummary(gdsfile, "annotation/filter")}}
     \item{info}{a \code{data.frame} of INFO field: ID, Number, Type,
@@ -85,6 +88,10 @@ a \code{data.frame} including ID.
     \code{seqSummary(gdsfile, "$format")} returns a \code{data.frame}
 describing VCF FORMAT header with ID, Number, Type and Description. The first
 row is used for genotypes.
+
+    ---
+    \code{seqSummary(gdsfile, "$digest")} returns a \code{data.frame} with
+the full names of GDS variables, digest codes and error (FALSE/TRUE).
 }
 \details{
     If \code{check="default"}, the function performs regular checking, like
@@ -104,6 +111,9 @@ range or not.
 
 seqSummary(gds.fn)
 
+ans <- seqSummary(gds.fn, check="full")
+ans
+
 seqSummary(gds.fn, "genotype")
 seqSummary(gds.fn, "allele")
 seqSummary(gds.fn, "annotation/filter")
@@ -117,6 +127,7 @@ seqSummary(gds.fn, "$filter")
 seqSummary(gds.fn, "$alt")
 seqSummary(gds.fn, "$info")
 seqSummary(gds.fn, "$format")
+seqSummary(gds.fn, "$digest")
 
 
 # open a GDS file

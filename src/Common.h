@@ -162,10 +162,7 @@ COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_
 /// get the list element named str, or return NULL
 inline static size_t GetLength(SEXP val)
 {
-	if (!Rf_isNull(val))
-		return Rf_length(val);
-	else
-		return 0;
+	return (!Rf_isNull(val)) ? XLENGTH(val) : 0;
 }
 
 

@@ -10,7 +10,6 @@
 #######################################################################
 # Get the numbers of selected samples and variants
 #
-
 .seldim <- function(gdsfile)
 {
     # seldim[1L] -- # of selected samples
@@ -23,7 +22,6 @@
 #######################################################################
 # Internal C functions
 #
-
 .cfunction0 <- function(name)
 {
     fn <- function(x) NULL
@@ -77,9 +75,24 @@
 
 
 #######################################################################
+# crayon package
+#
+.crayon <- function()
+{
+    crayon.flag <- getOption("gds.crayon", TRUE)
+    if (!is.logical(crayon.flag))
+        crayon.flag <- TRUE
+    crayon.flag <- crayon.flag[1L]
+    if (is.na(crayon.flag))
+        crayon.flag <- FALSE
+    crayon.flag && requireNamespace("crayon", quietly=TRUE)
+}
+
+
+
+#######################################################################
 # Variable path
 #
-
 .var_path <- function(var.name, prefix)
 {
     nm <- unlist(strsplit(var.name, "/"))
@@ -98,7 +111,6 @@
 #######################################################################
 # append the repeated values
 #
-
 .repeat_gds <- function(node, elm, count)
 {
     val <- rep(elm, 65536L)
@@ -125,7 +137,6 @@
 #######################################################################
 # Data Type define VCF Format
 #
-
 .vcf_type <- function(node)
 {
     a <- get.attr.gdsn(node)
@@ -234,7 +245,6 @@
 #######################################################################
 # Load Parallel package
 #
-
 .LoadParallelPackage <- function()
 {
     if (!requireNamespace("parallel"))
@@ -246,7 +256,6 @@
 #######################################################################
 # Parallel functions
 #
-
 .DynamicClusterCall <- function(cl, .num, .fun, .combinefun,
     .stopcluster, ...)
 {
@@ -378,7 +387,6 @@
 # Add a variable with corresponding compression mode
 # See: seqStorage.Option
 #
-
 .AddVar <- function(storage.option, node, varname, val=NULL,
     storage=storage.mode(val), valdim=NULL, closezip=FALSE, visible=TRUE)
 {
@@ -470,7 +478,6 @@
 #######################################################################
 # Merge attributes
 #
-
 .MergeAttr <- function(val)
 {
     stopifnot(is.list(val), length(val) > 0L)
@@ -500,9 +507,14 @@
     v <- .MergeAttr(v)
     if (!is.null(v))
     {
+        algo <- c("md5", "sha1", "sha256", "sha384", "sha512")
+        algo <- c(algo, paste0(algo, "_r"))
         nm <- names(v)
         for (i in seq_along(v))
-            put.attr.gdsn(target.node, nm[i], v[[i]])
+        {
+            if (!(nm[i] %in% algo))
+                put.attr.gdsn(target.node, nm[i], v[[i]])
+        }
     }
     invisible()
 }
@@ -512,7 +524,6 @@
 #######################################################################
 # Get the unique data frame
 #
-
 .UniqueDataFrame <- function(val)
 {
     stopifnot(is.data.frame(val))
@@ -522,4 +533,27 @@
     i <- duplicated(s)
     if (any(i)) val <- val[i, ]
     val
+}
+
+
+
+#######################################################################
+# Get the unique data frame
+#
+.DigestCode <- function(node, algo, verbose)
+{
+    stopifnot(inherits(node, "gdsn.class"))
+    if (isTRUE(algo) | is.character(algo))
+    {
+        if (isTRUE(algo)) algo <- "md5"
+        h <- digest.gdsn(node, algo=algo, action="add")
+        if (verbose)
+        {
+            s <- paste0("  [", algo, ": ", h, "]")
+            if (.crayon()) s <- crayon::blurred(s)
+            cat(s, "\n", sep="")
+        }
+    } else if (verbose)
+        cat("\n")
+    invisible()
 }

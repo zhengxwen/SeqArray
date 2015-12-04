@@ -23,10 +23,50 @@
     dm
 }
 
+.check_digest <- function(gdsfile, varname, verbose)
+{
+    ans <- NA
+    n <- index.gdsn(gdsfile, varname, silent=TRUE)
+    if (!is.null(n))
+    {
+        s <- paste0("    ", name.gdsn(n, fullname=TRUE), ":")
+        v <- digest.gdsn(n, action="return")
+        s1 <- paste(names(v)[which(v==TRUE)], collapse="/")
+        s2 <- paste(names(v)[which(v==FALSE)], collapse="/")
+        if (s1=="" & s2=="")
+        {
+            s <- paste(s, "no digest")
+        } else {
+            if (s1 != "")
+            {
+                s <- paste(s, sQuote(s1), "passes")
+                ans <- TRUE
+            }
+            if (s2 != "")
+            {
+                s <- paste0(s, ifelse(s1!="", ", ", ""), sQuote(s2), " fails")
+                ans <- FALSE
+            }
+        }
+        s <- paste0(s, "\n")
+        if (verbose)
+        {
+            if (.crayon())
+            {
+                if (identical(ans, NA))
+                    s <- crayon::blurred(s)
+                else if (identical(ans, FALSE))
+                    s <- crayon::bold(s)
+            }
+            cat(s)
+        }
+    }
+    ans
+}
+
 .summary_geno <- function(gdsfile, check, verbose, showsel=TRUE)
 {
     ans <- .Call(SEQ_Summary, gdsfile, "genotype")
-
     if (check != "none")
     {
         nsamp <- ans$dim[2L]
@@ -49,7 +89,6 @@
                 message("Invalid sample dimension in 'genotype/~data'.")
         }
     }
-
     if (verbose)
     {
         cat(paste(c("Ploidy:", "Number of samples:", "Number of variants:"),
@@ -59,6 +98,14 @@
             cat(paste(c("Number of selected samples:",
                 "Number of selected variants:"), ans$seldim), sep="\n")
         }
+    }
+    if (check == "full")
+    {
+        if (verbose) cat("Genotypes:\n")
+        ans$digest <- c(
+            "data"  = .check_digest(gdsfile, "genotype/data", verbose),
+            "~data" = .check_digest(gdsfile, "genotype/~data", verbose),
+            "@data" = .check_digest(gdsfile, "genotype/@data", verbose))
     }
     invisible(ans)
 }
@@ -98,12 +145,22 @@
             if (dm[2L] != nsamp)
                 message("Invalid sample dimension in 'phase/~data'.")
         }
+
+        if (check == "full")
+        {
+            if (verbose) cat("Phase:\n")
+            ans$digest <- c(
+                "data"  = .check_digest(gdsfile, "phase/data", verbose),
+                "~data" = .check_digest(gdsfile, "phase/~data", verbose))
+        }
     }
+
     invisible(ans)
 }
 
 .summary_sample_id <- function(gdsfile, check, verbose)
 {
+    ans <- .Call(SEQ_Summary, gdsfile, "sample.id")
     if (check == "full")
     {
         ss <- read.gdsn(index.gdsn(gdsfile, "sample.id"))
@@ -113,15 +170,18 @@
             if (i > 0L)
                 message("Duplicated sample id, e.g., ", ss[i])
             else
-                cat("Sample ID: no duplicate.")
+                cat("Sample ID: no duplicate.\n")
         } else
             message("Invalid dimension of 'sample.id'.")
+        if (check == "full")
+            attr(ans, "digest") <- .check_digest(gdsfile, "sample.id", verbose)
     }
-    .Call(SEQ_Summary, gdsfile, "sample.id")
+    ans
 }
 
 .summary_variant_id <- function(gdsfile, check, verbose)
 {
+    ans <- .Call(SEQ_Summary, gdsfile, "variant.id")
     if (check == "full")
     {
         ss <- read.gdsn(index.gdsn(gdsfile, "variant.id"))
@@ -131,24 +191,28 @@
             if (i > 0L)
                 message("Duplicated variant id, e.g., ", ss[i])
             else
-                cat("Variant ID: no duplicate.")
+                cat("Variant ID: no duplicate.\n")
         } else
             message("Invalid dimension of 'variant.id'.")
+        if (check == "full")
+            attr(ans, "digest") <- .check_digest(gdsfile, "variant.id", verbose)
     }
-    .Call(SEQ_Summary, gdsfile, "variant.id")
+    ans
 }
 
 .summary_position <- function(gdsfile, check, verbose)
 {
+    ans <- .Call(SEQ_Summary, gdsfile, "position")
     if (check != "none")
     {
         n <- index.gdsn(gdsfile, "position")
         dm <- .check_dim(n, 1L)
         if (dm != .Call(SEQ_Summary, gdsfile, "variant.id"))
             message("Invalid dimension of 'position'.")
-        dm
-    } else
-        .Call(SEQ_Summary, gdsfile, "position")
+        if (check == "full")
+            attr(ans, "digest") <- .check_digest(gdsfile, "position", verbose)
+    }
+    ans
 }
 
 .summary_chrom <- function(gdsfile, check, verbose)
@@ -159,13 +223,29 @@
         dm <- .check_dim(n, 1L)
         if (dm != .Call(SEQ_Summary, gdsfile, "variant.id"))
             message("Invalid dimension of 'chromosome'.")
-        tab <- table(seqGetData(gdsfile, "chromosome"), exclude=NULL)
+        if (verbose)
+            cat("Chromosomes:\n")
+
+        ans <- table(seqGetData(gdsfile, "chromosome"))
+        class(ans) <- NULL
+        i <- suppressWarnings(as.integer(names(ans)))
+        ans <- ans[order(i)]
+
         if (verbose)
         {
-            names(dimnames(tab)) <- "Chromosomes:"
-            print(tab)
+            s <- format(paste("Chr", format(names(ans)), ": ", ans, sep=""))
+            i <- 1L
+            while (i <= length(s))
+            {
+                k <- i + 6L
+                if (k > length(s)) k <- length(s) + 1L
+                cat("    ", toString(s[seq.int(i, k-1L)]), "\n", sep="")
+                i <- k
+            }
         }
-        dm
+        if (check == "full")
+            attr(ans, "digest") <- .check_digest(gdsfile, "chromosome", verbose)
+        invisible(ans)
     } else
         .Call(SEQ_Summary, gdsfile, "chromosome")
 }
@@ -200,26 +280,67 @@
                 prop.table(ans$table)*100.0)
             cat("    tabulation: ", paste(s, collapse="; "), "\n", sep="")
         }
+        if (check == "full")
+            ans$digest <- .check_digest(gdsfile, "chromosome", verbose)
     }
 
     invisible(ans)
 }
 
-.summary_var <- function(gdsfile, varname, check, verbose)
+.summary_annot_id <- function(gdsfile, check, verbose)
 {
-    n <- index.gdsn(gdsfile, varname, silent=TRUE)
+    ans <- NULL
+    vn <- "annotation/id"
+    n <- index.gdsn(gdsfile, vn, silent=TRUE)
     if (!is.null(n))
     {
+        ans <- .Call(SEQ_Summary, gdsfile, vn)
         if (check != "none")
         {
             dm <- .check_dim(n, 1L)
             if (dm != .Call(SEQ_Summary, gdsfile, "variant.id"))
-                message("Invalid dimension of '", varname, "'.")
-            dm
-        } else
-            .Call(SEQ_Summary, gdsfile, varname)
-    } else
-        NULL
+                message("Invalid dimension of 'annotation/id'.")
+            if (check == "full")
+            {
+                if (verbose) cat("Annotation, ID:\n")
+                ans <- .check_digest(gdsfile, vn, verbose)
+                names(ans) <- "digest"
+            }
+        }
+    }
+    invisible(ans)
+}
+
+.summary_annot_qual <- function(gdsfile, check, verbose)
+{
+    ans <- NULL
+    vn <- "annotation/qual"
+    n <- index.gdsn(gdsfile, vn, silent=TRUE)
+    if (!is.null(n))
+    {
+        ans <- .Call(SEQ_Summary, gdsfile, vn)
+        if (check != "none")
+        {
+            dm <- .check_dim(n, 1L)
+            if (dm != .Call(SEQ_Summary, gdsfile, "variant.id"))
+                message("Invalid dimension of 'annotation/qual'.")
+            if (verbose)
+                cat("Annotation, Quality:\n")
+            ans <- summary(seqGetData(gdsfile, vn))
+            class(ans) <- NULL
+            if (verbose)
+            {
+                s <- names(ans)
+                s[1L] <- "Min"; s[2L] <- "1st Qu"
+                s[5L] <- "3rd Qu"; s[6L] <- "Max"
+                cat("    ", paste(paste(s, ans, sep=": "), collapse=", "),
+                    "\n", sep="")
+            }
+            if (check == "full")
+                attr(ans, "digest") <- .check_digest(gdsfile, vn, verbose)
+        }
+    }
+    invisible(ans)
 }
 
 .summary_filter <- function(gdsfile, check, verbose)
@@ -467,6 +588,37 @@
         NULL
 }
 
+.summary_digest <- function(gdsfile)
+{
+    enum <- function(node)
+    {
+        ans <- NULL
+        dp <- objdesp.gdsn(node)
+        if (dp$type %in% c("Folder", "VFolder"))
+        {
+            for (nm in ls.gdsn(node, include.hidden=TRUE))
+            {
+                ans <- rbind(ans, enum(index.gdsn(node, nm)))
+            }
+        } else if (dp$is.array)
+        {
+            v <- digest.gdsn(node, action="return")
+            if (any(!is.na(v)))
+            {
+                at <- get.attr.gdsn(node)
+                at <- format(at[names(v)[!is.na(v)]])
+                err <- any(v==FALSE, na.rm=TRUE)
+                d <- data.frame(varname = dp$fullname,
+                    digest = toString(paste(names(at), at, sep=": ")),
+                    error = err, stringsAsFactors=FALSE)
+                ans <- rbind(ans, d)
+            }
+        }
+        ans
+    }
+
+    enum(gdsfile$root)
+}
 
 
 #######################################################################
@@ -538,10 +690,10 @@ seqSummary <- function(gdsfile, varname=NULL,
         ans$allele <- .summary_allele(gdsfile, check, verbose)
 
         ## annotation/id
-        .summary_var(gdsfile, "annotation/id", check, verbose)
+        .summary_annot_id(gdsfile, check, verbose)
 
         ## annotation/qual
-        .summary_var(gdsfile, "annotation/qual", check, verbose)
+        ans$annot_qual <- .summary_annot_qual(gdsfile, check, verbose)
 
         ## annotation/filter
         n <- index.gdsn(gdsfile, "annotation/filter", silent=TRUE)
@@ -573,7 +725,10 @@ seqSummary <- function(gdsfile, varname=NULL,
             `sample.id` = .summary_sample_id(gdsfile, check, verbose),
             `variant.id` = .summary_variant_id(gdsfile, check, verbose),
             `position` = .summary_position(gdsfile, check, verbose),
+            `chromosome` = .summary_chrom(gdsfile, check, verbose),
             `allele` = .summary_allele(gdsfile, check, verbose),
+            `annotation/id` = .summary_annot_id(gdsfile, check, verbose),
+            `annotation/qual` = .summary_annot_qual(gdsfile, check, verbose),
             `annotation/filter` = .summary_filter(gdsfile, check, verbose),
             `annotation/info` = .summary_info(gdsfile, check, verbose),
             `annotation/format` = .summary_format(gdsfile, check, verbose, FALSE),
@@ -584,6 +739,7 @@ seqSummary <- function(gdsfile, varname=NULL,
             `$alt` = .summary_allele(gdsfile, "none", verbose),
             `$info` = .summary_info(gdsfile, check, verbose),
             `$format` = .summary_format(gdsfile, check, verbose),
+            `$digest` = .summary_digest(gdsfile),
 
             .Call(SEQ_Summary, gdsfile, varname)  # others
         )

@@ -7,7 +7,7 @@
 \usage{
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,
     compress.geno="ZIP_RA", compress.annotation="ZIP_RA",
-    optimize=TRUE, verbose=TRUE)
+    optimize=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{bed.fn}{the file name of binary file, genotype information}
@@ -22,6 +22,9 @@ seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,
         \code{add.gdsn}}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
+    \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
+        "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
+        or a digest algorithm is specified}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

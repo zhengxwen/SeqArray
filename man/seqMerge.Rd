@@ -6,7 +6,8 @@
 }
 \usage{
 seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option(),
-    info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, verbose=TRUE)
+    info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
+    verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file names of multiple GDS files}
@@ -21,6 +22,9 @@ seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option(),
         or \code{NULL} for all variables}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
+    \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
+        "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
+        or a digest algorithm is specified}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

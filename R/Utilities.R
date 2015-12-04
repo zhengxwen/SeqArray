@@ -337,7 +337,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 # Merge multiple GDS files
 #
 seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
-    info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, verbose=TRUE)
+    info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn))
@@ -350,6 +351,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
     stopifnot(is.null(samp.var) | is.character(samp.var))
 
     stopifnot(is.logical(optimize), length(optimize)==1L)
+    stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose)

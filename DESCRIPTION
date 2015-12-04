@@ -1,13 +1,13 @@
 Package: SeqArray
 Type: Package
 Title: Big Data Management of Genome-Wide Sequence Variants
-Version: 1.11.4
-Date: 2015-12-01
-Depends: gdsfmt (>= 1.6.2)
+Version: 1.11.5
+Date: 2015-12-03
+Depends: gdsfmt (>= 1.7.4)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation, SummarizedExperiment
 LinkingTo: gdsfmt
-Suggests: parallel, RUnit, BiocGenerics, knitr, Rcpp, SNPRelate
+Suggests: parallel, crayon, RUnit, BiocGenerics, knitr, Rcpp, SNPRelate
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu"),
         person("Stephanie", "Gogarten", role="aut",
