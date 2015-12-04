@@ -63,7 +63,7 @@ library(VariantAnnotation)
   vcf <- readVcf(vcffile, genome="hg19")
   gdsobj <- seqOpen(gdsfile)
 
-  ## .test_rowRanges(rowRanges(vcf)), rowRanges(gdsobj))
+  ## .test_rowRanges(rowRanges(vcf), rowRanges(gdsobj))
   ## .test_colData(colData(vcf), colData(gdsobj))
   ## .test_header(header(vcf), header(gdsobj))
   ## .test_info(info(vcf), info(gdsobj))
