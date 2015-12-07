@@ -121,12 +121,12 @@ setMethod("header",
               ## info
               seqsum <- seqSummary(x, check="none", verbose=FALSE)
               infoHd <- seqsum$info
-              names(infoHd)[2:4] <- c("Number", "Type", "Description")
+              #names(infoHd)[2:4] <- c("Number", "Type", "Description")
               infoHd <- DataFrame(infoHd[,2:4], row.names=infoHd[,1])
 
               ## geno
               genoHd <- seqsum$format
-              names(genoHd)[2:4] <- c("Number", "Type", "Description")
+              #names(genoHd)[2:4] <- c("Number", "Type", "Description")
               genoHd <- DataFrame(genoHd[,2:4], row.names=genoHd[,1])
 
               ## meta
@@ -140,24 +140,33 @@ setMethod("header",
               n <- index.gdsn(x, "description/vcf.header", silent=TRUE)
               if (!is.null(n)) {
                   des <- read.gdsn(n)
-                  #ID=value header fields not parsed in GDS
+                  ## ID=value header fields not parsed in GDS
                   des <- des[!(des[,1] %in% c("contig", "SAMPLE", "PEDIGREE")),]
+                  ## deal with duplicate row names
+                  if (any(duplicated(des[,1]))) {
+                      des[,1] <- make.unique(des[,1])
+                  }
                   meta <- rbind(meta, DataFrame(Value=des[,2], row.names=des[,1]))
               }
 
               hdr <- DataFrameList(META=meta, INFO=infoHd, FORMAT=genoHd)
 
               ## fixed
-              n <- index.gdsn(x, "description/vcf.alt", silent=TRUE)
-              if (!is.null(n)) {
-                  des <- read.gdsn(n)
+              ## n <- index.gdsn(x, "description/vcf.alt", silent=TRUE)
+              ## if (!is.null(n)) {
+              ##     des <- read.gdsn(n)
+              ##     hdr[["ALT"]] <- DataFrame(Description=des[,2], row.names=des[,1])
+              ## }
+              ## des <- get.attr.gdsn(index.gdsn(x, "annotation/filter"))
+              ## des <- DataFrame(Description=des$Description, row.names=des$R.levels)
+              des <- seqsum$allele
+              if (nrow(des) > 0) {
                   hdr[["ALT"]] <- DataFrame(Description=des[,2], row.names=des[,1])
               }
-              des <- get.attr.gdsn(index.gdsn(x, "annotation/filter"))
-              des <- DataFrame(Description=des$Description, row.names=des$R.levels)
-              des <- des[des$Description != "",,drop=FALSE]
+              des <- seqsum$filter
+              des <- des[des$Description != "" & !is.na(des$Description),,drop=FALSE]
               if (nrow(des) > 0) {
-                  hdr[["FILTER"]] <- des
+                  hdr[["FILTER"]] <- DataFrame(Description=des[,2], row.names=des[,1])
               }
 
               VCFHeader(samples=sample.id, header=hdr)
@@ -307,5 +316,6 @@ setMethod("geno",
                       genoSl[[des$ID[i]]] <- v
                   }
               }
+              if (is.null(names(genoSl))) names(genoSl) <- character()
               genoSl
           })
