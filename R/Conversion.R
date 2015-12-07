@@ -906,8 +906,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
     .DigestCode(index.gdsn(gfile, "genotype/@data"), digest, FALSE)
 
-    if (flag) cat("    phase")
-    .DigestCode(index.gdsn(gfile, "phase/data"), digest, verbose)
+    n <- index.gdsn(gfile, "phase/data", silent=TRUE)
+    if (!is.null(n))
+    {
+        if (flag) cat("    phase")
+        .DigestCode(n, digest, verbose)
+    }
 
     if (flag) cat("    annotation/id")
     .DigestCode(index.gdsn(gfile, "annotation/id"), digest, verbose)

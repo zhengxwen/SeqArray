@@ -588,10 +588,19 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
         .append_gds(n, flist, "annotation/qual")
         .DigestCode(n, digest, verbose)
 
-        # add filter, TODO
-        if (verbose) cat("    annotation/filter")
-        n <- .AddVar(storage.option, varAnnot, "filter", storage="int32")
-        .append_gds(n, flist, "annotation/filter")
+        # add filter
+        nm <- "annotation/filter"
+        if (verbose) cat("   ", nm)
+        dp <- NULL; v <- NULL
+        for (i in seq_along(flist))
+        {
+            dp <- rbind(dp, seqSummary(flist[[i]], "$filter", check="none",
+                verbose=FALSE))
+            v <- c(v, as.character(read.gdsn(index.gdsn(flist[[i]], nm))))
+        }
+        v <- as.factor(v)
+        n <- .AddVar(storage.option, varAnnot, "filter", v)
+        put.attr.gdsn(n, "Description", dp$Description[match(levels(v), dp$ID)])
         .DigestCode(n, digest, verbose)
 
 
