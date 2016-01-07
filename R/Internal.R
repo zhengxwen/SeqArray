@@ -91,6 +91,21 @@
 
 
 #######################################################################
+# get pretty number with big mark
+#
+.pretty <- function(x)
+{
+    prettyNum(x, big.mark=",", scientific=FALSE)
+}
+
+.plural <- function(num)
+{
+    if (num > 1L) "s" else ""
+}
+
+
+
+#######################################################################
 # Variable path
 #
 .var_path <- function(var.name, prefix)

@@ -338,7 +338,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 
     if (verbose) cat("Done.\n")
 
-    ## optimize access efficiency
+    # optimize access efficiency
     if (optimize)
     {
         if (verbose)
@@ -397,8 +397,9 @@ seqMerge <- function(gds.fn, out.fn,
 
     if (verbose)
     {
-        cat(sprintf("    %d sample(s) in total, %d sample(s) in common\n",
-            length(samp.id), length(samp2.id)))
+        cat(sprintf("    %d sample%s in total, %d sample%s in common\n",
+            length(samp.id), .plural(length(samp.id)),
+            length(samp2.id), .plural(length(samp2.id))))
     }
 
     # variants
@@ -406,17 +407,28 @@ seqMerge <- function(gds.fn, out.fn,
         paste(seqGetData(f, "chromosome"), seqGetData(f, "position"), sep="-")
     }
     variant.id <- variant2.id <- variant(flist[[1L]])
-    for (f in flist[-1L])
+    if (verbose)
     {
-        s <- variant(f)
+        cat(sprintf("    [%-2d] %s, %s variant%s\n", 1L, basename(gds.fn[1L]),
+            .pretty(length(variant.id)), .plural(length(variant.id))))
+    }
+    for (i in seq_along(flist)[-1L])
+    {
+        s <- variant(flist[[i]])
+        if (verbose)
+        {
+            cat(sprintf("    [%-2d] %s, %s variant%s\n", i, basename(gds.fn[i]),
+                .pretty(length(s)), .plural(length(s))))
+        }
         variant.id <- unique(c(variant.id, s))
         variant2.id <- intersect(variant2.id, s)
     }
 
     if (verbose)
     {
-        cat(sprintf("    %d variant(s) in total, %d variant(s) in common\n",
-            length(variant.id), length(variant2.id)))
+        cat(sprintf("    %s variant%s in total, %s variant%s in common\n",
+            .pretty(length(variant.id)), .plural(length(variant.id)),
+            .pretty(length(variant2.id)), .plural(length(variant2.id))))
     }
 
     # common samples
@@ -542,7 +554,10 @@ seqMerge <- function(gds.fn, out.fn,
         for (i in seq_along(flist))
         {
             if (verbose)
+            {
                 cat(ifelse(i > 1L, ", ", ""), i, sep="")
+                flush.console()
+            }
             sid <- seqGetData(flist[[i]], "sample.id")
             n3 <- index.gdsn(flist[[i]], "genotype/data")
             n4 <- index.gdsn(flist[[i]], "phase/data")
@@ -791,7 +806,10 @@ seqMerge <- function(gds.fn, out.fn,
             for (j in seq_along(flist))
             {
                 if (verbose)
+                {
                     cat(ifelse(j > 1L, ", ", ""), j, sep="")
+                    flush.console()
+                }
                 f <- flist[[j]]
                 n6 <- index.gdsn(f, paste0("annotation/format/", varnm[i]),
                     silent=TRUE)
