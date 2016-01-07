@@ -5,14 +5,15 @@
     Storage and Compression Options for Importing VCF File(s).
 }
 \usage{
-seqStorage.Option(compression=c("ZIP_RA", "ZIP_RA.max", "LZ4_RA",
-    "LZ4_RA.max", "none"), float.mode="float32",
+seqStorage.Option(compression=c("ZIP_RA.default", "ZIP_RA", "ZIP_RA.max",
+    "LZ4_RA", "LZ4_RA.max", "none"), float.mode="float32",
     geno.compress=NULL, info.compress=NULL, format.compress=NULL,
     index.compress=NULL, ...)
 }
 \arguments{
     \item{compression}{the default compression level, see \link{add.gdsn} for
-        the description of compression methods}
+        the description of compression methods; "ZIP_RA.default" is equivalent
+        to "ZIP_RA"}
     \item{float.mode}{specify the storage mode for read numbers, e.g.,
         "float32", "float64", "packedreal16"; the additional parameters can
         follow by colon, like "packedreal16:scale=0.0001"}

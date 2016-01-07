@@ -1,8 +1,8 @@
 Package: SeqArray
 Type: Package
 Title: Big Data Management of Genome-Wide Sequence Variants
-Version: 1.11.5
-Date: 2015-12-06
+Version: 1.11.6
+Date: 2016-01-06
 Depends: gdsfmt (>= 1.7.4)
 Imports: methods, Biostrings, GenomicRanges, IRanges, S4Vectors,
         VariantAnnotation, SummarizedExperiment
@@ -14,7 +14,7 @@ Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="sdmorris@u.washington.edu"),
         person("Cathy", "Laurie", role="ctb"))
 Description: Big data management of genome-wide sequence variants with
-        thousands of individuals: genotypic data (e.g., SNPs, indels and
+        thousands of individuals: genotypic data (e.g., SNVs, indels and
         structural variation calls) and annotations in GDS files are stored
         in an array-oriented and compressed manner, with efficient data access
         using the R programming language.

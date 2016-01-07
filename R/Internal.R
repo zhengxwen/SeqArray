@@ -557,3 +557,62 @@
         cat("\n")
     invisible()
 }
+
+
+.DigestFile <- function(gfile, digest, verbose)
+{
+    ## digest hash functions
+    flag <- verbose & (isTRUE(digest) | is.character(digest))
+    if (flag) cat("Hash function digests:\n")
+
+    for (nm in c("sample.id", "variant.id", "position", "chromosome", "allele"))
+    {
+        if (flag) cat("   ", nm)
+        .DigestCode(index.gdsn(gfile, nm), digest, verbose)
+    }
+
+    if (flag) cat("    genotype")
+    .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
+    .DigestCode(index.gdsn(gfile, "genotype/@data"), digest, FALSE)
+
+    n <- index.gdsn(gfile, "phase/data", silent=TRUE)
+    if (!is.null(n))
+    {
+        if (flag) cat("    phase")
+        .DigestCode(n, digest, verbose)
+    }
+
+    if (flag) cat("    annotation/id")
+    .DigestCode(index.gdsn(gfile, "annotation/id"), digest, verbose)
+    if (flag) cat("    annotation/qual")
+    .DigestCode(index.gdsn(gfile, "annotation/qual"), digest, verbose)
+    if (flag) cat("    annotation/filter")
+    .DigestCode(index.gdsn(gfile, "annotation/filter"), digest, verbose)
+
+    node <- index.gdsn(gfile, "annotation/info")
+    for (n in ls.gdsn(node))
+    {
+        if (flag) cat("    annotation/info/", n, sep="")
+        .DigestCode(index.gdsn(node, n), digest, verbose)
+        n1 <- index.gdsn(node, paste0("@", n), silent=TRUE)
+        if (!is.null(n1))
+            .DigestCode(n1, digest, FALSE)
+    }
+
+    node <- index.gdsn(gfile, "annotation/format")
+    for (n in ls.gdsn(node))
+    {
+        if (flag) cat("    annotation/format/", n, sep="")
+        .DigestCode(index.gdsn(node, paste0(n, "/data")), digest, verbose)
+        .DigestCode(index.gdsn(node, paste0(n, "/@data")), digest, FALSE)
+    }
+
+    node <- index.gdsn(gfile, "sample.annotation")
+    for (n in ls.gdsn(node))
+    {
+        if (flag) cat("    sample.annotation/", n, sep="")
+        .DigestCode(index.gdsn(node, n), digest, verbose)
+    }
+
+    invisible()
+}

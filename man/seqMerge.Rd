@@ -5,7 +5,7 @@
     Merges multiple SeqArray GDS files.
 }
 \usage{
-seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option(),
+seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option("ZIP_RA.default"),
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     verbose=TRUE)
 }

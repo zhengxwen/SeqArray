@@ -384,7 +384,7 @@ seqVCF.SampID <- function(vcf.fn)
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
-    storage.option=seqStorage.Option(),
+    storage.option=seqStorage.Option("ZIP_RA.default"),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, verbose=TRUE)
@@ -892,58 +892,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         put.attr.gdsn(varFilter, "Description", dp)
     }
 
-    ## digest hash functions
-    flag <- verbose & (isTRUE(digest) | is.character(digest))
-    if (flag) cat("Hash function digests:\n")
-
-    for (nm in c("sample.id", "variant.id", "position", "chromosome", "allele"))
-    {
-        if (flag) cat("   ", nm)
-        .DigestCode(index.gdsn(gfile, nm), digest, verbose)
-    }
-
-    if (flag) cat("    genotype")
-    .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
-    .DigestCode(index.gdsn(gfile, "genotype/@data"), digest, FALSE)
-
-    n <- index.gdsn(gfile, "phase/data", silent=TRUE)
-    if (!is.null(n))
-    {
-        if (flag) cat("    phase")
-        .DigestCode(n, digest, verbose)
-    }
-
-    if (flag) cat("    annotation/id")
-    .DigestCode(index.gdsn(gfile, "annotation/id"), digest, verbose)
-    if (flag) cat("    annotation/qual")
-    .DigestCode(index.gdsn(gfile, "annotation/qual"), digest, verbose)
-    if (flag) cat("    annotation/filter")
-    .DigestCode(index.gdsn(gfile, "annotation/filter"), digest, verbose)
-
-    node <- index.gdsn(gfile, "annotation/info")
-    for (n in ls.gdsn(node))
-    {
-        if (flag) cat("    annotation/info/", n, sep="")
-        .DigestCode(index.gdsn(node, n), digest, verbose)
-        n1 <- index.gdsn(node, paste0("@", n), silent=TRUE)
-        if (!is.null(n1))
-            .DigestCode(n1, digest, FALSE)
-    }
-
-    node <- index.gdsn(gfile, "annotation/format")
-    for (n in ls.gdsn(node))
-    {
-        if (flag) cat("    annotation/format/", n, sep="")
-        .DigestCode(index.gdsn(node, paste0(n, "/data")), digest, verbose)
-        .DigestCode(index.gdsn(node, paste0(n, "/@data")), digest, FALSE)
-    }
-
-    node <- index.gdsn(gfile, "sample.annotation")
-    for (n in ls.gdsn(node))
-    {
-        if (flag) cat("    sample.annotation/", n, sep="")
-        .DigestCode(index.gdsn(node, n), digest, verbose)
-    }
+    .DigestFile(gfile, digest, verbose)
 
     on.exit()
     closefn.gds(gfile)

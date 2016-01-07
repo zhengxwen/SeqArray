@@ -56,6 +56,10 @@ Here, I focus on the application of CoreArray for statisticians working in the R
 
 To support efficient memory management for genome-wide numerical data, the [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) package provides the genomic data structure (GDS) file format for array-oriented bioinformatic data based on the CoreArray library, which is a container for storing genotypic and annotation data. The GDS format supports data blocking so that only the subset of data that is being processed needs to reside in memory.
 
+```{r echo=FALSE}
+options(width=110L)
+```
+
 ```{r}
 # load the R package SeqArray
 library(SeqArray)

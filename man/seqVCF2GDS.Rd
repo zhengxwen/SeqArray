@@ -7,7 +7,7 @@
 \usage{
 seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     genotype.storage=c("bit2", "bit4", "bit8"),
-    storage.option=seqStorage.Option(),
+    storage.option=seqStorage.Option("ZIP_RA.default"),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, verbose=TRUE)

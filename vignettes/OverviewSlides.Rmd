@@ -99,6 +99,7 @@ File: SeqArray/extdata/CEU_Exon.gds (396.3 KB)
 - the original VCF file: 10.7G (compressed)
     * genotypes + annotations
 - reformat to a single SeqArray file: 10.6G
+- R: v3.2.0
 
 **Calculate the frequencies of reference alleles**
 

@@ -143,13 +143,17 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 # Export to a GDS file
 #
 seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
-    samp.var=NULL, verbose=TRUE)
+    samp.var=NULL, optimize=TRUE, digest=TRUE, verbose=TRUE)
 {
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(out.fn), length(out.fn)==1L)
+
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
     stopifnot(is.null(samp.var) | is.character(samp.var))
+
+    stopifnot(is.logical(optimize), length(optimize)==1L)
+    stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     #######################################################################
@@ -327,6 +331,21 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             cp(node, S$sample.sel, nm, paste("sample.annotation", nm, sep="/"))
     }
 
+    .DigestFile(outfile, digest, verbose)
+
+    on.exit()
+    closefn.gds(outfile)
+
+    if (verbose) cat("Done.\n")
+
+    ## optimize access efficiency
+    if (optimize)
+    {
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
+        cleanup.gds(out.fn, verbose=verbose)
+    }
+
     # output
     invisible(normalizePath(out.fn))
 }
@@ -336,7 +355,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 #######################################################################
 # Merge multiple GDS files
 #
-seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
+seqMerge <- function(gds.fn, out.fn,
+    storage.option=seqStorage.Option("ZIP_RA.default"),
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     verbose=TRUE)
 {
@@ -885,8 +905,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option=seqStorage.Option(),
 #######################################################################
 # Storage options for the SeqArray GDS file
 #
-seqStorage.Option <- function(compression=c("ZIP_RA", "ZIP_RA.max", "LZ4_RA",
-    "LZ4_RA.max", "none"), float.mode="float32",
+seqStorage.Option <- function(compression=c("ZIP_RA.default", "ZIP_RA",
+    "ZIP_RA.max", "LZ4_RA", "LZ4_RA.max", "none"), float.mode="float32",
     geno.compress=NULL, info.compress=NULL, format.compress=NULL,
     index.compress=NULL, ...)
 {
