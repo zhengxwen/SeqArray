@@ -455,11 +455,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (verbose)
     {
         cat("The Variant Call Format (VCF) header:\n")
-        cat("\tfile format: ", header$fileformat, "\n", sep="")
-        cat("\tthe number of sets of chromosomes (ploidy): ",
+        cat("    file format: ", header$fileformat, "\n", sep="")
+        cat("    the number of sets of chromosomes (ploidy): ",
             header$ploidy, "\n", sep="")
-        cat("\tthe number of samples: ", length(samp.id), "\n", sep="")
-        cat("\tGDS genotype storage: ", genotype.storage, "\n", sep="")
+        cat("    the number of samples: ", length(samp.id), "\n", sep="")
+        cat("    GDS genotype storage: ", genotype.storage, "\n", sep="")
     }
 
     # check header
@@ -851,8 +851,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         if (verbose)
         {
-            cat("Parsing \"", vcf.fn[i], "\" ...\n", sep="")
-            flush(stdout())
+            cat(sprintf("Parsing '%s' (%s bytes)\n", vcf.fn[i],
+                file.size(vcf.fn[i])))
+            flush.console()
         }
 
         # call C function

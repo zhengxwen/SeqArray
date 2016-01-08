@@ -377,7 +377,8 @@ seqMerge <- function(gds.fn, out.fn,
     if (verbose)
     {
         cat(date(), "\n", sep="")
-        cat(sprintf("Merging %d GDS files:\n", length(gds.fn)))
+        cat(sprintf("Preparing merging %d GDS files:\n",
+            length(gds.fn)))
     }
 
     # open all GDS files
@@ -385,6 +386,11 @@ seqMerge <- function(gds.fn, out.fn,
     on.exit({ for (f in flist) seqClose(f) })
     for (i in seq_along(gds.fn))
         flist[[i]] <- seqOpen(gds.fn[i])
+    if (verbose)
+    {
+        s <- sum(file.size(gds.fn), na.rm=TRUE)
+        cat("   ", .pretty(s), "bytes in total\n")
+    }
 
     # samples
     samp.id <- samp2.id <- seqGetData(flist[[1L]], "sample.id")
@@ -403,25 +409,32 @@ seqMerge <- function(gds.fn, out.fn,
     }
 
     # variants
-    variant <- function(f) {
+    variantID <- function(f) {
         paste(seqGetData(f, "chromosome"), seqGetData(f, "position"), sep="-")
     }
-    variant.id <- variant2.id <- variant(flist[[1L]])
+    variant.id <- variant2.id <- variantID(flist[[1L]])
     if (verbose)
     {
-        cat(sprintf("    [%-2d] %s, %s variant%s\n", 1L, basename(gds.fn[1L]),
+        cat(sprintf("    [%-2d] %s (%s variant%s)\n", 1L, basename(gds.fn[1L]),
             .pretty(length(variant.id)), .plural(length(variant.id))))
     }
     for (i in seq_along(flist)[-1L])
     {
-        s <- variant(flist[[i]])
+        s <- variantID(flist[[i]])
         if (verbose)
         {
-            cat(sprintf("    [%-2d] %s, %s variant%s\n", i, basename(gds.fn[i]),
-                .pretty(length(s)), .plural(length(s))))
+            cat(sprintf("    [%-2d] %s (%s variant%s)\n", i,
+                basename(gds.fn[i]), .pretty(length(s)), .plural(length(s))))
         }
-        variant.id <- unique(c(variant.id, s))
+
+        # variant id maybe not unique
+        s1 <- intersect(variant.id, s)
+        if (length(s1) <= 0L)
+            variant.id <- c(variant.id, s)
+        else
+            variant.id <- c(variant.id, setdiff(s, s1))
         variant2.id <- intersect(variant2.id, s)
+        remove(s, s1)
     }
 
     if (verbose)
@@ -444,6 +457,9 @@ seqMerge <- function(gds.fn, out.fn,
     ## create a GDS file
     gfile <- createfn.gds(out.fn)
     on.exit({ if (!is.null(gfile)) closefn.gds(gfile) }, add=TRUE)
+
+    if (verbose)
+        cat("Output: ", normalizePath(out.fn), "\n", sep="")
 
     put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
     put.attr.gdsn(gfile$root, "FileVersion", "v1.0")
@@ -519,16 +535,22 @@ seqMerge <- function(gds.fn, out.fn,
         n <- .AddVar(storage.option, gfile, "position", storage="int32")
         .append_gds(n, flist, "position")
         .DigestCode(n, digest, verbose)
+        if (length(variant.id) != objdesp.gdsn(n)$dim)
+            stop("Invalid number of variants in 'position'.")
 
         if (verbose) cat("    chromosome")
         n <- .AddVar(storage.option, gfile, "chromosome", storage="string")
         .append_gds(n, flist, "chromosome")
         .DigestCode(n, digest, verbose)
+        if (length(variant.id) != objdesp.gdsn(n)$dim)
+            stop("Invalid number of variants in 'chromosome'.")
 
         if (verbose) cat("    allele")
         n <- .AddVar(storage.option, gfile, "allele", storage="string")
         .append_gds(n, flist, "allele")
         .DigestCode(n, digest, verbose)
+        if (length(variant.id) != objdesp.gdsn(n)$dim)
+            stop("Invalid number of variants in 'allele'.")
 
 
         ## add a folder for genotypes

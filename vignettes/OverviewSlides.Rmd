@@ -207,4 +207,5 @@ Department of Biostatistics at University of Washington -- Seattle,
 Genetic Analysis Center:
 
 - Dr. Stephanie M. Gogarten
+- Dr. David Levine
 - Dr. Cathy Laurie

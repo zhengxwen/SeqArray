@@ -6,6 +6,8 @@ bioc_required: true
 r_binary_packages:
   - RUnit
   - Rcpp
+  - rmarkdown
+  - knitr
 
 # Install packages from github
 r_github_packages:
