@@ -24,6 +24,9 @@ seqGetData(gdsfile, var.name)
 \code{"@genotype"}, \code{"annotation/info/@VARIABLE_NAME"} or
 \code{"annotation/format/@VARIABLE_NAME"} are used to obtain the index
 associated with these variables.
+
+\code{"chrom-pos"} returns characters with the combination of chromosome and
+position, e.g., "1-1272721".
 }
 
 \author{Xiuwen Zheng}
@@ -47,6 +50,9 @@ head(variant.id <- seqGetData(f, "variant.id"))
 
 # get 'chromosome'
 table(seqGetData(f, "chromosome"))
+
+# get 'chrom-pos'
+head(seqGetData(f, "chrom-pos"))
 
 # get 'allele'
 head(seqGetData(f, "allele"))

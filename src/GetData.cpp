@@ -21,6 +21,7 @@
 
 #include "ReadBySample.h"
 #include "ReadByVariant.h"
+#include <stdio.h>
 
 
 extern "C"
@@ -307,6 +308,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				C_BOOL *SelList = &Sel.Variant[0];
 				rv_ans = GDS_R_Array_Read(N, &st, &cnt, &SelList, 0);
 			}
+
 		} else if (strncmp(s, "annotation/info/@", 17) == 0)
 		{
 			PdAbstractArray N = GDS_Node_Path(Root, s, FALSE);
@@ -490,6 +492,48 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 
 			memset(DStart, 0, sizeof(DStart));
 			rv_ans = GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0], 0);
+
+		} else if (strcmp(s, "chrom-pos") == 0)
+		{
+			// ===========================================================
+			// chromosome-position
+			static const char *ERR_CHR_POS =
+				"Invalid dimension of 'chromosome' and 'position'.";
+
+			PdAbstractArray N1 = GDS_Node_Path(Root, "chromosome", TRUE);
+			PdAbstractArray N2 = GDS_Node_Path(Root, "position", TRUE);
+			C_Int64 n1 = GDS_Array_GetTotalCount(N1),
+				n2 = GDS_Array_GetTotalCount(N2);
+			if (n1 != n2)
+				throw ErrSeqArray(ERR_CHR_POS);
+
+			vector<string> chr;
+			vector<C_Int32> pos;
+			C_Int32 st=0, cnt=n1;
+
+			if (Sel.Variant.empty())
+			{
+				chr.resize(n1); pos.resize(n1);
+				GDS_Array_ReadData(N1, &st, &cnt, &chr[0], svStrUTF8);
+				GDS_Array_ReadData(N2, &st, &cnt, &pos[0], svInt32);
+			} else {
+				if (Sel.Variant.size() != (size_t)n1)
+					throw ErrSeqArray(ERR_CHR_POS);
+				n1 = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
+				chr.resize(n1); pos.resize(n1);
+				SelPtr[0] = &Sel.Variant[0];
+				GDS_Array_ReadDataEx(N1, &st, &cnt, &SelPtr[0], &chr[0], svStrUTF8);
+				GDS_Array_ReadDataEx(N2, &st, &cnt, &SelPtr[0], &pos[0], svInt32);
+			}
+
+			char buf[1024];
+			rv_ans = PROTECT(NEW_CHARACTER(n1));
+			for (size_t i=0; i < (size_t)n1; i++)
+			{
+				snprintf(buf, sizeof(buf), "%s-%d", chr[i].c_str(), pos[i]);
+				SET_STRING_ELT(rv_ans, i, mkChar(buf));
+			}
+			UNPROTECT(1);
 
 		} else {
 			throw ErrSeqArray(

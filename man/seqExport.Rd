@@ -53,7 +53,12 @@ seqSetFilter(f, variant.id=sample(variant.id, 100))
 
 # export
 seqExport(f, "tmp.gds")
+seqExport(f, "tmp.gds", info.var=character())
+seqExport(f, "tmp.gds", fmt.var=character())
+seqExport(f, "tmp.gds", samp.var=character())
 
+
+# show file
 (f1 <- seqOpen("tmp.gds")); seqClose(f1)
 
 

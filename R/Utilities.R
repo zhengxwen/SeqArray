@@ -294,6 +294,13 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
                     val=index.gdsn(gdsfile, "annotation/info"))
             }
             lst.info <- ls.gdsn(index.gdsn(gdsfile, "annotation/info"))
+            if (!is.null(info.var))
+            {
+                s <- setdiff(info.var, lst.info)
+                if (length(s) > 0L)
+                    warning("No INFO variable: ", paste(s, collapse=","))
+                lst.info <- intersect(lst.info, info.var)
+            }
             for (nm2 in lst.info)
             {
                 cp.info(node.info, S$variant.sel, nm2,
@@ -308,6 +315,13 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
                     val=index.gdsn(gdsfile, "annotation/format"))
             }
             lst.fmt <- ls.gdsn(index.gdsn(gdsfile, "annotation/format"))
+            if (!is.null(fmt.var))
+            {
+                s <- setdiff(fmt.var, lst.fmt)
+                if (length(s) > 0L)
+                    warning("No FORMAT variable: ", paste(s, collapse=","))
+                lst.fmt <- intersect(lst.fmt, fmt.var)
+            }
             for (nm2 in lst.fmt)
             {
                 s <- paste("annotation", "format", nm2, sep="/")
@@ -327,6 +341,13 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     {
         put.attr.gdsn(node, val=n2)
         lst <- ls.gdsn(n2)
+        if (!is.null(samp.var))
+        {
+            s <- setdiff(samp.var, lst)
+            if (length(s) > 0L)
+                warning("No sample variable: ", paste(s, collapse=","))
+            lst <- intersect(lst, samp.var)
+        }
         for (nm in lst)
             cp(node, S$sample.sel, nm, paste("sample.annotation", nm, sep="/"))
     }
@@ -409,10 +430,7 @@ seqMerge <- function(gds.fn, out.fn,
     }
 
     # variants
-    variantID <- function(f) {
-        paste(seqGetData(f, "chromosome"), seqGetData(f, "position"), sep="-")
-    }
-    variant.id <- variant2.id <- variantID(flist[[1L]])
+    variant.id <- variant2.id <- seqGetData(flist[[1L]], "chrom-pos")
     if (verbose)
     {
         cat(sprintf("    [%-2d] %s (%s variant%s)\n", 1L, basename(gds.fn[1L]),
@@ -420,7 +438,7 @@ seqMerge <- function(gds.fn, out.fn,
     }
     for (i in seq_along(flist)[-1L])
     {
-        s <- variantID(flist[[i]])
+        s <- seqGetData(flist[[i]], "chrom-pos")
         if (verbose)
         {
             cat(sprintf("    [%-2d] %s (%s variant%s)\n", i,
