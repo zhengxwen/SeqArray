@@ -435,8 +435,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
-					if ((I != NA_INTEGER) && (I < 1) && (I > Count))
-						throw ErrSeqArray("Invalid type of 'samp.sel'.");
+					if ((I != NA_INTEGER) && ((I < 1) || (I > Count)))
+						throw ErrSeqArray("Out of range 'samp.sel'.");
 				}
 				// set values
 				memset((void*)pArray, 0, Count);
@@ -454,8 +454,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
-					if ((I != NA_INTEGER) && (I < 1) && (I > Cnt))
-						throw ErrSeqArray("Invalid type of 'samp.sel'.");
+					if ((I != NA_INTEGER) && ((I < 1) || (I > Cnt)))
+						throw ErrSeqArray("Out of range 'samp.sel'.");
 				}
 				// get the current index
 				vector<int> Idx;
@@ -662,8 +662,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
-					if ((I != NA_INTEGER) && (I < 1) && (I > Count))
-						throw ErrSeqArray("Invalid type of 'variant.sel'.");
+					if ((I != NA_INTEGER) && ((I < 1) || (I > Count)))
+						throw ErrSeqArray("Out of range 'variant.sel'.");
 				}
 				// set values
 				memset((void*)pArray, 0, Count);
@@ -681,8 +681,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
-					if ((I != NA_INTEGER) && (I < 1) && (I > Cnt))
-						throw ErrSeqArray("Invalid type of 'variant.sel'.");
+					if ((I != NA_INTEGER) && ((I < 1) || (I > Cnt)))
+						throw ErrSeqArray("Out of range 'variant.sel'.");
 				}
 				// get the current index
 				vector<int> Idx;
@@ -716,7 +716,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 
 
 /// set a working space flag with selected chromosome(s)
-COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include, SEXP is_num)
+COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
+	SEXP is_num, SEXP verbose)
 {
 	int IsNum = Rf_asLogical(is_num);
 	if (!Rf_isNull(include))
@@ -745,6 +746,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include, SEXP is_num)
 		vector<C_BOOL> &array = Init.Selection(gdsfile).Variant;
 		array.resize(nVariant);
 		string txt;
+		int nSum = 0;
 
 		for (C_Int32 i=0; i < nVariant; i++)
 		{
@@ -764,7 +766,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include, SEXP is_num)
 				flag = (Inc.find(txt) != Inc.end());
 
 			array[i] = flag;
+			if (flag) nSum ++;
 		}
+
+		if (Rf_asLogical(verbose) == TRUE)
+			Rprintf("# of selected variants: %d\n", nSum);
 
 	COREARRAY_CATCH
 }
@@ -1033,6 +1039,33 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 }
 
 
+/// get a logical vector with selection
+COREARRAY_DLL_EXPORT SEXP SEQ_SelectFlag(SEXP select, SEXP len)
+{
+	R_len_t n = XLENGTH(select);
+	if (XLENGTH(len) != n)
+		error("Index variable error.");
+
+	int *p = INTEGER(len);
+	R_len_t m = 0;
+	for (R_len_t k=n; k > 0; k--, p++)
+	{
+		if (*p > 0) m += *p;
+	}
+
+	SEXP rv_ans = NEW_LOGICAL(m);
+	int *r = INTEGER(rv_ans), *s = INTEGER(select);
+	p = INTEGER(len);
+	for (; n > 0; n--, s++, p++)
+	{
+		for (int k=*p; k > 0; k--)
+			*r++ = *s;
+	}
+
+	return rv_ans;
+}
+
+
 
 // ===========================================================
 // analysis
@@ -1064,36 +1097,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_NumOfAllele(SEXP allele_node)
 		UNPROTECT(1);
 
 	COREARRAY_CATCH
-}
-
-
-
-
-// ===========================================================
-// analysis
-// ===========================================================
-
-COREARRAY_DLL_EXPORT SEXP seq_Merge_Pos(SEXP opfile, SEXP outgds_root)
-{
-/*
-	// GDS nodes
-	PdAbstractArray Root;
-	memcpy(&Root, INTEGER(outgds_root), sizeof(Root));
-	PdAbstractArray varPos = GDS_Node_Path(Root, "position");
-
-	// for - loop
-	for (int i=0; i < XLENGTH(opfile); i++)
-	{
-		// get variable
-		PdAbstractArray _R_;
-		memcpy(&_R_, INTEGER(VECTOR_ELT(opfile, i)), sizeof(_R_));
-		PdAbstractArray sPos = GDS_Node_Path(_R_, "position");
-
-		// read and write
-		
-	}
-*/
-	return R_NilValue;
 }
 
 
@@ -1150,7 +1153,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_FilterPop, 1),
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 4),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
-		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 3),
+		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 4),
 		CALL(SEQ_GetSpace, 2),
 
 		CALL(SEQ_Summary, 2),
@@ -1159,6 +1162,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 8),
 
 		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),
+		CALL(SEQ_SelectFlag, 2),
 
 		{ NULL, NULL, 0 }
 	};

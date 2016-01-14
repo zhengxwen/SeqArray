@@ -5,7 +5,8 @@
     Selects the variants according to the specified chromosome(s).
 }
 \usage{
-seqSetFilterChrom(gdsfile, include=NULL, is.num=NA, from.bp=NaN, to.bp=NaN)
+seqSetFilterChrom(gdsfile, include=NULL, is.num=NA, from.bp=NaN, to.bp=NaN,
+    verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -14,6 +15,7 @@ seqSetFilterChrom(gdsfile, include=NULL, is.num=NA, from.bp=NaN, to.bp=NaN)
         \code{FALSE}, chromosome is not numeric}
     \item{from.bp}{numeric, the lower bound of position}
     \item{to.bp}{numeric, the upper bound of position}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     None.

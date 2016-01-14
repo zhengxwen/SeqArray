@@ -186,7 +186,7 @@ seqResetFilter <- function(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 # Set a filter according to specified chromosomes
 #
 seqSetFilterChrom <- function(gdsfile, include=NULL, is.num=NA,
-    from.bp=NaN, to.bp=NaN)
+    from.bp=NaN, to.bp=NaN, verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -198,11 +198,12 @@ seqSetFilterChrom <- function(gdsfile, include=NULL, is.num=NA,
     stopifnot(is.numeric(to.bp) & is.vector(to.bp))
     stopifnot(length(to.bp) == 1L)
 
-    # call C function
-    .Call(SEQ_SetChrom, gdsfile, include, is.num)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (is.finite(from.bp) | is.finite(to.bp))
     {
+        # call C function
+        .Call(SEQ_SetChrom, gdsfile, include, is.num, FALSE)
         pos <- seqGetData(gdsfile, "position")
         if (is.finite(from.bp))
         {
@@ -212,7 +213,11 @@ seqSetFilterChrom <- function(gdsfile, include=NULL, is.num=NA,
         } else {
             flag <- (pos <= to.bp)
         }
-        seqSetFilter(gdsfile, action="intersect", variant.sel=flag, verbose=FALSE)
+        seqSetFilter(gdsfile, action="intersect", variant.sel=flag,
+            verbose=verbose)
+    } else {
+        # call C function
+        .Call(SEQ_SetChrom, gdsfile, include, is.num, verbose)
     }
 
     invisible()

@@ -162,7 +162,15 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     {
         if (is.null(name2)) name2 <- name
         if (show)
-            cat("Exporting \"", name2, "\" ...\n", sep="")
+        {
+            if (name %in% c("sample.id", "variant.id"))
+            {
+                ss <- .seldim(gdsfile)
+                n <- ifelse(name=="sample.id", ss[1L], ss[2L])
+                cat("Exporting '", name2, "' (", .pretty(n), ")\n", sep="")
+            } else
+                cat("Exporting '", name2, "'\n", sep="")
+        }
         src <- index.gdsn(gdsfile, name2)
         dst <- add.gdsn(folder, name, storage=src)
         put.attr.gdsn(dst, val=src)
@@ -181,7 +189,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     cp2 <- function(folder, samp.sel, var.sel, name, show=verbose)
     {
         if (show)
-            cat("Exporting \"", name, "\" ...\n", sep="")
+            cat("Exporting '", name, "'\n", sep="")
 
         dat1 <- index.gdsn(gdsfile, paste(name, "data", sep="/"))
         dat2 <- index.gdsn(gdsfile, paste(name, "~data", sep="/"), silent=TRUE)
@@ -222,27 +230,28 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     cp.info <- function(folder, sel, name, name2, show=verbose)
     {
         if (show)
-            cat("Exporting \"", name2, "\" ...\n", sep="")
+            cat("Exporting '", name2, "'\n", sep="")
         src <- index.gdsn(gdsfile, name2)
         idx <- index.gdsn(gdsfile, .var_path(name2, "@"), silent=TRUE)
 
         dst <- add.gdsn(folder, name, storage=src)
         put.attr.gdsn(dst, val=src)
-        if (!is.null(idx))
+
+        if (is.null(idx))
         {
+            dm <- objdesp.gdsn(src)$dim
+            ss <- vector("list", length(dm))
+            ss[[length(dm)]] <- sel
+            assign.gdsn(dst, src, append=FALSE, seldim=ss)
+        } else {
             dstidx <- add.gdsn(folder, paste("@", name, sep=""), storage=idx)
             put.attr.gdsn(dstidx, val=idx)
-        }
-
-        dm <- objdesp.gdsn(src)$dim
-        ss <- vector("list", length(dm))
-        ss[[length(dm)]] <- sel
-        for (i in seq_len(length(dm)-1L))
-            ss[[i]] <- rep(TRUE, dm[i])
-        assign.gdsn(dst, src, append=FALSE, seldim=ss)
-
-        if (!is.null(idx))
+            dm <- objdesp.gdsn(src)$dim
+            ss <- vector("list", length(dm))
+            ss[[length(dm)]] <- .Call(SEQ_SelectFlag, sel, read.gdsn(idx))
+            assign.gdsn(dst, src, append=FALSE, seldim=ss)
             assign.gdsn(dstidx, idx, append=FALSE, seldim=sel)
+        }
     }
 
     #######################################################################
@@ -275,7 +284,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
         copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra.index"))
         copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra"))
     } else  # TODO
-        stop("Not implemented in \"genotype/extra.index\".")
+        stop("Not implemented in 'genotype/extra.index'.")
 
     ## annotation
     node <- addfolder.gdsn(outfile, "annotation")

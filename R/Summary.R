@@ -92,7 +92,7 @@
     if (verbose)
     {
         cat(paste(c("Ploidy:", "Number of samples:", "Number of variants:"),
-            ans$dim), sep="\n")
+            .pretty(ans$dim)), sep="\n")
         if (showsel)
         {
             cat(paste(c("Number of selected samples:",

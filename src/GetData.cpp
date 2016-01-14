@@ -526,12 +526,26 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				GDS_Array_ReadDataEx(N2, &st, &cnt, &SelPtr[0], &pos[0], svInt32);
 			}
 
-			char buf[1024];
+			char buf1[1024] = { 0 };
+			char buf2[1024] = { 0 };
+			char *p1 = buf1, *p2 = buf2;
+			int dup = 0;
 			rv_ans = PROTECT(NEW_CHARACTER(n1));
 			for (size_t i=0; i < (size_t)n1; i++)
 			{
-				snprintf(buf, sizeof(buf), "%s-%d", chr[i].c_str(), pos[i]);
-				SET_STRING_ELT(rv_ans, i, mkChar(buf));
+				snprintf(p1, sizeof(buf1), "%s-%d", chr[i].c_str(), pos[i]);
+				if (strcmp(p1, p2) == 0)
+				{
+					dup ++;
+					snprintf(p1, sizeof(buf1), "%s-%d.%d", chr[i].c_str(),
+						pos[i], dup);
+					SET_STRING_ELT(rv_ans, i, mkChar(p1));
+				} else {
+					char *tmp;
+					tmp = p1; p1 = p2; p2 = tmp;
+					SET_STRING_ELT(rv_ans, i, mkChar(p2));
+					dup = 0;
+				}
 			}
 			UNPROTECT(1);
 
