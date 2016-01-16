@@ -184,6 +184,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             sel <- ss
         }
         assign.gdsn(dst, src, append=FALSE, seldim=sel)
+        readmode.gdsn(dst)
     }
 
     cp2 <- function(folder, samp.sel, var.sel, name, show=verbose)
@@ -216,15 +217,18 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
         sel[[length(dm)]] <- flag
         sel[[length(dm)-1L]] <- samp.sel
         assign.gdsn(dst1, dat1, append=FALSE, seldim=sel)
+        readmode.gdsn(dst1)
 
         if (!is.null(dat2))
         {
             sel[[length(dm)]] <- samp.sel
             sel[[length(dm)-1L]] <- flag
             assign.gdsn(dst2, dat2, append=FALSE, seldim=sel)
+            readmode.gdsn(dst2)
         }
 
         assign.gdsn(dstidx, idx, append=FALSE, seldim=var.sel)
+        readmode.gdsn(dstidx)
     }
 
     cp.info <- function(folder, sel, name, name2, show=verbose)
@@ -243,6 +247,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             ss <- vector("list", length(dm))
             ss[[length(dm)]] <- sel
             assign.gdsn(dst, src, append=FALSE, seldim=ss)
+            readmode.gdsn(dst)
         } else {
             dstidx <- add.gdsn(folder, paste("@", name, sep=""), storage=idx)
             put.attr.gdsn(dstidx, val=idx)
@@ -250,7 +255,9 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             ss <- vector("list", length(dm))
             ss[[length(dm)]] <- .Call(SEQ_SelectFlag, sel, read.gdsn(idx))
             assign.gdsn(dst, src, append=FALSE, seldim=ss)
+            readmode.gdsn(dst)
             assign.gdsn(dstidx, idx, append=FALSE, seldim=sel)
+            readmode.gdsn(dstidx)
         }
     }
 
@@ -259,6 +266,9 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     # create the GDS file
     outfile <- createfn.gds(out.fn)
     on.exit({ closefn.gds(outfile) })
+
+    if (verbose)
+        cat("Export to '", out.fn, "'\n", sep="")
 
     # copy folders and attributes
     put.attr.gdsn(outfile$root, val=gdsfile$root)
@@ -273,6 +283,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     cp(outfile, S$variant.sel, "position")
     cp(outfile, S$variant.sel, "chromosome")
     cp(outfile, S$variant.sel, "allele")
+    sync.gds(outfile)
 
     ## genotype
     node <- addfolder.gdsn(outfile, "genotype")
@@ -285,6 +296,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
         copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra"))
     } else  # TODO
         stop("Not implemented in 'genotype/extra.index'.")
+
+    sync.gds(outfile)
 
     ## annotation
     node <- addfolder.gdsn(outfile, "annotation")
@@ -342,6 +355,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             cp(node, S$variant.sel, nm, paste("annotation", nm, sep="/"))
         }
     }
+
+    sync.gds(outfile)
 
     ## sample.annotation
     node <- addfolder.gdsn(outfile, "sample.annotation")

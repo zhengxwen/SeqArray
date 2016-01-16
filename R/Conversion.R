@@ -852,7 +852,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (verbose)
         {
             cat(sprintf("Parsing '%s' (%s bytes)\n", vcf.fn[i],
-                file.size(vcf.fn[i])))
+                .pretty(file.size(vcf.fn[i]))))
             flush.console()
         }
 

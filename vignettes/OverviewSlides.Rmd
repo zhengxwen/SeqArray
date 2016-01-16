@@ -85,7 +85,7 @@ File: SeqArray/extdata/CEU_Exon.gds (396.3 KB)
 | seqVCF2GDS   | Reformats VCF files to GDS format |
 | seqSummary   | Gets the summary (# of samples, # of variants, INFO/FORMAT variables, etc) |
 | seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data) |
-| seqGetData   | Gets data from a sequencing file (from a subset of data) |
+| seqGetData   | Gets data from a SeqArray file (or a subset of data) |
 | seqApply     | Applies a user-defined function over array margins |
 | seqParallel  | Applies functions in parallel |
 
@@ -97,8 +97,9 @@ File: SeqArray/extdata/CEU_Exon.gds (396.3 KB)
 - 1000 Genomes Project Phase 1, chromosome 1
 - 3,007,196 variants, 1092 individuals
 - the original VCF file: 10.7G (compressed)
-    * genotypes + annotations
+    * genotypes (GT) + annotations (DS, genotype dosage; GL, genotype likelihoods)
 - reformat to a single SeqArray file: 10.6G
+    * genotype: bit2, ZIP (5.95%), 97.8 MB
 - R: v3.2.0
 
 **Calculate the frequencies of reference alleles**
@@ -198,6 +199,10 @@ system.time(
 
 - variant analysis, such like allele frequencies, HWE, Mendelian errors, etc
 - functions to display genotypes / annotations in a readable format
+
+**SNPRelate (Bioconductor)**
+
+- a parallel computing toolset for relatedness and principal component analysis
 
 
 ## Acknowledgements
