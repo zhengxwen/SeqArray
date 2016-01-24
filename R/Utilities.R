@@ -407,8 +407,8 @@ seqMerge <- function(gds.fn, out.fn,
 {
     # check
     stopifnot(is.character(gds.fn))
-    if (length(gds.fn) <= 1L)
-        stop("'gds.fn' should have more than one files.")
+    if (length(gds.fn) < 1L)
+        stop("'gds.fn' should have at least one file.")
     stopifnot(is.character(out.fn), length(out.fn)==1L)
 
     stopifnot(is.null(info.var) | is.character(info.var))

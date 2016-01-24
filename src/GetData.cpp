@@ -2,7 +2,7 @@
 //
 // GetData.cpp: Get data from the GDS file
 //
-// Copyright (C) 2015    Xiuwen Zheng
+// Copyright (C) 2015-2016    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

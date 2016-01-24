@@ -29,7 +29,7 @@ Development Version: v1.11.8
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
 * [Help Documents](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)
-* Tutorials: [Data Management](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [Data Analytics](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/AnalysisTutorial.html)
+* Tutorials: [Data Management](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [Data Analytics](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/AnalysisTutorial.html), [Overview Slides](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
 
 
 

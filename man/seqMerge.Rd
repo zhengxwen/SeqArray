@@ -31,14 +31,14 @@ seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option("ZIP_RA.default"),
     None.
 }
 \details{
-    The current implementation of \code{seqMerge} extracts and merges the
-genotypic data only without any annotation. Users can specify multiple VCF
-files in \code{\link{seqVCF2GDS}} to export a single GDS file.
+    The function merges multiple SeqArray GDS files. Users can specify the
+compression method and level for the new GDS file. If \code{gds.fn} contains
+one file, users can change the storage type to create a new file.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF2GDS}}, \code{\link{seqExport}}
 }
 
 \examples{

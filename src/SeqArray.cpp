@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2015    Xiuwen Zheng
+// Copyright (C) 2013-2016    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -118,14 +118,6 @@ COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname)
 	if (GDS_Array_DimCnt(Obj) != 1)
 		throw ErrSeqArray("Invalid dimension of '%s'!", varname);
 	return GDS_Array_GetTotalCount(Obj);
-}
-
-/// Get the number of TRUEs
-COREARRAY_DLL_LOCAL size_t GetNumOfTRUE(C_BOOL *array, size_t n)
-{
-	size_t ans = 0;
-	for (; n > 0; n--) if (*array++) ans ++;
-	return ans;
 }
 
 /// Get the number of alleles

@@ -2,7 +2,7 @@
 //
 // Common.h: the C++ header file of SeqArray
 //
-// Copyright (C) 2013-2015    Xiuwen Zheng
+// Copyright (C) 2013-2016    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -33,7 +33,7 @@
 
 #include <cctype>
 #include <cstring>
-
+#include "vectorization.h"
 
 using namespace std;
 using namespace CoreArray;
@@ -134,6 +134,9 @@ public:
 // Library Functions
 // ===========================================================
 
+/// Get the number of TRUEs
+#define GetNumOfTRUE(ptr, n)    vec_byte_count((C_UInt8*)(ptr), n)
+
 /// Get the list element named str, or return NULL
 COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
 	size_t nlist);
@@ -143,9 +146,6 @@ COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str);
 
 /// Get the total count requiring the number of dimension is one
 COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname);
-
-/// Get the number of TRUEs
-COREARRAY_DLL_LOCAL size_t GetNumOfTRUE(C_BOOL *array, size_t n);
 
 /// Get the number of alleles
 COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list);
