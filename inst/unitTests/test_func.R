@@ -17,8 +17,8 @@ library(RUnit)
 test_popcnt <- function()
 {
 	set.seed(1000)
-	v1 <- sample.int(2147483647, 10000, replace=TRUE)
-	v2 <- sample.int(2147483647, 10000, replace=TRUE)
+	v1 <- sample.int(2147483647L, 10000L, replace=TRUE)
+	v2 <- sample.int(2147483647L, 10000L, replace=TRUE)
 
 	c1 <- sapply(v1, .popcnt)
 	c2 <- sapply(v2, .popcnt)
@@ -30,6 +30,24 @@ test_popcnt <- function()
 	checkEquals(c1, t1, "popcount u32")
 	checkEquals(c2, t2, "popcount u32")
 	checkEquals(c1+c2, t3, "popcount u64")
+
+	invisible()
+}
+
+
+test_byte_count <- function()
+{
+	set.seed(1000)
+	v <- sample.int(255L, 50000L, replace=TRUE)
+	v[sample.int(50000L, 25000L)] <- 0L
+	v <- as.raw(v)
+
+	for (st in sample.int(1000L, 100L))
+	{
+		n1 <- SeqArray:::.cfunction2("test_byte_count")(v, st)
+		n2 <- sum(v[st:length(v)] != 0L)
+		checkEquals(n1, n2, paste("byte_count (start=", st, ")", sep=""))
+	}
 
 	invisible()
 }

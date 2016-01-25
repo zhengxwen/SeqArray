@@ -53,4 +53,12 @@ SEXP test_array_popcnt64(SEXP v1, SEXP v2)
 	return rv_ans;
 }
 
+SEXP test_byte_count(SEXP val, SEXP start)
+{
+	int st = Rf_asInteger(start) - 1;
+	Rbyte *p = RAW(val);
+	int n = length(val);
+	return ScalarInteger(vec_byte_count(p + st, n - st));
+}
+
 }
