@@ -14,7 +14,3 @@ r_github_packages:
   - zhengxwen/gdsfmt
   - zhengxwen/SNPRelate
 
-os:
-  - linux
-  - osx
-

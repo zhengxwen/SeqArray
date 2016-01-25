@@ -36,7 +36,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#if (defined(__SSE__) && defined(__SSE2__))
+#if (defined(COREARRAY_SIMD_SSE) && defined(COREARRAY_SIMD_SSE2))
 
 #   include <xmmintrin.h>  // SSE
 #   include <emmintrin.h>  // SSE2
@@ -44,6 +44,10 @@
 #   if defined(__SSE4_2__) || defined(__POPCNT__)
 #       define COREARRAY_HARDWARE_POPCNT
 #       include <nmmintrin.h>  // SSE4_2, for POPCNT
+#   endif
+
+#   if defined(COREARRAY_SIMD_AVX)
+#       include <immintrin.h>  // AVX, AVX2
 #   endif
 
 #endif

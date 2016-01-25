@@ -38,12 +38,13 @@ test_popcnt <- function()
 test_byte_count <- function()
 {
 	set.seed(1000)
-	v <- sample.int(255L, 50000L, replace=TRUE)
-	v[sample.int(50000L, 25000L)] <- 0L
-	v <- as.raw(v)
-
 	for (st in sample.int(1000L, 100L))
 	{
+		n <- 50000L + sample.int(64L, 1) - 1L
+		v <- sample.int(255L, n, replace=TRUE)
+		v[sample.int(n, 25000L)] <- 0L
+		v <- as.raw(v)
+
 		n1 <- SeqArray:::.cfunction2("test_byte_count")(v, st)
 		n2 <- sum(v[st:length(v)] != 0L)
 		checkEquals(n1, n2, paste("byte_count (start=", st, ")", sep=""))
