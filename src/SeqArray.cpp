@@ -1094,6 +1094,72 @@ COREARRAY_DLL_EXPORT SEXP SEQ_NumOfAllele(SEXP allele_node)
 
 
 // ===========================================================
+// File Merging
+// ===========================================================
+
+/// merge alleles from multiple alleles
+COREARRAY_DLL_EXPORT SEXP SEQ_MergeAllele(SEXP num, SEXP varidx, SEXP files,
+	SEXP export_var)
+{
+	COREARRAY_TRY
+
+/*		int TotalNum = Rf_asInteger(num);
+		int FileNum  = Rf_length(varidx);
+
+		vector<int*> pIdx(FileNum);
+		vector<C_Int32> pI(FileName);
+		for (int i=0; i < FileNum; i++)
+		{
+			pIdx[i] = INTEGER(VECTOR_ELT(varidx, i));
+			pI[i] = 0;
+		}
+
+		vector<PdAbstractArray> pVar(FileNum);
+		for (int i=0; i < FileNum; i++)
+		{
+			PdGDSFolder Root = GDS_R_SEXP2FileRoot(VECTOR_ELT(files, i));
+			pVar[i] = GDS_Node_Path(Root, "allele", TRUE);
+		}
+
+		PdAbstractArray exp_var = GDS_R_SEXP2Obj(export_var, FALSE);
+
+		// for-loop
+		const C_Int32 ONE = 1;
+		vector<string> vec;
+		string ss, val;
+		for (int i=1; i <= TotalNum; i++)
+		{
+			vec.clear();
+			for (int j=0; j < FileNum; j++)
+			{
+				if (*pIdx[j] == i)
+				{
+					++ pIdx[j];
+					GDS_Array_ReadData(pVar[j], &pI[j], &ONE, &val, svStrUTF8);
+					++ pI[j];
+					// parse alleles
+					const char *p = val.c_str();
+					const char *s = p;
+					do {
+						if (*p == '\x0' || *p == ',')
+						{
+							if (p != s)
+							{
+								
+							}
+						}
+					} while (*p);
+				}
+			}
+		}
+*/
+
+	COREARRAY_CATCH
+}
+
+
+
+// ===========================================================
 // the initial function when the package is loaded
 // ===========================================================
 

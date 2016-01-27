@@ -33,7 +33,7 @@
 
 
 /// get the number of non-zero
-size_t vec_byte_count(uint8_t *p, size_t n)
+size_t vec_byte_count(const uint8_t *p, size_t n)
 {
 	size_t ans = 0;
 

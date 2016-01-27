@@ -153,7 +153,7 @@ seqVCF.Header <- function(vcf.fn, getnum=FALSE)
 
     CheckNum <- function(number)
     {
-        if (!(number %in% c("A", "G", ".")))
+        if (!(number %in% c("A", "G", ".", "R")))
         {
             N <- suppressWarnings(as.integer(number))
             if (is.finite(N))

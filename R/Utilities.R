@@ -454,7 +454,7 @@ seqMerge <- function(gds.fn, out.fn,
     }
 
     # variants
-    variant.id <- variant2.id <- seqGetData(flist[[1L]], "chrom-pos")
+    variant.id <- variant2.id <- seqGetData(flist[[1L]], "chrom_pos")
     if (verbose)
     {
         cat(sprintf("    [%-2d] %s (%s variant%s)\n", 1L, basename(gds.fn[1L]),
@@ -462,7 +462,7 @@ seqMerge <- function(gds.fn, out.fn,
     }
     for (i in seq_along(flist)[-1L])
     {
-        s <- seqGetData(flist[[i]], "chrom-pos")
+        s <- seqGetData(flist[[i]], "chrom_pos")
         if (verbose)
         {
             cat(sprintf("    [%-2d] %s (%s variant%s)\n", i,
@@ -492,7 +492,14 @@ seqMerge <- function(gds.fn, out.fn,
         if (length(variant2.id) > 0L)
             stop("There are overlapping on both samples and variants.")
     } else {
-        stop("not implemented yet!")
+        varidx <- vector("list", length(flist))
+        for (i in seq_along(flist))
+        {
+            varidx[[i]] <- match(seqGetData(flist[[i]], "chrom_pos"),
+                variant.id)
+            if (is.unsorted(varidx[[i]], strictly=TRUE))
+                stop("File ", i, ": chromosomes and positions are unsorted.")
+        }
     }
 
 
@@ -952,7 +959,37 @@ seqMerge <- function(gds.fn, out.fn,
         }
 
     } else {
-        stop("not implemented yet!")
+
+        v <- strsplit(variant.id, "_", fixed=TRUE)
+
+        ## add position, chromsome, allele
+        # TODO: need to check whether position can be stored in 'int32'
+        if (verbose) cat("    position")
+        n <- .AddVar(storage.option, gfile, "position", sapply(v, `[`, i=2L),
+            storage="int32")
+        .DigestCode(n, digest, verbose)
+
+        if (verbose) cat("    chromosome")
+        n <- .AddVar(storage.option, gfile, "chromosome", sapply(v, `[`, i=1L),
+            storage="string")
+        .DigestCode(n, digest, verbose)
+
+        if (verbose) cat("    allele")
+        n <- .AddVar(storage.option, gfile, "allele", storage="string")
+        .append_gds(n, flist, "allele")
+        .DigestCode(n, digest, verbose)
+        if (length(variant.id) != objdesp.gdsn(n)$dim)
+            stop("Invalid number of variants in 'allele'.")
+
+
+
+        for (i in seq_along(flist))
+        {
+            i <- match(seqGetData(flist[[i]], "chrom_pos"), variant.id)
+            if (is.unsorted(x, strictly=TRUE))
+                stop("File ", i, ": chromosomes and positions are unsorted.")
+        }
+
     }
 
     for (f in flist) seqClose(f)

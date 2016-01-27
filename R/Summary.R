@@ -96,7 +96,8 @@
         if (showsel)
         {
             cat(paste(c("Number of selected samples:",
-                "Number of selected variants:"), ans$seldim), sep="\n")
+                "Number of selected variants:"), .pretty(ans$seldim)),
+                sep="\n")
         }
     }
     if (check == "full")

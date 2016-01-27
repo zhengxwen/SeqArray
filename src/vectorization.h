@@ -90,9 +90,8 @@ inline static int POPCNT_U64(uint64_t x)
 
 
 
-
 /// get the number of non-zero
-COREARRAY_DLL_DEFAULT size_t vec_byte_count(uint8_t *p, size_t n);
+COREARRAY_DLL_DEFAULT size_t vec_byte_count(const uint8_t *p, size_t n);
 
 
 
