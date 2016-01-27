@@ -46,7 +46,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 	int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
 	bool _UseRaw)
 {
-	static const char *ErrDim = "Invalid dimension of '%s'.";
+	static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
 	// initialize
 	GDS_PATH_PREFIX_CHECK(Path);
@@ -85,7 +85,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			// ===========================================================
 			// VARIABLE: sample.id
 			if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nSample))
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 			CellCount = 1;
 			SelPtr[0] = NeedTRUE(1);
 			break;
@@ -94,10 +94,10 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			// ===========================================================
 			// VARIABLE: genotype/~data, genotype/@data
 			if (DimCnt != 3)
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 			GDS_Array_GetDim(Node, DLen, 3);
 			if ((DLen[0] != nSample) || (DLen[1] < nVariant))
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 
 			Path2 = GDS_PATH_PREFIX(Path, '@');
 			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
@@ -105,7 +105,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
 			if ((GDS_Array_DimCnt(IndexNode) != 1) ||
 					(GDS_Array_GetTotalCount(IndexNode) != nVariant))
-				throw ErrSeqArray(ErrDim, Path2.c_str());
+				throw ErrSeqArray(ERR_DIM, Path2.c_str());
 
 			{
 				C_Int32 I, Cnt;
@@ -156,10 +156,10 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			// ===========================================================
 			// VARIABLE: phase/~data
 			if ((DimCnt != 2) && (DimCnt != 3))
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 			GDS_Array_GetDim(Node, DLen, 3);
 			if ((DLen[0] != nSample) || (DLen[1] != nVariant))
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 
 			CellCount = Num_Variant;
 			SelPtr[0] = NeedTRUE(1);
@@ -176,7 +176,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			// ===========================================================
 			// VARIABLE: format/...
 			if ((DimCnt!=2) && (DimCnt!=3))
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 			GDS_Array_GetDim(Node, DLen, 3);
 
 			Path2 = GDS_PATH_PREFIX(Path, '@');
@@ -185,7 +185,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
 			if ((GDS_Array_DimCnt(IndexNode) != 1) ||
 					(GDS_Array_GetTotalCount(IndexNode) != nVariant))
-				throw ErrSeqArray(ErrDim, Path2.c_str());
+				throw ErrSeqArray(ERR_DIM, Path2.c_str());
 
 			{
 				C_Int32 I, Cnt;
@@ -233,11 +233,11 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			// ===========================================================
 			// VARIABLE: sample.annotation/
 			if ((DimCnt != 1) && (DimCnt != 2))
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 			DLen[0] = DLen[1] = DLen[2] = 0;
 			GDS_Array_GetDim(Node, DLen, 2);
 			if (DLen[0] != nSample)
-				throw ErrSeqArray(ErrDim, Path);
+				throw ErrSeqArray(ERR_DIM, Path);
 
 			VariantStart = 0; VariantCount = DLen[1];
 			CellCount = 1;

@@ -61,7 +61,7 @@ public:
 	typedef list<TSelection> TSelList;
 
 	TInitObject();
-	TSelection &Selection(SEXP gds);
+	TSelection &Selection(SEXP gds, bool alloc=false);
 
 	/// a vector of TRUE
 	C_BOOL TRUE_ARRAY[1024];
@@ -152,6 +152,9 @@ COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list);
 
 /// Get the index in an allele list
 COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list);
+
+/// Get strings split by comma
+COREARRAY_DLL_LOCAL void GetAlleles(const char *allele_list, vector<string> &out);
 
 
 

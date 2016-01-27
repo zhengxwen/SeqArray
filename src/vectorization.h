@@ -94,6 +94,8 @@ inline static int POPCNT_U64(uint64_t x)
 COREARRAY_DLL_DEFAULT size_t vec_byte_count(const uint8_t *p, size_t n);
 
 
+COREARRAY_DLL_DEFAULT void vec_int32_set(int32_t *p, size_t n, int32_t val);
+
 
 #ifdef __cplusplus
 }

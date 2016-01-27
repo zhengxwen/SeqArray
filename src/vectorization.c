@@ -182,3 +182,9 @@ size_t vec_byte_count(const uint8_t *p, size_t n)
 
 	return ans;
 }
+
+
+void vec_int32_set(int32_t *p, size_t n, int32_t val)
+{
+	for (; n > 0; n--) *p++ = val;
+}

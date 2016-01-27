@@ -42,13 +42,30 @@ TInitObject::TInitObject(): GENO_BUFFER(1024)
 	memset(TRUE_ARRAY, TRUE, sizeof(TRUE_ARRAY));
 }
 
-TInitObject::TSelection &TInitObject::Selection(SEXP gds)
+TInitObject::TSelection &TInitObject::Selection(SEXP gdsfile, bool alloc)
 {
 	// TODO: check whether handle is valid
-	int id = INTEGER(GetListElement(gds, "id"))[0];
+	int id = INTEGER(GetListElement(gdsfile, "id"))[0];
 	TSelList &m = _Map[id];
 	if (m.empty()) m.push_back(TSelection());
-	return m.back();
+	TSelection &s = m.back();
+	if (alloc && (s.Sample.empty() | s.Variant.empty()))
+	{
+		// the GDS root node
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
+		// selection
+		if (s.Sample.empty())
+		{
+			PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
+			s.Sample.resize(GDS_Array_GetTotalCount(N), TRUE);
+		}
+		if (s.Variant.empty())
+		{
+			PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
+			s.Variant.resize(GDS_Array_GetTotalCount(N), TRUE);
+		}
+	}
+	return s;
 }
 
 void TInitObject::Need_GenoBuffer(size_t size)
@@ -164,6 +181,27 @@ COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_
 		}
 	}
 	return -1;
+}
+
+/// Get strings split by comma
+COREARRAY_DLL_LOCAL void GetAlleles(const char *allele_list, vector<string> &out)
+{
+	out.clear();
+	const char *p, *s;
+	p = s = allele_list;
+	do {
+		if ((*p == 0) || (*p == ','))
+		{
+			if (p != s)
+			{
+				out.push_back(string(s, p));
+				if (*p == ',') p ++;
+				s = p;
+			}
+			if (*p == 0) break;
+		} else
+			p ++;
+	} while (1);
 }
 
 
@@ -1094,72 +1132,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_NumOfAllele(SEXP allele_node)
 
 
 // ===========================================================
-// File Merging
-// ===========================================================
-
-/// merge alleles from multiple alleles
-COREARRAY_DLL_EXPORT SEXP SEQ_MergeAllele(SEXP num, SEXP varidx, SEXP files,
-	SEXP export_var)
-{
-	COREARRAY_TRY
-
-/*		int TotalNum = Rf_asInteger(num);
-		int FileNum  = Rf_length(varidx);
-
-		vector<int*> pIdx(FileNum);
-		vector<C_Int32> pI(FileName);
-		for (int i=0; i < FileNum; i++)
-		{
-			pIdx[i] = INTEGER(VECTOR_ELT(varidx, i));
-			pI[i] = 0;
-		}
-
-		vector<PdAbstractArray> pVar(FileNum);
-		for (int i=0; i < FileNum; i++)
-		{
-			PdGDSFolder Root = GDS_R_SEXP2FileRoot(VECTOR_ELT(files, i));
-			pVar[i] = GDS_Node_Path(Root, "allele", TRUE);
-		}
-
-		PdAbstractArray exp_var = GDS_R_SEXP2Obj(export_var, FALSE);
-
-		// for-loop
-		const C_Int32 ONE = 1;
-		vector<string> vec;
-		string ss, val;
-		for (int i=1; i <= TotalNum; i++)
-		{
-			vec.clear();
-			for (int j=0; j < FileNum; j++)
-			{
-				if (*pIdx[j] == i)
-				{
-					++ pIdx[j];
-					GDS_Array_ReadData(pVar[j], &pI[j], &ONE, &val, svStrUTF8);
-					++ pI[j];
-					// parse alleles
-					const char *p = val.c_str();
-					const char *s = p;
-					do {
-						if (*p == '\x0' || *p == ',')
-						{
-							if (p != s)
-							{
-								
-							}
-						}
-					} while (*p);
-				}
-			}
-		}
-*/
-
-	COREARRAY_CATCH
-}
-
-
-
-// ===========================================================
 // the initial function when the package is loaded
 // ===========================================================
 
@@ -1200,6 +1172,11 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_ConvBEDFlag(SEXP, SEXP, SEXP);
 	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP);
 
+	extern SEXP SEQ_MergeAllele(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_MergeGeno(SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_MergePhase(SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_MergeInfo(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+
 	static R_CallMethodDef callMethods[] =
 	{
 		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
@@ -1209,6 +1186,10 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_File_Init, 1),             CALL(SEQ_File_Done, 1),
 		CALL(SEQ_FilterPushEmpty, 1),       CALL(SEQ_FilterPushLast, 1),
 		CALL(SEQ_FilterPop, 1),
+
+		CALL(SEQ_MergeAllele, 4),           CALL(SEQ_MergeGeno, 5),
+		CALL(SEQ_MergePhase, 5),            CALL(SEQ_MergeInfo, 6),
+
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 4),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 4),
