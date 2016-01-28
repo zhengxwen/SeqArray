@@ -269,7 +269,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 					&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
 
 				// the number of calling PROTECT
-				int SIZE = NodeVar.Num_Sample * NodeVar.DLen[2];
+				size_t SIZE = (size_t)NodeVar.Num_Sample * NodeVar.DLen[2];
 				PROTECT(rv_ans = NEW_INTEGER(nVariant * SIZE));
 				PROTECT(tmp = NEW_INTEGER(3));
 					INTEGER(tmp)[0] = NodeVar.DLen[2];
