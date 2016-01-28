@@ -302,7 +302,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 }
 
 
-/// merge info variables from multiple files
+/// merge INFO variables from multiple files
 COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 	SEXP varname, SEXP export_file, SEXP param)
 {
@@ -310,9 +310,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 
 		MERGE_VAR_DEF
 
+		int nProtected = 0;
 		string VarName  = CHAR(STRING_ELT(varname, 0));
 		string VarName2 = GDS_PATH_PREFIX(VarName, '@');
-		int nProtected = 0;
 
 		vector<CVarApplyByVariant> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
@@ -370,5 +370,104 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 
 	COREARRAY_CATCH
 }
+
+
+
+/// merge FORMAT variable from multiple files
+COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
+	SEXP varname, SEXP export_file, SEXP param)
+{
+	COREARRAY_TRY
+
+		MERGE_VAR_DEF
+
+		int nProtected = 0;
+		string VarName  = CHAR(STRING_ELT(varname, 0));
+		string VarName2 = GDS_PATH_PREFIX(VarName, '@');
+
+		vector<CVarApplyByVariant> Files(FileCnt);
+		for (int i=0; i < FileCnt; i++)
+		{
+			SEXP f = VECTOR_ELT(files, i);
+			TInitObject::TSelection &Sel = Init.Selection(f, true);
+			Files[i].InitObject(CVariable::ctFormat, VarName.c_str(),
+				GDS_R_SEXP2FileRoot(f),
+				Sel.Variant.size(), &Sel.Variant[0],
+				Sel.Sample.size(), &Sel.Sample[0], false);
+		}
+
+		PdGDSFolder Root = GDS_R_SEXP2FileRoot(export_file);
+		PdAbstractArray fmt_var = GDS_Node_Path(Root, VarName.c_str(), TRUE);
+		PdAbstractArray fmt_idx = GDS_Node_Path(Root, VarName2.c_str(), TRUE);
+
+		int div = TotalNum / 25;
+		SEXP NA = GetListElement(param, "na");
+		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose"))==TRUE);
+		vector<SEXP> RDList(FileCnt);
+
+		// for-loop
+		for (int i=1; i <= TotalNum; i++)
+		{
+			for (int j=0; j < FileCnt; j++)
+			{
+				SEXP RD = R_NilValue;
+				if (*pIdx[j] == i)  // deal with this variant?
+				{
+					++ pIdx[j];
+					CVarApplyByVariant &FILE = Files[j];
+					RD = FILE.NeedRData(nProtected);
+					FILE.ReadData(RD);
+					FILE.NextCell();
+				}
+				RDList[j] = RD;
+			}
+
+			// TODO: check 2-dim or 3-dim, assuming 2-dim here
+			int step = 0;
+			for (int j=0; j < FileCnt; j++)
+			{
+				if (!Rf_isNull(RDList[j]))
+				{
+					size_t len = XLENGTH(RDList[j]);
+					int m = len / Files[j].Num_Sample;
+					if (m > step) step = m;
+				}
+			}
+
+			// write to the variable
+			for (int k=0; k < step; k++)
+			{
+				for (int j=0; j < FileCnt; j++)
+				{
+					CVarApplyByVariant &FILE = Files[j];
+					if (!Rf_isNull(RDList[j]))
+					{
+						size_t len = XLENGTH(RDList[j]);
+						int m = len / FILE.Num_Sample;
+						if (k < m)
+						{
+							GDS_R_AppendEx(fmt_var, RDList[j],
+								k * FILE.Num_Sample, FILE.Num_Sample);
+						} else
+							GDS_R_AppendEx(fmt_var, NA, 0, FILE.Num_Sample);
+					} else
+						GDS_R_AppendEx(fmt_var, NA, 0, FILE.Num_Sample);
+				}
+			}
+
+			// write to index variable
+			GDS_Array_AppendData(fmt_idx, 1, &step, svInt32);
+
+			if (Verbose)
+				if (i % div == 0) Rprintf("<");
+		}
+
+		// finally
+		if (Verbose) Rprintf("]");
+		UNPROTECT(nProtected);
+
+	COREARRAY_CATCH
+}
+
 
 } // extern "C"

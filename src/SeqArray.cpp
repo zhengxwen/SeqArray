@@ -1176,6 +1176,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_MergeGeno(SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergePhase(SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergeInfo(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_MergeFormat(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	static R_CallMethodDef callMethods[] =
 	{
@@ -1189,6 +1190,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_MergeAllele, 4),           CALL(SEQ_MergeGeno, 5),
 		CALL(SEQ_MergePhase, 5),            CALL(SEQ_MergeInfo, 6),
+		CALL(SEQ_MergeFormat, 6),
 
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 4),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
