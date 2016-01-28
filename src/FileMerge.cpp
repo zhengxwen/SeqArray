@@ -465,7 +465,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 		}
 
 		// finally
-		if (Verbose) Rprintf("]");
 		UNPROTECT(nProtected);
 
 	COREARRAY_CATCH
