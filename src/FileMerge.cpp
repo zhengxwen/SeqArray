@@ -142,15 +142,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 		const int ploidy = INTEGER(num)[2];
 		const int geno_cnt = nsamp * ploidy;
 
-		int *pGeno;
 		vector<int> geno_buffer(geno_cnt);
 		vector<C_Int8> I8s(geno_cnt);
-
 		vector<string> ss;
-		vector<int> map;
+		vector<int> allele_map;
 		string allele_list, s;
 
 		int div = TotalNum / 25;
+		if (div <= 0) div = 1;
 		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose")) == TRUE);
 
 		// for-loop
@@ -158,7 +157,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 		{
 			C_Int32 st = i - 1;
 			GDS_Array_ReadData(allele, &st, &ONE, &allele_list, svStrUTF8);
-			pGeno = &(geno_buffer[0]);
+			int *pGeno = &(geno_buffer[0]);
 
 			for (int j=0; j < FileCnt; j++)
 			{
@@ -173,25 +172,26 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 					// parse alleles
 					GetAlleles(s.c_str(), ss);
 					const int nAllele = ss.size();
-					map.resize(nAllele);
+					allele_map.resize(nAllele);
 					for (int k=0; k < nAllele; k++)
 					{
 						int x = GetIndexOfAllele(ss[k].c_str(), allele_list.c_str());
 						if (x < 0)
 							throw ErrSeqArray("internal error in SEQ_MergeGeno");
-						map[k] = x;
+						allele_map[k] = x;
 					}
 					FILE.ReadGenoData(pGeno);
 					FILE.NextCell();
 					// replace
 					size_t m = size;
-					for (int *p = pGeno; m > 0; m--)
+					const int *map = &allele_map[0];
+					for (int *p = pGeno; m > 0; m--, p++)
 					{
-						if ((0 <= *p) && (*p < nAllele))
-							*p = map[*p];
-						else if (*p != NA_INTEGER)
+						int v = *p;
+						if ((0 <= v) && (v < nAllele))
+							*p = map[v];
+						else if (v != NA_INTEGER)
 							warning("Genotype in File(%d), out of range.", j+1);
-						p ++;
 					}
 				} else
 					vec_int32_set(pGeno, size, NA_INTEGER);
@@ -215,9 +215,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 				C_Int8 *s = &(I8s[0]);
 				for (int k=0; k < geno_cnt; k++)
 				{
-					*s++ = (*p == NA_INTEGER) ? GenoBitMask :
-						((*p >> bits) & GenoBitMask);
-					p ++;
+					int v = *p++;
+					*s++ = (v == NA_INTEGER) ? GenoBitMask :
+						((v >> bits) & GenoBitMask);
 				}
 				GDS_Array_AppendData(geno_var, geno_cnt, &(I8s[0]), svInt8);
 			}
@@ -262,6 +262,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 		const int pcnt = nsamp * (ploidy - 1);
 
 		int div = TotalNum / 25;
+		if (div <= 0) div = 1;
 		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose"))==TRUE);
 		vector<int> phase_buf(pcnt);
 
@@ -403,6 +404,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 		PdAbstractArray fmt_idx = GDS_Node_Path(Root, VarName2.c_str(), TRUE);
 
 		int div = TotalNum / 25;
+		if (div <= 0) div = 1;
 		SEXP NAs = GetListElement(param, "na");
 		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose"))==TRUE);
 		vector<SEXP> RDList(FileCnt);

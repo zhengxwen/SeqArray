@@ -165,13 +165,15 @@ COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list)
 /// Get the index in an allele list
 COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list)
 {
-	int idx = 0;
+	const size_t len = strlen(allele);
 	const char *st = allele_list;
+	int idx = 0;
 	while (*allele_list)
 	{
 		while ((*allele_list != ',') && (*allele_list != 0))
 			allele_list ++;
-		if (strncmp(allele, st, allele_list - st) == 0)
+		size_t n = allele_list - st;
+		if ((len==n) && (strncmp(allele, st, n)==0))
 			return idx;
 		if (*allele_list == ',')
 		{
@@ -184,23 +186,20 @@ COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_
 }
 
 /// Get strings split by comma
-COREARRAY_DLL_LOCAL void GetAlleles(const char *allele_list, vector<string> &out)
+COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out)
 {
 	out.clear();
 	const char *p, *s;
-	p = s = allele_list;
+	p = s = alleles;
 	do {
 		if ((*p == 0) || (*p == ','))
 		{
-			if (p != s)
-			{
-				out.push_back(string(s, p));
-				if (*p == ',') p ++;
-				s = p;
-			}
+			out.push_back(string(s, p));
+			if (*p == ',') p ++;
+			s = p;
 			if (*p == 0) break;
-		} else
-			p ++;
+		}
+		p ++;
 	} while (1);
 }
 

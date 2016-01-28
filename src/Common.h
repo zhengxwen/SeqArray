@@ -154,7 +154,7 @@ COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list);
 COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list);
 
 /// Get strings split by comma
-COREARRAY_DLL_LOCAL void GetAlleles(const char *allele_list, vector<string> &out);
+COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out);
 
 
 
