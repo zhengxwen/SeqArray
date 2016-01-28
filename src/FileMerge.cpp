@@ -394,6 +394,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 				GDS_R_SEXP2FileRoot(f),
 				Sel.Variant.size(), &Sel.Variant[0],
 				Sel.Sample.size(), &Sel.Sample[0], false);
+			if (Files[i].DimCnt != 2)
+				throw ErrSeqArray("SEQ_MergeFormat: unsupported FORMAT dimension.");
 		}
 
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(export_file);
@@ -401,7 +403,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 		PdAbstractArray fmt_idx = GDS_Node_Path(Root, VarName2.c_str(), TRUE);
 
 		int div = TotalNum / 25;
-		SEXP NA = GetListElement(param, "na");
+		SEXP NAs = GetListElement(param, "na");
 		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose"))==TRUE);
 		vector<SEXP> RDList(FileCnt);
 
@@ -449,9 +451,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 							GDS_R_AppendEx(fmt_var, RDList[j],
 								k * FILE.Num_Sample, FILE.Num_Sample);
 						} else
-							GDS_R_AppendEx(fmt_var, NA, 0, FILE.Num_Sample);
+							GDS_R_AppendEx(fmt_var, NAs, 0, FILE.Num_Sample);
 					} else
-						GDS_R_AppendEx(fmt_var, NA, 0, FILE.Num_Sample);
+						GDS_R_AppendEx(fmt_var, NAs, 0, FILE.Num_Sample);
 				}
 			}
 

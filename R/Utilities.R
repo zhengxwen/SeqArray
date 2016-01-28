@@ -622,8 +622,14 @@ seqMerge <- function(gds.fn, out.fn,
 
         ## add phase folder
         varPhase <- addfolder.gdsn(gfile, "phase")
-        n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
-            valdim=c(header$ploidy-1L, nSamp, 0L))
+        if (ploidy > 2L)
+        {
+            n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
+                valdim=c(ploidy-1L, nSamp, 0L))
+        } else {
+            n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
+                valdim=c(nSamp, 0L))
+        }
 
         for (i in seq_along(flist))
         {
@@ -1030,8 +1036,14 @@ seqMerge <- function(gds.fn, out.fn,
         ## add phase folder
         if (verbose) cat("    phase [")
         varPhase <- addfolder.gdsn(gfile, "phase")
-        .AddVar(storage.option, varPhase, "data", storage="bit1",
-            valdim=c(ploidy-1L, nSamp, 0L))
+        if (ploidy > 2L)
+        {
+            .AddVar(storage.option, varPhase, "data", storage="bit1",
+                valdim=c(ploidy-1L, nSamp, 0L))
+        } else {
+            .AddVar(storage.option, varPhase, "data", storage="bit1",
+                valdim=c(nSamp, 0L))
+        }
 
         # writing
         .Call(SEQ_MergePhase, c(nVariant, nSamp, ploidy), varidx, flist,
@@ -1267,9 +1279,8 @@ seqMerge <- function(gds.fn, out.fn,
             .MergeNodeAttr(n3, flist[idx],
                 paste0("annotation/format/", varnm[i]))
             dp <- objdesp.gdsn(n1)
-            dp$dim[length(dp$dim)] <- 0L
             n4 <- .AddVar(storage.option, n3, "data", storage=dp$storage,
-                valdim=dp$dim)
+                valdim=c(nSamp, 0L))
             n5 <- .AddVar(storage.option, n3, "@data", storage="int32",
                 visible=FALSE)
 
