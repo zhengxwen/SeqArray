@@ -401,7 +401,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 # Merge multiple GDS files
 #
 seqMerge <- function(gds.fn, out.fn,
-    storage.option=seqStorage.Option("ZIP_RA.default"),
+    storage.option=seqStorageOption("ZIP_RA.default"),
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     verbose=TRUE)
 {
@@ -490,7 +490,10 @@ seqMerge <- function(gds.fn, out.fn,
     if (length(samp2.id) > 0L)
     {
         if (length(variant2.id) > 0L)
-            stop("There are overlapping on both samples and variants.")
+        {
+            stop("There are overlapping on both samples and variants, ",
+                "please merge different samples and variants respectively.")
+        }
     } else {
         varidx <- vector("list", length(flist))
         for (i in seq_along(flist))
@@ -635,7 +638,7 @@ seqMerge <- function(gds.fn, out.fn,
         {
             if (verbose)
             {
-                cat(ifelse(i > 1L, ", ", ""), i, sep="")
+                cat(ifelse(i > 1L, ",", ""), i, sep="")
                 flush.console()
             }
             sid <- seqGetData(flist[[i]], "sample.id")
@@ -1130,7 +1133,7 @@ seqMerge <- function(gds.fn, out.fn,
             {
                 if (verbose)
                 {
-                    cat(ifelse(j > 1L, ", ", ""), j, sep="")
+                    cat(ifelse(j > 1L, ",", ""), j, sep="")
                     flush.console()
                 }
                 f <- flist[[j]]
@@ -1280,8 +1283,9 @@ seqMerge <- function(gds.fn, out.fn,
 #######################################################################
 # Storage options for the SeqArray GDS file
 #
-seqStorage.Option <- function(compression=c("ZIP_RA.default", "ZIP_RA",
-    "ZIP_RA.max", "LZ4_RA", "LZ4_RA.max", "none"), float.mode="float32",
+seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
+    "ZIP_RA.fast", "ZIP_RA.max", "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max",
+    "none"), mode=NULL, float.mode="float32",
     geno.compress=NULL, info.compress=NULL, format.compress=NULL,
     index.compress=NULL, ...)
 {

@@ -13,7 +13,7 @@ SeqArray: Big Data Management of Genome-Wide Sequence Variants
 
 ## Features
 
-Big data management of genome-wide sequence variants with thousands of individuals: genotypic data (e.g., SNVs, indels and structural variation calls) and annotations in GDS files are stored in an array-oriented and compressed manner, with efficient data access using the R programming language.
+Big data management of whole-genome sequence variant calls with thousands of individuals: genotypic data (e.g., SNVs, indels and structural variation calls) and annotations in GDS files are stored in an array-oriented and compressed manner, with efficient data access using the R programming language.
 
 ## Bioconductor:
 
@@ -24,7 +24,7 @@ Release Version: v1.10.6
 * [Help Documents](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [Data Analytics](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/AnalysisTutorial.html)
 
-Development Version: v1.11.9
+Development Version: v1.11.10
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 

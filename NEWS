@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.11.0-1.11.9
+CHANGES IN VERSION 1.11.0-1.11.10
 -------------------------
 
     o rewrite `seqSummary()`
@@ -9,6 +9,8 @@ CHANGES IN VERSION 1.11.0-1.11.9
       (integer overflow)
 
     o bug fixes in `seqMerge()` if chromosome and positions are not unique
+
+    o `seqStorage.Option()` is renamed to `seqStorageOption()`
 
 
 CHANGES IN VERSION 1.10.0-1.10.6
@@ -74,9 +76,9 @@ CHANGES IN VERSION 1.9.0-1.9.19
     o new functions `seqSNP2GDS()`, `seqBED2GDS()`, `seqAlleleCount()` and
       `seqResetFilter()`
 
-    o `seqCompress.Option` is renamed to `seqStorage.Option`
+    o `seqCompress.Option()` is renamed to `seqStorage.Option()`
 
-    o "ZIP_RA" is the default value in `seqStorage.Option()` and other
+    o "ZIP_RA" is the default value in `seqStorageOption()` and other
       functions instead of "ZIP_RA.max"
 
     o `seqSetFilter()` becomes a S4 method

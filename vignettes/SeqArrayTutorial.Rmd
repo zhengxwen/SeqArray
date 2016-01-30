@@ -155,10 +155,10 @@ The columns `Number`, `Type` and `Description` are defined by the 1000 Genomes P
 seqVCF2GDS(vcf.fn, "tmp.gds")
 
 # maximize the compression level
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorage.Option("ZIP_RA.max"))
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorageOption("ZIP_RA.max"))
 
 # maximize the access speed with LZ4 compression algorithm
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorage.Option("LZ4_RA.max"))
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorageOption("LZ4_RA.max"))
 
 seqSummary("tmp.gds")
 ```

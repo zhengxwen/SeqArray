@@ -5,7 +5,7 @@
     Merges multiple SeqArray GDS files.
 }
 \usage{
-seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option("ZIP_RA.default"),
+seqMerge(gds.fn, out.fn, storage.option=seqStorageOption("ZIP_RA.default"),
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     verbose=TRUE)
 }
@@ -13,11 +13,13 @@ seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option("ZIP_RA.default"),
     \item{gds.fn}{the file names of multiple GDS files}
     \item{out.fn}{the output file name}
     \item{storage.option}{specify the storage and compression options,
-        by default \code{\link{seqStorage.Option}}}
+        by default \code{\link{seqStorageOption}}}
     \item{info.var}{characters, the variable name(s) in the INFO field;
-        or \code{NULL} for all variables}
+        \code{NULL} for all variables, or \code{character()} excludes all
+        INFO variables}
     \item{fmt.var}{characters, the variable name(s) in the FORMAT field;
-        or \code{NULL} for all variables}
+        \code{NULL} for all variables, or \code{character()} excludes all
+        FORMAT variables}
     \item{samp.var}{characters, the variable name(s) in 'sample.annotation';
         or \code{NULL} for all variables}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
@@ -28,7 +30,7 @@ seqMerge(gds.fn, out.fn, storage.option=seqStorage.Option("ZIP_RA.default"),
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
-    None.
+    Return the file name of GDS format with an absolute path.
 }
 \details{
     The function merges multiple SeqArray GDS files. Users can specify the

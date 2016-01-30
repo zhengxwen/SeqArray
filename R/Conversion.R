@@ -384,7 +384,7 @@ seqVCF.SampID <- function(vcf.fn)
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
-    storage.option=seqStorage.Option("ZIP_RA.default"),
+    storage.option=seqStorageOption("ZIP_RA.default"),
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, verbose=TRUE)
@@ -1572,7 +1572,11 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             stop("IDs in PLINK BED are not unique!")
     }
     if (verbose)
-        cat("\tFAM file: \"", fam.fn, "\" (", nrow(famD), " samples)\n", sep="")
+    {
+        n <- nrow(famD)
+        cat("\tFAM file: '", fam.fn, "' (", .pretty(n), " sample",
+            .plural(n), ")\n", sep="")
+    }
 
     ##  read bim.fn  ##
 
@@ -1581,7 +1585,11 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     .close_conn(f)
     names(bimD) <- c("chr", "snp.id", "map", "pos", "allele1", "allele2")
     if (verbose)
-        cat("\tBIM file: \"", bim.fn, "\" (", nrow(bimD), " variants)\n", sep="")
+    {
+        n <- nrow(bimD)
+        cat("\tBIM file: '", bim.fn, "' (", .pretty(n), " variant",
+            .plural(n), ")\n", sep="")
+    }
 
 
     ##  create GDS file  ##
@@ -1704,7 +1712,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 
     # add filter
     n1 <- add.gdsn(n, "filter", storage="int32", compress=compress.annotation)
-    .repeat_gds(n1, 0L, nrow(bimD))
+    .repeat_gds(n1, 1L, nrow(bimD))
     readmode.gdsn(n1)
     put.attr.gdsn(n1, "R.class", "factor")
     put.attr.gdsn(n1, "R.levels", c("PASS"))

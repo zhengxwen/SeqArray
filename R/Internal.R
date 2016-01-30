@@ -400,7 +400,7 @@
 
 #######################################################################
 # Add a variable with corresponding compression mode
-# See: seqStorage.Option
+# See: seqStorageOption
 #
 .AddVar <- function(storage.option, node, varname, val=NULL,
     storage=storage.mode(val), valdim=NULL, closezip=FALSE, visible=TRUE)
