@@ -610,6 +610,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         if (length(variant.id) != objdesp.gdsn(n)$dim)
             stop("Invalid number of variants in 'allele'.")
 
+        sync.gds(gfile)
 
         ## add a folder for genotypes
         if (verbose) cat("    genotype, phase [")
@@ -693,6 +694,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         if (verbose) cat("          ")
         .DigestCode(index.gdsn(gfile, "phase/data"), digest, verbose)
 
+        sync.gds(gfile)
 
         ## add annotation folder
         varAnnot <- addfolder.gdsn(gfile, "annotation")
@@ -724,7 +726,6 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         put.attr.gdsn(n, "Description", dp$Description[match(levels(v), dp$ID)])
         .DigestCode(n, digest, verbose)
 
-
     } else {
 
         ## merge different samples
@@ -749,6 +750,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         readmode.gdsn(n)
         .DigestCode(n, digest, verbose)
 
+        sync.gds(gfile)
 
         ## add a folder for genotypes
         if (verbose) cat("    genotype [")
@@ -807,6 +809,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         n <- .AddVar(storage.option, varPhase, "extra", storage="bit1")
         readmode.gdsn(n)
 
+        sync.gds(gfile)
 
         ## add annotation folder
         varAnnot <- addfolder.gdsn(gfile, "annotation")
@@ -864,6 +867,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         .DigestCode(n, digest, verbose)
     }
 
+    sync.gds(gfile)
 
     ####  VCF INFO  ####
 
@@ -883,7 +887,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
             warning("No INFO variable(s): ", paste(s, collapse=", "),
                 immediate.=TRUE)
         }
-        varnm <- intersect(varnm, info.var)
+        varnm <- unique(intersect(info.var, varnm))
     }
     if (verbose)
     {
@@ -1087,7 +1091,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
             warning("No FORMAT variable(s): ", paste(s, collapse=", "),
                 immediate.=TRUE)
         }
-        varnm <- intersect(varnm, fmt.var)
+        varnm <- unique(intersect(fmt.var, varnm))
     }
     if (verbose)
     {
@@ -1296,7 +1300,9 @@ seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
     compression <- match.arg(compression)
     if (compression == "none") compression <- ""
 
+    stopifnot(is.null(mode) | is.character(mode))
     stopifnot(is.character(float.mode), length(float.mode) > 0L)
+
     if (!is.null(geno.compress))
         stopifnot(is.character(geno.compress), length(geno.compress)==1L)
     if (!is.null(info.compress))
@@ -1306,10 +1312,11 @@ seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
     if (!is.null(index.compress))
         stopifnot(is.character(index.compress), length(index.compress)==1L)
 
-    rv <- list(compression = compression, float.mode = float.mode,
-        geno.compress   = ifelse(is.null(geno.compress), compression,
+    rv <- list(compression = compression,
+        mode = mode, float.mode = float.mode,
+        geno.compress = ifelse(is.null(geno.compress), compression,
             geno.compress),
-        info.compress   = ifelse(is.null(info.compress), compression,
+        info.compress = ifelse(is.null(info.compress), compression,
             info.compress),
         format.compress = ifelse(is.null(format.compress),
             ifelse(compression=="", "", paste(compression, ":8M", sep="")),

@@ -480,6 +480,26 @@
             storage.param <- s[2L]
     }
 
+    nm <- names(storage.option$mode)
+    if (!is.null(nm))
+    {
+        i <- match(fullvarname, nm)
+        j <- match(varname2, nm)
+        if (is.na(i)) i <- j
+        if (!is.na(i))
+        {
+            stm <- storage.option$mode[i]
+            s <- unlist(strsplit(stm, ":", fixed=TRUE))
+            if (length(s) > 2L)
+                stop("Invalid 'storage.option$mode'.")
+            storage <- s[1L]
+            if (length(s) == 2L)
+                storage.param <- s[2L]
+            else
+                storage.param <- ""
+        }
+    }
+
     # add.gdsn arguments
     args <- list(node=node, name=varname, val=val, storage=storage,
         valdim=valdim, compress=compress.flag, closezip=closezip,

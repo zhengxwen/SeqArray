@@ -1,8 +1,8 @@
 \name{seqStorageOption}
 \alias{seqStorageOption}
-\title{Storage and Compression Options for Importing VCF File(s)}
+\title{Storage and Compression Options}
 \description{
-    Storage and Compression Options for Importing VCF File(s).
+    Storage and compression options for GDS import and merging.
 }
 \usage{
 seqStorageOption(compression=c("ZIP_RA.default", "ZIP_RA", "ZIP_RA.fast",
@@ -14,8 +14,8 @@ seqStorageOption(compression=c("ZIP_RA.default", "ZIP_RA", "ZIP_RA.fast",
     \item{compression}{the default compression level, see \link{add.gdsn} for
         the description of compression methods; "ZIP_RA.default" is equivalent
         to "ZIP_RA"}
-    \item{mode}{other specified storage compression for corresponding variable,
-        like `annotation/info/HM`="ZIP_MAX"}
+    \item{mode}{specify storage type for corresponding variable,
+        e.g., `annotation/info/HM`="int16"}
     \item{float.mode}{specify the storage mode for read numbers, e.g.,
         "float32", "float64", "packedreal16"; the additional parameters can
         follow by colon, like "packedreal16:scale=0.0001"}
@@ -28,7 +28,7 @@ seqStorageOption(compression=c("ZIP_RA.default", "ZIP_RA", "ZIP_RA.fast",
     \item{index.compress}{NULL for the default value, or the compression method
         for data index variables (e.g., "annotation/info/@HM")}
     \item{...}{other specified storage compression for corresponding variable,
-        like `annotation/info/HM`="ZIP_MAX"}
+        e.g., `annotation/info/HM`="ZIP_MAX"}
 }
 \value{
     Return a list with a class name "SeqGDSStorageClass".
@@ -36,7 +36,7 @@ seqStorageOption(compression=c("ZIP_RA.default", "ZIP_RA", "ZIP_RA.fast",
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF2GDS}}, \code{\link{seqMerge}}
 }
 
 \examples{
