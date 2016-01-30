@@ -384,7 +384,7 @@ seqVCF.SampID <- function(vcf.fn)
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
-    storage.option=seqStorageOption("ZIP_RA.default"),
+    storage.option="ZIP_RA.default",
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, verbose=TRUE)
@@ -394,6 +394,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.character(out.fn), length(out.fn)==1L)
 
     stopifnot(is.null(header) | inherits(header, "SeqVCFHeaderClass"))
+
+    if (is.character(storage.option))
+        storage.option <- seqStorageOption(storage.option)
     stopifnot(inherits(storage.option, "SeqGDSStorageClass"))
 
     stopifnot(is.character(genotype.var.name), length(genotype.var.name)==1L)

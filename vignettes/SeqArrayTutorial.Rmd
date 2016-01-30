@@ -1,7 +1,7 @@
 ---
-title: "SeqArray -- Big Data Management of Genome-Wide Sequence Variants"
+title: "SeqArray -- Big Data Management of Whole-Genome Sequence Variant Calls"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
-date: "Jun 23, 2015"
+date: "Jan 25, 2016"
 output:
   html_document:
     theme: spacelab
@@ -155,10 +155,10 @@ The columns `Number`, `Type` and `Description` are defined by the 1000 Genomes P
 seqVCF2GDS(vcf.fn, "tmp.gds")
 
 # maximize the compression level
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorageOption("ZIP_RA.max"))
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA.max", verbose=FALSE)
 
 # maximize the access speed with LZ4 compression algorithm
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option=seqStorageOption("LZ4_RA.max"))
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="LZ4_RA.max", verbose=FALSE)
 
 seqSummary("tmp.gds")
 ```

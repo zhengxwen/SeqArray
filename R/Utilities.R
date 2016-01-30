@@ -400,8 +400,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 #######################################################################
 # Merge multiple GDS files
 #
-seqMerge <- function(gds.fn, out.fn,
-    storage.option=seqStorageOption("ZIP_RA.default"),
+seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     verbose=TRUE)
 {
@@ -410,6 +409,10 @@ seqMerge <- function(gds.fn, out.fn,
     if (length(gds.fn) < 1L)
         stop("'gds.fn' should have at least one file.")
     stopifnot(is.character(out.fn), length(out.fn)==1L)
+
+    if (is.character(storage.option))
+        storage.option <- seqStorageOption(storage.option)
+    stopifnot(inherits(storage.option, "SeqGDSStorageClass"))
 
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))

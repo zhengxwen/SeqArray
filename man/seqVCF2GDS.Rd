@@ -6,8 +6,7 @@
 }
 \usage{
 seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
-    genotype.storage=c("bit2", "bit4", "bit8"),
-    storage.option=seqStorageOption("ZIP_RA.default"),
+    genotype.storage=c("bit2", "bit4", "bit8"), storage.option="ZIP_RA.default",
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, verbose=TRUE)
@@ -23,7 +22,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
         size and access speed, "bit2" is the most efficient when most of
         variants are biallelic.}
     \item{storage.option}{specify the storage and compression options,
-        by default \code{\link{seqStorageOption}}, see details}
+        by default \code{\link{seqStorageOption}("ZIP_RA.default")}}
     \item{info.import}{characters, the variable name(s) in the INFO field
         for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
@@ -62,16 +61,18 @@ merge all VCF files together if they contain the same samples. It is useful
 to merge genomic variants if VCF data are divided by chromosomes.
 
     The real numbers in the VCF file(s) are stored in 32-bit floating-point
-format by default. Users can set \code{seqStorageOption(float.mode="float64")}
+format by default. Users can set
+\code{storage.option=seqStorageOption(float.mode="float64")}
 to switch to 64-bit floating point format. Or packed real numbers can be
 adopted by setting
-\code{seqStorageOption(float.mode="packedreal16:scale=0.0001")}.
+\code{storage.option=seqStorageOption(float.mode="packedreal16:scale=0.0001")}.
 
     By default, the compression method is "ZIP_RA" (zlib algorithm with default
 compression level + multiple independent data blocks). Users can maximize the
-compression ratio by \code{seqStorageOption("ZIP_RA.max")}.
-    LZ4 (an extremely fast compression algorithm,
-\url{http://cyan4973.github.io/lz4/}) is an option via
+compression ratio by \code{storage.option="ZIP_RA.max"} or
+\code{storage.option=seqStorageOption("ZIP_RA.max")}.
+    LZ4 (\url{http://cyan4973.github.io/lz4/}) is an option via
+\code{storage.option="LZ4_RA"} or
 \code{storage.option=seqStorageOption("LZ4_RA")}.
 }
 \references{
