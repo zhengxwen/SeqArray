@@ -1450,7 +1450,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
 
     # add filter
     n1 <- add.gdsn(n, "filter", storage="int32", compress=compress.annotation)
-    .repeat_gds(n1, 0L, nSNP)
+    .repeat_gds(n1, 1L, nSNP)
     readmode.gdsn(n1)
     put.attr.gdsn(n1, "R.class", "factor")
     put.attr.gdsn(n1, "R.levels", c("PASS"))
