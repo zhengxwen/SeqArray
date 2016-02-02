@@ -511,6 +511,16 @@
 
 
 #######################################################################
+# GDS node variable type
+#
+.DetectVarType <- function(srcfiles, varname)
+{
+    
+}
+
+
+
+#######################################################################
 # Merge attributes
 #
 .MergeAttr <- function(val)
@@ -534,11 +544,11 @@
     ans
 }
 
-.MergeNodeAttr <- function(target.node, srcfile, varname)
+.MergeNodeAttr <- function(target.node, srcfiles, varname)
 {
-    v <- vector("list", length(srcfile))
-    for (i in seq_along(srcfile))
-        v[[i]] <- get.attr.gdsn(index.gdsn(srcfile[[i]], varname))
+    v <- vector("list", length(srcfiles))
+    for (i in seq_along(srcfiles))
+        v[[i]] <- get.attr.gdsn(index.gdsn(srcfiles[[i]], varname))
     v <- .MergeAttr(v)
     if (!is.null(v))
     {

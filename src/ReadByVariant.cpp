@@ -613,6 +613,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			nProtected ++;
 		}
 
+		map<SEXP, SEXP> R_fcall_map;
+		R_fcall_map[R_call_param] = R_fcall;
+
+
 		// ===========================================================
 		// for-loop calling
 
@@ -628,13 +632,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 					INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1;
 					break;
 			}
+
 			if (NodeList.size() <= 1)
 			{
-				// ToDo: optimize this
-				SEXP tmp = NodeList[0].NeedRData(nProtected);
-				if (tmp != R_call_param)
+				R_call_param = NodeList[0].NeedRData(nProtected);
+				map<SEXP, SEXP>::iterator it = R_fcall_map.find(R_call_param);
+				if (it == R_fcall_map.end())
 				{
-					R_call_param = tmp;
 					if (VarIdx > 1)
 					{
 						PROTECT(R_fcall = LCONS(FUN, LCONS(R_Index,
@@ -644,8 +648,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 							LCONS(R_call_param, LCONS(R_DotsSymbol, R_NilValue))));
 					}
 					nProtected ++;
-				}
+					R_fcall_map[R_call_param] = R_fcall;
+				} else
+					R_fcall = it->second;
+
 				NodeList[0].ReadData(R_call_param);
+
 			} else {
 				int idx = 0;
 				for (it=NodeList.begin(); it != NodeList.end(); it ++)
