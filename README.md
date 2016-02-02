@@ -1,4 +1,4 @@
-SeqArray: Big Data Management of Genome-Wide Sequence Variants
+SeqArray: Big Data Management of Whole-genome Sequence Variant Calls
 ===
 
 ![GPLv3](http://www.gnu.org/graphics/gplv3-88x31.png)

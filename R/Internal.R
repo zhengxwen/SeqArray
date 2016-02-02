@@ -424,7 +424,7 @@
     } else {
         if (path == "genotype")
             varname2 <- "genotype"
-        else if (fmt_flag)
+        else if (fmt_flag & !idx_flag)
             varname2 <- path
     }
 

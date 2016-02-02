@@ -689,7 +689,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
 
         # sync file
         sync.gds(gfile)
-        if (verbose) cat("]")
+        if (verbose) cat("]\n          ")
         .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
         if (verbose) cat("          ")
         .DigestCode(index.gdsn(gfile, "phase/data"), digest, verbose)
