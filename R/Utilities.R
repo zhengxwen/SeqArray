@@ -3,7 +3,7 @@
 # Package Name: SeqArray
 #
 # Description:
-#     Big Data Management of Sequencing-based Genetic Variants
+#     Big Data Management of Whole-Genome Sequence Variant Calls
 #
 
 
@@ -1072,6 +1072,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         }
     }
 
+    sync.gds(gfile)
 
     ####  VCF FORMAT  ####
 
@@ -1180,6 +1181,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
         if (verbose) cat("]")
         .DigestCode(n4, digest, verbose)
         .DigestCode(n5, digest, FALSE)
+
+        sync.gds(gfile)
     }
 
 

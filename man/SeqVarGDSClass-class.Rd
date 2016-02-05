@@ -120,7 +120,7 @@ gds
 head(seqGetData(gds, "sample.id"))
 
 ## variants
-granges(gds)
+# granges(gds)
 
 ## alleles as comma-separated character strings
 head(seqGetData(gds, "allele"))

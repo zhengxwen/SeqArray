@@ -3,7 +3,7 @@
 # Package Name: SeqArray
 #
 # Description:
-#     Big Data Management of Genome-Wide Sequence Variants
+#     Big Data Management of Whole-Genome Sequence Variant Calls
 #
 
 

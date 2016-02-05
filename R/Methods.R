@@ -2,7 +2,7 @@
 #
 # Package Name: SeqArray
 #
-# The interface to the class "SeqVarGDSClass"
+# Description: Methods
 #
 
 
@@ -303,45 +303,6 @@ seqApply <- function(gdsfile, var.name, FUN,
 
 
 #######################################################################
-# Apply functions via a sliding window over variants
-#
-.seqSlidingWindow <- function(gdsfile, var.name, win.size, shift=1, FUN,
-    as.is = c("list", "integer", "double", "character", "none"),
-    var.index = c("none", "relative", "absolute"), ...)
-{
-    # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(var.name), length(var.name) > 0L)
-
-    stopifnot(is.numeric(win.size), length(win.size)==1L)
-    win.size <- as.integer(win.size)
-    stopifnot(is.finite(win.size))
-    if (win.size < 1)
-        stop("`win.size' should be greater than 0.")
-
-    stopifnot(is.numeric(shift), length(shift)==1L)
-    shift <- as.integer(shift)
-    stopifnot(is.finite(shift))
-    if (shift < 1)
-        stop("`shift' should be greater than 0.")
-
-    as.is <- match.arg(as.is)
-    var.index <- match.arg(var.index)
-    var.index <- match(var.index, c("none", "relative", "absolute"))
-
-    FUN <- match.fun(FUN)
-
-    # C call
-    rv <- .Call(SEQ_SlidingWindow, gdsfile, var.name, win.size, shift,
-        FUN, as.is, var.index, new.env())
-
-    if (as.is == "none") return(invisible())
-    rv
-}
-
-
-
-#######################################################################
 # Data Analysis
 #######################################################################
 
@@ -488,51 +449,4 @@ seqAlleleCount <- function(gdsfile,
             seqApply(f, c("genotype", "allele"), margin="by.variant",
                 as.is="list", FUN = .cfunction("FC_AlleleCount"))
         })
-}
-
-
-
-#######################################################################
-# IBD
-#
-ssIBD <- function(gdsfile, method=c("OneLocus", "TwoLoci"), interval=1L,
-    parallel=getOption("seqarray.parallel", FALSE))
-{
-    # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    method <- match.arg(method)
-
-    if (method == "OneLocus")
-    {
-        v <- seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(gdsfile)
-            {
-                n <- .seldim(gdsfile)[1L]
-                size <- n * (n + 1L) / 2L
-                # m[,1] -- numerator, m[,2] -- denominator
-                m <- matrix(0.0, nrow=size, ncol=2L)
-                seqApply(gdsfile, "genotype", margin = "by.variant",
-                    as.is = "none", FUN = .cfunction3("FC_IBD_OneLocus"),
-                    y = m, z = raw(size), .useraw=TRUE)
-                m
-            }, .combine="+")
-    } else if (method == "TwoLoci")
-    {
-        v <- seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(gdsfile, interval)
-            {
-                n <- .seldim(gdsfile)[1L]
-                size <- n * (n + 1L) / 2L
-                # m[,1] -- numerator, m[,2] -- denominator
-                m <- matrix(0.0, nrow=size, ncol=2L)
-                .cfunction2("FC_IBD_TwoLoci_Init")(interval, n)
-                # apply
-                seqApply(gdsfile, "genotype", margin = "by.variant",
-                    as.is = "none", FUN = .cfunction3("FC_IBD_TwoLoci"),
-                    y = m, z = raw(size), .useraw=TRUE)
-                m
-            }, .combine="+", interval=interval)
-    }
-
-    .cfunction2("FC_IBD_Div")(v, .seldim(gdsfile)[1L])
 }

@@ -8,7 +8,7 @@ setMethod("granges",
             variant.id <- seqGetData(x, "variant.id")
             chromosome <- seqGetData(x, "chromosome")
             position <- seqGetData(x, "position")
-            reflen <- elementLengths(ref(x))
+            reflen <- elementNROWS(ref(x))
             reflen[reflen < 1] <- 1
             gr <- GRanges(seqnames=chromosome,
                           ranges=IRanges(start=position,
@@ -220,7 +220,7 @@ setMethod("info",
                           vl <- .variableLengthToList(v)
                           ## each element should have length number of alt alleles, even for NAs
                           if (des$Number[i] == "A") {
-                              nAlt <- elementLengths(alt(x))
+                              nAlt <- elementNROWS(alt(x))
                               addNA <- which(nAlt > 1 & is.na(vl))
                               for (ind in addNA) {
                                   vl[[ind]] <- rep(NA, nAlt[ind])

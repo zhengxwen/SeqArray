@@ -2,6 +2,8 @@
 #
 # Package Name: SeqArray
 #
+# Description: Get the summary information
+#
 
 
 #######################################################################
