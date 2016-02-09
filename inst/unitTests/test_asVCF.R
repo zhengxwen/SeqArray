@@ -80,11 +80,12 @@ library(VariantAnnotation)
   seqClose(gdsobj)
 }
 
-test_asVCF <- function() {
-  vcffile <- seqExampleFileName("vcf")
-  gdsfile <- seqExampleFileName("gds")
-  .test_asVCF(vcffile, gdsfile)
-}
+## takes too long - use for development only
+## test_asVCF <- function() {
+##   vcffile <- seqExampleFileName("vcf")
+##   gdsfile <- seqExampleFileName("gds")
+##   .test_asVCF(vcffile, gdsfile)
+## }
 
 test_asVCF_filterInHead <- function() {
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
