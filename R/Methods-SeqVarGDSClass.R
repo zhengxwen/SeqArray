@@ -8,7 +8,7 @@ setMethod("granges",
             variant.id <- seqGetData(x, "variant.id")
             chromosome <- seqGetData(x, "chromosome")
             position <- seqGetData(x, "position")
-            reflen <- elementNROWS(ref(x))
+            reflen <- lengths(ref(x))
             reflen[reflen < 1] <- 1
             gr <- GRanges(seqnames=chromosome,
                           ranges=IRanges(start=position,
@@ -152,13 +152,6 @@ setMethod("header",
               hdr <- DataFrameList(META=meta, INFO=infoHd, FORMAT=genoHd)
 
               ## fixed
-              ## n <- index.gdsn(x, "description/vcf.alt", silent=TRUE)
-              ## if (!is.null(n)) {
-              ##     des <- read.gdsn(n)
-              ##     hdr[["ALT"]] <- DataFrame(Description=des[,2], row.names=des[,1])
-              ## }
-              ## des <- get.attr.gdsn(index.gdsn(x, "annotation/filter"))
-              ## des <- DataFrame(Description=des$Description, row.names=des$R.levels)
               des <- seqsum$allele
               if (nrow(des) > 0) {
                   hdr[["ALT"]] <- DataFrame(Description=des[,2], row.names=des[,1])
@@ -220,7 +213,7 @@ setMethod("info",
                           vl <- .variableLengthToList(v)
                           ## each element should have length number of alt alleles, even for NAs
                           if (des$Number[i] == "A") {
-                              nAlt <- elementNROWS(alt(x))
+                              nAlt <- lengths(alt(x))
                               addNA <- which(nAlt > 1 & is.na(vl))
                               for (ind in addNA) {
                                   vl[[ind]] <- rep(NA, nAlt[ind])
