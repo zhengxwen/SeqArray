@@ -188,3 +188,63 @@ void vec_int32_set(int32_t *p, size_t n, int32_t val)
 {
 	for (; n > 0; n--) *p++ = val;
 }
+
+
+size_t vec_int32_count(int32_t *p, size_t n, int32_t val)
+{
+	size_t ans = 0;
+
+#ifdef COREARRAY_SIMD_SSE2
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
+	for (; (n > 0) && (h > 0); n--, h--)
+		if (*p++ == val) ans++;
+
+	// body, SSE2
+	const __m128i mask = _mm_set1_epi32(val);
+	__m128i sum = _mm_set1_epi32(0);
+
+#   ifdef COREARRAY_SIMD_AVX2
+
+	// header 2, 32-byte aligned
+	if ((n >= 4) && ((size_t)p & 0x10))
+	{
+		__m128i c = _mm_cmpeq_epi32(_mm_load_si128((__m128i const*)p), mask);
+		sum = _mm_sub_epi32(sum, c);
+		n -= 4; p += 4;
+	}
+
+	const __m256i mask2 = _mm256_set1_epi32(val);
+	__m256i sum2 = _mm256_castsi128_si256(sum);
+
+	for (; n >= 8; n-=8, p+=8)
+	{
+		__m256i c = _mm256_cmpeq_epi32(_mm256_load_si256((__m256i const*)p), mask2);
+		sum2 = _mm256_sub_epi32(sum2, c);
+	}
+
+	sum = _mm_add_epi32(
+		_mm256_extracti128_si256(sum2, 0), _mm256_extracti128_si256(sum2, 1));
+
+#   else
+
+	for (; n >= 4; n-=4, p+=4)
+	{
+		__m128i c = _mm_cmpeq_epi32(_mm_load_si128((__m128i const*)p), mask);
+		sum = _mm_sub_epi32(sum, c);
+	}
+
+#   endif
+
+	int32_t array[4] __attribute__((aligned(16)));
+	*((__m128i*)array) = sum;
+	ans += array[0] + array[1] + array[2] + array[3];
+
+#endif
+
+	// tail
+	for (; n > 0; n--) if (*p++ == val) ans++;
+
+	return ans;
+}

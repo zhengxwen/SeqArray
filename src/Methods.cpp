@@ -60,14 +60,9 @@ COREARRAY_DLL_EXPORT SEXP FC_NumAllele(SEXP AlleleStr)
 /// Calculate the missing rate per variant
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 {
-	int *p = INTEGER(Geno);
-	size_t N = XLENGTH(Geno), m = 0;
-	for (size_t n=N; n > 0; n--)
-	{
-		if (*p++ == NA_INTEGER)
-			m ++;
-	}
-	return ScalarReal((N > 0) ? (double(m) / N) : R_NaN);
+	size_t n = XLENGTH(Geno);
+	size_t m = vec_int32_count(INTEGER(Geno), n, NA_INTEGER);
+	return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
 }
 
 /// Calculate the missing rate per sample

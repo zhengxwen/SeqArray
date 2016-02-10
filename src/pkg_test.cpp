@@ -61,4 +61,13 @@ SEXP test_byte_count(SEXP val, SEXP start)
 	return ScalarInteger(vec_byte_count(p + st, n - st));
 }
 
+SEXP test_int32_count(SEXP val, SEXP start, SEXP find)
+{
+	int st = Rf_asInteger(start) - 1;
+	int fd = Rf_asInteger(find);
+	int *p = INTEGER(val);
+	int n = length(val);
+	return ScalarInteger(vec_int32_count(p + st, n - st, fd));
+}
+
 }

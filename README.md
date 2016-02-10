@@ -85,7 +85,7 @@ seqClose(f)
 
 ```R
 ## Object of class "SeqVarGDSClass"
-## File: SeqArray/extdata/CEU_Exon.gds (396.3 KB)
+## File: SeqArray/extdata/CEU_Exon.gds (387.3K)
 ## +    [  ] *
 ## |--+ description   [  ] *
 ## |--+ sample.id   { VStr8 90 ZIP_RA(30.83%), 222B }
