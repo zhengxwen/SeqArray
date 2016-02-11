@@ -70,3 +70,22 @@ test_int_count <- function()
 
 	invisible()
 }
+
+
+test_int_count2 <- function()
+{
+	set.seed(5000)
+	for (st in sample.int(1000L, 100L))
+	{
+		n <- 50000L + sample.int(64L, 1L) - 1L
+		v <- sample.int(256L, n, replace=TRUE)
+		fd1 <- sample(v, 1L)
+		fd2 <- sample(v, 1L)
+
+		n1 <- SeqArray:::.cfunction4("test_int32_count2")(v, st, fd1, fd2)
+		n2 <- c(sum(v[st:length(v)] == fd1), sum(v[st:length(v)] == fd2))
+		checkEquals(n1, n2, paste0("int_count2 (start=", st, ")"))
+	}
+
+	invisible()
+}

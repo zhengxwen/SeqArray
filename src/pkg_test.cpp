@@ -37,6 +37,7 @@ SEXP test_array_popcnt32(SEXP val)
 	return rv_ans;
 }
 
+
 SEXP test_array_popcnt64(SEXP v1, SEXP v2)
 {
 	int n = length(v1);
@@ -53,6 +54,7 @@ SEXP test_array_popcnt64(SEXP v1, SEXP v2)
 	return rv_ans;
 }
 
+
 SEXP test_byte_count(SEXP val, SEXP start)
 {
 	int st = Rf_asInteger(start) - 1;
@@ -61,6 +63,7 @@ SEXP test_byte_count(SEXP val, SEXP start)
 	return ScalarInteger(vec_byte_count(p + st, n - st));
 }
 
+
 SEXP test_int32_count(SEXP val, SEXP start, SEXP find)
 {
 	int st = Rf_asInteger(start) - 1;
@@ -68,6 +71,24 @@ SEXP test_int32_count(SEXP val, SEXP start, SEXP find)
 	int *p = INTEGER(val);
 	int n = length(val);
 	return ScalarInteger(vec_int32_count(p + st, n - st, fd));
+}
+
+
+SEXP test_int32_count2(SEXP val, SEXP start, SEXP find1, SEXP find2)
+{
+	int st = Rf_asInteger(start) - 1;
+	int fd1 = Rf_asInteger(find1);
+	int fd2 = Rf_asInteger(find2);
+	int *p = INTEGER(val);
+	int n = length(val);
+
+	size_t n1, n2;
+	vec_int32_count2(p + st, n - st, fd1, fd2, &n1, &n2);
+	SEXP rv_ans = NEW_INTEGER(2);
+	INTEGER(rv_ans)[0] = n1;
+	INTEGER(rv_ans)[1] = n2;
+
+	return rv_ans;
 }
 
 }

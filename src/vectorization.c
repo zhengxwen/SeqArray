@@ -248,3 +248,91 @@ size_t vec_int32_count(int32_t *p, size_t n, int32_t val)
 
 	return ans;
 }
+
+
+void vec_int32_count2(int32_t *p, size_t n, int32_t val1, int32_t val2,
+	size_t *out_n1, size_t *out_n2)
+{
+	size_t n1=0, n2=0;
+
+#ifdef COREARRAY_SIMD_SSE2
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
+	for (; (n > 0) && (h > 0); n--, h--)
+	{
+		int32_t v = *p++;
+		if (v == val1) n1++;
+		if (v == val2) n2++;
+	}
+
+	// body, SSE2
+	const __m128i mask1 = _mm_set1_epi32(val1);
+	const __m128i mask2 = _mm_set1_epi32(val2);
+	__m128i sum1, sum2;
+	sum1 = sum2 = _mm_set1_epi32(0);
+
+#   ifdef COREARRAY_SIMD_AVX2
+
+	// header 2, 32-byte aligned
+	if ((n >= 4) && ((size_t)p & 0x10))
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c1 = _mm_cmpeq_epi32(v, mask1);
+		sum1 = _mm_sub_epi32(sum1, c1);
+		__m128i c2 = _mm_cmpeq_epi32(v, mask2);
+		sum2 = _mm_sub_epi32(sum2, c2);
+		n -= 4; p += 4;
+	}
+
+	const __m256i mask_1 = _mm256_set1_epi32(val1);
+	const __m256i mask_2 = _mm256_set1_epi32(val2);
+	__m256i sum_1 = _mm256_castsi128_si256(sum1);
+	__m256i sum_2 = _mm256_castsi128_si256(sum2);
+
+	for (; n >= 8; n-=8, p+=8)
+	{
+		__m256i v = _mm256_load_si256((__m256i const*)p);
+		__m256i c1 = _mm256_cmpeq_epi32(v, mask_1);
+		sum_1 = _mm256_sub_epi32(sum_1, c1);
+		__m256i c2 = _mm256_cmpeq_epi32(v, mask_2);
+		sum_2 = _mm256_sub_epi32(sum_2, c2);
+	}
+
+	sum1 = _mm_add_epi32(
+		_mm256_extracti128_si256(sum_1, 0), _mm256_extracti128_si256(sum_1, 1));
+	sum2 = _mm_add_epi32(
+		_mm256_extracti128_si256(sum_2, 0), _mm256_extracti128_si256(sum_2, 1));
+
+#   else
+
+	for (; n >= 4; n-=4, p+=4)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c1 = _mm_cmpeq_epi32(v, mask1);
+		sum1 = _mm_sub_epi32(sum1, c1);
+		__m128i c2 = _mm_cmpeq_epi32(v, mask2);
+		sum2 = _mm_sub_epi32(sum2, c2);
+	}
+
+#   endif
+
+	int32_t a[4] __attribute__((aligned(16)));
+	*((__m128i*)a) = sum1;
+	n1 += a[0] + a[1] + a[2] + a[3];
+	*((__m128i*)a) = sum2;
+	n2 += a[0] + a[1] + a[2] + a[3];
+
+#endif
+
+	// tail
+	for (; n > 0; n--)
+	{
+		int32_t v = *p++;
+		if (v == val1) n1++;
+		if (v == val2) n2++;
+	}
+
+	if (out_n1) *out_n1 = n1;
+	if (out_n2) *out_n2 = n2;
+}

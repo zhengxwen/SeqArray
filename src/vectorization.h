@@ -100,8 +100,9 @@ COREARRAY_DLL_DEFAULT void vec_int32_set(int32_t *p, size_t n, int32_t val);
 /// count how many val in p, assuming p is 4-byte aligned
 COREARRAY_DLL_DEFAULT size_t vec_int32_count(int32_t *p, size_t n, int32_t val);
 
-/// count how many val in p, assuming p is 4-byte aligned
-COREARRAY_DLL_DEFAULT size_t vec_int32_count2(int32_t *p, size_t n, int32_t val);
+/// count how many val1 and val2 in p, assuming p is 4-byte aligned
+COREARRAY_DLL_DEFAULT void vec_int32_count2(int32_t *p, size_t n,
+	int32_t val1, int32_t val2, size_t *out_n1, size_t *out_n2);
 
 
 #ifdef __cplusplus
