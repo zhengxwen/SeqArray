@@ -625,7 +625,8 @@
 
 
 #######################################################################
-
+# summarize
+#
 seqSummary <- function(gdsfile, varname=NULL,
     check=c("default", "none", "full"), verbose=TRUE)
 {
@@ -747,4 +748,25 @@ seqSummary <- function(gdsfile, varname=NULL,
             .Call(SEQ_Summary, gdsfile, varname)  # others
         )
     }
+}
+
+
+#######################################################################
+# summarize
+#
+seqDigest <- function(gdsfile, varname, algo=c("md5"))
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.character(varname), length(varname)==1L)
+    algo <- match.arg(algo)
+
+    if (requireNamespace("digest", quietly=TRUE))
+    {
+        .cfunction("FC_DigestInit")(algo)
+        seqApply(gdsfile, varname, FUN=.cfunction("FC_DigestScan"),
+            margin="by.variant", as.is="none")
+        .cfunction("FC_DigestDone")(algo)
+    } else
+        NA_character_
 }

@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.11.0-1.11.10
+CHANGES IN VERSION 1.11.0-1.11.11
 -------------------------
 
     o rewrite `seqSummary()`
@@ -11,6 +11,8 @@ CHANGES IN VERSION 1.11.0-1.11.10
     o bug fixes in `seqMerge()` if chromosome and positions are not unique
 
     o `seqStorage.Option()` is renamed to `seqStorageOption()`
+
+    o new function `seqDigest()`
 
 
 CHANGES IN VERSION 1.10.0-1.10.6

@@ -7,7 +7,8 @@ Depends: R (>= 2.15.0), gdsfmt (>= 1.7.9)
 Imports: methods, S4Vectors, IRanges, GenomicRanges,
         SummarizedExperiment, Biostrings, VariantAnnotation
 LinkingTo: gdsfmt
-Suggests: parallel, crayon, RUnit, BiocGenerics, knitr, Rcpp, SNPRelate
+Suggests: parallel, digest, crayon, RUnit, BiocGenerics, knitr, Rcpp,
+        SNPRelate
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu"),
         person("Stephanie", "Gogarten", role="aut",
