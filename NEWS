@@ -17,6 +17,8 @@ CHANGES IN VERSION 1.11.0-1.11.12
     o `seqVCF.Header()` is renamed to `seqVCF_Header()`,
       `seqVCF.SampID()` is renamed to `seqVCF_SampID()`
 
+    o seqSetFilter(): 'samp.sel' is deprecated, please use 'sample.sel' instead
+
 
 CHANGES IN VERSION 1.10.0-1.10.6
 -------------------------

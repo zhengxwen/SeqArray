@@ -414,7 +414,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 			if (!intersect_flag)
 			{
 				if (XLENGTH(samp_sel) != Count)
-					throw ErrSeqArray("Invalid length of 'samp.sel'.");
+					throw ErrSeqArray("Invalid length of 'sample.sel'.");
 				// set selection
 				if (Rf_isLogical(samp_sel))
 				{
@@ -430,7 +430,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 				if ((size_t)XLENGTH(samp_sel) != GetNumOfTRUE(pArray, flag_array.size()))
 				{
 					throw ErrSeqArray(
-						"Invalid length of 'samp.sel' "
+						"Invalid length of 'sample.sel' "
 						"(should be equal to the number of selected samples).");
 				}
 				// set selection
@@ -465,7 +465,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 				{
 					int I = *pI ++;
 					if ((I != NA_INTEGER) && ((I < 1) || (I > Count)))
-						throw ErrSeqArray("Out of range 'samp.sel'.");
+						throw ErrSeqArray("Out of range 'sample.sel'.");
 				}
 				// set values
 				memset((void*)pArray, 0, Count);
@@ -484,7 +484,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 				{
 					int I = *pI ++;
 					if ((I != NA_INTEGER) && ((I < 1) || (I > Cnt)))
-						throw ErrSeqArray("Out of range 'samp.sel'.");
+						throw ErrSeqArray("Out of range 'sample.sel'.");
 				}
 				// get the current index
 				vector<int> Idx;
@@ -506,7 +506,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 		{
 			flag_array.clear();
 		} else
-			throw ErrSeqArray("Invalid type of 'samp.sel'.");
+			throw ErrSeqArray("Invalid type of 'sample.sel'.");
 
 		int n = GetNumOfTRUE(&flag_array[0], flag_array.size());
 		if (Rf_isNull(samp_sel)) n = Count;

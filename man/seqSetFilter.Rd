@@ -8,7 +8,7 @@
 }
 \usage{
 \S4method{seqSetFilter}{SeqVarGDSClass}(object,
-    sample.id=NULL, variant.id=NULL, samp.sel=NULL, variant.sel=NULL,
+    sample.id=NULL, variant.id=NULL, samp.sel=NULL, sample.sel=NULL, variant.sel=NULL,
     action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
     verbose=TRUE)
 
@@ -18,7 +18,8 @@ seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
     \item{sample.id}{IDs of selected samples}
     \item{variant.id}{IDs of selected variants}
-    \item{samp.sel}{a logical/raw/index vector indicating the selected
+    \item{samp.sel}{it is deprecated, please use \code{sample.sel} instead}
+    \item{sample.sel}{a logical/raw/index vector indicating the selected
         samples}
     \item{variant.sel}{a logical/raw/index vector indicating the selected
         variants}
@@ -87,7 +88,7 @@ seqGetData(f, "genotype")
 
 ## OR
 # set sample and variant filters
-seqSetFilter(f, samp.sel=c(2,4,6,8))
+seqSetFilter(f, sample.sel=c(2,4,6,8))
 set.seed(100)
 seqSetFilter(f, variant.sel=sample.int(length(variant.id), 5))
 

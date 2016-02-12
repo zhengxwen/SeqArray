@@ -1496,7 +1496,7 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
 
                 # set filter
                 seqSetFilter(.file,
-                    samp.sel = memDecompress(.sel_sample, type="gzip"),
+                    sample.sel = memDecompress(.sel_sample, type="gzip"),
                     variant.sel = memDecompress(.sel_variant, type="gzip"))
                 .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
                     .proc_cnt, .selection.flag)

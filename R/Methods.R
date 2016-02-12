@@ -86,7 +86,7 @@ setMethod("seqClose", signature(object="SeqVarGDSClass"),
 # Set a working space with selected samples and variants
 #
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
-    function(object, sample.id=NULL, variant.id=NULL, samp.sel=NULL,
+    function(object, sample.id=NULL, variant.id=NULL, samp.sel=NULL, sample.sel=NULL,
         variant.sel=NULL, action=c("set", "intersect", "push", "push+set",
         "push+intersect", "pop"), verbose=TRUE)
     {
@@ -94,16 +94,24 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
         action <- match.arg(action)
         stopifnot(is.logical(verbose))
 
+        if (!is.null(samp.sel))
+        {
+            warning(
+                "'samp.sel' in seqSetFilter() is deprecated, please use 'sample.sel' instead.",
+                call.=FALSE, immediate.=TRUE)
+            sample.sel <- samp.sel
+        }
+
         setflag <- FALSE
         switch(action,
             "set" = NULL,
             "intersect" = { setflag <- TRUE },
             "push" = {
                 if (!all(is.null(sample.id), is.null(variant.id),
-                        is.null(samp.sel), is.null(variant.sel)))
+                        is.null(sample.sel), is.null(variant.sel)))
                 {
                     stop("The arguments 'sample.id', 'variant.id', ",
-                        "'samp.sel' and 'variant.sel' should be NULL.")
+                        "'sample.sel' and 'variant.sel' should be NULL.")
                 }
                 .Call(SEQ_FilterPushLast, object)
             },
@@ -116,10 +124,10 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
             },
             "pop" = {
                 if (!all(is.null(sample.id), is.null(variant.id),
-                        is.null(samp.sel), is.null(variant.sel)))
+                        is.null(sample.sel), is.null(variant.sel)))
                 {
                     stop("The arguments 'sample.id', 'variant.id', ",
-                        "'samp.sel' and 'variant.sel' should be NULL.")
+                        "'sample.sel' and 'variant.sel' should be NULL.")
                 }
                 .Call(SEQ_FilterPop, object)
                 return(invisible())
@@ -131,11 +139,11 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
             stopifnot(is.vector(sample.id))
             stopifnot(is.numeric(sample.id) | is.character(sample.id))
             .Call(SEQ_SetSpaceSample, object, sample.id, setflag, verbose)
-        } else if (!is.null(samp.sel))
+        } else if (!is.null(sample.sel))
         {
-            stopifnot(is.vector(samp.sel))
-            stopifnot(is.logical(samp.sel) | is.raw(samp.sel) | is.numeric(samp.sel))
-            .Call(SEQ_SetSpaceSample2, object, samp.sel, setflag, verbose)
+            stopifnot(is.vector(sample.sel))
+            stopifnot(is.logical(sample.sel) | is.raw(sample.sel) | is.numeric(sample.sel))
+            .Call(SEQ_SetSpaceSample2, object, sample.sel, setflag, verbose)
         }
 
         if (!is.null(variant.id))
@@ -149,7 +157,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
             stopifnot(is.logical(variant.sel) | is.raw(variant.sel) | is.numeric(variant.sel))
             .Call(SEQ_SetSpaceVariant2, object, variant.sel, setflag, verbose)
         } else {
-            if (is.null(sample.id) & is.null(samp.sel))
+            if (is.null(sample.id) & is.null(sample.sel))
             {
                 .Call(SEQ_SetSpaceSample, object, NULL, setflag, verbose)
                 .Call(SEQ_SetSpaceVariant, object, NULL, setflag, verbose)
