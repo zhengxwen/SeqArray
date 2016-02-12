@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.11.0-1.11.11
+CHANGES IN VERSION 1.11.0-1.11.12
 -------------------------
 
     o rewrite `seqSummary()`
@@ -13,6 +13,9 @@ CHANGES IN VERSION 1.11.0-1.11.11
     o `seqStorage.Option()` is renamed to `seqStorageOption()`
 
     o new function `seqDigest()`
+
+    o `seqVCF.Header()` is renamed to `seqVCF_Header()`,
+      `seqVCF.SampID()` is renamed to `seqVCF_SampID()`
 
 
 CHANGES IN VERSION 1.10.0-1.10.6

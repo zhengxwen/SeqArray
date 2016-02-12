@@ -1,11 +1,11 @@
-\name{seqVCF.Header}
-\alias{seqVCF.Header}
+\name{seqVCF_Header}
+\alias{seqVCF_Header}
 \title{Parse the Header of a VCF File}
 \description{
     Parses the header of a VCF file.
 }
 \usage{
-seqVCF.Header(vcf.fn, getnum=FALSE)
+seqVCF_Header(vcf.fn, getnum=FALSE)
 }
 \arguments{
     \item{vcf.fn}{the file name of VCF}
@@ -44,7 +44,7 @@ Description -- a variable description.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF.SampID}}, \code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF_SampID}}, \code{\link{seqVCF2GDS}}
 }
 
 \examples{
@@ -53,7 +53,7 @@ Description -- a variable description.
 # or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # get sample id
-seqVCF.Header(vcf.fn, getnum=TRUE)
+seqVCF_Header(vcf.fn, getnum=TRUE)
 }
 
 \keyword{gds}

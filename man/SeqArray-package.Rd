@@ -77,10 +77,10 @@ vcf.fn
 # or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # parse the header
-seqVCF.Header(vcf.fn)
+seqVCF_Header(vcf.fn)
 
 # get sample id
-seqVCF.SampID(vcf.fn)
+seqVCF_SampID(vcf.fn)
 
 # convert
 seqVCF2GDS(vcf.fn, "tmp.gds")

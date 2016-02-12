@@ -1,11 +1,11 @@
-\name{seqVCF.SampID}
-\alias{seqVCF.SampID}
+\name{seqVCF_SampID}
+\alias{seqVCF_SampID}
 \title{Get the Sample IDs}
 \description{
     Returns the sample IDs of a VCF file.
 }
 \usage{
-seqVCF.SampID(vcf.fn)
+seqVCF_SampID(vcf.fn)
 }
 \arguments{
     \item{vcf.fn}{the file name of VCF}
@@ -21,7 +21,7 @@ seqVCF.SampID(vcf.fn)
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF.Header}}, \code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF_Header}}, \code{\link{seqVCF2GDS}}
 }
 
 \examples{
@@ -29,7 +29,7 @@ seqVCF.SampID(vcf.fn)
 (vcf.fn <- seqExampleFileName("vcf"))
 
 # get sample id
-seqVCF.SampID(vcf.fn)
+seqVCF_SampID(vcf.fn)
 }
 
 \keyword{gds}

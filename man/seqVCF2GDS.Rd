@@ -15,7 +15,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     \item{vcf.fn}{the file name(s) of VCF format}
     \item{out.fn}{the file name of output GDS file}
     \item{header}{if NULL, \code{header} is set to be
-        \code{\link{seqVCF.Header}(vcf.fn)}}
+        \code{\link{seqVCF_Header}(vcf.fn)}}
     \item{genotype.var.name}{the ID for genotypic data in the FORMAT column;
         "GT" by default, VCFv4.0}
     \item{genotype.storage}{"bit2" by default; with respect to the compression
@@ -85,7 +85,7 @@ compression ratio by \code{storage.option="ZIP_RA.max"} or
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF.Header}}, \code{\link{seqStorageOption}},
+    \code{\link{seqVCF_Header}}, \code{\link{seqStorageOption}},
     \code{\link{seqMerge}}, \code{\link{seqGDS2VCF}}
 }
 
