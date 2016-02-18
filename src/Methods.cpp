@@ -340,8 +340,10 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 			const char *s = CHAR(STRING_ELT(Data, i));
 			(*md5_update)(&md5_ctx, (void*)s, strlen(s)+1);
 		}
-	} else
+	} else if (!Rf_isNull(Data))
+	{
 		error("Not support data type.");
+	}
 
 	return R_NilValue;
 }

@@ -377,8 +377,10 @@
     if (check != "none")
     {
         ans <- list(value=ans)
-        a <- table(seqGetData(gdsfile, "annotation/filter"))
-        a <- match(ans$value$ID, names(a))
+        v <- seqGetData(gdsfile, "annotation/filter")
+        a <- table(v)
+        n <- length(v); remove(v)
+        a <- unname(a[match(ans$value$ID, names(a))])
         a[is.na(a)] <- 0L
         ans$table <- a
         if (verbose)
@@ -386,7 +388,8 @@
             if (nrow(ans$value) > 0L)
             {
                 cat(paste0("    ", ans$value$ID, ", ",
-                    .str(ans$value$Description), ", ", ans$table, "\n"),
+                    .str(ans$value$Description), ", ", ans$table,
+                    sprintf("(%0.1f%%)", a/n*100), "\n"),
                     sep="")
             } else
                 cat("    <None>\n")

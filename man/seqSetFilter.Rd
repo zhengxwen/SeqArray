@@ -18,7 +18,8 @@ seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
     \item{sample.id}{IDs of selected samples}
     \item{variant.id}{IDs of selected variants}
-    \item{samp.sel}{it is deprecated, please use \code{sample.sel} instead}
+    \item{samp.sel}{it is deprecated since v1.11.12, please use
+        \code{sample.sel} instead}
     \item{sample.sel}{a logical/raw/index vector indicating the selected
         samples}
     \item{variant.sel}{a logical/raw/index vector indicating the selected

@@ -1113,8 +1113,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # write the header -- samples
 
-    cat(c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT",
-        seqGetData(gdsfile, "sample.id")), sep="\t", file=ofile)
+    cat(c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO",
+        "FORMAT", seqGetData(gdsfile, "sample.id")), sep="\t", file=ofile)
     cat("\n", file=ofile)
 
 
@@ -1125,12 +1125,12 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     if (!is.null(z$info$ID))
         nm.info <- paste("annotation/info/", z$info$ID, sep="")
     else
-        nm.info <- c()
+        nm.info <- character()
     # the FORMAT field
     if (!is.null(z$format$ID))
         nm.format <- paste("annotation/format/", z$format$ID, sep="")
     else
-        nm.format <- c()
+        nm.format <- character()
 
     # initialize the variable length of INFO
     len.info <- NULL
