@@ -59,8 +59,8 @@ public:
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
 		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
 		bool _UseRaw);
-	void ResetObject();
 
+	void ResetObject();
 	bool NextCell();
 
 	/// read genotypes in 32-bit integer

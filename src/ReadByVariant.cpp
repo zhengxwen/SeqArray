@@ -173,8 +173,7 @@ void CVarApplyByVariant::ResetObject()
 	} else
 		NumIndexRaw = 1;
 
-	if (!VariantSelect[0])
-		NextCell();
+	if (!VariantSelect[0]) NextCell();
 }
 
 bool CVarApplyByVariant::NextCell()
