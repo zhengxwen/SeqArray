@@ -184,12 +184,6 @@ size_t vec_byte_count(const uint8_t *p, size_t n)
 }
 
 
-void vec_int32_set(int32_t *p, size_t n, int32_t val)
-{
-	for (; n > 0; n--) *p++ = val;
-}
-
-
 size_t vec_int32_count(int32_t *p, size_t n, int32_t val)
 {
 	size_t ans = 0;
@@ -253,7 +247,7 @@ size_t vec_int32_count(int32_t *p, size_t n, int32_t val)
 void vec_int32_count2(int32_t *p, size_t n, int32_t val1, int32_t val2,
 	size_t *out_n1, size_t *out_n2)
 {
-	size_t n1=0, n2=0;
+	size_t n1 = 0, n2 = 0;
 
 #ifdef COREARRAY_SIMD_SSE2
 
@@ -335,4 +329,74 @@ void vec_int32_count2(int32_t *p, size_t n, int32_t val1, int32_t val2,
 
 	if (out_n1) *out_n1 = n1;
 	if (out_n2) *out_n2 = n2;
+}
+
+
+void vec_int32_set(int32_t *p, size_t n, int32_t val)
+{
+	for (; n > 0; n--) *p++ = val;
+}
+
+
+void vec_int32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
+{
+#ifdef COREARRAY_SIMD_SSE2
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
+	for (; (n > 0) && (h > 0); n--, h--, p++)
+		if (*p == val) *p = substitute;
+
+	// body, SSE2
+	const __m128i mask = _mm_set1_epi32(val);
+	const __m128i sub4 = _mm_set1_epi32(substitute);
+
+#   ifdef COREARRAY_SIMD_AVX2
+
+	// header 2, 32-byte aligned
+	if ((n >= 4) && ((size_t)p & 0x10))
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c = _mm_cmpeq_epi32(v, mask);
+		if (_mm_movemask_epi8(c))
+		{
+			_mm_store_si128((__m128i *)p,
+				_mm_or_si128(_mm_and_si128(c, sub4), _mm_andnot_si128(c, v)));
+		}
+		n -= 4; p += 4;
+	}
+
+	const __m256i mask2 = _mm256_set1_epi32(val);
+	const __m256i sub8 = _mm256_set1_epi32(substitute);
+
+	for (; n >= 8; n-=8, p+=8)
+	{
+		__m256i v = _mm256_load_si256((__m256i const*)p);
+		__m256i c = _mm256_cmpeq_epi32(v, mask2);
+		if (_mm256_movemask_epi8(c))
+		{
+			_mm256_store_si256((__m256i *)p,
+				_mm256_or_si256(_mm256_and_si256(c, sub8),
+				_mm256_andnot_si256(c, v)));
+		}
+	}
+
+#   endif
+
+	for (; n >= 4; n-=4, p+=4)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c = _mm_cmpeq_epi32(v, mask);
+		if (_mm_movemask_epi8(c))
+		{
+			_mm_store_si128((__m128i *)p,
+				_mm_or_si128(_mm_and_si128(c, sub4), _mm_andnot_si128(c, v)));
+		}
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--, p++)
+		if (*p == val) *p = substitute;
 }

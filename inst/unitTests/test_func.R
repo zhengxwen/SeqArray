@@ -89,3 +89,24 @@ test_int_count2 <- function()
 
 	invisible()
 }
+
+
+test_int_replace <- function()
+{
+	set.seed(5000)
+	for (st in sample.int(1000L, 100L))
+	{
+		n <- 50000L + sample.int(64L, 1L) - 1L
+		v1 <- sample.int(256L, n, replace=TRUE)
+		fd <- sample(v1, 1L)
+		sub <- sample(v1, 1L)
+
+		v2 <- SeqArray:::.cfunction4("test_int32_replace")(v1, st, fd, sub)
+		a <- v1[st:length(v1)]
+		a[a == fd] <- sub
+		v1[st:length(v1)] <- a
+		checkEquals(v1, v2, paste0("int_replace (start=", st, ")"))
+	}
+
+	invisible()
+}
