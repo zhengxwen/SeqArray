@@ -20,6 +20,8 @@ CHANGES IN VERSION 1.11.0-1.11.14
     o seqSetFilter(): 'samp.sel' is deprecated since v1.11.12, please use
       'sample.sel' instead
 
+    o new function `seqSystem()`
+
 
 CHANGES IN VERSION 1.10.0-1.10.6
 -------------------------

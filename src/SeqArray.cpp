@@ -1131,6 +1131,67 @@ COREARRAY_DLL_EXPORT SEXP SEQ_NumOfAllele(SEXP allele_node)
 
 
 // ===========================================================
+// get system configuration
+// ===========================================================
+
+/// the number of alleles per site
+COREARRAY_DLL_EXPORT SEXP SEQ_System()
+{
+	COREARRAY_TRY
+
+		int nProtect = 0;
+		rv_ans = PROTECT(NEW_LIST(2));
+		SEXP nm = PROTECT(NEW_CHARACTER(2));
+		nProtect += 2;
+		SET_NAMES(rv_ans, nm);
+
+		// the number of logical cores
+		SET_ELEMENT(rv_ans, 0, ScalarInteger(GDS_Mach_GetNumOfCores()));
+		SET_STRING_ELT(nm, 0, mkChar("num.logical.core"));
+
+		// compiler flags
+		vector<string> ss;
+	#ifdef COREARRAY_SIMD_SSE
+		ss.push_back("SSE");
+	#endif
+	#ifdef COREARRAY_SIMD_SSE2
+		ss.push_back("SSE2");
+	#endif
+	#ifdef COREARRAY_SIMD_SSE3
+		ss.push_back("SSE3");
+	#endif
+	#ifdef COREARRAY_SIMD_SSE4_1
+		ss.push_back("SSE4.1");
+	#endif
+	#ifdef COREARRAY_SIMD_SSE4_2
+		ss.push_back("SSE4.2");
+	#endif
+	#ifdef COREARRAY_SIMD_AVX
+		ss.push_back("AVX");
+	#endif
+	#ifdef COREARRAY_SIMD_AVX2
+		ss.push_back("AVX2");
+	#endif
+	#ifdef COREARRAY_SIMD_FMA
+		ss.push_back("FMA");
+	#endif
+	#ifdef COREARRAY_SIMD_FMA4
+		ss.push_back("FMA4");
+	#endif
+		SEXP SIMD = PROTECT(NEW_CHARACTER(ss.size()));
+		nProtect ++;
+		SET_ELEMENT(rv_ans, 1, SIMD);
+		SET_STRING_ELT(nm, 1, mkChar("compiler.flag"));
+		for (int i=0; i < (int)ss.size(); i++)
+			SET_STRING_ELT(SIMD, i, mkChar(ss[i].c_str()));
+
+		UNPROTECT(nProtect);
+
+	COREARRAY_CATCH
+}
+
+
+// ===========================================================
 // the initial function when the package is loaded
 // ===========================================================
 
@@ -1196,7 +1257,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 4),
 		CALL(SEQ_GetSpace, 2),
 
-		CALL(SEQ_Summary, 2),
+		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
 
 		CALL(SEQ_GetData, 2),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 8),

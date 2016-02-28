@@ -6,7 +6,9 @@ useDynLib(SeqArray,
     SEQ_MergeFormat,
     SEQ_SetSpaceSample, SEQ_SetSpaceSample2,
     SEQ_SetSpaceVariant, SEQ_SetSpaceVariant2, SEQ_SplitSelection,
-    SEQ_SetChrom, SEQ_GetSpace, SEQ_Summary,
+    SEQ_SetChrom, SEQ_GetSpace,
+
+    SEQ_Summary, SEQ_System,
 
     SEQ_Parse_VCF4, SEQ_Quote, SEQ_InitOutVCF4, SEQ_OutVCF4,
     SEQ_GetData, SEQ_Apply_Variant, SEQ_Apply_Sample, SEQ_NumOfAllele,

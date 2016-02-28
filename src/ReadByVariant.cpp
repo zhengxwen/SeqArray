@@ -620,12 +620,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		do {
 			switch (VarIdx)
 			{
-				case 2:
-					INTEGER(R_Index)[0] = ans_index + 1;
-					break;
-				case 3:
-					INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1;
-					break;
+			case 2:
+				INTEGER(R_Index)[0] = ans_index + 1; break;
+			case 3:
+				INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1; break;
 			}
 
 			if (NodeList.size() <= 1)

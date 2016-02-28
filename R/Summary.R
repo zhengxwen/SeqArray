@@ -773,3 +773,16 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"))
     } else
         NA_character_
 }
+
+
+#######################################################################
+# summarize
+#
+seqSystem <- function()
+{
+    rv <- .Call(SEQ_System)
+    rv$options <- list(
+        seqarray.parallel = getOption("seqarray.parallel", FALSE)
+    )
+    rv
+}
