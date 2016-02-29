@@ -63,7 +63,7 @@ COREARRAY_DLL_EXPORT SEXP FC_NumAllele(SEXP AlleleStr)
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 {
 	size_t n = XLENGTH(Geno);
-	size_t m = vec_int32_count(INTEGER(Geno), n, NA_INTEGER);
+	size_t m = vec_i32_count(INTEGER(Geno), n, NA_INTEGER);
 	return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
 }
 
@@ -160,7 +160,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 
 	if (A < nAllele)
 	{
-		vec_int32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
+		vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
 		n = N - n;
 	}
 
@@ -187,7 +187,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 	if (A >= 0)
 	{
 		const size_t N = XLENGTH(Geno);
-		vec_int32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
+		vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
 		n = N - n;
 	}
 

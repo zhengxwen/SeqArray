@@ -58,9 +58,9 @@ SEXP test_array_popcnt64(SEXP v1, SEXP v2)
 SEXP test_byte_count(SEXP val, SEXP start)
 {
 	int st = Rf_asInteger(start) - 1;
-	Rbyte *p = RAW(val);
+	int8_t *p = (int8_t *)RAW(val);
 	int n = length(val);
-	return ScalarInteger(vec_byte_count(p + st, n - st));
+	return ScalarInteger(vec_i8_cnt_nonzero(p + st, n - st));
 }
 
 
@@ -70,7 +70,7 @@ SEXP test_int32_count(SEXP val, SEXP start, SEXP find)
 	int fd = Rf_asInteger(find);
 	int *p = INTEGER(val);
 	int n = length(val);
-	return ScalarInteger(vec_int32_count(p + st, n - st, fd));
+	return ScalarInteger(vec_i32_count(p + st, n - st, fd));
 }
 
 
@@ -83,7 +83,7 @@ SEXP test_int32_count2(SEXP val, SEXP start, SEXP find1, SEXP find2)
 	int n = length(val);
 
 	size_t n1, n2;
-	vec_int32_count2(p + st, n - st, fd1, fd2, &n1, &n2);
+	vec_i32_count2(p + st, n - st, fd1, fd2, &n1, &n2);
 	SEXP rv_ans = NEW_INTEGER(2);
 	INTEGER(rv_ans)[0] = n1;
 	INTEGER(rv_ans)[1] = n2;
@@ -101,7 +101,7 @@ SEXP test_int32_replace(SEXP val, SEXP start, SEXP find, SEXP substitute)
 
 	SEXP rv_ans = duplicate(val);
 	int *p = INTEGER(rv_ans);
-	vec_int32_replace(p + st, n - st, v1, v2);
+	vec_i32_replace(p + st, n - st, v1, v2);
 
 	return rv_ans;
 }

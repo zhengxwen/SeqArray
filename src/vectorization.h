@@ -91,20 +91,35 @@ inline static int POPCNT_U64(uint64_t x)
 
 
 /// get the number of non-zero
-COREARRAY_DLL_DEFAULT size_t vec_byte_count(const uint8_t *p, size_t n);
+COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
+
+
+// ===========================================================
+// functions for int8
+// ===========================================================
+
+/// count how many 'val' in 'p'
+COREARRAY_DLL_DEFAULT size_t vec_i8_count(int8_t *p, size_t n, int8_t val);
+
+
+
+
+// ===========================================================
+// functions for int32
+// ===========================================================
 
 /// count how many val in p, assuming p is 4-byte aligned
-COREARRAY_DLL_DEFAULT size_t vec_int32_count(int32_t *p, size_t n, int32_t val);
+COREARRAY_DLL_DEFAULT size_t vec_i32_count(int32_t *p, size_t n, int32_t val);
 
 /// count how many val1 and val2 in p, assuming p is 4-byte aligned
-COREARRAY_DLL_DEFAULT void vec_int32_count2(int32_t *p, size_t n,
+COREARRAY_DLL_DEFAULT void vec_i32_count2(int32_t *p, size_t n,
 	int32_t val1, int32_t val2, size_t *out_n1, size_t *out_n2);
 
 
 COREARRAY_DLL_DEFAULT void vec_int32_set(int32_t *p, size_t n, int32_t val);
 
 /// replace 'val' in the array of 'p' by 'substitute', assuming p is 4-byte aligned
-COREARRAY_DLL_DEFAULT void vec_int32_replace(int32_t *p, size_t n, int32_t val,
+COREARRAY_DLL_DEFAULT void vec_i32_replace(int32_t *p, size_t n, int32_t val,
 	int32_t substitute);
 
 

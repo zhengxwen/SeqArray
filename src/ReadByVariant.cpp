@@ -238,7 +238,7 @@ void CVarApplyByVariant::ReadGenoData(int *Base)
 	}
 
 	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
-	vec_int32_replace(Base, CellCount, missing, NA_INTEGER);
+	vec_i32_replace(Base, CellCount, missing, NA_INTEGER);
 }
 
 void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)

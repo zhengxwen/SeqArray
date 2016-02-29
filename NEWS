@@ -20,6 +20,8 @@ CHANGES IN VERSION 1.11.0-1.11.14
     o seqSetFilter(): 'samp.sel' is deprecated since v1.11.12, please use
       'sample.sel' instead
 
+    o accelerate reading genotypes with SSE2(+13%) and AVX2(+23%)
+
     o new function `seqSystem()`
 
 
