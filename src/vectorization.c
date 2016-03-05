@@ -258,7 +258,7 @@ size_t vec_i32_count(int32_t *p, size_t n, int32_t val)
 
 #   endif
 
-	int32_t array[4] __attribute__((aligned(16)));
+	uint32_t array[4] __attribute__((aligned(16)));
 	*((__m128i*)array) = sum;
 	ans += array[0] + array[1] + array[2] + array[3];
 
@@ -355,7 +355,7 @@ void vec_i32_count2(int32_t *p, size_t n, int32_t val1, int32_t val2,
 
 #   endif
 
-	int32_t a[4] __attribute__((aligned(16)));
+	uint32_t a[4] __attribute__((aligned(16)));
 	*((__m128i*)a) = sum1;
 	n1 += a[0] + a[1] + a[2] + a[3];
 	*((__m128i*)a) = sum2;
