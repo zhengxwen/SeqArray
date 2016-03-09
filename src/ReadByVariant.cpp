@@ -30,6 +30,12 @@ CVarApplyByVariant::CVarApplyByVariant()
 	Node = IndexNode = NULL;
 	VariantSelect = NULL;
 	UseRaw = false;
+	ExtPtr = NULL;
+}
+
+CVarApplyByVariant::~CVarApplyByVariant()
+{
+	if (ExtPtr) free(ExtPtr);
 }
 
 void CVarApplyByVariant::InitObject(TType Type, const char *Path,
@@ -289,11 +295,7 @@ void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
 	}
 
 	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
-	for (size_t n=CellCount; n > 0; n--)
-	{
-		if (*Base == missing) *Base = NA_RAW;
-		Base ++;
-	}	
+	vec_i8_replace((C_Int8*)Base, CellCount, missing, NA_RAW);
 }
 
 void CVarApplyByVariant::ReadData(SEXP Val)

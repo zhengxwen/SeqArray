@@ -64,6 +64,21 @@ SEXP test_byte_count(SEXP val, SEXP start)
 }
 
 
+SEXP test_int8_replace(SEXP val, SEXP start, SEXP find, SEXP substitute)
+{
+	int st = Rf_asInteger(start) - 1;
+	int v1 = Rf_asInteger(find);
+	int v2 = Rf_asInteger(substitute);
+	int n = length(val);
+
+	SEXP rv_ans = duplicate(val);
+	int8_t *p = (int8_t *)RAW(rv_ans);
+	vec_i8_replace(p + st, n - st, v1, v2);
+
+	return rv_ans;
+}
+
+
 SEXP test_int32_count(SEXP val, SEXP start, SEXP find)
 {
 	int st = Rf_asInteger(start) - 1;

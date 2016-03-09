@@ -30,6 +30,7 @@ protected:
 
 	C_Int32 VariantStart;   ///< start index according to the variants
 	C_Int32 VariantCount;   ///< the length according to the variants
+	int NumOfBits;             ///< the number of bits
 	size_t CellCount;       ///< the number of entries for the current sample
 	vector<C_UInt8> GenoCellCnt;  ///< 
 	map<size_t, SEXP> VarList;    ///< a list of SEXP variables
@@ -40,7 +41,6 @@ protected:
 	bool UseRaw;            ///< whether use RAW type
 
 	vector<C_BOOL> Selection;  ///< the buffer of selection
-	int NumOfBits;             ///< the number of bits
 
 public:
 	TType VarType;          ///< VCF data type

@@ -493,7 +493,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 			memset(DStart, 0, sizeof(DStart));
 			rv_ans = GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0], 0);
 
-		} else if (strcmp(s, "chrom_pos") == 0)
+		} else if (strcmp(s, "$chrom_pos") == 0)
 		{
 			// ===========================================================
 			// chromosome-position

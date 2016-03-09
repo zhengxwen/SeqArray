@@ -193,6 +193,72 @@ size_t vec_i8_count(int8_t *p, size_t n, int8_t val)
 	return 0;
 }
 
+void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
+{
+#ifdef COREARRAY_SIMD_SSE2
+
+	// header 1, 16-byte aligned
+	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
+	for (; (n > 0) && (h > 0); n--, h--, p++)
+		if (*p == val) *p = substitute;
+
+	// body, SSE2
+	const __m128i mask = _mm_set1_epi8(val);
+	const __m128i sub  = _mm_set1_epi8(substitute);
+
+#   ifdef COREARRAY_SIMD_AVX2
+
+	// header 2, 32-byte aligned
+	if ((n >= 16) && ((size_t)p & 0x10))
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c = _mm_cmpeq_epi8(v, mask);
+		if (_mm_movemask_epi8(c))
+		{
+			_mm_store_si128((__m128i *)p,
+				_mm_or_si128(_mm_and_si128(c, sub), _mm_andnot_si128(c, v)));
+		}
+		n -= 16; p += 16;
+	}
+
+	const __m256i mask2 = _mm256_set1_epi8(val);
+	const __m256i sub32 = _mm256_set1_epi8(substitute);
+	const __m256i zero = _mm256_setzero_si256();
+	const __m256i ones = _mm256_cmpeq_epi64(zero, zero);
+
+	for (; n >= 32; n-=32, p+=32)
+	{
+		__m256i v = _mm256_load_si256((__m256i const*)p);
+		__m256i c = _mm256_cmpeq_epi8(v, mask2);
+		if (_mm256_movemask_epi8(c))
+		{
+			_mm256_stream_si256((__m256i *)p,
+				_mm256_or_si256(_mm256_and_si256(c, sub32),
+				_mm256_andnot_si256(c, v)));
+		}
+	}
+
+#   endif
+
+	for (; n >= 16; n-=16, p+=16)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c = _mm_cmpeq_epi8(v, mask);
+		if (_mm_movemask_epi8(c))
+		{
+			_mm_store_si128((__m128i *)p,
+				_mm_or_si128(_mm_and_si128(c, sub), _mm_andnot_si128(c, v)));
+		}
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--, p++)
+		if (*p == val) *p = substitute;
+}
+
+
 
 // ===========================================================
 // functions for int32
@@ -403,10 +469,7 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c = _mm_cmpeq_epi32(v, mask);
 		if (_mm_movemask_epi8(c))
-		{
-			_mm_store_si128((__m128i *)p,
-				_mm_or_si128(_mm_and_si128(c, sub4), _mm_andnot_si128(c, v)));
-		}
+			_mm_maskstore_epi32(p, c, sub4);
 		n -= 4; p += 4;
 	}
 

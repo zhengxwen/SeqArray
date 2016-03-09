@@ -24,7 +24,7 @@ Release Version: v1.10.6
 * [Help Documents](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [Data Analytics](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/AnalysisTutorial.html)
 
-Development Version: v1.11.13
+Development Version: v1.11.14
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
@@ -63,6 +63,12 @@ curl -L https://github.com/zhengxwen/SeqArray/tarball/master/ -o SeqArray_latest
 R CMD INSTALL gdsfmt_latest.tar.gz
 R CMD INSTALL SeqArray_latest.tar.gz
 ```
+
+
+
+## SeqArray File Download
+
+* [1000 Genomes Project](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes)
 
 
 

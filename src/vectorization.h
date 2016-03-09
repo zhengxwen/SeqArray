@@ -102,6 +102,10 @@ COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
 COREARRAY_DLL_DEFAULT size_t vec_i8_count(int8_t *p, size_t n, int8_t val);
 
 
+/// replace 'val' in the array of 'p' by 'substitute'
+COREARRAY_DLL_DEFAULT void vec_i8_replace(int8_t *p, size_t n, int8_t val,
+	int8_t substitute);
+
 
 
 // ===========================================================
@@ -121,6 +125,13 @@ COREARRAY_DLL_DEFAULT void vec_int32_set(int32_t *p, size_t n, int32_t val);
 /// replace 'val' in the array of 'p' by 'substitute', assuming p is 4-byte aligned
 COREARRAY_DLL_DEFAULT void vec_i32_replace(int32_t *p, size_t n, int32_t val,
 	int32_t substitute);
+
+
+
+// ===========================================================
+// functions for float64
+// ===========================================================
+
 
 
 

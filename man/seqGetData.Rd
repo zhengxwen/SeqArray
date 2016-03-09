@@ -25,7 +25,7 @@ seqGetData(gdsfile, var.name)
 \code{"annotation/format/@VARIABLE_NAME"} are used to obtain the index
 associated with these variables.
 
-\code{"chrom_pos"} returns characters with the combination of chromosome and
+\code{"$chrom_pos"} returns characters with the combination of chromosome and
 position, e.g., "1_1272721".
 }
 
@@ -51,8 +51,8 @@ head(variant.id <- seqGetData(f, "variant.id"))
 # get 'chromosome'
 table(seqGetData(f, "chromosome"))
 
-# get 'chrom_pos'
-head(seqGetData(f, "chrom_pos"))
+# get '$chrom_pos'
+head(seqGetData(f, "$chrom_pos"))
 
 # get 'allele'
 head(seqGetData(f, "allele"))

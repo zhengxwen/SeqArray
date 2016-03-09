@@ -91,6 +91,7 @@ public:
 		ctNone,
 		ctBasic,       ///< sample.id, variant.id, etc
 		ctGenotype,    ///< genotypes or alleles
+		ctDosage,      ///< dosage of reference or specified allele
 		ctPhase,       ///< phase information
 		ctInfo,        ///< variant annotation info field
 		ctFormat,      ///< variant annotation format field

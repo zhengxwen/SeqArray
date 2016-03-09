@@ -33,6 +33,7 @@ protected:
 
 	C_Int32 IndexRaw;          ///< the index according to the raw data set
 	C_Int32 NumIndexRaw;       ///< the increment of raw index
+	int NumOfBits;             ///< the number of bits
 	size_t CellCount;          ///< the number of entries for the current variant
 	map<size_t, SEXP> VarList; ///< a list of SEXP variables
 
@@ -42,7 +43,7 @@ protected:
 	bool UseRaw;            ///< whether use RAW type
 
 	vector<C_BOOL> Selection;  ///< the buffer of selection
-	int NumOfBits;             ///< the number of bits
+	void *ExtPtr;              ///< a pointer to the additional buffer
 
 public:
 	TType VarType;          ///< VCF data type
@@ -54,7 +55,7 @@ public:
 	C_Int32 CurIndex;       ///< the index of variant, starting from ZERO
 
 	CVarApplyByVariant();
-	virtual ~CVarApplyByVariant() {}
+	virtual ~CVarApplyByVariant();
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
 		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
@@ -68,8 +69,15 @@ public:
 	/// read genotypes in unsigned 8-bit intetger
 	void ReadGenoData(C_UInt8 *Base);
 
+	/// read dosages in 32-bit integer
+	// void ReadDosage(int *Base);
+	/// read dosages in unsigned 8-bit intetger
+	// void ReadDosage(C_UInt8 *Base);
+
+	/// read data to R object
 	void ReadData(SEXP Val);
 
+	/// return an R object for the next call 'ReadData()'
 	SEXP NeedRData(int &nProtected);
 };
 
