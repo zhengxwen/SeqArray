@@ -36,7 +36,26 @@
 // The Initialized Object
 // ===========================================================
 
-/// the initial data
+void TInitObject::TSelection::Reset(PdGDSFolder Root)
+{
+	if (Sample.empty())
+	{
+		PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
+		C_Int64 n = GDS_Array_GetTotalCount(N);
+		if ((n < 0) || (n > 2147483647))
+			throw ErrSeqArray("Invalid dimension of 'sample.id'.");
+		Sample.resize(n, TRUE);
+	}
+	if (Variant.empty())
+	{
+		PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
+		C_Int64 n = GDS_Array_GetTotalCount(N);
+		if ((n < 0) || (n > 2147483647))
+			throw ErrSeqArray("Invalid dimension of 'variant.id'.");
+		Variant.resize(n, TRUE);
+	}
+}
+
 TInitObject::TInitObject(): GENO_BUFFER(1024)
 {
 	memset(TRUE_ARRAY, TRUE, sizeof(TRUE_ARRAY));
@@ -44,27 +63,22 @@ TInitObject::TInitObject(): GENO_BUFFER(1024)
 
 TInitObject::TSelection &TInitObject::Selection(SEXP gdsfile, bool alloc)
 {
-	// TODO: check whether handle is valid
-	int id = INTEGER(GetListElement(gdsfile, "id"))[0];
+	SEXP ID = GetListElement(gdsfile, "id");
+	if (Rf_isNull(ID))
+		throw ErrSeqArray("Invalid gds object.");
+
+	int id = Rf_asInteger(ID);
 	TSelList &m = _Map[id];
 	if (m.empty()) m.push_back(TSelection());
+
 	TSelection &s = m.back();
 	if (alloc && (s.Sample.empty() | s.Variant.empty()))
 	{
 		// the GDS root node
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
-		// selection
-		if (s.Sample.empty())
-		{
-			PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
-			s.Sample.resize(GDS_Array_GetTotalCount(N), TRUE);
-		}
-		if (s.Variant.empty())
-		{
-			PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
-			s.Variant.resize(GDS_Array_GetTotalCount(N), TRUE);
-		}
+		s.Reset(Root);
 	}
+
 	return s;
 }
 
@@ -1259,7 +1273,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
 
-		CALL(SEQ_GetData, 2),
+		CALL(SEQ_GetData, 3),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 8),
 
 		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),

@@ -38,6 +38,14 @@ CVarApplyByVariant::~CVarApplyByVariant()
 	if (ExtPtr) free(ExtPtr);
 }
 
+void CVarApplyByVariant::NeedMemory(size_t size)
+{
+	ExtPtr = realloc(ExtPtr, size);
+	if (!ExtPtr)
+		throw ErrSeqArray("No sufficient memory in 'CVarApplyByVariant'!");
+}
+
+
 void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 	PdGDSObj Root, int nVariant, C_BOOL *VariantSel, int nSample,
 	C_BOOL *SampleSel, bool _UseRaw)
@@ -68,6 +76,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			break;
 
 		case ctGenotype:
+		case ctDosage:
 			// ===========================================================
 			// VARIABLE: genotype/data, genotype/@data
 			if (DimCnt != 3)
@@ -101,6 +110,9 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 						p += DLen[2];
 				}
 			}
+
+			if (Type == ctDosage)
+				NeedMemory(sizeof(int)*CellCount);
 			break;
 
 		case ctPhase:
@@ -167,6 +179,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 	ResetObject();
 }
 
+
 void CVarApplyByVariant::ResetObject()
 {
 	CurIndex = 0;
@@ -181,6 +194,7 @@ void CVarApplyByVariant::ResetObject()
 
 	if (!VariantSelect[0]) NextCell();
 }
+
 
 bool CVarApplyByVariant::NextCell()
 {
@@ -214,6 +228,7 @@ bool CVarApplyByVariant::NextCell()
 	return (CurIndex < TotalNum_Variant);
 }
 
+
 void CVarApplyByVariant::ReadGenoData(int *Base)
 {
 	// the size of Init.GENO_BUFFER has been checked in 'Init()'
@@ -246,6 +261,7 @@ void CVarApplyByVariant::ReadGenoData(int *Base)
 	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
 	vec_i32_replace(Base, CellCount, missing, NA_INTEGER);
 }
+
 
 void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
 {
@@ -298,16 +314,88 @@ void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
 	vec_i8_replace((C_Int8*)Base, CellCount, missing, NA_RAW);
 }
 
+
+void CVarApplyByVariant::ReadDosage(int *Base)
+{
+	if (!ExtPtr)
+		NeedMemory(sizeof(int)*CellCount);
+	ReadGenoData((int *)ExtPtr);
+
+	// count the number of reference allele
+/*	if (DLen[2] == 2) // diploid
+	{
+	
+	} else {
+*/		int *p = (int *)ExtPtr;
+		for (int n=Num_Sample; n > 0; n--)
+		{
+			int cnt = 0;
+			for (int m=DLen[2]; m > 0; m--, p++)
+			{
+				if (*p == 0)
+				{
+					if (cnt != NA_INTEGER)
+						cnt ++;
+				} else if (*p == NA_INTEGER)
+					cnt = NA_INTEGER;
+			}
+			*Base ++ = cnt;
+		}
+//	}
+}
+
+
+void CVarApplyByVariant::ReadDosage(C_UInt8 *Base)
+{
+	if (!ExtPtr)
+		NeedMemory(sizeof(int)*CellCount);
+	ReadGenoData((C_UInt8 *)ExtPtr);
+
+	// count the number of reference allele
+/*	if (DLen[2] == 2) // diploid
+	{
+	
+	} else {
+*/		C_UInt8 *p = (C_UInt8 *)ExtPtr;
+		for (int n=Num_Sample; n > 0; n--)
+		{
+			C_UInt8 cnt = 0;
+			for (int m=DLen[2]; m > 0; m--, p++)
+			{
+				if (*p == 0)
+				{
+					if (cnt != NA_RAW)
+						cnt ++;
+				} else if (*p == NA_RAW)
+					cnt = NA_RAW;
+			}
+			*Base ++ = cnt;
+		}
+//	}
+}
+
+
 void CVarApplyByVariant::ReadData(SEXP Val)
 {
 	if (NumIndexRaw <= 0) return;
-	if (VarType == ctGenotype)
+
+	switch (VarType)
 	{
+	case ctGenotype:
 		if (UseRaw)
 			ReadGenoData(RAW(Val));
 		else
 			ReadGenoData(INTEGER(Val));
-	} else {
+		break;
+
+	case ctDosage:
+		if (UseRaw)
+			ReadDosage(RAW(Val));
+		else
+			ReadDosage(INTEGER(Val));
+		break;
+
+	default:
 		C_Int32 st[3] = { IndexRaw, 0, 0 };
 		DLen[0] = NumIndexRaw;
 		SelPtr[0] = NeedTRUE(NumIndexRaw);
@@ -328,6 +416,7 @@ void CVarApplyByVariant::ReadData(SEXP Val)
 	}
 }
 
+
 SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 {
 	if (NumIndexRaw <= 0) return R_NilValue;
@@ -341,6 +430,8 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 			CellCount = 1; break;
 		case ctGenotype:
 			CellCount = Num_Sample * DLen[2]; break;
+		case ctDosage:
+			CellCount = Num_Sample; break;
 		case ctPhase:
 			CellCount = (DimCnt>2) ? Num_Sample*DLen[2] : Num_Sample;
 			break;
@@ -355,10 +446,10 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 			CellCount = 0;
 		}
 
-		SEXP ans = R_NilValue, dim;
+		SEXP ans=R_NilValue, dim;
 		if (COREARRAY_SV_INTEGER(SVType))
 		{
-			if (VarType == ctGenotype)
+			if ((VarType == ctGenotype) || (VarType == ctDosage))
 			{
 				if (UseRaw)
 					PROTECT(ans = NEW_RAW(CellCount));
@@ -391,28 +482,19 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 			nProtected ++;
 		}
 
-		SEXP name_list, tmp;
+		int *p;
 		switch (VarType)
 		{
 		case ctGenotype:
-			{
-				int *p = INTEGER(dim = NEW_INTEGER(2));
-				p[0] = DLen[2]; p[1] = Num_Sample;
-				SET_DIM(ans, dim);
-				PROTECT(name_list = NEW_LIST(2));
-				PROTECT(tmp = NEW_CHARACTER(2));
-				SET_STRING_ELT(tmp, 0, mkChar("allele"));
-				SET_STRING_ELT(tmp, 1, mkChar("sample"));
-				SET_NAMES(name_list, tmp);
-				SET_DIMNAMES(ans, name_list);
-				UNPROTECT(2);
-			}
+			p = INTEGER(dim = NEW_INTEGER(2));
+			p[0] = DLen[2]; p[1] = Num_Sample;
+			SET_DIM(ans, dim);
 			break;
 
 		case ctPhase:
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
-				int *p = INTEGER(dim = NEW_INTEGER(2));
+				p = INTEGER(dim = NEW_INTEGER(2));
 				p[0] = DLen[2]; p[1] = Num_Sample;
 				SET_DIM(ans, dim);
 			}
@@ -421,12 +503,12 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 		case ctFormat:
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
-				int *p = INTEGER(dim = NEW_INTEGER(3));
+				p = INTEGER(dim = NEW_INTEGER(3));
 				p[0] = DLen[2]; p[1] = Num_Sample; p[2] = NumIndexRaw;
 				SET_DIM(ans, dim);
 			} else if (DimCnt == 2)
 			{
-				int *p = INTEGER(dim = NEW_INTEGER(2));
+				p = INTEGER(dim = NEW_INTEGER(2));
 				p[0] = Num_Sample; p[1] = NumIndexRaw;
 				SET_DIM(ans, dim);
 			}
@@ -533,6 +615,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			{
 				VarType = CVarApplyByVariant::ctFormat;
 				s.append("/data");
+			} else if (s == "$dosage")
+			{
+				VarType = CVarApplyByVariant::ctDosage;
+				s = "genotype/data";
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"

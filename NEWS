@@ -24,6 +24,9 @@ CHANGES IN VERSION 1.11.0-1.11.15
 
     o new function `seqSystem()`
 
+    o allow "$dosage" in `seqGetData()` and `seqApply()` for the dosages of
+      reference allele
+
 
 CHANGES IN VERSION 1.10.0-1.10.6
 -------------------------

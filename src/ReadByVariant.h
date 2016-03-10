@@ -45,6 +45,8 @@ protected:
 	vector<C_BOOL> Selection;  ///< the buffer of selection
 	void *ExtPtr;              ///< a pointer to the additional buffer
 
+	void NeedMemory(size_t size);  ///< allocate memory and assign it to ExtPtr
+
 public:
 	TType VarType;          ///< VCF data type
 	int TotalNum_Variant;   ///< the total number of variants
@@ -70,9 +72,9 @@ public:
 	void ReadGenoData(C_UInt8 *Base);
 
 	/// read dosages in 32-bit integer
-	// void ReadDosage(int *Base);
+	void ReadDosage(int *Base);
 	/// read dosages in unsigned 8-bit intetger
-	// void ReadDosage(C_UInt8 *Base);
+	void ReadDosage(C_UInt8 *Base);
 
 	/// read data to R object
 	void ReadData(SEXP Val);

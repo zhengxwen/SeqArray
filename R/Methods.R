@@ -262,13 +262,13 @@ seqGetFilter <- function(gdsfile, .useraw=FALSE)
 #######################################################################
 # Get data from a working space with selected samples and variants
 #
-seqGetData <- function(gdsfile, var.name)
+seqGetData <- function(gdsfile, var.name, .useraw=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(var.name), length(var.name)==1L)
 
-    .Call(SEQ_GetData, gdsfile, var.name)
+    .Call(SEQ_GetData, gdsfile, var.name, .useraw)
 }
 
 

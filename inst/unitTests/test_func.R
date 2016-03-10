@@ -1,134 +1,111 @@
+###########################################################################
+#
+# Test SeqArray functions
+#
+
 library(SeqArray)
 library(RUnit)
 
 
-.popcnt <- function(x)
+.create_valid_data <- function()
 {
-	ans <- 0L
-	while(x > 0)
-	{
-		if (x %% 2) ans <- ans + 1L
-		x <- x %/% 2
-	}
-	ans
-}
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
 
-
-test_popcnt <- function()
-{
 	set.seed(1000)
-	v1 <- sample.int(2147483647L, 10000L, replace=TRUE)
-	v2 <- sample.int(2147483647L, 10000L, replace=TRUE)
+	samp.id <- seqGetData(f, "sample.id")
+	variant.id <- seqGetData(f, "variant.id")
 
-	c1 <- sapply(v1, .popcnt)
-	c2 <- sapply(v2, .popcnt)
+	# get results
+	fcAlleleFreq <- list(
+		d1=seqAlleleFreq(f, NULL),
+		d2=seqAlleleFreq(f, 0L),
+		d3=seqAlleleFreq(f, sample(c(0L,1L), length(variant.id), replace=TRUE)),
+		d4=seqAlleleFreq(f, toupper(seqGetData(f, "annotation/info/AA")$data))
+	)
 
-	t1 <- SeqArray:::.cfunction("test_array_popcnt32")(v1)
-	t2 <- SeqArray:::.cfunction("test_array_popcnt32")(v2)
-	t3 <- SeqArray:::.cfunction2("test_array_popcnt64")(v1, v2)
+	# validation data
+	Valid <- list(
+		fcAlleleFreq = fcAlleleFreq
+	)
+	save(Valid, file="Valid.RData", compress="xz")
 
-	checkEquals(c1, t1, "popcount u32")
-	checkEquals(c2, t2, "popcount u32")
-	checkEquals(c1+c2, t3, "popcount u64")
+	# close the GDS file
+	seqClose(f)
+}
 
+
+# load the validation data
+Valid <- get(load(system.file("unitTests", "data", "Valid.RData",
+	package="SeqArray", mustWork=TRUE)))
+
+
+test_allele_freq <- function()
+{
+	num.cores <- 2L
+
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
+
+	samp.id <- seqGetData(f, "sample.id")
+	variant.id <- seqGetData(f, "variant.id")
+
+	# get results
+	for (p in 1L:num.cores)
+	{
+		d <- seqAlleleFreq(f, NULL, parallel=p)
+		checkEquals(Valid$fcAlleleFreq$d1, d, paste0("seqAlleleFreq 1:", p))
+	}
+
+	for (p in 1L:num.cores)
+	{
+		d <- seqAlleleFreq(f, 0L, parallel=p)
+		checkEquals(Valid$fcAlleleFreq$d2, d, paste0("seqAlleleFreq 2:", p))
+	}
+
+	for (p in 1L:num.cores)
+	{
+		set.seed(1000)
+		d <- seqAlleleFreq(f, sample(c(0L,1L), length(variant.id),
+			replace=TRUE), parallel=p)
+		checkEquals(Valid$fcAlleleFreq$d3, d, paste0("seqAlleleFreq 3:", p))
+	}
+
+	for (p in 1L:num.cores)
+	{
+		d <- seqAlleleFreq(f, toupper(seqGetData(f, "annotation/info/AA")$data),
+			parallel=p)
+		checkEquals(Valid$fcAlleleFreq$d4, d, paste0("seqAlleleFreq 4:", p))
+	}
+
+	# close the GDS file
+	seqClose(f)
 	invisible()
 }
 
 
-test_byte_count <- function()
+test_dosage <- function()
 {
-	set.seed(1000)
-	for (st in sample.int(1000L, 25L))
-	{
-		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- sample.int(255L, n, replace=TRUE)
-		v[sample.int(n, 25000L)] <- 0L
-		v <- as.raw(v)
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
 
-		n1 <- SeqArray:::.cfunction2("test_byte_count")(v, st)
-		n2 <- sum(v[st:length(v)] != 0L)
-		checkEquals(n1, n2, paste0("byte_count (start=", st, ")"))
-	}
+	gm <- seqGetData(f, "genotype")
+	dm <- seqGetData(f, "$dosage")
+	m <- (gm[1L,,]==0L) + (gm[2L,,]==0L)
+	checkEquals(dm, m, "dosage, integer")
 
-	invisible()
-}
+	gm <- seqGetData(f, "genotype", .useraw=TRUE)
+	dm <- seqGetData(f, "$dosage", .useraw=TRUE)
+	m <- (gm[1L,,]==0L) + (gm[2L,,]==0L)
+	m[gm[1L,,]==255L | gm[2L,,]==255L] <- 255L
+	m <- as.raw(m)
+	dim(m) <- dim(dm)
+	checkEquals(dm, m, "dosage, raw")
 
-
-test_int8_replace <- function()
-{
-	set.seed(5000)
-	for (st in sample.int(1000L, 25L))
-	{
-		n <- 50000L + sample.int(64L, 1L) - 1L
-		v1 <- sample.int(127L, n, replace=TRUE)
-		fd <- sample(v1, 1L)
-		sub <- sample(v1, 1L)
-
-		v2 <- SeqArray:::.cfunction4("test_int8_replace")(as.raw(v1), st, fd, sub)
-		a <- v1[st:length(v1)]
-		a[a == fd] <- sub
-		v1[st:length(v1)] <- a
-		v1 <- as.raw(v1)
-		checkEquals(v1, v2, paste0("int8_replace (start=", st, ")"))
-	}
-
-	invisible()
-}
-
-
-test_int_count <- function()
-{
-	set.seed(5000)
-	for (st in sample.int(1000L, 25L))
-	{
-		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- sample.int(256L, n, replace=TRUE)
-		fd <- sample(v, 1L)
-
-		n1 <- SeqArray:::.cfunction3("test_int32_count")(v, st, fd)
-		n2 <- sum(v[st:length(v)] == fd)
-		checkEquals(n1, n2, paste0("int_count (start=", st, ")"))
-	}
-
-	invisible()
-}
-
-
-test_int_count2 <- function()
-{
-	set.seed(5000)
-	for (st in sample.int(1000L, 25L))
-	{
-		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- sample.int(256L, n, replace=TRUE)
-		fd1 <- sample(v, 1L)
-		fd2 <- sample(v, 1L)
-
-		n1 <- SeqArray:::.cfunction4("test_int32_count2")(v, st, fd1, fd2)
-		n2 <- c(sum(v[st:length(v)] == fd1), sum(v[st:length(v)] == fd2))
-		checkEquals(n1, n2, paste0("int_count2 (start=", st, ")"))
-	}
-
-	invisible()
-}
-
-
-test_int_replace <- function()
-{
-	set.seed(5000)
-	for (st in sample.int(1000L, 25L))
-	{
-		n <- 50000L + sample.int(64L, 1L) - 1L
-		v1 <- sample.int(256L, n, replace=TRUE)
-		fd <- sample(v1, 1L)
-		sub <- sample(v1, 1L)
-
-		v2 <- SeqArray:::.cfunction4("test_int32_replace")(v1, st, fd, sub)
-		a <- v1[st:length(v1)]
-		a[a == fd] <- sub
-		v1[st:length(v1)] <- a
-		checkEquals(v1, v2, paste0("int_replace (start=", st, ")"))
-	}
-
+	# close the GDS file
+	seqClose(f)
 	invisible()
 }

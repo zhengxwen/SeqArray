@@ -135,11 +135,13 @@ static void MAP_INDEX(PdAbstractArray Node, const vector<C_BOOL> &sel,
 
 
 /// Get data from a working space
-COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
+COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 {
-	COREARRAY_TRY
+	int use_raw = Rf_asLogical(UseRaw);
+	if (use_raw == NA_LOGICAL)
+		error("'.useraw' must be TRUE or FALSE.");
 
-		SEXP tmp;
+	COREARRAY_TRY
 
 		// the selection
 		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
@@ -208,61 +210,38 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 			if (!Sel.Sample.empty() || !Sel.Variant.empty())
 			{
+				Sel.Reset(Root);
+
+				// check
 				GDS_Array_GetDim(N, DLen, 3);
-
-				if (Sel.Variant.empty())
-					Sel.Variant.resize(DLen[0], TRUE);
-				else if ((int)Sel.Variant.size() != DLen[0])
+				if (Sel.Variant.size() != (size_t)DLen[0])
 					throw ErrSeqArray("Invalid dimension of '%s'.", s);
-
-				if (Sel.Sample.empty())
-					Sel.Sample.resize(DLen[1], TRUE);
-				else if ((int)Sel.Sample.size() != DLen[1])
+				if (Sel.Sample.size() != (size_t)DLen[1])
 					throw ErrSeqArray("Invalid dimension of '%s'.", s);
-
-				CVarApply Var;
 
 				SelPtr[0] = &Sel.Variant[0];
 				SelPtr[1] = &Sel.Sample[0];
+
+				CVarApply Var;
 				if (DimCnt == 3)
 					SelPtr[2] = Var.NeedTRUE(DLen[2]);
 
 				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0], 0);
-			} else {
+
+			} else
 				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL, 0);
-			}
 
 		} else if (strcmp(s, "genotype") == 0)
 		{
 			// ===========================================================
 			// genotypic data
 
-			// init selection
-			if (Sel.Sample.empty())
-			{
-				PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
-				int Cnt = GDS_Array_GetTotalCount(N);
-				if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
-				Sel.Sample.resize(Cnt, TRUE);
-			}
-			if (Sel.Variant.empty())
-			{
-				PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
-				int Cnt = GDS_Array_GetTotalCount(N);
-				if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
-				Sel.Variant.resize(Cnt, TRUE);
-			}
+			Sel.Reset(Root);
+			int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
 
-			// the number of selected variants
-			int nVariant = 0;
-			for (vector<C_BOOL>::iterator it = Sel.Variant.begin();
-				it != Sel.Variant.end(); it ++)
-			{
-				if (*it) nVariant ++;
-			}
 			if (nVariant > 0)
 			{
-				// initialize the GDS Node list
+				// initialize GDS genotype Node
 				CVarApplyByVariant NodeVar;
 				NodeVar.InitObject(CVariable::ctGenotype,
 					"genotype/data", Root, Sel.Variant.size(),
@@ -270,29 +249,33 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 
 				// the number of calling PROTECT
 				size_t SIZE = (size_t)NodeVar.Num_Sample * NodeVar.DLen[2];
-				PROTECT(rv_ans = NEW_INTEGER(nVariant * SIZE));
-				PROTECT(tmp = NEW_INTEGER(3));
-					INTEGER(tmp)[0] = NodeVar.DLen[2];
-					INTEGER(tmp)[1] = NodeVar.Num_Sample;
-					INTEGER(tmp)[2] = nVariant;
-				SET_DIM(rv_ans, tmp);
-				SEXP name_list;
-				PROTECT(name_list = NEW_LIST(3));
-				PROTECT(tmp = NEW_CHARACTER(3));
-					SET_STRING_ELT(tmp, 0, mkChar("allele"));
-					SET_STRING_ELT(tmp, 1, mkChar("sample"));
-					SET_STRING_ELT(tmp, 2, mkChar("variant"));
-					SET_NAMES(name_list, tmp);
-				SET_DIMNAMES(rv_ans, name_list);
 
-				int *base = INTEGER(rv_ans);
-				do {
-					NodeVar.ReadGenoData(base);
-					base += SIZE;
-				} while (NodeVar.NextCell());
+				if (use_raw)
+				{
+					rv_ans = PROTECT(NEW_RAW(nVariant * SIZE));
+					C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
+					do {
+						NodeVar.ReadGenoData(base);
+						base += SIZE;
+					} while (NodeVar.NextCell());
+				} else {
+					rv_ans = PROTECT(NEW_INTEGER(nVariant * SIZE));
+					int *base = INTEGER(rv_ans);
+					do {
+						NodeVar.ReadGenoData(base);
+						base += SIZE;
+					} while (NodeVar.NextCell());
+				}
+
+				SEXP dim = PROTECT(NEW_INTEGER(3));
+					int *p = INTEGER(dim);
+					p[0] = NodeVar.DLen[2];
+					p[1] = NodeVar.Num_Sample;
+					p[2] = nVariant;
+				SET_DIM(rv_ans, dim);
 
 				// finally
-				UNPROTECT(4);
+				UNPROTECT(2);
 			}
 
 		} else if (strcmp(s, "@genotype") == 0)
@@ -375,7 +358,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 						SET_ELEMENT(rv_ans, 0, I32);
 						SET_ELEMENT(rv_ans, 1,
 							VAR_LOGICAL(N, GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0], 0)));
-					PROTECT(tmp = NEW_CHARACTER(2));
+					SEXP tmp = PROTECT(NEW_CHARACTER(2));
 						SET_STRING_ELT(tmp, 0, mkChar("length"));
 						SET_STRING_ELT(tmp, 1, mkChar("data"));
 						SET_NAMES(rv_ans, tmp);
@@ -387,7 +370,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 							GDS_R_Array_Read(N_idx, NULL, NULL, NULL, 0));
 						SET_ELEMENT(rv_ans, 1,
 							VAR_LOGICAL(N, GDS_R_Array_Read(N, NULL, NULL, NULL, 0)));
-					PROTECT(tmp = NEW_CHARACTER(2));
+					SEXP tmp = PROTECT(NEW_CHARACTER(2));
 						SET_STRING_ELT(tmp, 0, mkChar("length"));
 						SET_STRING_ELT(tmp, 1, mkChar("data"));
 						SET_NAMES(rv_ans, tmp);
@@ -414,22 +397,25 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 			}
 		} else if (strncmp(s, "annotation/format/", 18) == 0)
 		{
+			Sel.Reset(Root);
+
 			GDS_PATH_PREFIX_CHECK(s);
 			PdAbstractArray N =
 				GDS_Node_Path(Root, string(string(s)+"/data").c_str(), TRUE);
 			PdAbstractArray N_idx =
 				GDS_Node_Path(Root, string(string(s)+"/@data").c_str(), TRUE);
 
+			// check
 			DimCnt = GDS_Array_DimCnt(N);
 			if ((DimCnt!=2) && (DimCnt!=3))
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 			memset(DStart, 0, sizeof(DStart));
 			GDS_Array_GetDim(N, DLen, 3);
 
-			if (Sel.Sample.empty())
-				Sel.Sample.resize(DLen[1], TRUE);
-			if (Sel.Variant.empty())
-				Sel.Variant.resize(GDS_Array_GetTotalCount(N_idx), TRUE);
+			if (Sel.Sample.size() != (size_t)DLen[1])
+				throw ErrSeqArray("Invalid dimension of '%s'.", s);
+			if (Sel.Variant.size() != (size_t)GDS_Array_GetTotalCount(N_idx))
+				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 
 			vector<int> len;
 			vector<C_BOOL> var_sel;
@@ -442,15 +428,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				SelPtr[2] = Var.NeedTRUE(DLen[2]);
 
 			PROTECT(rv_ans = NEW_LIST(2));
-				SEXP I32;
-				PROTECT(I32 = NEW_INTEGER(len.size()));
+				SEXP I32 = PROTECT(NEW_INTEGER(len.size()));
 				int *base = INTEGER(I32);
 				for (int i=0; i < (int)len.size(); i++)
 					base[i] = len[i];
 				SET_ELEMENT(rv_ans, 0, I32);
 				SEXP DAT = GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0], 0);
 				SET_ELEMENT(rv_ans, 1, DAT);
-			PROTECT(tmp = NEW_CHARACTER(2));
+			SEXP tmp = PROTECT(NEW_CHARACTER(2));
 				SET_STRING_ELT(tmp, 0, mkChar("length"));
 				SET_STRING_ELT(tmp, 1, mkChar("data"));
 				SET_NAMES(rv_ans, tmp);
@@ -548,6 +533,45 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name)
 				}
 			}
 			UNPROTECT(1);
+
+		} else if (strcmp(s, "$dosage") == 0)
+		{
+			// ===========================================================
+			// dosage data
+
+			Sel.Reset(Root);
+			int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
+
+			if (nVariant > 0)
+			{
+				// initialize GDS genotype Node
+				CVarApplyByVariant NodeVar;
+				NodeVar.InitObject(CVariable::ctDosage,
+					"genotype/data", Root, Sel.Variant.size(),
+					&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
+
+				if (use_raw)
+				{
+					rv_ans = allocMatrix(RAWSXP, NodeVar.Num_Sample, nVariant);
+					PROTECT(rv_ans);
+					C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
+					do {
+						NodeVar.ReadDosage(base);
+						base += (size_t)NodeVar.Num_Sample;
+					} while (NodeVar.NextCell());
+				} else {
+					rv_ans = allocMatrix(INTSXP, NodeVar.Num_Sample, nVariant);
+					PROTECT(rv_ans);
+					int *base = INTEGER(rv_ans);
+					do {
+						NodeVar.ReadDosage(base);
+						base += (size_t)NodeVar.Num_Sample;
+					} while (NodeVar.NextCell());
+				}
+
+				// finally
+				UNPROTECT(1);
+			}
 
 		} else {
 			throw ErrSeqArray(

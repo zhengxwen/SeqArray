@@ -5,11 +5,12 @@
     Gets data from a SeqArray GDS file.
 }
 \usage{
-seqGetData(gdsfile, var.name)
+seqGetData(gdsfile, var.name, .useraw=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{var.name}{the variable name, see details}
+    \item{.useraw}{use RAW instead of INTEGER for genotypes and dosages}
 }
 \value{
     Return vectors or lists.
@@ -27,6 +28,9 @@ associated with these variables.
 
 \code{"$chrom_pos"} returns characters with the combination of chromosome and
 position, e.g., "1_1272721".
+
+\code{"$dosage"} returns a RAW/INTEGER matrix for the dosages of reference
+allele.
 }
 
 \author{Xiuwen Zheng}
@@ -51,12 +55,16 @@ head(variant.id <- seqGetData(f, "variant.id"))
 # get 'chromosome'
 table(seqGetData(f, "chromosome"))
 
-# get '$chrom_pos'
-head(seqGetData(f, "$chrom_pos"))
-
 # get 'allele'
 head(seqGetData(f, "allele"))
 # "T,C" "G,A" "G,A" ...
+
+# get '$chrom_pos'
+head(seqGetData(f, "$chrom_pos"))
+
+# get '$dosage'
+head(seqGetData(f, "$dosage"))
+
 
 
 # set sample and variant filters

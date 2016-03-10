@@ -54,8 +54,11 @@ class COREARRAY_DLL_LOCAL TInitObject
 public:
 	struct TSelection
 	{
-		vector<C_BOOL> Sample;
-		vector<C_BOOL> Variant;
+		vector<C_BOOL> Sample;   ///< sample selection
+		vector<C_BOOL> Variant;  ///< variant selection
+
+		/// reset 'Sample' and 'Variant' to the actual numbers
+		void Reset(PdGDSFolder Root);
 	};
 
 	typedef list<TSelection> TSelList;
