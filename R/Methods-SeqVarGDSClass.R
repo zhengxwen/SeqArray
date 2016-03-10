@@ -110,7 +110,17 @@ setMethod("colData",
           "SeqVarGDSClass",
           function(x) {
               sample.id <- seqGetData(x, "sample.id")
-              DataFrame(Samples=seq_along(sample.id), row.names=sample.id)
+              node <- index.gdsn(x, "sample.annotation")
+              vars <- ls.gdsn(node)
+              if (length(vars) > 0) {
+                  annot <- lapply(vars, function(v) {
+                      seqGetData(x, paste0("sample.annotation/", v))
+                  })
+                  names(annot) <- vars
+                  DataFrame(Samples=seq_along(sample.id), annot, row.names=sample.id)
+              } else {
+                  DataFrame(Samples=seq_along(sample.id), row.names=sample.id)
+              }
           })
 
 setMethod("header",

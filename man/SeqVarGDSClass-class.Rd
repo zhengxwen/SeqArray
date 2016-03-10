@@ -68,7 +68,7 @@ to create a \code{SeqVarGDSClass} object.
 		}
 		\item{}{
 			\code{colData(x)}:
-			Returns a \code{DataFrame} with sample identifiers.
+			Returns a \code{DataFrame} with sample identifiers and any information in the 'sample.annotation' node.
 		}
 		\item{}{
 			\code{info(x, info=NULL)}:
