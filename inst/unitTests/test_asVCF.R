@@ -20,6 +20,7 @@ library(VariantAnnotation)
 }
 
 .test_colData <- function(cdv, cdg) {
+  cdg <- cdg[,1,drop=FALSE]
   checkIdentical(cdv, cdg)
 }
 

@@ -24,3 +24,22 @@ test_altAllele <- function() {
   xm <- matrix(list(1:3,1:3,4:6,4:6,7:9,7:9), nrow=2, ncol=3)
   checkIdentical(xm, .variableLengthToMatrix(x))
 }
+
+test_colData <- function() {
+  ## test with no sample annotation  
+  vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
+  gdsfile <- tempfile()
+  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+  gds <- seqOpen(gdsfile)
+  annot <- colData(gds)
+  checkTrue(ncol(annot) == 1)
+  seqClose(gds)
+  unlink(gdsfile)
+
+  ## test with annotation
+  gdsfile <- seqExampleFileName("gds")
+  gds <- seqOpen(gdsfile)
+  annot <- colData(gds)
+  checkTrue(ncol(annot) > 1)
+  seqClose(gds)
+}
