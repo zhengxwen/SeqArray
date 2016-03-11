@@ -30,21 +30,7 @@ CVarApplyByVariant::CVarApplyByVariant()
 	Node = IndexNode = NULL;
 	VariantSelect = NULL;
 	UseRaw = false;
-	ExtPtr = NULL;
 }
-
-CVarApplyByVariant::~CVarApplyByVariant()
-{
-	if (ExtPtr) free(ExtPtr);
-}
-
-void CVarApplyByVariant::NeedMemory(size_t size)
-{
-	ExtPtr = realloc(ExtPtr, size);
-	if (!ExtPtr)
-		throw ErrSeqArray("No sufficient memory in 'CVarApplyByVariant'!");
-}
-
 
 void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 	PdGDSObj Root, int nVariant, C_BOOL *VariantSel, int nSample,
@@ -112,7 +98,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			}
 
 			if (Type == ctDosage)
-				NeedMemory(sizeof(int)*CellCount);
+				ExtPtr.reset(sizeof(int)*CellCount);
 			break;
 
 		case ctPhase:
@@ -229,7 +215,7 @@ bool CVarApplyByVariant::NextCell()
 }
 
 
-void CVarApplyByVariant::ReadGenoData(int *Base)
+inline int CVarApplyByVariant::_ReadGenoData(int *Base)
 {
 	// the size of Init.GENO_BUFFER has been checked in 'Init()'
 	const ssize_t SlideCnt = ssize_t(DLen[1]) * ssize_t(DLen[2]);
@@ -258,12 +244,11 @@ void CVarApplyByVariant::ReadGenoData(int *Base)
 		missing = (missing << NumOfBits) | bit_mask;
 	}
 
-	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
-	vec_i32_replace(Base, CellCount, missing, NA_INTEGER);
+	return missing;
 }
 
 
-void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
+inline C_UInt8 CVarApplyByVariant::_ReadGenoData(C_UInt8 *Base)
 {
 	// the size of Init.GENO_BUFFER has been checked in 'Init()'
 	const ssize_t SlideCnt = ssize_t(DLen[1]) * ssize_t(DLen[2]);
@@ -310,23 +295,34 @@ void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
 		missing = (missing << NumOfBits) | bit_mask;
 	}
 
-	// CellCount = Num_Sample * DLen[2] in 'NeedRData'
+	return missing;
+}
+
+
+void CVarApplyByVariant::ReadGenoData(int *Base)
+{
+	int missing = _ReadGenoData(Base);
+	vec_i32_replace(Base, CellCount, missing, NA_INTEGER);
+}
+
+
+void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
+{
+	C_UInt8 missing = _ReadGenoData(Base);
 	vec_i8_replace((C_Int8*)Base, CellCount, missing, NA_RAW);
 }
 
 
 void CVarApplyByVariant::ReadDosage(int *Base)
 {
-	if (!ExtPtr)
-		NeedMemory(sizeof(int)*CellCount);
-	ReadGenoData((int *)ExtPtr);
+	int *p = (int *)ExtPtr.get();
+	int missing = _ReadGenoData(p);
 
 	// count the number of reference allele
-/*	if (DLen[2] == 2) // diploid
+	if (DLen[2] == 2) // diploid
 	{
-	
+		vec_i32_cnt_dosage2(p, Base, Num_Sample, 0, missing, NA_INTEGER);
 	} else {
-*/		int *p = (int *)ExtPtr;
 		for (int n=Num_Sample; n > 0; n--)
 		{
 			int cnt = 0;
@@ -336,27 +332,27 @@ void CVarApplyByVariant::ReadDosage(int *Base)
 				{
 					if (cnt != NA_INTEGER)
 						cnt ++;
-				} else if (*p == NA_INTEGER)
+				} else if (*p == missing)
 					cnt = NA_INTEGER;
 			}
 			*Base ++ = cnt;
 		}
-//	}
+	}
 }
 
 
 void CVarApplyByVariant::ReadDosage(C_UInt8 *Base)
 {
-	if (!ExtPtr)
-		NeedMemory(sizeof(int)*CellCount);
-	ReadGenoData((C_UInt8 *)ExtPtr);
+	C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
+	C_UInt8 missing = _ReadGenoData(p);
 
 	// count the number of reference allele
-/*	if (DLen[2] == 2) // diploid
+	if (DLen[2] == 2) // diploid
 	{
-	
+		vec_i8_cnt_dosage2((int8_t *)p, (int8_t *)Base, Num_Sample, 0,
+			missing, NA_RAW);
 	} else {
-*/		C_UInt8 *p = (C_UInt8 *)ExtPtr;
+		C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
 		for (int n=Num_Sample; n > 0; n--)
 		{
 			C_UInt8 cnt = 0;
@@ -366,12 +362,12 @@ void CVarApplyByVariant::ReadDosage(C_UInt8 *Base)
 				{
 					if (cnt != NA_RAW)
 						cnt ++;
-				} else if (*p == NA_RAW)
+				} else if (*p == missing)
 					cnt = NA_RAW;
 			}
 			*Base ++ = cnt;
 		}
-//	}
+	}
 }
 
 

@@ -21,6 +21,7 @@
 
 #include "Common.h"
 
+using namespace Vectorization;
 
 // ===================================================================== //
 
@@ -43,9 +44,11 @@ protected:
 	bool UseRaw;            ///< whether use RAW type
 
 	vector<C_BOOL> Selection;  ///< the buffer of selection
-	void *ExtPtr;              ///< a pointer to the additional buffer
+	AUTO_PTR ExtPtr;           ///< a pointer to the additional buffer
 
-	void NeedMemory(size_t size);  ///< allocate memory and assign it to ExtPtr
+private:
+	inline int _ReadGenoData(int *Base);
+	inline C_UInt8 _ReadGenoData(C_UInt8 *Base);
 
 public:
 	TType VarType;          ///< VCF data type
@@ -57,7 +60,6 @@ public:
 	C_Int32 CurIndex;       ///< the index of variant, starting from ZERO
 
 	CVarApplyByVariant();
-	virtual ~CVarApplyByVariant();
 
 	void InitObject(TType Type, const char *Path, PdGDSObj Root,
 		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,

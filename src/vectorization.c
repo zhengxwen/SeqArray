@@ -4,19 +4,19 @@
 //
 // Copyright (C) 2016    Xiuwen Zheng
 //
-// This file is part of CoreArray.
+// This file is part of SeqArray.
 //
-// CoreArray is free software: you can redistribute it and/or modify it
-// under the terms of the GNU Lesser General Public License Version 3 as
+// SeqArray is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 3 as
 // published by the Free Software Foundation.
 //
-// CoreArray is distributed in the hope that it will be useful, but
+// SeqArray is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with CoreArray.
+// You should have received a copy of the GNU General Public
+// License along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
@@ -31,13 +31,21 @@
 #include "vectorization.h"
 
 
+#ifdef __SSE3__
+#   define MM_LOADU_128    _mm_lddqu_si128
+#else
+#   define MM_LOADU_128    _mm_loadu_si128
+#endif
+
+#define MM_LOADU_256    _mm256_loadu_si256
+
 
 /// get the number of non-zero
 size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 {
 	size_t ans = 0;
 
-#ifdef COREARRAY_SIMD_SSE2
+#ifdef __SSE2__
 
 	const __m128i ZERO = { 0LL, 0LL };
 	const __m128i ONES = { 0x0101010101010101LL, 0x0101010101010101LL };
@@ -48,7 +56,7 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 	for (; (n > 0) && (h > 0); n--, h--)
 		ans += (*p++) ? 1 : 0;
 
-#   ifdef COREARRAY_SIMD_AVX2
+#   ifdef __AVX2__
 
 	// header 2, 32-byte aligned
 	if ((n >= 16) && ((size_t)p & 0x10))
@@ -195,7 +203,7 @@ size_t vec_i8_count(int8_t *p, size_t n, int8_t val)
 
 void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 {
-#ifdef COREARRAY_SIMD_SSE2
+#ifdef __SSE2__
 
 	// header 1, 16-byte aligned
 	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
@@ -206,7 +214,7 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 	const __m128i mask = _mm_set1_epi8(val);
 	const __m128i sub  = _mm_set1_epi8(substitute);
 
-#   ifdef COREARRAY_SIMD_AVX2
+#   ifdef __AVX2__
 
 	// header 2, 32-byte aligned
 	if ((n >= 16) && ((size_t)p & 0x10))
@@ -232,7 +240,8 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 		__m256i c = _mm256_cmpeq_epi8(v, mask2);
 		if (_mm256_movemask_epi8(c))
 		{
-			_mm256_stream_si256((__m256i *)p,
+			// TODO
+			_mm256_store_si256((__m256i *)p,
 				_mm256_or_si256(_mm256_and_si256(c, sub32),
 				_mm256_andnot_si256(c, v)));
 		}
@@ -245,10 +254,7 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c = _mm_cmpeq_epi8(v, mask);
 		if (_mm_movemask_epi8(c))
-		{
-			_mm_store_si128((__m128i *)p,
-				_mm_or_si128(_mm_and_si128(c, sub), _mm_andnot_si128(c, v)));
-		}
+			_mm_maskmoveu_si128(sub, c, (char*)p);
 	}
 
 #endif
@@ -259,12 +265,148 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 }
 
 
+void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
+	int8_t missing, int8_t missing_substitute)
+{
+#ifdef __SSSE3__
+// __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = (16 - ((size_t)out & 0x0F)) & 0x0F;
+	for (; (n > 0) && (h > 0); n--, h--, p+=2)
+	{
+		*out ++ = ((p[0] == missing) || (p[1] == missing)) ?
+			missing_substitute :
+			(p[0]==val ? 1 : 0) + (p[1]==val ? 1 : 0);
+	}
+
+	// body, SSE2
+	const __m128i val16  = _mm_set1_epi8(val);
+	const __m128i miss16 = _mm_set1_epi8(missing);
+	const __m128i sub16  = _mm_set1_epi8(missing_substitute);
+
+	const __m128i shuffle1 = _mm_set_epi8(
+		0, 0, 0, 0, 0, 0, 0, 0,    14, 12, 10, 8, 6, 4, 2, 0);
+	const __m128i shuffle2 = _mm_set_epi8(
+		0, 0, 0, 0, 0, 0, 0, 0,    15, 13, 11, 9, 7, 5, 3, 1);
+
+#   ifdef __AVX2__
+
+	// header 2, 32-byte aligned
+	if ((n >= 16) && ((size_t)out & 0x10))
+	{
+		__m128i v, w;
+
+		v = MM_LOADU_128((__m128i const*)p); p += 16;
+		__m128i v1 = _mm_shuffle_epi8(v, shuffle1);
+		__m128i v2 = _mm_shuffle_epi8(v, shuffle2);
+
+		v = MM_LOADU_128((__m128i const*)p); p += 16;
+		__m128i w1 = _mm_shuffle_epi8(v, shuffle1);
+		__m128i w2 = _mm_shuffle_epi8(v, shuffle2);
+
+		v1 = _mm_unpacklo_epi64(v1, w1);
+		v2 = _mm_unpacklo_epi64(v2, w2);
+
+		__m128i c = _mm_setzero_si128();
+		c = _mm_sub_epi8(c, _mm_cmpeq_epi8(v1, val16));
+		c = _mm_sub_epi8(c, _mm_cmpeq_epi8(v2, val16));
+
+		w1 = _mm_cmpeq_epi8(v1, miss16);
+		w2 = _mm_cmpeq_epi8(v2, miss16);
+		w  = _mm_or_si128(w1, w2);
+		c = _mm_or_si128(_mm_and_si128(w, sub16), _mm_andnot_si128(w, c));
+
+		_mm_store_si128((__m128i *)out, c);
+		n -= 16; out += 16;
+	}
+
+	const __m256i val32  = _mm256_set1_epi8(val);
+	const __m256i miss32 = _mm256_set1_epi8(missing);
+	const __m256i sub32  = _mm256_set1_epi8(missing_substitute);
+
+	const __m256i shuffle3 = _mm256_inserti128_si256(
+		_mm256_castsi128_si256(shuffle1), shuffle1, 1); // = { shuffle1, shuffle1 }
+	const __m256i shuffle4 = _mm256_inserti128_si256(
+		_mm256_castsi128_si256(shuffle2), shuffle2, 1); // = { shuffle2, shuffle2 }
+
+	for (; n >= 32; n-=32)
+	{
+		__m256i v, w;
+
+		v = MM_LOADU_256((__m256i const*)p); p += 32;
+		__m256i v1 = _mm256_shuffle_epi8(v, shuffle3);
+		__m256i v2 = _mm256_shuffle_epi8(v, shuffle4);
+
+		v = MM_LOADU_256((__m256i const*)p); p += 32;
+		__m256i w1 = _mm256_shuffle_epi8(v, shuffle3);
+		__m256i w2 = _mm256_shuffle_epi8(v, shuffle4);
+
+		v1 = _mm256_blend_epi32(v1, _mm256_slli_si256(w1, 8), 0xCC);
+		v2 = _mm256_blend_epi32(v2, _mm256_slli_si256(w2, 8), 0xCC);
+
+		__m256i c = _mm256_setzero_si256();
+		c = _mm256_sub_epi8(c, _mm256_cmpeq_epi8(v1, val32));
+		c = _mm256_sub_epi8(c, _mm256_cmpeq_epi8(v2, val32));
+
+		w1 = _mm256_cmpeq_epi8(v1, miss32);
+		w2 = _mm256_cmpeq_epi8(v2, miss32);
+		w  = _mm256_or_si256(w1, w2);
+		c = _mm256_or_si256(_mm256_and_si256(w, sub32), _mm256_andnot_si256(w, c));
+
+		c = _mm256_permute4x64_epi64(c, 0xD8);
+		_mm256_store_si256((__m256i *)out, c);
+		out += 32;
+	}
+
+#   endif
+
+	for (; n >= 16; n-=16)
+	{
+		__m128i v, w;
+
+		v = MM_LOADU_128((__m128i const*)p); p += 16;
+		__m128i v1 = _mm_shuffle_epi8(v, shuffle1);
+		__m128i v2 = _mm_shuffle_epi8(v, shuffle2);
+
+		v = MM_LOADU_128((__m128i const*)p); p += 16;
+		__m128i w1 = _mm_shuffle_epi8(v, shuffle1);
+		__m128i w2 = _mm_shuffle_epi8(v, shuffle2);
+
+		v1 = _mm_unpacklo_epi64(v1, w1);
+		v2 = _mm_unpacklo_epi64(v2, w2);
+
+		__m128i c = _mm_setzero_si128();
+		c = _mm_sub_epi8(c, _mm_cmpeq_epi8(v1, val16));
+		c = _mm_sub_epi8(c, _mm_cmpeq_epi8(v2, val16));
+
+		w1 = _mm_cmpeq_epi8(v1, miss16);
+		w2 = _mm_cmpeq_epi8(v2, miss16);
+		w  = _mm_or_si128(w1, w2);
+		c = _mm_or_si128(_mm_and_si128(w, sub16), _mm_andnot_si128(w, c));
+
+		_mm_store_si128((__m128i *)out, c);
+		out += 16;
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--, p+=2)
+	{
+		*out ++ = ((p[0] == missing) || (p[1] == missing)) ?
+			missing_substitute :
+			(p[0]==val ? 1 : 0) + (p[1]==val ? 1 : 0);
+	}
+}
+
+
 
 // ===========================================================
 // functions for int32
 // ===========================================================
 
-size_t vec_i32_count(int32_t *p, size_t n, int32_t val)
+size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 {
 	size_t ans = 0;
 
@@ -281,7 +423,7 @@ size_t vec_i32_count(int32_t *p, size_t n, int32_t val)
 	}
 #endif
 
-#ifdef COREARRAY_SIMD_SSE2
+#ifdef __SSE2__
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
@@ -292,7 +434,7 @@ size_t vec_i32_count(int32_t *p, size_t n, int32_t val)
 	const __m128i mask = _mm_set1_epi32(val);
 	__m128i sum = _mm_setzero_si128();
 
-#   ifdef COREARRAY_SIMD_AVX2
+#   ifdef __AVX2__
 
 	// header 2, 32-byte aligned
 	if ((n >= 4) && ((size_t)p & 0x10))
@@ -337,7 +479,7 @@ size_t vec_i32_count(int32_t *p, size_t n, int32_t val)
 }
 
 
-void vec_i32_count2(int32_t *p, size_t n, int32_t val1, int32_t val2,
+void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	size_t *out_n1, size_t *out_n2)
 {
 	size_t n1 = 0, n2 = 0;
@@ -359,7 +501,7 @@ void vec_i32_count2(int32_t *p, size_t n, int32_t val1, int32_t val2,
 	}
 #endif
 
-#ifdef COREARRAY_SIMD_SSE2
+#ifdef __SSE2__
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
@@ -376,7 +518,7 @@ void vec_i32_count2(int32_t *p, size_t n, int32_t val1, int32_t val2,
 	__m128i sum1, sum2;
 	sum1 = sum2 = _mm_setzero_si128();
 
-#   ifdef COREARRAY_SIMD_AVX2
+#   ifdef __AVX2__
 
 	// header 2, 32-byte aligned
 	if ((n >= 4) && ((size_t)p & 0x10))
@@ -450,7 +592,7 @@ void vec_int32_set(int32_t *p, size_t n, int32_t val)
 
 void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 {
-#ifdef COREARRAY_SIMD_SSE2
+#ifdef __SSE2__
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
@@ -461,7 +603,7 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 	const __m128i mask = _mm_set1_epi32(val);
 	const __m128i sub4 = _mm_set1_epi32(substitute);
 
-#   ifdef COREARRAY_SIMD_AVX2
+#   ifdef __AVX2__
 
 	// header 2, 32-byte aligned
 	if ((n >= 4) && ((size_t)p & 0x10))
@@ -491,10 +633,7 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c = _mm_cmpeq_epi32(v, mask);
 		if (_mm_movemask_epi8(c))
-		{
-			_mm_store_si128((__m128i *)p,
-				_mm_or_si128(_mm_and_si128(c, sub4), _mm_andnot_si128(c, v)));
-		}
+			_mm_maskmoveu_si128(sub4, c, (char*)p);
 	}
 
 #endif
@@ -502,4 +641,131 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 	// tail
 	for (; n > 0; n--, p++)
 		if (*p == val) *p = substitute;
+}
+
+
+void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
+	int32_t missing, int32_t missing_substitute)
+{
+#ifdef __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)out & 0x0F)) & 0x0F) >> 2;
+	for (; (n > 0) && (h > 0); n--, h--, p+=2)
+	{
+		*out ++ = ((p[0] == missing) || (p[1] == missing)) ?
+			missing_substitute :
+			(p[0]==val ? 1 : 0) + (p[1]==val ? 1 : 0);
+	}
+
+	// body, SSE2
+	const __m128i val4  = _mm_set1_epi32(val);
+	const __m128i miss4 = _mm_set1_epi32(missing);
+	const __m128i sub4  = _mm_set1_epi32(missing_substitute);
+
+#   ifdef __AVX2__
+
+	// header 2, 32-byte aligned
+	if ((n >= 4) && ((size_t)out & 0x10))
+	{
+		__m128i v, w;
+
+		v = MM_LOADU_128((__m128i const*)p); p += 4;
+		__m128i v1 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,2,0));
+		__m128i v2 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,3,1));
+
+		v = MM_LOADU_128((__m128i const*)p); p += 4;
+		__m128i w1 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,2,0));
+		__m128i w2 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,3,1));
+
+		v1 = _mm_unpacklo_epi64(v1, w1);
+		v2 = _mm_unpacklo_epi64(v2, w2);
+
+		__m128i c = _mm_setzero_si128();
+		c = _mm_sub_epi32(c, _mm_cmpeq_epi32(v1, val4));
+		c = _mm_sub_epi32(c, _mm_cmpeq_epi32(v2, val4));
+
+		w1 = _mm_cmpeq_epi32(v1, miss4);
+		w2 = _mm_cmpeq_epi32(v2, miss4);
+		w  = _mm_or_si128(w1, w2);
+		c = _mm_or_si128(_mm_and_si128(w, sub4), _mm_andnot_si128(w, c));
+
+		_mm_store_si128((__m128i *)out, c);
+		n -= 4; out += 4;
+	}
+
+	const __m256i val8  = _mm256_set1_epi32(val);
+	const __m256i miss8 = _mm256_set1_epi32(missing);
+	const __m256i sub8  = _mm256_set1_epi32(missing_substitute);
+
+	const __m256i shuffle1 = _mm256_set_epi32(0, 0, 0, 0, 6, 4, 2, 0);
+	const __m256i shuffle2 = _mm256_set_epi32(0, 0, 0, 0, 7, 5, 3, 1);
+
+	for (; n >= 8; n-=8)
+	{
+		__m256i v, w;
+
+		v = MM_LOADU_256((__m256i const*)p); p += 8;
+		__m256i v1 = _mm256_permutevar8x32_epi32(v, shuffle1);
+		__m256i v2 = _mm256_permutevar8x32_epi32(v, shuffle2);
+
+		v = MM_LOADU_256((__m256i const*)p); p += 8;
+		__m256i w1 = _mm256_permutevar8x32_epi32(v, shuffle1);
+		__m256i w2 = _mm256_permutevar8x32_epi32(v, shuffle2);
+
+		v1 = _mm256_permute2f128_si256(v1, w1, 0x20);
+		v2 = _mm256_permute2f128_si256(v2, w2, 0x20);
+
+		__m256i c = _mm256_setzero_si256();
+		c = _mm256_sub_epi32(c, _mm256_cmpeq_epi32(v1, val8));
+		c = _mm256_sub_epi32(c, _mm256_cmpeq_epi32(v2, val8));
+
+		w1 = _mm256_cmpeq_epi32(v1, miss8);
+		w2 = _mm256_cmpeq_epi32(v2, miss8);
+		w  = _mm256_or_si256(w1, w2);
+		c = _mm256_or_si256(_mm256_and_si256(w, sub8), _mm256_andnot_si256(w, c));
+
+		_mm256_store_si256((__m256i *)out, c);
+		out += 8;
+	}
+
+#   endif
+
+	for (; n >= 4; n-=4)
+	{
+		__m128i v, w;
+
+		v = MM_LOADU_128((__m128i const*)p); p += 4;
+		__m128i v1 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,2,0));
+		__m128i v2 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,3,1));
+
+		v = MM_LOADU_128((__m128i const*)p); p += 4;
+		__m128i w1 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,2,0));
+		__m128i w2 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,3,1));
+
+		v1 = _mm_unpacklo_epi64(v1, w1);
+		v2 = _mm_unpacklo_epi64(v2, w2);
+
+		__m128i c = _mm_setzero_si128();
+		c = _mm_sub_epi32(c, _mm_cmpeq_epi32(v1, val4));
+		c = _mm_sub_epi32(c, _mm_cmpeq_epi32(v2, val4));
+
+		w1 = _mm_cmpeq_epi32(v1, miss4);
+		w2 = _mm_cmpeq_epi32(v2, miss4);
+		w  = _mm_or_si128(w1, w2);
+		c = _mm_or_si128(_mm_and_si128(w, sub4), _mm_andnot_si128(w, c));
+
+		_mm_store_si128((__m128i *)out, c);
+		out += 4;
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--, p+=2)
+	{
+		*out ++ = ((p[0] == missing) || (p[1] == missing)) ?
+			missing_substitute :
+			(p[0]==val ? 1 : 0) + (p[1]==val ? 1 : 0);
+	}
 }
