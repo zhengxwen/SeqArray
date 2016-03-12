@@ -86,9 +86,10 @@ setMethod("seqClose", signature(object="SeqVarGDSClass"),
 # Set a working space with selected samples and variants
 #
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
-    function(object, sample.id=NULL, variant.id=NULL, samp.sel=NULL, sample.sel=NULL,
-        variant.sel=NULL, action=c("set", "intersect", "push", "push+set",
-        "push+intersect", "pop"), verbose=TRUE)
+    function(object, sample.id=NULL, variant.id=NULL, samp.sel=NULL,
+        sample.sel=NULL, variant.sel=NULL,
+        action=c("set", "intersect", "push", "push+set", "push+intersect",
+        "pop"), verbose=TRUE)
     {
         # check
         action <- match.arg(action)

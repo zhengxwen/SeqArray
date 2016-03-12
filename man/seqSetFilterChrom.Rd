@@ -12,7 +12,8 @@ seqSetFilterChrom(gdsfile, include=NULL, is.num=NA, from.bp=NaN, to.bp=NaN,
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{include}{NULL, or character for specified chromosome(s)}
     \item{is.num}{a logical variable: \code{TRUE}, chromosome code is numeric;
-        \code{FALSE}, chromosome is not numeric}
+        \code{FALSE}, chromosome is not numeric; \code{is.num=TRUE} is usually
+        used to exclude non-autosomes}
     \item{from.bp}{numeric, the lower bound of position}
     \item{to.bp}{numeric, the upper bound of position}
     \item{verbose}{if \code{TRUE}, show information}
