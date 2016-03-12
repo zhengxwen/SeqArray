@@ -68,10 +68,11 @@ TInitObject::TSelection &TInitObject::Selection(SEXP gdsfile, bool alloc)
 		throw ErrSeqArray("Invalid gds object.");
 
 	int id = Rf_asInteger(ID);
-	TSelList &m = _Map[id];
-	if (m.empty()) m.push_back(TSelection());
+	TFileInfo &info = _Map[id];
+	if (info.SelList.empty())
+		info.SelList.push_back(TSelection());
 
-	TSelection &s = m.back();
+	TSelection &s = info.SelList.back();
 	if (alloc && (s.Sample.empty() | s.Variant.empty()))
 	{
 		// the GDS root node
@@ -238,9 +239,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_File_Init(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP SEQ_File_Done(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int gds_file_id = Rf_asInteger(GetListElement(gdsfile, "id"));
-		map<int, TInitObject::TSelList>::iterator it =
-			Init._Map.find(gds_file_id);
+		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
+		map<int, TInitObject::TFileInfo>::iterator it = Init._Map.find(id);
 		if (it != Init._Map.end())
 			Init._Map.erase(it);
 	COREARRAY_CATCH
@@ -257,11 +257,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushEmpty(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
-		map<int, TInitObject::TSelList>::iterator it =
+		map<int, TInitObject::TFileInfo>::iterator it =
 			Init._Map.find(id);
 		if (it != Init._Map.end())
 		{
-			it->second.push_back(TInitObject::TSelection());
+			it->second.SelList.push_back(TInitObject::TSelection());
 		} else
 			throw ErrSeqArray("The GDS file is closed or invalid.");
 	COREARRAY_CATCH
@@ -273,14 +273,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushLast(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
-		map<int, TInitObject::TSelList>::iterator it =
+		map<int, TInitObject::TFileInfo>::iterator it =
 			Init._Map.find(id);
 		if (it != Init._Map.end())
 		{
-			if (!it->second.empty())
-				it->second.push_back(it->second.back());
+			if (!it->second.SelList.empty())
+				it->second.SelList.push_back(it->second.SelList.back());
 			else
-				it->second.push_back(TInitObject::TSelection());
+				it->second.SelList.push_back(TInitObject::TSelection());
 		} else
 			throw ErrSeqArray("The GDS file is closed or invalid.");
 	COREARRAY_CATCH
@@ -292,13 +292,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPop(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
-		map<int, TInitObject::TSelList>::iterator it =
+		map<int, TInitObject::TFileInfo>::iterator it =
 			Init._Map.find(id);
 		if (it != Init._Map.end())
 		{
-			if (it->second.size() <= 1)
+			if (it->second.SelList.size() <= 1)
 				throw ErrSeqArray("No filter can be pop up.");
-			it->second.pop_back();
+			it->second.SelList.pop_back();
 		} else
 			throw ErrSeqArray("The GDS file is closed or invalid.");
 	COREARRAY_CATCH
@@ -1165,31 +1165,35 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 
 		// compiler flags
 		vector<string> ss;
-	#ifdef COREARRAY_SIMD_SSE
+
+	#ifdef __SSE__
 		ss.push_back("SSE");
 	#endif
-	#ifdef COREARRAY_SIMD_SSE2
+	#ifdef __SSE2__
 		ss.push_back("SSE2");
 	#endif
-	#ifdef COREARRAY_SIMD_SSE3
+	#ifdef __SSE3__
 		ss.push_back("SSE3");
 	#endif
-	#ifdef COREARRAY_SIMD_SSE4_1
+	#ifdef __SSSE3__
+		ss.push_back("SSSE3");
+	#endif
+	#ifdef __SSE4_1__
 		ss.push_back("SSE4.1");
 	#endif
-	#ifdef COREARRAY_SIMD_SSE4_2
+	#ifdef __SSE4_2__
 		ss.push_back("SSE4.2");
 	#endif
-	#ifdef COREARRAY_SIMD_AVX
+	#ifdef __AVX__
 		ss.push_back("AVX");
 	#endif
-	#ifdef COREARRAY_SIMD_AVX2
+	#ifdef __AVX2__
 		ss.push_back("AVX2");
 	#endif
-	#ifdef COREARRAY_SIMD_FMA
+	#ifdef __FMA__
 		ss.push_back("FMA");
 	#endif
-	#ifdef COREARRAY_SIMD_FMA4
+	#ifdef __FMA4__
 		ss.push_back("FMA4");
 	#endif
 		SEXP SIMD = PROTECT(NEW_CHARACTER(ss.size()));

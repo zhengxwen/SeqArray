@@ -61,9 +61,15 @@ public:
 		void Reset(PdGDSFolder Root);
 	};
 
-	typedef list<TSelection> TSelList;
+	struct TFileInfo
+	{
+		list<TSelection> SelList;  ///< a list of sample and variant selections
+	};
 
+	/// constructor
 	TInitObject();
+
+	/// get the associated selection
 	TSelection &Selection(SEXP gds, bool alloc=false);
 
 	/// a vector of TRUE
@@ -74,7 +80,7 @@ public:
 	/// allocator buffer according to size at least
 	void Need_GenoBuffer(size_t size);
 
-	map<int, TSelList> _Map;
+	map<int, TFileInfo> _Map;
 };
 
 extern TInitObject Init;
