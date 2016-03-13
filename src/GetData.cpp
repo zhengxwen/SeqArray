@@ -210,7 +210,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 			if (!Sel.Sample.empty() || !Sel.Variant.empty())
 			{
-				Sel.Reset(Root);
+				Sel.Reset();
 
 				// check
 				GDS_Array_GetDim(N, DLen, 3);
@@ -236,7 +236,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			// ===========================================================
 			// genotypic data
 
-			Sel.Reset(Root);
+			Sel.Reset();
 			int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
 
 			if (nVariant > 0)
@@ -397,7 +397,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			}
 		} else if (strncmp(s, "annotation/format/", 18) == 0)
 		{
-			Sel.Reset(Root);
+			Sel.Reset();
 
 			GDS_PATH_PREFIX_CHECK(s);
 			PdAbstractArray N =
@@ -539,7 +539,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			// ===========================================================
 			// dosage data
 
-			Sel.Reset(Root);
+			Sel.Reset();
 			int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
 
 			if (nVariant > 0)

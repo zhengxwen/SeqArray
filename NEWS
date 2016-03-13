@@ -27,6 +27,8 @@ CHANGES IN VERSION 1.11.0-1.11.15
     o allow "$dosage" in `seqGetData()` and `seqApply()` for the dosages of
       reference allele
 
+    o accelerate `seqSetFilterChrom()` and allow multiple region selections
+
 
 CHANGES IN VERSION 1.10.0-1.10.6
 -------------------------

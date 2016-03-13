@@ -33,10 +33,13 @@
 
 #include <cctype>
 #include <cstring>
+
+#include "Index.h"
 #include "vectorization.h"
 
 using namespace std;
 using namespace CoreArray;
+using namespace SeqArray;
 
 
 #define LongBool int
@@ -52,18 +55,28 @@ using namespace CoreArray;
 class COREARRAY_DLL_LOCAL TInitObject
 {
 public:
+	struct TFileInfo;
+
 	struct TSelection
 	{
+		TFileInfo *FileInfo;
 		vector<C_BOOL> Sample;   ///< sample selection
 		vector<C_BOOL> Variant;  ///< variant selection
 
+		/// constructor
+		TSelection(TFileInfo &info) { FileInfo = &info; }
 		/// reset 'Sample' and 'Variant' to the actual numbers
-		void Reset(PdGDSFolder Root);
+		void Reset();
 	};
 
 	struct TFileInfo
 	{
+		PdGDSFolder Root;  ///< the root of gds file
 		list<TSelection> SelList;  ///< a list of sample and variant selections
+		CChromIndex Chrom;  ///< chromosome indexing
+
+		/// check if Chrom is initialized
+		void NeedChrom();
 	};
 
 	/// constructor
@@ -124,23 +137,6 @@ private:
 
 
 // ===========================================================
-// Define Exception
-// ===========================================================
-
-class ErrSeqArray: public ErrCoreArray
-{
-public:
-	ErrSeqArray(): ErrCoreArray()
-		{ }
-	ErrSeqArray(const char *fmt, ...): ErrCoreArray()
-		{ _COREARRAY_ERRMACRO_(fmt); }
-	ErrSeqArray(const std::string &msg): ErrCoreArray()
-		{ fMessage = msg; }
-};
-
-
-
-// ===========================================================
 // Library Functions
 // ===========================================================
 
@@ -173,7 +169,7 @@ COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out);
 // ===========================================================
 
 /// get the list element named str, or return NULL
-inline static size_t GetLength(SEXP val)
+inline static size_t RLength(SEXP val)
 {
 	return (!Rf_isNull(val)) ? XLENGTH(val) : 0;
 }
