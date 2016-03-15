@@ -6,10 +6,9 @@
 }
 \usage{
 seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
-    genotype.storage=c("bit2", "bit4", "bit8"), storage.option="ZIP_RA.default",
-    info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
-    reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
-    digest=TRUE, verbose=TRUE)
+    storage.option="ZIP_RA.default", info.import=NULL, fmt.import=NULL,
+    ignore.chr.prefix="chr", reference=NULL, start=1L, count=-1L,
+    optimize=TRUE, raise.error=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -18,9 +17,6 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
         \code{\link{seqVCF_Header}(vcf.fn)}}
     \item{genotype.var.name}{the ID for genotypic data in the FORMAT column;
         "GT" by default, VCFv4.0}
-    \item{genotype.storage}{"bit2" by default; with respect to the compression
-        size and access speed, "bit2" is the most efficient when most of
-        variants are biallelic.}
     \item{storage.option}{specify the storage and compression options,
         by default \code{\link{seqStorageOption}("ZIP_RA.default")}}
     \item{info.import}{characters, the variable name(s) in the INFO field

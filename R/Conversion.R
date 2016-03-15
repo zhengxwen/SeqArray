@@ -383,8 +383,7 @@ seqVCF_SampID <- function(vcf.fn)
 #
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
-    genotype.var.name="GT", genotype.storage=c("bit2", "bit4", "bit8"),
-    storage.option="ZIP_RA.default",
+    genotype.var.name="GT", storage.option="ZIP_RA.default",
     info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, verbose=TRUE)
@@ -401,7 +400,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     stopifnot(is.character(genotype.var.name), length(genotype.var.name)==1L)
     stopifnot(!is.na(genotype.var.name))
-    genotype.storage <- match.arg(genotype.storage)
 
     stopifnot(is.null(info.import) | is.character(info.import))
     stopifnot(is.null(fmt.import) | is.character(fmt.import))
@@ -417,6 +415,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose) cat(date(), "\n", sep="")
+    genotype.storage <- "bit2"
 
     # check sample id
     samp.id <- NULL
