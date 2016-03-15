@@ -837,11 +837,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 
 		} else {
 			// include != NULL
-			string last(128, '\x0');
-			vector<C_Int32> buffer;
 			PdAbstractArray varPos = NULL;
 			if (pFrom && pTo)
 				varPos = GDS_Node_Path(Sel.FileInfo->Root, "position", TRUE);
+
+			CChromIndex &Chrom = Sel.FileInfo->Chrom;
+			map<string, CRangeSet> RngSets;
 
 			R_xlen_t n = XLENGTH(include);
 			for (R_xlen_t idx=0; idx < n; idx++)
@@ -856,45 +857,51 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 					if (is_numeric(s)) continue;
 				}
 
-				CChromIndex &Chrom = Sel.FileInfo->Chrom;
 				map<string, CChromIndex::TRangeList>::iterator it =
 					Chrom.Map.find(s);
 				if (it != Chrom.Map.end())
 				{
-					CChromIndex::TRangeList &rng = it->second;
-
-					// if from.bp and to.bp
 					if (varPos)
 					{
+						// if from.bp and to.bp
 						int from = pFrom[idx], to = pTo[idx];
 						if (from == NA_INTEGER) from = 0;
 						if (to == NA_INTEGER) to = 2147483647;
-						if (s != last)
-						{
-							buffer.resize(Chrom.RangeTotalLength(rng));
-							Chrom.ReadData(varPos, rng, &buffer[0], svInt32);
-							last = s;
-						}
-
-						int *pos = &buffer[0];
-						vector<CChromIndex::TRange>::iterator it;
-						for (it=rng.begin(); it != rng.end(); it++)
-						{
-							C_BOOL *p = &array[it->Start];
-							for (size_t m=it->Length; m > 0; m--)
-							{
-								if ((from <= *pos) && (*pos <= to))
-									*p = TRUE;
-								p ++; pos ++;
-							}
-						}
-
+						RngSets[s].AddRange(from, to);
 					} else {
 						// no from.bp and to.bp
-						vector<CChromIndex::TRange>::iterator it;
-						for (it=rng.begin(); it != rng.end(); it++)
+						CChromIndex::TRangeList &rng = it->second;
+						vector<CChromIndex::TRange>::iterator p;
+						for (p=rng.begin(); p != rng.end(); p++)
 						{
-							memset(&array[it->Start], TRUE, it->Length);
+							memset(&array[p->Start], TRUE, p->Length);
+						}
+					}
+				}
+			}
+
+			if (varPos)
+			{
+				vector<C_Int32> buf;
+				map<string, CRangeSet>::iterator it;
+				for (it=RngSets.begin(); it != RngSets.end(); it++)
+				{
+					CChromIndex::TRangeList &rng = Chrom.Map[it->first];
+					CRangeSet &RngSet = it->second;
+					vector<CChromIndex::TRange>::const_iterator p;
+					for (p=rng.begin(); p != rng.end(); p++)
+					{
+						C_Int32 st  = p->Start;
+						C_Int32 cnt = p->Length;
+						buf.resize(cnt);
+						GDS_Array_ReadData(varPos, &st, &cnt, &buf[0], svInt32);
+
+						size_t i = p->Start;
+						for (int *s=&buf[0]; cnt > 0; cnt--)
+						{
+							if (RngSet.IsIncluded(*s++))
+								array[i] = TRUE;
+							i ++;
 						}
 					}
 				}

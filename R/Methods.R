@@ -85,12 +85,14 @@ setMethod("seqClose", signature(object="SeqVarGDSClass"),
 #######################################################################
 # Set a working space with selected samples and variants
 #
-setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
-    function(object, sample.id=NULL, variant.id=NULL, samp.sel=NULL,
-        sample.sel=NULL, variant.sel=NULL,
+setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
+    function(object, variant.sel, sample.sel=NULL, variant.id=NULL,
+        sample.id=NULL, samp.sel=NULL,
         action=c("set", "intersect", "push", "push+set", "push+intersect",
         "pop"), verbose=TRUE)
     {
+        if (missing(variant.sel)) variant.sel <- NULL
+
         # check
         action <- match.arg(action)
         stopifnot(is.logical(verbose))
@@ -168,6 +170,32 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass"),
         invisible()
     }
 )
+
+setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
+    variant.sel="GRanges"),
+    function(object, variant.sel, rm.txt="chr", verbose=TRUE)
+    {
+        z <- seqnames(variant.sel)
+        levels(z) <- sub(rm.txt, "", levels(z))
+
+        seqSetFilterChrom(object,
+            include = as.character(z),
+            from.bp = BiocGenerics::start(variant.sel),
+            to.bp   = BiocGenerics::end(variant.sel),
+            verbose = verbose)
+        invisible()
+    }
+)
+
+setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
+    variant.sel="GRangesList"),
+    function(object, variant.sel, rm.txt="chr", verbose=TRUE)
+    {
+        seqSetFilter(object, unlist(variant.sel), rm.txt, verbose)
+        invisible()
+    }
+)
+
 
 
 

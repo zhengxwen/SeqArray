@@ -1,29 +1,36 @@
 \name{seqSetFilter-methods}
 \alias{seqSetFilter}
-\alias{seqSetFilter,SeqVarGDSClass-method}
+\alias{seqSetFilter,SeqVarGDSClass,ANY-method}
+\alias{seqSetFilter,SeqVarGDSClass,GRanges-method}
+\alias{seqSetFilter,SeqVarGDSClass,GRangesList-method}
 \alias{seqResetFilter}
 \title{Set a Filter to Sample or Variant}
 \description{
     Sets a filter to sample and/or variant.
 }
 \usage{
-\S4method{seqSetFilter}{SeqVarGDSClass}(object,
-    sample.id=NULL, variant.id=NULL, samp.sel=NULL, sample.sel=NULL, variant.sel=NULL,
+\S4method{seqSetFilter}{SeqVarGDSClass,ANY}(object, variant.sel,
+    sample.sel=NULL, variant.id=NULL, sample.id=NULL, samp.sel=NULL,
     action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
     verbose=TRUE)
-
+\S4method{seqSetFilter}{SeqVarGDSClass,GRanges}(object, variant.sel,
+    rm.txt="chr", verbose=TRUE)
+\S4method{seqSetFilter}{SeqVarGDSClass,GRangesList}(object, variant.sel,
+    rm.txt="chr", verbose=TRUE)
 seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
-    \item{sample.id}{IDs of selected samples}
-    \item{variant.id}{IDs of selected variants}
-    \item{samp.sel}{it is deprecated since v1.11.12, please use
-        \code{sample.sel} instead}
+    \item{variant.sel}{a logical/raw/index vector indicating the selected
+        variants; \code{\link{GRanges}}, a GRanges object for the genomic
+        locations; \code{\link{GRangesList}}, a GRangesList object for storing
+        a collection of GRanges objects}
     \item{sample.sel}{a logical/raw/index vector indicating the selected
         samples}
-    \item{variant.sel}{a logical/raw/index vector indicating the selected
-        variants}
+    \item{variant.id}{ID of selected variants}
+    \item{sample.id}{ID of selected samples}
+    \item{samp.sel}{it is deprecated since v1.11.12, please use
+        \code{sample.sel} instead}
     \item{action}{\code{"set"} -- set the current filter via \code{sample.id},
             \code{variant.id}, \code{samp.sel} or \code{variant.sel};
         \code{"intersect"} -- set the current filter to the intersection of
@@ -38,6 +45,8 @@ seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
             set the current filter to the intersection of selected samples
             and/or variants;
         \code{"pop"} -- pop up the last filter}
+    \item{rm.txt}{a character, the characters will be removed from
+        \code{seqnames(variant.sel)}}
     \item{sample}{logical, if \code{TRUE}, include all samples}
     \item{variant}{logical, if \code{TRUE}, include all variants}
     \item{verbose}{if \code{TRUE}, show information}
@@ -52,7 +61,7 @@ where the selection arguments in \code{seqSetFilter} are \code{NULL}.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqGetFilter}}, \code{\link{seqSetFilterChrom}},
+    \code{\link{seqSetFilterChrom}}, \code{\link{seqGetFilter}},
     \code{\link{seqGetData}}, \code{\link{seqApply}}
 }
 

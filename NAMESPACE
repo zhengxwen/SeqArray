@@ -28,7 +28,8 @@ import(S4Vectors)
 import(IRanges)
 import(GenomicRanges)
 
-importFrom(utils, count.fields, read.table)
+importFrom(utils, count.fields, read.table, flush.console)
+importClassesFrom(GenomicRanges, GRanges, GRangesList)
 importFrom(VariantAnnotation, VCF, VCFHeader, readVcf)
 importClassesFrom(VariantAnnotation, VCF, CollapsedVCF, VCFHeader)
 importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF,

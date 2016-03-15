@@ -75,7 +75,6 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 	Map[last].push_back(rng);
 }
 
-
 size_t CChromIndex::RangeTotalLength(const TRangeList &RngList)
 {
 	size_t ans = 0;
@@ -86,17 +85,50 @@ size_t CChromIndex::RangeTotalLength(const TRangeList &RngList)
 }
 
 
-void CChromIndex::ReadData(PdAbstractArray Obj, const TRangeList &RngList,
-	void *OutBuf, C_SVType SVType)
-{
-	if (GDS_Array_DimCnt(Obj) != 1)
-		throw ErrSeqArray("Invalid dimension in 'CChromIndex::ReadData()'.");
 
-	vector<TRange>::const_iterator it;
-	for (it=RngList.begin(); it != RngList.end(); it ++)
-	{
-		C_Int32 st  = it->Start;
-		C_Int32 cnt = it->Length;
-		OutBuf = GDS_Array_ReadData(Obj, &st, &cnt, OutBuf, SVType);
-	}
+// ===========================================================
+// Genomic Range Set
+// ===========================================================
+
+bool CRangeSet::less_range::operator()(const TRange &lhs, const TRange &rhs) const
+{
+	// -1 for two possible adjacent regions
+	return (lhs.End < rhs.Start-1);
+}
+
+void CRangeSet::Clear()
+{
+	_RangeSet.clear();
+}
+
+void CRangeSet::AddRange(int start, int end)
+{
+	if (end < start) end = start;
+	TRange rng;
+	rng.Start = start; rng.End = end;
+
+	do {
+		set<TRange, less_range>::iterator it = _RangeSet.find(rng);
+		if (it != _RangeSet.end())
+		{
+			if ((rng.Start < it->Start) || (rng.End > it->End))
+			{
+				if (rng.Start > it->Start) rng.Start = it->Start;
+				if (rng.End < it->End) rng.End = it->End;
+				_RangeSet.erase(it);
+			} else
+				break;
+		} else {
+			_RangeSet.insert(rng);
+			break;
+		}
+	} while (1);
+}
+
+bool CRangeSet::IsIncluded(int point)
+{
+	TRange rng;
+	rng.Start = rng.End = point;
+	set<TRange, less_range>::iterator it = _RangeSet.find(rng);
+	return it != _RangeSet.end();
 }

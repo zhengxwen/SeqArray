@@ -27,7 +27,11 @@ CHANGES IN VERSION 1.11.0-1.11.15
     o allow "$dosage" in `seqGetData()` and `seqApply()` for the dosages of
       reference allele
 
-    o accelerate `seqSetFilterChrom()` and allow multiple region selections
+    o accelerate `seqSetFilterChrom()` and allow a selection with
+      multiple regions
+
+    o new methods `\S4method{seqSetFilter}{SeqVarGDSClass, GRanges}()` and
+      `\S4method{seqSetFilter}{SeqVarGDSClass, GRangesList}()`
 
 
 CHANGES IN VERSION 1.10.0-1.10.6

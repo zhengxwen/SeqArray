@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 #include <cctype>
 #include <cstring>
@@ -67,13 +68,40 @@ public:
 	size_t RangeTotalLength(const TRangeList &RngList);
 
 	/// 
-	void ReadData(PdAbstractArray Obj, const TRangeList &RngList,
-		void *OutBuf, C_SVType SVType);
-
-	/// 
 	map<string, TRangeList> Map;
 };
 
+
+
+// ===========================================================
+// Genomic Range Sets
+// ===========================================================
+
+/// Genomic Range Set Object
+class COREARRAY_DLL_LOCAL CRangeSet
+{
+public:
+	/// range object
+	struct TRange
+	{
+		int Start;     ///< the starting position
+		int End;       ///< the ending (always, End >= Start)
+	};
+
+	void Clear();
+	void AddRange(int start, int end);
+	bool IsIncluded(int point);
+
+protected:
+	/// strict weak ordering for non-overlapping, == when overlapping
+	struct less_range
+	{
+    	bool operator()(const TRange &lhs, const TRange &rhs) const;
+	};
+
+	/// 
+	set<TRange, less_range> _RangeSet;
+};
 
 
 
