@@ -430,27 +430,20 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 			nProtected ++;
 		}
 
-		SEXP name_list, tmp;
+		int *p;
 		switch (VarType)
 		{
 		case ctGenotype:
-			PROTECT(dim = NEW_INTEGER(2));
-			INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Variant;
+			p = INTEGER(dim = NEW_INTEGER(2));
+			p[0] = DLen[2]; p[1] = Num_Variant;
 			SET_DIM(ans, dim);
-			PROTECT(name_list = NEW_LIST(2));
-			PROTECT(tmp = NEW_CHARACTER(2));
-				SET_STRING_ELT(tmp, 0, mkChar("allele"));
-				SET_STRING_ELT(tmp, 1, mkChar("variant"));
-				SET_NAMES(name_list, tmp);
-			SET_DIMNAMES(ans, name_list);
-			nProtected += 3;
 			break;
 
 		case ctPhase:
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
-				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				INTEGER(dim)[0] = DLen[2]; INTEGER(dim)[1] = Num_Variant;
+				p = INTEGER(dim = NEW_INTEGER(2));
+				p[0] = DLen[2]; p[1] = Num_Variant;
 				SET_DIM(ans, dim);
 			}
 			break;
@@ -458,9 +451,8 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 		case ctFormat:
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
-				PROTECT(dim = NEW_INTEGER(2)); nProtected ++;
-				INTEGER(dim)[0] = DLen[2];
-				INTEGER(dim)[1] = CellCount / DLen[2];
+				p = INTEGER(dim = NEW_INTEGER(2));
+				p[0] = DLen[2]; p[1] = CellCount / DLen[2];
 				SET_DIM(ans, dim);
 			}
 			break;
@@ -612,12 +604,19 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			SET_NAMES(R_call_param, GET_NAMES(var_name));
 		}
 
-		// 1 -- none, 2 -- relative, 3 -- absolute
-		int VarIdx = INTEGER(var_index)[0];
+		// ===============================================================
+		// var.index
+		static const char *VarIdxStr[] =
+		{
+			"none", "relative", "absolute"
+		};
+		int VarIdx = MatchElement(CHAR(STRING_ELT(var_index, 0)), VarIdxStr, 3);
+		if (VarIdx < 0)
+			throw ErrSeqArray("'var.index' is not valid!");
 
 		SEXP R_fcall;
 		SEXP R_Index = NULL;
-		if (VarIdx > 1)
+		if (VarIdx > 0)
 		{
 			PROTECT(R_Index = NEW_INTEGER(1));
 			nProtected ++;
@@ -638,13 +637,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 		do {
 			switch (VarIdx)
 			{
-				case 2:
-					INTEGER(R_Index)[0] = ans_index + 1;
-					break;
-				case 3:
-					INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1;
-					break;
+			case 1:  // relative
+				INTEGER(R_Index)[0] = ans_index + 1; break;
+			case 2:
+				INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1; break;
 			}
+
 			if (NodeList.size() <= 1)
 			{
 				// ToDo: optimize this
@@ -652,7 +650,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 				if (tmp != R_call_param)
 				{
 					R_call_param = tmp;
-					if (VarIdx > 1)
+					if (VarIdx > 0)
 					{
 						PROTECT(R_fcall = LCONS(FUN, LCONS(R_Index,
 							LCONS(R_call_param, LCONS(R_DotsSymbol, R_NilValue)))));

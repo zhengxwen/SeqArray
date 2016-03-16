@@ -196,6 +196,24 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
     }
 )
 
+setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
+    variant.sel="IRanges"),
+    function(object, variant.sel, chr, verbose=TRUE)
+    {
+        stopifnot(is.vector(chr))
+        if (length(chr) > 1L)
+            stopifnot(length(chr) == length(variant.sel))
+        else
+            chr <- rep(chr, length(variant.sel))
+
+        seqSetFilterChrom(object,
+            include = chr,
+            from.bp = BiocGenerics::start(variant.sel),
+            to.bp   = BiocGenerics::end(variant.sel),
+            verbose = verbose)
+        invisible()
+    }
+)
 
 
 
@@ -286,9 +304,9 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE)
 # Apply functions over margins on a working space with selected samples and variants
 #
 seqApply <- function(gdsfile, var.name, FUN,
-    margin = c("by.variant", "by.sample"), as.is = c("none", "list",
-    "integer", "double", "character", "logical", "raw"),
-    var.index = c("none", "relative", "absolute"),
+    margin=c("by.variant", "by.sample"), as.is=c("none", "list",
+        "integer", "double", "character", "logical", "raw"),
+    var.index=c("none", "relative", "absolute"),
     .useraw=FALSE, .list_dup=TRUE, ...)
 {
     # check
@@ -299,21 +317,20 @@ seqApply <- function(gdsfile, var.name, FUN,
     margin <- match.arg(margin)
     as.is <- match.arg(as.is)
     var.index <- match.arg(var.index)
-    var.index <- match(var.index, c("none", "relative", "absolute"))
 
     if (margin == "by.variant")
     {
         # C call
         rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
             var.index, .useraw, .list_dup, new.env())
-        if (as.is == "none") return(invisible())
     } else if (margin == "by.sample")
     {
         # C call
         rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
             var.index, .useraw, new.env())
-        if (as.is == "none") return(invisible())
     }
+
+    if (as.is == "none") return(invisible())
     rv
 }
 

@@ -1000,10 +1000,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         cat(date(), "\n", sep="")
         cat("Output: ", vcf.fn, "\n", sep="")
-        cat("The INFO field: ", paste(z$info$ID, collapse=", "),
-            "\n", sep="")
-        cat("The FORMAT field: ", paste(z$format$ID, collapse=", "),
-            "\n", sep="")
+        cat("INFO Field: ", paste(z$info$ID, collapse=", "), "\n", sep="")
+        cat("FORMAT Field: ", paste(z$format$ID, collapse=", "), "\n", sep="")
     }
 
     ######################################################
@@ -1056,7 +1054,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         }
     }
 
-    # the INFO field
+    # INFO field
     for (nm in z$info$ID)
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile,
@@ -1070,7 +1068,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         cat("##INFO=<", s, ">\n", file=ofile, sep="")
     }
 
-    # the FILTER field
+    # FILTER field
     n <- index.gdsn(gdsfile, "annotation/filter", silent=TRUE)
     if (!is.null(n))
     {
@@ -1083,7 +1081,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         }
     }
 
-    # the FORMAT field
+    # FORMAT field
     a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
     cat(sprintf("##FORMAT=<ID=%s,Number=1,Type=String,Description=%s>\n",
         a$VariableName, dq(a$Description, TRUE)), file=ofile)
@@ -1095,7 +1093,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE)), file=ofile)
     }
 
-    # others ...
+    # others
     n <- index.gdsn(gdsfile, "description/vcf.header", silent=TRUE)
     if (!is.null(n))
     {

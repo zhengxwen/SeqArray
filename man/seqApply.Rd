@@ -105,7 +105,7 @@ seqResetFilter(f)
 
 # calculate the frequency of reference allele,
 #   a faster version could be obtained by C coding
-af <- seqApply(f, "genotype", FUN=function(x) mean(x==0, na.rm=TRUE),
+af <- seqApply(f, "genotype", FUN=function(x) mean(x==0L, na.rm=TRUE),
     as.is="double")
 length(af)
 summary(af)

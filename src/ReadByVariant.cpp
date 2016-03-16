@@ -674,12 +674,19 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			SET_NAMES(R_call_param, GET_NAMES(var_name));
 		}
 
-		// 1 -- none, 2 -- relative, 3 -- absolute
-		int VarIdx = INTEGER(var_index)[0];
+		// ===============================================================
+		// var.index
+		static const char *VarIdxStr[] =
+		{
+			"none", "relative", "absolute"
+		};
+		int VarIdx = MatchElement(CHAR(STRING_ELT(var_index, 0)), VarIdxStr, 3);
+		if (VarIdx < 0)
+			throw ErrSeqArray("'var.index' is not valid!");
 
 		SEXP R_fcall;
 		SEXP R_Index = NULL;
-		if (VarIdx > 1)
+		if (VarIdx > 0)
 		{
 			PROTECT(R_Index = NEW_INTEGER(1));
 			nProtected ++;
@@ -704,9 +711,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		do {
 			switch (VarIdx)
 			{
-			case 2:
+			case 1:  // relative
 				INTEGER(R_Index)[0] = ans_index + 1; break;
-			case 3:
+			case 2:  // absolute
 				INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1; break;
 			}
 
@@ -716,7 +723,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				map<SEXP, SEXP>::iterator it = R_fcall_map.find(R_call_param);
 				if (it == R_fcall_map.end())
 				{
-					if (VarIdx > 1)
+					if (VarIdx > 0)
 					{
 						PROTECT(R_fcall = LCONS(FUN, LCONS(R_Index,
 							LCONS(R_call_param, LCONS(R_DotsSymbol, R_NilValue)))));

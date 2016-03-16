@@ -3,6 +3,7 @@
 \alias{seqSetFilter,SeqVarGDSClass,ANY-method}
 \alias{seqSetFilter,SeqVarGDSClass,GRanges-method}
 \alias{seqSetFilter,SeqVarGDSClass,GRangesList-method}
+\alias{seqSetFilter,SeqVarGDSClass,IRanges-method}
 \alias{seqResetFilter}
 \title{Set a Filter to Sample or Variant}
 \description{
@@ -17,6 +18,8 @@
     rm.txt="chr", verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRangesList}(object, variant.sel,
     rm.txt="chr", verbose=TRUE)
+\S4method{seqSetFilter}{SeqVarGDSClass,IRanges}(object, variant.sel,
+    chr, verbose=TRUE)
 seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 }
 \arguments{
@@ -24,7 +27,8 @@ seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
     \item{variant.sel}{a logical/raw/index vector indicating the selected
         variants; \code{\link{GRanges}}, a GRanges object for the genomic
         locations; \code{\link{GRangesList}}, a GRangesList object for storing
-        a collection of GRanges objects}
+        a collection of GRanges objects; \code{\link{IRanges}}, a IRanges
+        object for storing a collection of range objects}
     \item{sample.sel}{a logical/raw/index vector indicating the selected
         samples}
     \item{variant.id}{ID of selected variants}
@@ -47,6 +51,7 @@ seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
         \code{"pop"} -- pop up the last filter}
     \item{rm.txt}{a character, the characters will be removed from
         \code{seqnames(variant.sel)}}
+    \item{chr}{a vector of character for chromsome coding}
     \item{sample}{logical, if \code{TRUE}, include all samples}
     \item{variant}{logical, if \code{TRUE}, include all variants}
     \item{verbose}{if \code{TRUE}, show information}

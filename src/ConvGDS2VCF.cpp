@@ -140,9 +140,9 @@ static vector<int> _VCF4_FORMAT_Number;  //<
 
 extern "C"
 {
-// ###########################################################
+// ========================================================================
 // Convert to VCF4: GDS -> VCF4
-// ###########################################################
+// ========================================================================
 
 /// double quote text if needed
 COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
@@ -191,7 +191,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	// variable list
 	SEXP VarNames = getAttrib(X, R_NamesSymbol);
 
-	// ************************************************************************
+	// ========================================================================
 	// the first seven columns: chr, pos, id, allele (REF/ALT), qual, filter
 
 	// CHROM
@@ -232,7 +232,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	txt.push_back('\t');
 
 
-	// ************************************************************************
+	// ========================================================================
 	// INFO
 
 	bool NeedSeparator = false;
@@ -271,7 +271,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	txt.push_back('\t');
 
 
-	// ************************************************************************
+	// ========================================================================
 	// FORMAT
 
 	vector< pair<SEXP, int> > fmt_list;
@@ -290,7 +290,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	txt.push_back('\t');
 
 
-	// ************************************************************************
+	// ========================================================================
 	// Genotypic data
 
 	// genotype

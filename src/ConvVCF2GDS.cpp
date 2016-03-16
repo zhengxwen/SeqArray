@@ -801,7 +801,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		PdAbstractArray varGenoExtra = GDS_Node_Path(Root, "genotype/extra", TRUE);
 
 		const int GenoNumBits= GDS_Array_GetBitOf(varGeno);
-		if ((GenoNumBits!=2) && (GenoNumBits!=8))
+		if (GenoNumBits != 2)
 			throw ErrSeqArray("Invalid data type in genotype/data.");
 		const int GenoBitMask = ~((-1) << GenoNumBits);
 
@@ -1354,7 +1354,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			// -------------------------------------------------
 			// write genotypes
 
-			// determine how many bits (GenoNumBits == 2, 4 or 8)
+			// determine how many bits (GenoNumBits = 2)
 			int num_bits = GenoNumBits;
 			// plus ONE for missing value
 			while ((num_allele + 1) > (1 << num_bits))
