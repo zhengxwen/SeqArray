@@ -55,12 +55,43 @@ static string QuoteText(const char *p)
 	return rv;
 }
 
-// convert to a string
-static const string TO_TEXT(SEXP X, int Start=0, int MaxCnt=-1,
+
+/// return the number
+static int GetNum(SEXP X, int Start, int MaxCnt, int Step=1)
+{
+	if (MaxCnt < 0)
+		MaxCnt = (Rf_length(X) - Start) / Step;
+
+	if (IS_INTEGER(X) || IS_LOGICAL(X))
+	{
+		int *Base = (IS_INTEGER(X) ? INTEGER(X) : LOGICAL(X)) + Start;
+		for (; MaxCnt > 0; MaxCnt --)
+			if (Base[(MaxCnt-1)*Step] != NA_INTEGER) break;
+	} else if (IS_NUMERIC(X))
+	{
+		double *Base = REAL(X) + Start;
+		for (; MaxCnt > 0; MaxCnt --)
+			if (R_finite(Base[(MaxCnt-1)*Step])) break;
+	} else if (IS_CHARACTER(X) || Rf_isFactor(X))
+	{
+		if (Rf_isFactor(X))
+			X = Rf_asCharacterFactor(X);
+		for (; MaxCnt > 0; MaxCnt --)
+		{
+			SEXP s = STRING_ELT(X, Start + (MaxCnt-1)*Step);
+			if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
+		}
+	}
+
+	return MaxCnt;
+}
+
+/// convert to a string and append it to the variable 'txt'
+static void AppendText(string &txt, SEXP X, int Start=0, int MaxCnt=-1,
 	bool VarLength=false, bool NoBlank=true, int Step=1)
 {
 	char buffer[64];
-	string ans;
+	string::const_iterator end = txt.end();
 
 	if (MaxCnt < 0)
 		MaxCnt = (Rf_length(X) - Start) / Step;
@@ -75,13 +106,13 @@ static const string TO_TEXT(SEXP X, int Start=0, int MaxCnt=-1,
 		}
 		for (int i=0; i < MaxCnt; i++, Base += Step)
 		{
-			if (i > 0) ans.push_back(',');
+			if (i > 0) txt.push_back(',');
 			if (*Base != NA_INTEGER)
 			{
 				snprintf(buffer, sizeof(buffer), "%d", *Base);
-				ans.append(buffer);
+				txt.append(buffer);
 			} else
-				ans.push_back('.');
+				txt.push_back('.');
 		}
 	} else if (IS_NUMERIC(X))
 	{
@@ -93,13 +124,13 @@ static const string TO_TEXT(SEXP X, int Start=0, int MaxCnt=-1,
 		}
 		for (int i=0; i < MaxCnt; i++, Base += Step)
 		{
-			if (i > 0) ans.push_back(',');
+			if (i > 0) txt.push_back(',');
 			if (R_finite(*Base))
 			{
 				snprintf(buffer, sizeof(buffer), "%0.6g", *Base);
-				ans.append(buffer);
+				txt.append(buffer);
 			} else
-				ans.push_back('.');
+				txt.push_back('.');
 		}
 	} else if (IS_CHARACTER(X) || Rf_isFactor(X))
 	{
@@ -113,28 +144,21 @@ static const string TO_TEXT(SEXP X, int Start=0, int MaxCnt=-1,
 				if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
 			}
 		}
-		for (int i=0; i < MaxCnt; i ++, Start += Step)
+		for (int i=0; i < MaxCnt; i++, Start += Step)
 		{
-			if (i > 0) ans.push_back(',');
+			if (i > 0) txt.push_back(',');
 			if (STRING_ELT(X, Start) != NA_STRING)
-				ans.append(QuoteText(CHAR(STRING_ELT(X, Start))));
+				txt.append(QuoteText(CHAR(STRING_ELT(X, Start))));
 			else
-				ans.push_back('.');
+				txt.push_back('.');
 		}
 	}
 
 	if (NoBlank)
 	{
-		if (ans.empty()) ans = ".";
+		if (txt.end() == end) txt.push_back('.');
 	}
-
-	return ans;
 }
-
-
-/// used in SEQ_OutVCF4
-static vector<int> _VCF4_INFO_Number;    //< 
-static vector<int> _VCF4_FORMAT_Number;  //< 
 
 
 
@@ -170,13 +194,22 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 }
 
 
+/// used in SEQ_OutVCF4
+static vector<int> _VCF4_INFO_Number;    ///<
+static vector<int> _VCF4_FORMAT_Number;  ///<
+static string _VCF4_Text;
+
+
 /// convert to VCF4
 COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Info, SEXP Format)
 {
 	int *pInfo = INTEGER(Info);
 	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
+
 	int *pFmt = INTEGER(Format);
 	_VCF4_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
+
+	_VCF4_Text.reserve(4096);
 
 	return R_NilValue;
 }
@@ -184,52 +217,51 @@ COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Info, SEXP Format)
 /// convert to VCF4
 COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 {
-	const char *p, *s;
-	string txt, tmp;
-	int n;
-
 	// variable list
 	SEXP VarNames = getAttrib(X, R_NamesSymbol);
+
+	_VCF4_Text.clear();
 
 	// ========================================================================
 	// the first seven columns: chr, pos, id, allele (REF/ALT), qual, filter
 
 	// CHROM
-	txt.append(TO_TEXT(VECTOR_ELT(X, 0)));
-	txt.push_back('\t');
+	AppendText(_VCF4_Text, VECTOR_ELT(X, 0));
+	_VCF4_Text.push_back('\t');
 	// POS
-	txt.append(TO_TEXT(VECTOR_ELT(X, 1)));
-	txt.push_back('\t');
+	AppendText(_VCF4_Text, VECTOR_ELT(X, 1));
+	_VCF4_Text.push_back('\t');
 	// ID
-	txt.append(TO_TEXT(VECTOR_ELT(X, 2)));
-	txt.push_back('\t');
+	AppendText(_VCF4_Text, VECTOR_ELT(X, 2));
+	_VCF4_Text.push_back('\t');
 
 	// allele -- REF/ALT
+	const char *p, *s;
 	s = p = CHAR(STRING_ELT(AS_CHARACTER(VECTOR_ELT(X, 3)), 0));
-	n = 0;
-	while ((*p != 0) && (*p != ','))
-	{
-		n ++; p ++;
-	}
+	size_t n = 0;
+	while ((*p != 0) && (*p != ',')) { n++; p++; }
 
 	// REF
-	if (n > 0) txt.append(s, n); else txt.push_back('.');
-	txt.push_back('\t');
+	if (n > 0)
+		_VCF4_Text.append(s, n);
+	else
+		_VCF4_Text.push_back('.');
+	_VCF4_Text.push_back('\t');
+
 	// ALT
-	if (*p != 0)
-	{
-		p ++; txt.append((*p) ? p : ".");
-	} else {
-		txt.push_back('.');
-	}
-	txt.push_back('\t');
+	if (*p == ',') p ++;
+	if (*p)
+		_VCF4_Text.append(p);
+	else
+		_VCF4_Text.push_back('.');
+	_VCF4_Text.push_back('\t');
 
 	// QUAL
-	txt.append(TO_TEXT(VECTOR_ELT(X, 4)));
-	txt.push_back('\t');
+	AppendText(_VCF4_Text, VECTOR_ELT(X, 4));
+	_VCF4_Text.push_back('\t');
 	// FILTER
-	txt.append(TO_TEXT(VECTOR_ELT(X, 5)));
-	txt.push_back('\t');
+	AppendText(_VCF4_Text, VECTOR_ELT(X, 5));
+	_VCF4_Text.push_back('\t');
 
 
 	// ========================================================================
@@ -237,7 +269,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 
 	bool NeedSeparator = false;
 	n = 0;
-	for (int i=0; i < (int)_VCF4_INFO_Number.size(); i++)
+	for (size_t i=0; i < _VCF4_INFO_Number.size(); i++)
 	{
 		// name
 		const char *nm = CHAR(STRING_ELT(VarNames, i + 8)) + 5;
@@ -246,48 +278,49 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 
 		if (IS_LOGICAL(D))  // FLAG type
 		{
-			if (LOGICAL(D)[0] == TRUE)
+			if (Rf_asLogical(D) == TRUE)
 			{
-				if (NeedSeparator) txt.push_back(';');
+				if (NeedSeparator) _VCF4_Text.push_back(';');
 				NeedSeparator = true;
-				txt.append(nm);
+				_VCF4_Text.append(nm);
 				n ++;
 			}
 		} else {
 			int L = _VCF4_INFO_Number[i];
-			tmp = TO_TEXT(D, 0, (L < 0) ? -1 : L, (L < 0), false);
-			if (!tmp.empty())
+			if (GetNum(D, 0, (L < 0) ? -1 : L) > 0)
 			{
-				if (NeedSeparator) txt.push_back(';');
-				NeedSeparator = true;
-				txt.append(nm);
-				txt.push_back('=');
-				txt.append(tmp);
+				if (NeedSeparator)
+					_VCF4_Text.push_back(';');
+				else
+					NeedSeparator = true;
+				_VCF4_Text.append(nm);
+				_VCF4_Text.push_back('=');
+				AppendText(_VCF4_Text, D, 0, (L < 0) ? -1 : L, L < 0, false);
 				n ++;
 			}
 		}
 	}
-	if (n <= 0) txt.push_back('.');	
-	txt.push_back('\t');
+	if (n <= 0) _VCF4_Text.push_back('.');	
+	_VCF4_Text.push_back('\t');
 
 
 	// ========================================================================
 	// FORMAT
 
 	vector< pair<SEXP, int> > fmt_list;
-	txt.append("GT");
-	for (int i=0; i < (int)_VCF4_FORMAT_Number.size(); i ++)
+	_VCF4_Text.append("GT");
+	for (size_t i=0; i < _VCF4_FORMAT_Number.size(); i++)
 	{
 		const char *nm = CHAR(STRING_ELT(VarNames, i + 8 + _VCF4_INFO_Number.size()));
 		SEXP D = VECTOR_ELT(X, i + 8 + _VCF4_INFO_Number.size());
 		if (!isNull(D))
 		{
-			txt.push_back(':');
-			txt.append(nm + 4);
+			_VCF4_Text.push_back(':');
+			_VCF4_Text.append(nm + 4);
 			fmt_list.push_back(pair<SEXP, int>(D, i));
 		}
 	}
-	txt.push_back('\t');
+	_VCF4_Text.push_back('\t');
 
 
 	// ========================================================================
@@ -299,8 +332,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	if (Rf_length(geno_dim) != 2)
 		error("Invalid dimension of genotypes.");
 
-	const int NumAllele = INTEGER(geno_dim)[0];
-	const int NumSample = INTEGER(geno_dim)[1];
+	const size_t NumAllele = INTEGER(geno_dim)[0];
+	const size_t NumSample = INTEGER(geno_dim)[1];
 
 	// phase information
 	SEXP phase = VECTOR_ELT(X, 7);
@@ -311,53 +344,48 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	int *pAllele = INTEGER(phase);
 
 	// for-loop of samples
-	for (int i=0; i < NumSample; i ++)
+	for (size_t i=0; i < NumSample; i ++)
 	{
 		// genotypes
-		for (int j=0; j < NumAllele; j++, pSamp++)
+		for (size_t j=0; j < NumAllele; j++, pSamp++)
 		{
 			if (j > 0)
 			{
-				txt.push_back(*pAllele ? '|' : '/');
+				_VCF4_Text.push_back(*pAllele ? '|' : '/');
 				pAllele ++;
 			}
 			if (*pSamp != NA_INTEGER)
 			{
 				char buf[32];
 				snprintf(buf, sizeof(buf), "%d", *pSamp);
-				txt.append(buf);
+				_VCF4_Text.append(buf);
 			} else
-				txt.push_back('.');
+				_VCF4_Text.push_back('.');
 		}
 
 		// annotation
 		vector< pair<SEXP, int> >::iterator it;
 		for (it=fmt_list.begin(); it != fmt_list.end(); it ++)
 		{
-			txt.push_back(':');
+			_VCF4_Text.push_back(':');
 			int nTotal = Rf_length(it->first);
 			int nColumn = nTotal / NumSample;
 			if ((nTotal % NumSample) != 0)
 				error("Internal Error: invalid dimension.");
 
 			int L = _VCF4_FORMAT_Number[it->second];
-			tmp = (L < 0) ? TO_TEXT(it->first, i, nColumn, true, true, NumSample) :
-				TO_TEXT(it->first, i, L, false, true, NumSample);
-			txt.append(tmp);
+			AppendText(_VCF4_Text, it->first, i, (L < 0) ? nColumn : L,
+				L < 0, true, NumSample);
 		}
 
 		// add '\t'
-		if (i < (NumSample-1)) txt.push_back('\t');
+		if (i < (NumSample-1)) _VCF4_Text.push_back('\t');
 	}
 
 
-	// append '\n'
-	txt.push_back('\n');
-
 	// return
-	SEXP ans;
-	PROTECT(ans = NEW_CHARACTER(1));
-	SET_STRING_ELT(ans, 0, mkChar(txt.c_str()));
+	SEXP ans = PROTECT(NEW_CHARACTER(1));
+	SET_STRING_ELT(ans, 0, Rf_mkCharLen(&_VCF4_Text[0], _VCF4_Text.size()));
 	UNPROTECT(1);
 	return ans;
 }

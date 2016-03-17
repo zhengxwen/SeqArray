@@ -1169,17 +1169,11 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     names(nm) <- s
 
     # output lines variant by variant
-    seqApply(gdsfile, nm, margin="by.variant", as.is="none",
-        FUN = function(x)
-        {
-            cat(.Call(SEQ_OutVCF4, x), file=ofile)
-        })
+    seqApply(gdsfile, nm, margin="by.variant", as.is=ofile,
+        FUN = .cfunction("SEQ_OutVCF4"))
 
     if (verbose)
-    {
-        cat("Done.\n")
-        cat(date(), "\n", sep="")
-    }
+        cat("Done.\n", date(), "\n", sep="")
 
     # output
     invisible(normalizePath(vcf.fn))

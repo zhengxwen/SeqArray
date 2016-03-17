@@ -660,16 +660,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			R_rv_ptr = (C_Int8 *)RAW(rv_ans);
 			break;
 		case 7:
-			{
-				R_con_param = PROTECT(NEW_CHARACTER(R_con_idx_cnt));
-				R_con_call  = PROTECT(LCONS(GetListElement(param, "fun"),
-					LCONS(R_con_param, LCONS(GetListElement(param, "funparam"),
-					R_NilValue))));
-				nProtected += 2;
-			}
+			R_con_param = PROTECT(NEW_CHARACTER(R_con_idx_cnt));
+			R_con_call  = PROTECT(LCONS(GetListElement(param, "fun"),
+				LCONS(R_con_param, LCONS(GetListElement(param, "funparam"),
+				R_NilValue))));
+			nProtected += 2;
 			break;
-		default:
-			rv_ans = R_NilValue;
 		}
 
 		// ===========================================================

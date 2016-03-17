@@ -95,6 +95,7 @@ seqApply(f, "genotype", FUN=sum, na.rm=TRUE, as.is=fl)
 close(fl)
 
 readLines("tmp.txt")
+seqApply(f, "genotype", FUN=sum, na.rm=TRUE, as.is=stdout())
 seqApply(f, "genotype", FUN=sum, na.rm=TRUE, as.is="integer")
 # should be identical
 
