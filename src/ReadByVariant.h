@@ -91,6 +91,5 @@ extern "C"
 {
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP list_duplicate,
-	SEXP rho);
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho);
 } // extern "C"

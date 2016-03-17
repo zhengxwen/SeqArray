@@ -475,6 +475,10 @@ extern "C"
 // Apply functions over margins on a working space
 // ===========================================================
 
+COREARRAY_DLL_LOCAL extern const char *Txt_Apply_AsIs[];
+COREARRAY_DLL_LOCAL extern const char *Txt_Apply_VarIdx[];
+
+
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho)
@@ -561,11 +565,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 
 		// ===============================================================
 		// as.is
-		static const char *AsList[] =
-		{
-			"none", "list", "integer", "double", "character", "logical", "raw"
-		};
-		int DatType = MatchElement(CHAR(STRING_ELT(as_is, 0)), AsList, 7);
+		int DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
 		if (DatType < 0)
 			throw ErrSeqArray("'as.is' is not valid!");
 		switch (DatType)
@@ -606,11 +606,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 
 		// ===============================================================
 		// var.index
-		static const char *VarIdxStr[] =
-		{
-			"none", "relative", "absolute"
-		};
-		int VarIdx = MatchElement(CHAR(STRING_ELT(var_index, 0)), VarIdxStr, 3);
+		int VarIdx = MatchText(CHAR(STRING_ELT(var_index, 0)), Txt_Apply_VarIdx);
 		if (VarIdx < 0)
 			throw ErrSeqArray("'var.index' is not valid!");
 

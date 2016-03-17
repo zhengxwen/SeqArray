@@ -1,8 +1,3 @@
-# register old-style (S3) classes and inheritance
-setOldClass("gds.class")
-setOldClass("gdsn.class")
-
-
 # create class definitions
 setClass("SeqVarGDSClass", contains="gds.class")
 # setClass("SeqVarNodeNewInfoClass", slots = c(

@@ -33,6 +33,9 @@ CHANGES IN VERSION 1.11.0-1.11.16
     o new methods `\S4method{seqSetFilter}{SeqVarGDSClass, GRanges}()` and
       `\S4method{seqSetFilter}{SeqVarGDSClass, GRangesList}()`
 
+    o 'as.is' in `seqApply()` allows a 'connection' object (created by file,
+      gzfile, etc)
+
 
 CHANGES IN VERSION 1.10.0-1.10.6
 -------------------------

@@ -22,8 +22,6 @@
 #include "ReadByVariant.h"
 
 
-// ===================================================================== //
-
 /// 
 CVarApplyByVariant::CVarApplyByVariant()
 {
@@ -528,41 +526,36 @@ extern "C"
 // Apply functions over margins on a working space
 // ===========================================================
 
+COREARRAY_DLL_LOCAL const char *Txt_Apply_AsIs[] =
+{
+	"none", "list", "integer", "double", "character", "logical",
+	"raw", "con", NULL
+};
+
+COREARRAY_DLL_LOCAL const char *Txt_Apply_VarIdx[] =
+{
+	"none", "relative", "absolute", NULL
+};
+
+
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP list_duplicate,
-	SEXP rho)
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho)
 {
-	int use_raw_flag = Rf_asLogical(use_raw);
+	int use_raw_flag = Rf_asLogical(GetListElement(param, ".useraw"));
 	if (use_raw_flag == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
 
-	int dup_flag = Rf_asLogical(list_duplicate);
+	int dup_flag = Rf_asLogical(GetListElement(param, ".list_dup"));
 	if (dup_flag == NA_LOGICAL)
-		error("'.duplicate' must be TRUE or FALSE.");
+		error("'.list_dup' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
 
 		// the selection
-		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
+		TInitObject::TSelection &Sel = Init.Selection(gdsfile, true);
 		// the GDS root node
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
-
-		// init selection
-		if (Sel.Sample.empty())
-		{
-			PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
-			int Cnt = GDS_Array_GetTotalCount(N);
-			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
-			Sel.Sample.resize(Cnt, TRUE);
-		}
-		if (Sel.Variant.empty())
-		{
-			PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
-			int Cnt = GDS_Array_GetTotalCount(N);
-			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
-			Sel.Variant.resize(Cnt, TRUE);
-		}
 
 		// the number of calling PROTECT
 		int nProtected = 0;
@@ -579,7 +572,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		vector<CVarApplyByVariant> NodeList(Rf_length(var_name));
 		vector<CVarApplyByVariant>::iterator it;
 
-		// for - loop
+		// for-loop
 		for (int i=0; i < Rf_length(var_name); i++)
 		{
 			// the path of GDS variable
@@ -629,29 +622,52 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				use_raw_flag != FALSE);
 		}
 
+
 		// ===========================================================
 		// as.is
-		static const char *AsList[] =
-		{
-			"none", "list", "integer", "double", "character", "logical", "raw"
-		};
-		int DatType = MatchElement(CHAR(STRING_ELT(as_is, 0)), AsList, 7);
+
+		SEXP R_con_call=R_NilValue, R_con_param=R_NilValue;
+		const R_xlen_t R_con_idx_cnt = 256;
+		R_xlen_t R_con_idx = 0;
+
+		int DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
 		if (DatType < 0)
 			throw ErrSeqArray("'as.is' is not valid!");
+
+		C_Int8 *R_rv_ptr = NULL;
 		switch (DatType)
 		{
 		case 1:
-			PROTECT(rv_ans = NEW_LIST(nVariant)); nProtected ++; break;
+			rv_ans = PROTECT(NEW_LIST(nVariant)); nProtected ++;
+			break;
 		case 2:
-			PROTECT(rv_ans = NEW_INTEGER(nVariant)); nProtected ++; break;
+			rv_ans = PROTECT(NEW_INTEGER(nVariant)); nProtected ++;
+			R_rv_ptr = (C_Int8 *)INTEGER(rv_ans);
+			break;
 		case 3:
-			PROTECT(rv_ans = NEW_NUMERIC(nVariant)); nProtected ++; break;
+			rv_ans = PROTECT(NEW_NUMERIC(nVariant)); nProtected ++;
+			R_rv_ptr = (C_Int8 *)REAL(rv_ans);
+			break;
 		case 4:
-			PROTECT(rv_ans = NEW_CHARACTER(nVariant)); nProtected ++; break;
+			rv_ans = PROTECT(NEW_CHARACTER(nVariant)); nProtected ++;
+			break;
 		case 5:
-			PROTECT(rv_ans = NEW_LOGICAL(nVariant)); nProtected ++; break;
+			rv_ans = PROTECT(NEW_LOGICAL(nVariant)); nProtected ++;
+			R_rv_ptr = (C_Int8 *)LOGICAL(rv_ans);
+			break;
 		case 6:
-			PROTECT(rv_ans = NEW_RAW(nVariant)); nProtected ++; break;
+			rv_ans = PROTECT(NEW_RAW(nVariant)); nProtected ++;
+			R_rv_ptr = (C_Int8 *)RAW(rv_ans);
+			break;
+		case 7:
+			{
+				R_con_param = PROTECT(NEW_CHARACTER(R_con_idx_cnt));
+				R_con_call  = PROTECT(LCONS(GetListElement(param, "fun"),
+					LCONS(R_con_param, LCONS(GetListElement(param, "funparam"),
+					R_NilValue))));
+				nProtected += 2;
+			}
+			break;
 		default:
 			rv_ans = R_NilValue;
 		}
@@ -676,11 +692,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 
 		// ===============================================================
 		// var.index
-		static const char *VarIdxStr[] =
-		{
-			"none", "relative", "absolute"
-		};
-		int VarIdx = MatchElement(CHAR(STRING_ELT(var_index, 0)), VarIdxStr, 3);
+		int VarIdx = MatchText(CHAR(STRING_ELT(var_index, 0)), Txt_Apply_VarIdx);
 		if (VarIdx < 0)
 			throw ErrSeqArray("'var.index' is not valid!");
 
@@ -758,15 +770,38 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				SET_ELEMENT(rv_ans, ans_index, val);
 				break;
 			case 2:
-				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val); break;
+				*((int*)R_rv_ptr) = Rf_asInteger(val);
+				R_rv_ptr += sizeof(int);
+				break;
 			case 3:
-				REAL(rv_ans)[ans_index] = Rf_asReal(val); break;
+				*((double*)R_rv_ptr) = Rf_asReal(val);
+				R_rv_ptr += sizeof(double);
+				break;
 			case 4:
-				SET_STRING_ELT(rv_ans, ans_index, Rf_asChar(val)); break;
+				SET_STRING_ELT(rv_ans, ans_index, Rf_asChar(val));
+				break;
 			case 5:
-				LOGICAL(rv_ans)[ans_index] = Rf_asLogical(val); break;
+				*((int*)R_rv_ptr) = Rf_asLogical(val);
+				R_rv_ptr += sizeof(int);
+				break;
 			case 6:
-				RAW(rv_ans)[ans_index] = Rf_asInteger(val); break;
+				*R_rv_ptr = Rf_asInteger(val);
+				R_rv_ptr ++;
+				break;
+			case 7:
+				if (!Rf_isString(val)) val = AS_CHARACTER(val);
+				R_xlen_t num_txt = XLENGTH(val);
+				for (R_xlen_t i=0; i < num_txt; i++)
+				{
+					SET_STRING_ELT(R_con_param, R_con_idx, STRING_ELT(val, i));
+					R_con_idx ++;
+					if (R_con_idx >= R_con_idx_cnt)
+					{
+						eval(R_con_call, rho);
+						R_con_idx = 0;
+					}
+				}
+				break;
 			}
 			ans_index ++;
 
@@ -778,6 +813,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			}
 
 		} while (!ifend);
+
+		// if as.is == "con"
+		if (R_con_idx > 0)
+		{
+			SET_LENGTH(R_con_param, R_con_idx);
+			R_con_call = PROTECT(LCONS(GetListElement(param, "fun"),
+				LCONS(R_con_param, LCONS(GetListElement(param, "funparam"),
+				R_NilValue))));
+			nProtected ++;
+			eval(R_con_call, rho);
+		}
 
 		// finally
 		UNPROTECT(nProtected);

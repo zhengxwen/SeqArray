@@ -24,7 +24,7 @@
 #
 .cfunction0 <- function(name)
 {
-    fn <- function(x) NULL
+    fn <- function() NULL
     f <- quote(.Call(SEQ_ExternalName0))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address

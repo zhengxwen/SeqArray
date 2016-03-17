@@ -143,9 +143,8 @@ private:
 /// Get the number of TRUEs
 #define GetNumOfTRUE(ptr, n)    vec_i8_cnt_nonzero((C_Int8*)(ptr), n)
 
-/// Get the list element named str, or return NULL
-COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
-	size_t nlist);
+/// Text matching, return -1 when no maching
+COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[]);
 
 /// Get the list element named str, or return NULL
 COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *str);

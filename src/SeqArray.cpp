@@ -121,15 +121,13 @@ C_BOOL *CVarApply::NeedTRUE(size_t size)
 // Library Functions
 // ===========================================================
 
-/// Get the list element named str, or return NULL
-COREARRAY_DLL_LOCAL int MatchElement(const char *txt, const char *list[],
-	size_t nlist)
+/// Text matching, return -1 when no maching
+COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[])
 {
-	for (size_t i=0; i < nlist; i++)
+	for (int i=0; *list; list++, i++)
 	{
 		if (strcmp(txt, *list) == 0)
 			return i;
-		list ++;
 	}
 	return -1;
 }
@@ -1379,7 +1377,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
 
 		CALL(SEQ_GetData, 3),
-		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 8),
+		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
 
 		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),
 		CALL(SEQ_SelectFlag, 2),

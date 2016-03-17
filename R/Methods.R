@@ -304,8 +304,8 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE)
 # Apply functions over margins on a working space with selected samples and variants
 #
 seqApply <- function(gdsfile, var.name, FUN,
-    margin=c("by.variant", "by.sample"), as.is=c("none", "list",
-        "integer", "double", "character", "logical", "raw"),
+    margin=c("by.variant", "by.sample"),
+    as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
     var.index=c("none", "relative", "absolute"),
     .useraw=FALSE, .list_dup=TRUE, ...)
 {
@@ -315,22 +315,29 @@ seqApply <- function(gdsfile, var.name, FUN,
 
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
-    as.is <- match.arg(as.is)
     var.index <- match.arg(var.index)
+    param <- list(.useraw=.useraw, .list_dup=.list_dup)
+
+    if (inherits(as.is, "connection"))
+    {
+        param$fun <- writeLines
+        param$funparam <- as.is
+        as.is <- "con"
+    } else
+        as.is <- match.arg(as.is)
 
     if (margin == "by.variant")
     {
-        # C call
+        # C call, by.variant
         rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
-            var.index, .useraw, .list_dup, new.env())
-    } else if (margin == "by.sample")
-    {
-        # C call
+            var.index, param, new.env())
+    } else {
+        # C call, by.sample
         rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
             var.index, .useraw, new.env())
     }
 
-    if (as.is == "none") return(invisible())
+    if (as.is %in% c("none", "con")) return(invisible())
     rv
 }
 
