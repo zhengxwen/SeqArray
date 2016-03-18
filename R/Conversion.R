@@ -932,7 +932,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(vcf.fn), length(vcf.fn)==1L)
+    if (!inherits(vcf.fn, "connection"))
+        stopifnot(is.character(vcf.fn), length(vcf.fn)==1L)
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
 
@@ -978,23 +979,29 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # create an output text file
 
-    vcf.fn <- vcf.fn[1L]
-    ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
-    if (ext == ".gz")
+    if (!inherits(vcf.fn, "connection"))
     {
-        ofile <- gzfile(vcf.fn, "wt")
-    } else if (ext == ".bz")
-    {
-        ofile <- bzfile(vcf.fn, "wt")
-    } else if (ext == ".xz")
-    {
-        ofile <- xzfile(vcf.fn, "wt")
+        ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
+        if (ext == ".gz")
+        {
+            ofile <- gzfile(vcf.fn, "wt")
+        } else if (ext == ".bz")
+        {
+            ofile <- bzfile(vcf.fn, "wt")
+        } else if (ext == ".xz")
+        {
+            ofile <- xzfile(vcf.fn, "wt")
+        } else {
+            ofile <- file(vcf.fn, open="wt")
+        }
+        on.exit({ close(ofile) })
     } else {
-        ofile <- file(vcf.fn, open="wt")
+        ofile <- vcf.fn
     }
+
     op <- options("useFancyQuotes")
     options(useFancyQuotes = FALSE)
-    on.exit({ options(op); close(ofile) })
+    on.exit({ options(op) }, add=TRUE)
 
     if (verbose)
     {
@@ -1119,15 +1126,22 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # write the contents
 
     # the INFO field
+    nm.info <- character()
     if (!is.null(z$info$ID))
-        nm.info <- paste("annotation/info/", z$info$ID, sep="")
-    else
-        nm.info <- character()
+    {
+        s <- z$info$ID
+        if (length(s) > 0L)
+            nm.info <- paste("annotation/info/", s, sep="")
+    }
+
     # the FORMAT field
+    nm.format <- character()
     if (!is.null(z$format$ID))
-        nm.format <- paste("annotation/format/", z$format$ID, sep="")
-    else
-        nm.format <- character()
+    {
+        s <- z$format$ID
+        if (length(s) > 0L)
+            nm.format <- paste("annotation/format/", s, sep="")
+    }
 
     # initialize the variable length of INFO
     len.info <- NULL
@@ -1152,7 +1166,6 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # call C function
     .Call(SEQ_InitOutVCF4, len.info, len.fmt)
 
-
     # variable names
     nm <- c("chromosome", "position", "annotation/id", "allele",
         "annotation/qual", "annotation/filter", "genotype", "phase")
@@ -1176,7 +1189,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         cat("Done.\n", date(), "\n", sep="")
 
     # output
-    invisible(normalizePath(vcf.fn))
+    if (!inherits(vcf.fn, "connection"))
+        invisible(normalizePath(vcf.fn))
+    else
+        invisible()
 }
 
 
