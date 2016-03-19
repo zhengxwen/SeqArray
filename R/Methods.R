@@ -385,8 +385,6 @@ seqMissing <- function(gdsfile, per.variant=TRUE,
             })
     } else {
         dm <- .seldim(gdsfile)
-        # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
-
         sum <- seqParallel(parallel, gdsfile, split="by.variant",
             FUN = function(f, num)
             {
@@ -395,8 +393,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE,
                     as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
                     y=tmpsum)
                 tmpsum
-            }, .combine="+", num=dm[1L])
-        sum / (2L * dm[2L])
+            }, .combine="+", num=dm[2L])
+        sum / (dm[1L] * dm[3L])
     }
 }
 
@@ -425,11 +423,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
     } else if (is.numeric(ref.allele))
     {
         dm <- .seldim(gdsfile)
-        # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
-        if (!(length(ref.allele) %in% c(1L, dm[2L])))
-        {
+        if (!(length(ref.allele) %in% c(1L, dm[3L])))
             stop("'length(ref.allele)' should be 1 or the number of selected variants.")
-        }
 
         if (length(ref.allele) == 1L)
         {
@@ -455,11 +450,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
     } else if (is.character(ref.allele))
     {
         dm <- .seldim(gdsfile)
-        # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
-        if (length(ref.allele) != dm[2L])
-        {
+        if (length(ref.allele) != dm[3L])
             stop("'length(ref.allele)' should be the number of selected variants.")
-        }
 
         seqParallel(parallel, gdsfile, split="by.variant",
             .selection.flag=TRUE,

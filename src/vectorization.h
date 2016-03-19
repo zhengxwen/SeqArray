@@ -236,7 +236,7 @@ COREARRAY_DLL_DEFAULT void vec_int32_set(int32_t *p, size_t n, int32_t val);
 COREARRAY_DLL_DEFAULT void vec_i32_replace(int32_t *p, size_t n, int32_t val,
 	int32_t substitute);
 
-/// assuming 'out' is 4-byte aligned
+/// assuming 'out' is 4-byte aligned, output (p[0]==val) + (p[1]==val) or missing_substitute
 COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage2(const int32_t *p,
 	int32_t *out, size_t n, int32_t val, int32_t missing,
 	int32_t missing_substitute);

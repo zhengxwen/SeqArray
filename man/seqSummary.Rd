@@ -41,8 +41,9 @@ seqSummary(gdsfile, varname=NULL, check=c("default", "none", "full"),
     ---
     \code{seqSummary(gdsfile, "genotype", check="none", verbose=FALSE)} returns
 a list with components:
-    \item{dim}{ploidy, # of samples, # of variants}
-    \item{seldim}{# of selected samples, # of selected variants}
+    \item{dim}{an integer vector: ploidy, # of samples, # of variants}
+    \item{seldim}{an integer vector: ploidy, # of selected samples, # of
+        selected variants}
 
     ---
     \code{seqSummary(gdsfile, "allele")} returns a data.frame with ID and

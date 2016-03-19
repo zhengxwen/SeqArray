@@ -218,11 +218,10 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         if (.selection.flag)
         {
             dm <- .seldim(gdsfile)
-            # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
             if (split == "by.variant")
-                ans <- FUN(gdsfile, rep(TRUE, dm[2L]), ...)
+                ans <- FUN(gdsfile, rep(TRUE, dm[3L]), ...)
             else if (split == "by.sample")
-                ans <- FUN(gdsfile, rep(TRUE, dm[1L]), ...)
+                ans <- FUN(gdsfile, rep(TRUE, dm[2L]), ...)
             else
                 ans <- FUN(gdsfile, NULL, ...)
         } else
@@ -250,13 +249,12 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         if (split %in% c("by.variant", "by.sample"))
         {
             dm <- .seldim(gdsfile)
-            # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
             if (split == "by.variant")
             {
-                if (dm[2L] <= 0) stop("No variants selected.")
+                if (dm[3L] <= 0) stop("No variants selected.")
                 if (cl > dm[2L]) cl <- dm[2L]
             } else {
-                if (dm[1L] <= 0) stop("No samples selected.")
+                if (dm[2L] <= 0) stop("No samples selected.")
                 if (cl > dm[1L]) cl <- dm[1L]
             }
         }
@@ -311,14 +309,13 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         if (split %in% c("by.variant", "by.sample"))
         {
             dm <- .seldim(gdsfile)
-            # dm[1] -- Num of selected samples, dm[2] -- Num of selected variants
             if (split == "by.variant")
             {
-                if (dm[2L] <= 0) stop("No variants selected.")
-                if (length(cl) > dm[2L]) cl <- cl[seq_len(dm[2L])]
+                if (dm[3L] <= 0) stop("No variants selected.")
+                if (length(cl) > dm[3L]) cl <- cl[seq_len(dm[3L])]
             } else {
-                if (dm[1L] <= 0) stop("No samples selected.")
-                if (length(cl) > dm[1L]) cl <- cl[seq_len(dm[1L])]
+                if (dm[2L] <= 0) stop("No samples selected.")
+                if (length(cl) > dm[2L]) cl <- cl[seq_len(dm[2L])]
             }
 
             sel <- seqGetFilter(gdsfile, .useraw=TRUE)

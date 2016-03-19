@@ -34,7 +34,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             if (name %in% c("sample.id", "variant.id"))
             {
                 ss <- .seldim(gdsfile)
-                n <- ifelse(name=="sample.id", ss[1L], ss[2L])
+                n <- ifelse(name=="sample.id", ss[2L], ss[3L])
                 cat("    ", name2, " (", .pretty(n), ")", sep="")
             } else
                 cat("   ", name2)

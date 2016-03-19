@@ -1114,7 +1114,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 	COREARRAY_TRY
 
 		// the selection
-		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
+		TInitObject::TSelection &Sel = Init.Selection(gdsfile, true);
 		// the GDS root node
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
 		// the variable name
@@ -1122,8 +1122,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 
 		if ((vn=="genotype") || (vn=="phase"))
 		{
-			PdGDSObj vSample  = GDS_Node_Path(Root, "sample.id", TRUE);
-			PdGDSObj vVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 			PdGDSObj vGeno = GDS_Node_Path(Root, "genotype/data", TRUE);
 			if (vGeno == NULL)
 			{
@@ -1136,37 +1134,22 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 			}
 
 			PROTECT(rv_ans = NEW_LIST(2));
-				SEXP I32, S32;
 
-				PROTECT(I32 = NEW_INTEGER(3));
+				SEXP I32 = PROTECT(NEW_INTEGER(3));
 				SET_ELEMENT(rv_ans, 0, I32);
-				int Buf[256];
+				C_Int32 Buf[4];
 				GDS_Array_GetDim(vGeno, Buf, 3);
 				INTEGER(I32)[0] = Buf[2];
-				INTEGER(I32)[1] = GDS_Array_GetTotalCount(vSample);
-				INTEGER(I32)[2] = GDS_Array_GetTotalCount(vVariant);
+				INTEGER(I32)[1] = Sel.Sample.size();
+				INTEGER(I32)[2] = Sel.Variant.size();
 
-				PROTECT(S32 = NEW_INTEGER(2));
+				SEXP S32 = PROTECT(NEW_INTEGER(3));
 				SET_ELEMENT(rv_ans, 1, S32);
-				if (!Sel.Sample.empty())
-				{
-					int &n = INTEGER(S32)[0]; n = 0;
-					vector<C_BOOL>::iterator it;
-					for (it=Sel.Sample.begin(); it != Sel.Sample.end(); it ++)
-						if (*it) n ++;
-				} else
-					INTEGER(S32)[0] = INTEGER(I32)[1];
-				if (!Sel.Variant.empty())
-				{
-					int &n = INTEGER(S32)[1]; n = 0;
-					vector<C_BOOL>::iterator it;
-					for (it=Sel.Variant.begin(); it != Sel.Variant.end(); it ++)
-						if (*it) n ++;
-				} else
-					INTEGER(S32)[1] = INTEGER(I32)[2];
+				INTEGER(S32)[0] = Buf[2];
+				INTEGER(S32)[1] = GetNumOfTRUE(&Sel.Sample[0], Sel.Sample.size());
+				INTEGER(S32)[2] = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
 
-			SEXP tmp;
-			PROTECT(tmp = NEW_CHARACTER(2));
+			SEXP tmp = PROTECT(NEW_CHARACTER(2));
 				SET_STRING_ELT(tmp, 0, mkChar("dim"));
 				SET_STRING_ELT(tmp, 1, mkChar("seldim"));
 				SET_NAMES(rv_ans, tmp);

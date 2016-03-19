@@ -377,6 +377,7 @@ void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 // functions for int32
 // ===========================================================
 
+/// count how many val in p, assuming p is 4-byte aligned
 size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 {
 	size_t ans = 0;
@@ -450,6 +451,7 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 }
 
 
+/// count how many val1 and val2 in p, assuming p is 4-byte aligned
 void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	size_t *out_n1, size_t *out_n2)
 {
@@ -561,6 +563,7 @@ void vec_int32_set(int32_t *p, size_t n, int32_t val)
 }
 
 
+/// replace 'val' in the array of 'p' by 'substitute', assuming 'p' is 4-byte aligned
 void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 {
 #ifdef __SSE2__
@@ -615,6 +618,7 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 }
 
 
+/// assuming 'out' is 4-byte aligned, output (p[0]==val) + (p[1]==val) or missing_substitute
 void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
 	int32_t missing, int32_t missing_substitute)
 {

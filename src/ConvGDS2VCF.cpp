@@ -20,7 +20,11 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "Common.h"
+#include <cstdio>
+#include <cstring>
 #include <vector>
+
+using namespace std;
 
 
 // double quote the text if it is needed
@@ -53,111 +57,6 @@ static string QuoteText(const char *p)
 	}
 
 	return rv;
-}
-
-
-/// return the number
-static int GetNum(SEXP X, int Start, int MaxCnt, int Step=1)
-{
-	if (MaxCnt < 0)
-		MaxCnt = (Rf_length(X) - Start) / Step;
-
-	if (IS_INTEGER(X) || IS_LOGICAL(X))
-	{
-		int *Base = (IS_INTEGER(X) ? INTEGER(X) : LOGICAL(X)) + Start;
-		for (; MaxCnt > 0; MaxCnt --)
-			if (Base[(MaxCnt-1)*Step] != NA_INTEGER) break;
-	} else if (IS_NUMERIC(X))
-	{
-		double *Base = REAL(X) + Start;
-		for (; MaxCnt > 0; MaxCnt --)
-			if (R_finite(Base[(MaxCnt-1)*Step])) break;
-	} else if (IS_CHARACTER(X) || Rf_isFactor(X))
-	{
-		if (Rf_isFactor(X))
-			X = Rf_asCharacterFactor(X);
-		for (; MaxCnt > 0; MaxCnt --)
-		{
-			SEXP s = STRING_ELT(X, Start + (MaxCnt-1)*Step);
-			if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
-		}
-	}
-
-	return MaxCnt;
-}
-
-/// convert to a string and append it to the variable 'txt'
-static void AppendText(string &txt, SEXP X, int Start=0, int MaxCnt=-1,
-	bool VarLength=false, bool NoBlank=true, int Step=1)
-{
-	char buffer[64];
-	string::const_iterator end = txt.end();
-
-	if (MaxCnt < 0)
-		MaxCnt = (Rf_length(X) - Start) / Step;
-
-	if (IS_INTEGER(X) || IS_LOGICAL(X))
-	{
-		int *Base = (IS_INTEGER(X) ? INTEGER(X) : LOGICAL(X)) + Start;
-		if (VarLength || !NoBlank)
-		{
-			for (; MaxCnt > 0; MaxCnt --)
-				if (Base[(MaxCnt-1)*Step] != NA_INTEGER) break;
-		}
-		for (int i=0; i < MaxCnt; i++, Base += Step)
-		{
-			if (i > 0) txt.push_back(',');
-			if (*Base != NA_INTEGER)
-			{
-				snprintf(buffer, sizeof(buffer), "%d", *Base);
-				txt.append(buffer);
-			} else
-				txt.push_back('.');
-		}
-	} else if (IS_NUMERIC(X))
-	{
-		double *Base = REAL(X) + Start;
-		if (VarLength || !NoBlank)
-		{
-			for (; MaxCnt > 0; MaxCnt --)
-				if (R_finite(Base[(MaxCnt-1)*Step])) break;
-		}
-		for (int i=0; i < MaxCnt; i++, Base += Step)
-		{
-			if (i > 0) txt.push_back(',');
-			if (R_finite(*Base))
-			{
-				snprintf(buffer, sizeof(buffer), "%0.6g", *Base);
-				txt.append(buffer);
-			} else
-				txt.push_back('.');
-		}
-	} else if (IS_CHARACTER(X) || Rf_isFactor(X))
-	{
-		if (Rf_isFactor(X))
-			X = Rf_asCharacterFactor(X);
-		if (VarLength || !NoBlank)
-		{
-			for (; MaxCnt > 0; MaxCnt --)
-			{
-				SEXP s = STRING_ELT(X, Start + (MaxCnt-1)*Step);
-				if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
-			}
-		}
-		for (int i=0; i < MaxCnt; i++, Start += Step)
-		{
-			if (i > 0) txt.push_back(',');
-			if (STRING_ELT(X, Start) != NA_STRING)
-				txt.append(QuoteText(CHAR(STRING_ELT(X, Start))));
-			else
-				txt.push_back('.');
-		}
-	}
-
-	if (NoBlank)
-	{
-		if (txt.end() == end) txt.push_back('.');
-	}
 }
 
 
@@ -194,84 +93,311 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 }
 
 
+// ========================================================================
+
 /// used in SEQ_OutVCF4
 static vector<int> _VCF4_INFO_Number;    ///<
 static vector<int> _VCF4_FORMAT_Number;  ///<
-static string _VCF4_Text;
+static vector<SEXP> _VCF4_FORMAT_List;
+
+static size_t _VCF4_NumAllele;
+static size_t _VCF4_NumSample;
 
 
-/// convert to VCF4
-COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Info, SEXP Format)
+const size_t LINE_BUFFER_SIZE = 4096;
+static vector<char> LineBuffer;
+static char *LineBegin = NULL;
+static char *LinePtr   = NULL;
+static char *LineEnd   = NULL;
+
+inline static void LineBuf_Init()
 {
-	int *pInfo = INTEGER(Info);
-	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
-
-	int *pFmt = INTEGER(Format);
-	_VCF4_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
-
-	_VCF4_Text.reserve(4096);
-
-	return R_NilValue;
+	LineBuffer.resize(LINE_BUFFER_SIZE);
+	LinePtr = LineBegin = &LineBuffer[0];
+	LineEnd = LinePtr + LINE_BUFFER_SIZE;
 }
 
-/// convert to VCF4
-COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
+inline static void LineBuf_Done()
+{
+	LineBuffer.clear();
+	LineBegin = LinePtr = LineEnd = NULL;
+	_VCF4_FORMAT_List.clear();
+}
+
+inline static void LineBuf_InitPtr()
+{
+	LinePtr = LineBegin = &LineBuffer[0];
+}
+
+inline static void LineBuf_NeedSize(size_t st)
+{
+	if (LinePtr + st > LineEnd)
+	{
+		size_t p = LinePtr - LineBegin;
+		size_t n = p + st;
+		n = (n / LINE_BUFFER_SIZE + 1) * LINE_BUFFER_SIZE;
+		LineBuffer.resize(n);
+		LineBegin = &LineBuffer[0];
+		LinePtr = LineBegin + p;
+		LineEnd = LineBegin + n;
+	}
+}
+
+inline static char *fast_itoa(char *p, int32_t val)
+{
+	static int base[10] = {
+		1000000000, 100000000, 10000000, 1000000, 100000,
+		10000, 1000, 100, 10, 1
+	};
+	if (val < 0)
+		{ *p++ = '-'; val = -val; }
+
+	size_t n=9;
+	for (int *b = base+8; n > 0; n--)
+		if (val < (*b--)) break;
+
+	for (int *b = base+n; n < 9; n++, b++)
+	{
+		*p++ = val / (*b) + '0';
+		val %= (*b);
+	}
+
+	*p++ = val + '0';
+	return p;
+}
+
+inline static void _Line_Append(int val)
+{
+	if (val != NA_INTEGER)
+		LinePtr = fast_itoa(LinePtr, val);
+	else
+		*LinePtr++ = '.';
+}
+
+inline static void _Line_Append_Geno(int val)
+{
+	if (val >= 0)
+	{
+		if (val < 10)
+			*LinePtr++ = val + '0';
+		else
+			LinePtr = fast_itoa(LinePtr, val);
+	} else 
+		*LinePtr++ = '.';
+}
+
+inline static void _Line_Append(double val)
+{
+	if (R_FINITE(val))
+		LinePtr += sprintf(LinePtr, "%0.6g", val);
+	else
+		*LinePtr++ = '.';
+}
+
+
+inline static void LineBuf_Append(int val)
+{
+	LineBuf_NeedSize(32);
+	_Line_Append(val);
+}
+
+inline static void LineBuf_Append(double val)
+{
+	LineBuf_NeedSize(32);
+	_Line_Append(val);
+}
+
+inline static void LineBuf_Append(const char *txt)
+{
+	const size_t n = strlen(txt);
+	LineBuf_NeedSize(n + 16);
+	memcpy(LinePtr, txt, n);
+	LinePtr += n;
+}
+
+
+// ========================================================================
+
+/// return the number in the INFO field
+inline static int INFO_GetNum(SEXP X, int n)
+{
+	if (n < 0) n = Rf_length(X);
+
+	if (IS_INTEGER(X))
+	{
+		int *p = INTEGER(X) + n;
+		for (; n > 0; n--)
+			if (*(--p) != NA_INTEGER) break;
+	} else if (IS_NUMERIC(X))
+	{
+		double *p = REAL(X) + n;
+		for (; n > 0; n--)
+			if (R_finite(*(--p))) break;
+	} else if (IS_CHARACTER(X))
+	{
+		for (; n > 0; n--)
+		{
+			SEXP s = STRING_ELT(X, n-1);
+			if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
+		}
+	}
+
+	return n;
+}
+
+
+/// write info values
+inline static void INFO_Write(SEXP X, size_t n)
+{
+	size_t i = 0;
+	if (IS_INTEGER(X))
+	{
+		LineBuf_NeedSize(12*n + 32);
+		for (int *p = INTEGER(X); i < n; i++)
+		{
+			if (i > 0) *LinePtr++ = ',';
+			_Line_Append(*p++);
+		}
+	} else if (IS_NUMERIC(X))
+	{
+		LineBuf_NeedSize(12*n + 32);
+		for (double *p = REAL(X); i < n; i++)
+		{
+			if (i > 0) *LinePtr++ = ',';
+			_Line_Append(*p++);
+		}
+	} else if (IS_CHARACTER(X))
+	{
+		for (; i < n; i++)
+		{
+			if (i > 0) *LinePtr++ = ',';
+			LineBuf_Append(CHAR(STRING_ELT(X, i)));
+		}
+	}
+}
+
+
+/// write format values
+inline static void FORMAT_Write(SEXP X, size_t n, size_t Start, size_t Step)
+{
+	if (IS_INTEGER(X) || IS_LOGICAL(X))
+	{
+		int *base = (IS_INTEGER(X) ? INTEGER(X) : LOGICAL(X)) + Start;
+		int *p = base + (n - 1)*Step;
+		for (; n > 0; n--, p-=Step)
+			if (*p != NA_INTEGER) break;
+		LineBuf_NeedSize(12*n + 32);
+		p = base;
+		for (size_t i=0; i < n; i++)
+		{
+			if (i > 0) *LinePtr++ = ',';
+			_Line_Append(*p);
+			p += Step;
+		}
+	} else if (IS_NUMERIC(X))
+	{
+		double *base = REAL(X) + Start;
+		double *p = base + (n - 1)*Step;
+		for (; n > 0; n--, p-=Step)
+			if (R_finite(*p)) break;
+		LineBuf_NeedSize(12*n + 32);
+		p = base;
+		for (size_t i=0; i < n; i++)
+		{
+			if (i > 0) *LinePtr++ = ',';
+			_Line_Append(*p);
+			p += Step;
+		}
+	} else if (IS_CHARACTER(X) || Rf_isFactor(X))
+	{
+		if (Rf_isFactor(X))
+			X = Rf_asCharacterFactor(X);
+		for (; n > 0; n--)
+		{
+			SEXP s = STRING_ELT(X, Start + (n - 1)*Step);
+			if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
+		}
+		for (size_t i=0; i < n; i++, Start += Step)
+		{
+			if (i > 0) *LinePtr++ = ',';
+			SEXP s = STRING_ELT(X, Start);
+			if (s != NA_STRING)
+				LineBuf_Append(CHAR(s));
+			else
+				*LinePtr++ = '.';
+		}
+	}
+
+	if (n <= 0) *LinePtr++ = '.';
+}
+
+
+
+
+
+// ========================================================================
+
+/// export the first seven columns: chr, pos, id, allele (REF/ALT), qual, filter
+inline static void ExportHead(SEXP X)
+{
+	// CHROM
+	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 0), 0)));
+	*LinePtr++ = '\t';
+
+	// POS
+	LineBuf_Append(Rf_asInteger(VECTOR_ELT(X, 1)));
+	*LinePtr++ = '\t';
+
+	// ID
+	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 2), 0)));
+	*LinePtr++ = '\t';
+
+	// allele -- REF/ALT
+	size_t n = LinePtr - LineBegin;
+	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 3), 0)));
+
+	char *s = LineBegin + n;
+	for (; s < LinePtr; s++)
+	{
+		if (*s == ',')
+			{ *s = '\t'; break; }
+	}
+	if (s == LinePtr)
+	{
+		*LinePtr++ = '\t';
+		*LinePtr++ = '.';
+	}
+	*LinePtr++ = '\t';
+
+	// QUAL
+	LineBuf_Append(Rf_asReal(VECTOR_ELT(X, 4)));
+	*LinePtr++ = '\t';
+
+	// FILTER
+	SEXP tmp = VECTOR_ELT(X, 5);
+	if (Rf_isFactor(tmp))
+		tmp = Rf_asCharacterFactor(tmp);
+	else
+		tmp = AS_CHARACTER(tmp);
+	LineBuf_Append(CHAR(STRING_ELT(tmp, 0)));
+	*LinePtr++ = '\t';
+}
+
+
+/// export the INFO and FORMAT fields
+inline static void ExportInfoFormat(SEXP X)
 {
 	// variable list
 	SEXP VarNames = getAttrib(X, R_NamesSymbol);
 
-	_VCF4_Text.clear();
+	//====  INFO  ====//
 
-	// ========================================================================
-	// the first seven columns: chr, pos, id, allele (REF/ALT), qual, filter
-
-	// CHROM
-	AppendText(_VCF4_Text, VECTOR_ELT(X, 0));
-	_VCF4_Text.push_back('\t');
-	// POS
-	AppendText(_VCF4_Text, VECTOR_ELT(X, 1));
-	_VCF4_Text.push_back('\t');
-	// ID
-	AppendText(_VCF4_Text, VECTOR_ELT(X, 2));
-	_VCF4_Text.push_back('\t');
-
-	// allele -- REF/ALT
-	const char *p, *s;
-	s = p = CHAR(STRING_ELT(AS_CHARACTER(VECTOR_ELT(X, 3)), 0));
+	LineBuf_NeedSize(32);
+	size_t cnt_info = _VCF4_INFO_Number.size();
 	size_t n = 0;
-	while ((*p != 0) && (*p != ',')) { n++; p++; }
-
-	// REF
-	if (n > 0)
-		_VCF4_Text.append(s, n);
-	else
-		_VCF4_Text.push_back('.');
-	_VCF4_Text.push_back('\t');
-
-	// ALT
-	if (*p == ',') p ++;
-	if (*p)
-		_VCF4_Text.append(p);
-	else
-		_VCF4_Text.push_back('.');
-	_VCF4_Text.push_back('\t');
-
-	// QUAL
-	AppendText(_VCF4_Text, VECTOR_ELT(X, 4));
-	_VCF4_Text.push_back('\t');
-	// FILTER
-	AppendText(_VCF4_Text, VECTOR_ELT(X, 5));
-	_VCF4_Text.push_back('\t');
-
-
-	// ========================================================================
-	// INFO
-
-	bool NeedSeparator = false;
-	n = 0;
-	for (size_t i=0; i < _VCF4_INFO_Number.size(); i++)
+	for (size_t i=0; i < cnt_info; i++)
 	{
-		// name
+		// name, "info.*"
 		const char *nm = CHAR(STRING_ELT(VarNames, i + 8)) + 5;
 		// SEXP
 		SEXP D = VECTOR_ELT(X, i + 8);
@@ -280,112 +406,135 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 		{
 			if (Rf_asLogical(D) == TRUE)
 			{
-				if (NeedSeparator) _VCF4_Text.push_back(';');
-				NeedSeparator = true;
-				_VCF4_Text.append(nm);
+				if (n > 0) *LinePtr++ = ';';
+				LineBuf_Append(nm);
 				n ++;
 			}
 		} else {
-			int L = _VCF4_INFO_Number[i];
-			if (GetNum(D, 0, (L < 0) ? -1 : L) > 0)
+			int m = INFO_GetNum(D, _VCF4_INFO_Number[i]);
+			if (m > 0)
 			{
-				if (NeedSeparator)
-					_VCF4_Text.push_back(';');
-				else
-					NeedSeparator = true;
-				_VCF4_Text.append(nm);
-				_VCF4_Text.push_back('=');
-				AppendText(_VCF4_Text, D, 0, (L < 0) ? -1 : L, L < 0, false);
+				if (n > 0) *LinePtr++ = ';';
+				LineBuf_Append(nm);
+				*LinePtr++ = '=';
+				INFO_Write(D, m);
 				n ++;
 			}
 		}
 	}
-	if (n <= 0) _VCF4_Text.push_back('.');	
-	_VCF4_Text.push_back('\t');
 
+	if (n <= 0) *LinePtr++ = '.';
+	*LinePtr++ = '\t';
 
-	// ========================================================================
-	// FORMAT
+	//====  FORMAT  ====//
 
-	vector< pair<SEXP, int> > fmt_list;
-	_VCF4_Text.append("GT");
-	for (size_t i=0; i < _VCF4_FORMAT_Number.size(); i++)
+	_VCF4_FORMAT_List.clear();
+	LineBuf_NeedSize(32);
+	LinePtr[0] = 'G', LinePtr[1] = 'T'; LinePtr += 2;
+
+	size_t cnt_fmt = _VCF4_FORMAT_Number.size();
+	for (size_t i=0; i < cnt_fmt; i++)
 	{
-		const char *nm = CHAR(STRING_ELT(VarNames, i + 8 + _VCF4_INFO_Number.size()));
-		SEXP D = VECTOR_ELT(X, i + 8 + _VCF4_INFO_Number.size());
+		// name, "fmt.*"
+		const char *nm = CHAR(STRING_ELT(VarNames, i + cnt_info + 8));
+		SEXP D = VECTOR_ELT(X, i + cnt_info + 8);
 		if (!isNull(D))
 		{
-			_VCF4_Text.push_back(':');
-			_VCF4_Text.append(nm + 4);
-			fmt_list.push_back(pair<SEXP, int>(D, i));
+			*LinePtr++ = ':';
+			LineBuf_Append(nm + 4);
+			_VCF4_FORMAT_List.push_back(D);
 		}
 	}
-	_VCF4_Text.push_back('\t');
+	*LinePtr++ = '\t';
+}
 
 
-	// ========================================================================
-	// Genotypic data
+
+// ========================================================================
+
+
+/// initialize
+COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Sel, SEXP Info, SEXP Format)
+{
+	_VCF4_NumAllele = INTEGER(Sel)[0];
+	_VCF4_NumSample = INTEGER(Sel)[1];
+
+	int *pInfo = INTEGER(Info);
+	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
+
+	int *pFmt = INTEGER(Format);
+	_VCF4_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
+
+	_VCF4_FORMAT_List.reserve(256);
+	LineBuf_Init();
+
+	return R_NilValue;
+}
+
+/// finalize
+COREARRAY_DLL_EXPORT SEXP SEQ_DoneOutVCF4()
+{
+	LineBuf_Done();
+	return R_NilValue;
+}
+
+
+
+/// convert to VCF4
+COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
+{
+	// initialize line pointer
+	LineBuf_InitPtr();
+
+	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
+	ExportHead(X);
+
+	// INFO, FORMAT
+	ExportInfoFormat(X);
 
 	// genotype
 	SEXP geno = VECTOR_ELT(X, 6);
-	SEXP geno_dim = GET_DIM(geno);
-	if (Rf_length(geno_dim) != 2)
-		error("Invalid dimension of genotypes.");
-
-	const size_t NumAllele = INTEGER(geno_dim)[0];
-	const size_t NumSample = INTEGER(geno_dim)[1];
+	int *pSamp = INTEGER(geno);
 
 	// phase information
 	SEXP phase = VECTOR_ELT(X, 7);
-	if (Rf_length(phase) != (NumAllele-1)*NumSample)
-		error("Invalid dimension of phasing information.");
-
-	int *pSamp = INTEGER(geno);
 	int *pAllele = INTEGER(phase);
 
 	// for-loop of samples
-	for (size_t i=0; i < NumSample; i ++)
+	for (size_t i=0; i < _VCF4_NumSample; i ++)
 	{
+		// add '\t'
+		if (i > 0) *LinePtr++ = '\t';
+
 		// genotypes
-		for (size_t j=0; j < NumAllele; j++, pSamp++)
+		LineBuf_NeedSize(_VCF4_NumAllele << 4); // NumAllele*16
+		if (_VCF4_NumAllele == 2)
 		{
-			if (j > 0)
+			_Line_Append_Geno(*pSamp++);
+			*LinePtr++ = (*pAllele++) ? '|' : '/';
+			_Line_Append_Geno(*pSamp++);
+		} else {
+			for (size_t j=0; j < _VCF4_NumAllele; j++)
 			{
-				_VCF4_Text.push_back(*pAllele ? '|' : '/');
-				pAllele ++;
+				if (j > 0)
+					*LinePtr++ = (*pAllele++) ? '|' : '/';
+				_Line_Append(*pSamp++);
 			}
-			if (*pSamp != NA_INTEGER)
-			{
-				char buf[32];
-				snprintf(buf, sizeof(buf), "%d", *pSamp);
-				_VCF4_Text.append(buf);
-			} else
-				_VCF4_Text.push_back('.');
 		}
 
 		// annotation
-		vector< pair<SEXP, int> >::iterator it;
-		for (it=fmt_list.begin(); it != fmt_list.end(); it ++)
+		vector<SEXP>::iterator p;
+		for (p=_VCF4_FORMAT_List.begin(); p != _VCF4_FORMAT_List.end(); p++)
 		{
-			_VCF4_Text.push_back(':');
-			int nTotal = Rf_length(it->first);
-			int nColumn = nTotal / NumSample;
-			if ((nTotal % NumSample) != 0)
-				error("Internal Error: invalid dimension.");
-
-			int L = _VCF4_FORMAT_Number[it->second];
-			AppendText(_VCF4_Text, it->first, i, (L < 0) ? nColumn : L,
-				L < 0, true, NumSample);
+			*LinePtr++ = ':';
+			size_t n = Rf_length(*p) / _VCF4_NumSample;
+			FORMAT_Write(*p, n, i, _VCF4_NumSample);
 		}
-
-		// add '\t'
-		if (i < (NumSample-1)) _VCF4_Text.push_back('\t');
 	}
-
 
 	// return
 	SEXP ans = PROTECT(NEW_CHARACTER(1));
-	SET_STRING_ELT(ans, 0, Rf_mkCharLen(&_VCF4_Text[0], _VCF4_Text.size()));
+	SET_STRING_ELT(ans, 0, Rf_mkCharLen(LineBegin, LinePtr-LineBegin));
 	UNPROTECT(1);
 	return ans;
 }

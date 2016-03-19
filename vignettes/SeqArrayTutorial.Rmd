@@ -495,18 +495,15 @@ system.time({
 ```{r}
 m.variant <- local({
     # get ploidy, the number of samples and variants
-    z <- seqSummary(genofile, "genotype")
-    # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-    dm <- z$seldim
-    # ploidy
-    ploidy <- z$dim[1]
+    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
     # apply the function marginally
     m <- seqApply(genofile, "genotype", function(x) { sum(is.na(x)) },
         margin="by.variant", as.is="integer")
 
     # output
-    m / (ploidy * dm[1])
+    m / (dm[1L] * dm[2L])
 })
 
 length(m.variant)
@@ -521,14 +518,11 @@ summary(seqMissing(genofile, per.variant=TRUE))
 ```{r}
 m.sample <- local({
     # get ploidy, the number of samples and variants
-    z <- seqSummary(genofile, "genotype")
-    # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-    dm <- z$seldim
-    # ploidy
-    ploidy <- z$dim[1]
+    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
     # need a global variable (only available in the bracket of "local")
-    n <- integer(dm[1])
+    n <- integer(dm[2L])
 
     # apply the function marginally
     # use "<<-" operator to find "n" in the parent environment
@@ -536,7 +530,7 @@ m.sample <- local({
         margin="by.variant", as.is="none")
 
     # output
-    n / (ploidy * dm[2])
+    n / (dm[1L] * dm[3L])
 })
 
 length(m.sample)
@@ -560,11 +554,8 @@ seqParallelSetup(2)
 # run in parallel
 m.variant <- local({
     # get ploidy, the number of samples and variants
-    z <- seqSummary(genofile, "genotype")
-    # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-    dm <- z$seldim
-    # ploidy
-    ploidy <- z$dim[1]
+    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
     # run in parallel
     m <- seqParallel(, genofile, FUN = function(f) {
@@ -574,7 +565,7 @@ m.variant <- local({
     }, split = "by.variant")
 
     # output
-    m / (ploidy * dm[1])
+    m / (dm[1L] * dm[2L])
 })
 
 summary(m.variant)
@@ -587,11 +578,11 @@ m.sample <- local({
     # run in parallel
     m <- seqParallel(, genofile, FUN = function(f)
         {
-            # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-            dm <- seqSummary(f, "genotype")$seldim
+            # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+            dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
             # need a global variable (only available in the bracket of "local")
-            n <- integer(dm[1])
+            n <- integer(dm[2L])
 
             # apply the function marginally
             # use "<<-" operator to find "n" in the parent environment
@@ -603,15 +594,11 @@ m.sample <- local({
         }, .combine = "+",     # sum all variables "n" of different processes
         split = "by.variant")
 
-    # get ploidy, the number of samples and variants
-    z <- seqSummary(genofile, "genotype")
-    # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-    dm <- z$seldim
-    # ploidy
-    ploidy <- z$dim[1]
+    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
     # output
-    m / (ploidy * dm[2])
+    m / (dm[1L] * dm[3L])
 })
 
 summary(m.sample)
@@ -625,7 +612,8 @@ summary(m.sample)
 
 ```{r}
 # apply the function variant by variant
-afreq <- seqApply(genofile, "genotype", function(x) { mean(x==0, na.rm=TRUE) },
+afreq <- seqApply(genofile, "genotype",
+    FUN=function(x) { mean(x==0L, na.rm=TRUE) },
     as.is="double", margin="by.variant")
 
 length(afreq)
@@ -645,7 +633,7 @@ seqParallelSetup(2)
 ```{r}
 # run in parallel
 afreq <- seqParallel(, genofile, FUN = function(f) {
-        seqApply(f, "genotype", as.is="double", FUN=function(x) mean(x==0, na.rm=TRUE))
+        seqApply(f, "genotype", as.is="double", FUN=function(x) mean(x==0L, na.rm=TRUE))
     }, split = "by.variant")
 
 length(afreq)
@@ -666,16 +654,16 @@ where $g_{j,l}$ is a genotype of individual $j$ at locus $l$ ($\in \{0,1,2\}$, N
 # genetic covariance matrix
 genmat <- local({
     # get the number of samples and variants
-    # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype")$seldim
+    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
     # need a global variable (only available in the bracket of "local")
-    s <- matrix(0.0, nrow=dm[1], ncol=dm[1])
+    s <- matrix(0.0, nrow=dm[2L], ncol=dm[2L])
 
     # apply the function variant by variant
     # use "<<-" operator to find "s" in the parent environment
     seqApply(genofile, "genotype", function(x) {
-        g <- (x==0)                   # indicator of reference allele
+        g <- (x==0L)                  # indicator of reference allele
         p <- mean(g, na.rm=TRUE)      # allele frequency
         g2 <- colSums(g) - 2*p        # genotypes adjusted by allele frequency
         m <- (g2 %o% g2) / (p*(1-p))  # genetic covariance matrix
@@ -684,7 +672,7 @@ genmat <- local({
     }, margin="by.variant", as.is="none")
 
     # output, scaled by the trace of matrix "s" over the number of samples
-    s / (sum(diag(s)) / dm[1])
+    s / (sum(diag(s)) / dm[2L])
 })
 
 # eigen-decomposition
@@ -711,16 +699,16 @@ seqParallelSetup(2)
 genmat <- seqParallel(, genofile, FUN = function(f)
     {
         # get the number of samples and variants
-        # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-        dm <- seqSummary(f, "genotype")$seldim
+        # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+        dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
         # need a global variable (only available in the bracket of "local")
-        s <- matrix(0.0, nrow=dm[1], ncol=dm[1])
+        s <- matrix(0.0, nrow=dm[2L], ncol=dm[2L])
 
         # apply the function variant by variant
         # use "<<-" operator to find "s" in the parent environment
         seqApply(f, "genotype", function(x) {
-            g <- (x==0)                   # indicator of reference allele
+            g <- (x==0L)                  # indicator of reference allele
             p <- mean(g, na.rm=TRUE)      # allele frequency
             g2 <- colSums(g) - 2*p        # genotypes adjusted by allele frequency
             m <- (g2 %o% g2) / (p*(1-p))  # genetic covariance matrix
@@ -734,8 +722,8 @@ genmat <- seqParallel(, genofile, FUN = function(f)
     split = "by.variant")
 
 # finally, scaled by the trace of matrix "s" over the number of samples
-dm <- seqSummary(genofile, "genotype")$seldim
-genmat <- genmat / (sum(diag(genmat)) / dm[1])
+dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+genmat <- genmat / (sum(diag(genmat)) / dm[2L])
 
 # eigen-decomposition
 eig <- eigen(genmat)
@@ -756,18 +744,18 @@ where $g_l$ is a SNP genotype at locus $l$ $\in \{0,1,2\}$ (Num. of reference al
 ```{r}
 coeff <- local({
     # get the number of samples and variants
-    # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype")$seldim
+    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
     # need global variables (only available in the bracket of "local")
-    n <- integer(dm[1])
-    s <- double(dm[1])
+    n <- integer(dm[2L])
+    s <- double(dm[2L])
 
     # apply the function variant by variant
     # use "<<-" operator to find "n" and "s" in the parent environment
     seqApply(genofile, "genotype", function(x) {
-        p <- mean(x==0, na.rm=TRUE)      # allele frequency
-        g <- colSums(x==0)               # genotypes: # of reference allele
+        p <- mean(x==0L, na.rm=TRUE)     # allele frequency
+        g <- colSums(x==0L)              # genotypes: # of reference allele
         d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
         n <<- n + is.finite(d)           # output to the global variable "n"
         d[!is.finite(d)] <- 0
@@ -794,18 +782,18 @@ seqParallelSetup(2)
 coeff <- seqParallel(, genofile, FUN = function(f)
     {
         # get the number of samples and variants
-        # dm[1] -- # of selected samples, dm[2] -- # of selected variants
-        dm <- seqSummary(f, "genotype")$seldim
+        # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+        dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
         # need global variables (only available in the bracket)
-        n <- integer(dm[1])
-        s <- double(dm[1])
+        n <- integer(dm[2L])
+        s <- double(dm[2L])
 
         # apply the function variant by variant
         # use "<<-" operator to find "n" and "s" in the parent environment
         seqApply(f, "genotype", function(x) {
-            p <- mean(x==0, na.rm=TRUE)      # allele frequency
-            g <- colSums(x==0)               # genotypes: # of reference allele
+            p <- mean(x==0L, na.rm=TRUE)     # allele frequency
+            g <- colSums(x==0L)              # genotypes: # of reference allele
             d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
             n <<- n + is.finite(d)           # output to the global variable "n"
             d[!is.finite(d)] <- 0

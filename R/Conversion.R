@@ -1007,8 +1007,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         cat(date(), "\n", sep="")
         cat("Output: ", vcf.fn, "\n", sep="")
-        cat("INFO Field: ", paste(z$info$ID, collapse=", "), "\n", sep="")
-        cat("FORMAT Field: ", paste(z$format$ID, collapse=", "), "\n", sep="")
+        s <- .seldim(gdsfile)
+        cat("   ", s[2L], "samples,", s[3L], "variants\n")
+        cat("    INFO Field: ", paste(z$info$ID, collapse=", "), "\n", sep="")
+        cat("    FORMAT Field: ", paste(z$format$ID, collapse=", "), "\n", sep="")
     }
 
     ######################################################
@@ -1163,8 +1165,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     }
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
-    # call C function
-    .Call(SEQ_InitOutVCF4, len.info, len.fmt)
+    # initialize
+    .Call(SEQ_InitOutVCF4, .seldim(gdsfile), len.info, len.fmt)
 
     # variable names
     nm <- c("chromosome", "position", "annotation/id", "allele",
@@ -1184,6 +1186,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # output lines variant by variant
     seqApply(gdsfile, nm, margin="by.variant", as.is=ofile,
         FUN = .cfunction("SEQ_OutVCF4"))
+
+    .Call(SEQ_DoneOutVCF4)
 
     if (verbose)
         cat("Done.\n", date(), "\n", sep="")

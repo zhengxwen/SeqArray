@@ -627,7 +627,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// as.is
 
 		SEXP R_con_call=R_NilValue, R_con_param=R_NilValue;
-		const R_xlen_t R_con_idx_cnt = 256;
+		const R_xlen_t R_con_idx_cnt = 128;
 		R_xlen_t R_con_idx = 0;
 
 		int DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
@@ -793,7 +793,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 					R_con_idx ++;
 					if (R_con_idx >= R_con_idx_cnt)
 					{
-						eval(R_con_call, rho);
+						EVAL(R_con_call);
 						R_con_idx = 0;
 					}
 				}
@@ -818,7 +818,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				LCONS(R_con_param, LCONS(GetListElement(param, "funparam"),
 				R_NilValue))));
 			nProtected ++;
-			eval(R_con_call, rho);
+			EVAL(R_con_call);
 		}
 
 		// finally

@@ -36,6 +36,10 @@ CHANGES IN VERSION 1.11.0-1.11.16
     o 'as.is' in `seqApply()` allows a 'connection' object (created by file,
       gzfile, etc)
 
+    o seqSummary(f, "genotype")$seldim returns a vector with 3 integers
+      (ploidy, # of selected samples, # of selected variants) instead of
+      2 integers
+
 
 CHANGES IN VERSION 1.10.0-1.10.6
 -------------------------
