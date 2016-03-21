@@ -625,16 +625,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4_Di_WrtFmt(SEXP X)
 	// INFO, FORMAT
 	ExportInfoFormat(X);
 
-	// 32-byte alignment
-	LineBuf_NeedSize(64);
-	size_t offset = (size_t)LinePtr & 0x1F;
-	if (offset > 0)
-	{
-		offset = 32 - offset;
-		memmove(LineBegin+offset, LineBegin, LinePtr-LineBegin);
-		LinePtr += offset;
-	}
-
 	// genotype
 	SEXP geno = VECTOR_ELT(X, 6);
 	int *pSamp = INTEGER(geno);
@@ -648,7 +638,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4_Di_WrtFmt(SEXP X)
 
 #ifdef __SSE2__
 
-	LineBuf_NeedSize(n*4 + 32);
+	LineBuf_NeedSize(n*4 + 64);
+
+	// 32-byte alignment
+	size_t offset = (size_t)LinePtr & 0x1F;
+	if (offset > 0)
+	{
+		offset = 32 - offset;
+		memmove(LineBegin+offset, LineBegin, LinePtr-LineBegin);
+		LinePtr += offset;
+	}
 
 #ifdef __AVX2__
 	for (; n >= 8; n -= 8)

@@ -632,7 +632,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 
 		SEXP R_con_call  = R_NilValue;
 		SEXP R_con_param = R_NilValue;
-		const R_xlen_t R_con_bufsize = write_raw_flag ? 65536 : 128;
+		// 256KB or 128 lines
+		const R_xlen_t R_con_bufsize = write_raw_flag ? (1024*256) : 128;
 		R_xlen_t R_con_idx = 0;
 
 		int DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);

@@ -1010,43 +1010,48 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         cat(date(), "\n", sep="")
         cat("Output: ", vcf.fn, "\n", sep="")
         s <- .seldim(gdsfile)
-        cat("   ", s[2L], "samples,", s[3L], "variants\n")
+        cat("    ", s[2L], " sample", .plural(s[2L]), ", ",
+            s[3L], " variant", .plural(s[3L]), "\n", sep="")
         cat("    INFO Field: ", paste(z$info$ID, collapse=", "), "\n", sep="")
         cat("    FORMAT Field: ", paste(z$format$ID, collapse=", "), "\n", sep="")
     }
 
+
     ######################################################
     # write the header
+
+    txt <- character()
+
     a <- get.attr.gdsn(index.gdsn(gdsfile, "description"))
 
     # fileformat
     if (is.null(a$vcf.fileformat))
         a$vcf.fileformat <- "VCFv4.2"
-    cat("##fileformat=", a$vcf.fileformat, "\n", sep="", file=ofile)
+    txt <- c(txt, paste0("##fileformat=", a$vcf.fileformat))
 
     # fileDate
-    cat("##fileDate=", format(Sys.time(), "%Y%m%d"), "\n", sep="", file=ofile)
+    txt <- c(txt, paste0("##fileDate=", format(Sys.time(), "%Y%m%d")))
 
     # program, source
     aa <- get.attr.gdsn(gdsfile$root)
     if (is.null(aa$FileVersion))
         aa$FileVersion <- "v1.0"
-    cat("##source=SeqArray_Format_", aa$FileVersion, "\n", sep="", file=ofile)
+    txt <- c(txt, paste0("##source=SeqArray_Format_", aa$FileVersion))
 
     # reference
     if (length(z$reference) > 0L)
-        cat("##reference=", z$reference[1L], "\n", sep="", file=ofile)
+        txt <- c(txt, paste0("##reference=", z$reference[1L]))
 
     # assembly
     if (!is.null(a$vcf.assembly))
-        cat("##assembly=", dq(a$vcf.assembly), "\n", sep="", file=ofile)
+        txt <- c(txt, paste0("##assembly=", dq(a$vcf.assembly)))
 
     # ALT=<ID=type,Description=description>
     for (i in seq_len(nrow(z$allele)))
     {
         s <- sprintf("##ALT=<ID=%s,Description=%s>",
             as.character(z$allele[i,1L]), dq(z$allele[i,2L]))
-        writeLines(s, con=ofile)
+        txt <- c(txt, s)
     }
 
     # contig=<ID=ctg1,URL=ftp://somewhere.org/assembly.fa,...>
@@ -1061,7 +1066,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             for (j in seq_len(ncol(dat)))
                 s[j] <- paste(nm[j], "=", dq(dat[i,j]), sep="")
             s <- paste(s, collapse=",")
-            cat("##contig=<", s, ">\n", sep="", file=ofile)
+            txt <- c(txt, paste0("##contig=<", s, ">"))
         }
     }
 
@@ -1076,7 +1081,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             s <- paste(s, ",Source=", dq(a$Source, TRUE), sep="")
         if (!is.null(a$Version))
             s <- paste(s, ",Version=", dq(a$Version, TRUE), sep="")
-        cat("##INFO=<", s, ">\n", file=ofile, sep="")
+        txt <- c(txt, paste0("##INFO=<", s, ">"))
     }
 
     # FILTER field
@@ -1087,21 +1092,23 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         id <- at$R.levels; dp <- at$Description
         for (i in seq_along(id))
         {
-            cat(sprintf("##FILTER=<ID=%s,Description=%s>\n",
-                dq(id[i]), dq(dp[i], TRUE)), file=ofile)
+            txt <- c(txt, sprintf("##FILTER=<ID=%s,Description=%s>",
+                dq(id[i]), dq(dp[i], TRUE)))
         }
     }
 
     # FORMAT field
     a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
-    cat(sprintf("##FORMAT=<ID=%s,Number=1,Type=String,Description=%s>\n",
-        a$VariableName, dq(a$Description, TRUE)), file=ofile)
+    txt <- c(txt, sprintf(
+        "##FORMAT=<ID=%s,Number=1,Type=String,Description=%s>",
+        a$VariableName, dq(a$Description, TRUE)))
     for (nm in z$format$ID)
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile,
             paste("annotation/format/", nm, sep="")))
-        cat(sprintf("##FORMAT=<ID=%s,Number=%s,Type=%s,Description=%s>\n",
-            nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE)), file=ofile)
+        txt <- c(txt, sprintf(
+            "##FORMAT=<ID=%s,Number=%s,Type=%s,Description=%s>",
+            nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE)))
     }
 
     # others
@@ -1113,7 +1120,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         {
             s <- dat[i,1L]
             if (!(s %in% c("fileDate", "source")))
-                cat("##", s, "=", dq(dat[i,2L]), "\n", sep="", file=ofile)
+                txt <- c(txt, paste0("##", s, "=", dq(dat[i,2L])))
         }
     }
 
@@ -1121,9 +1128,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # write the header -- samples
 
-    cat(c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO",
-        "FORMAT", seqGetData(gdsfile, "sample.id")), sep="\t", file=ofile)
-    cat("\n", file=ofile)
+    txt <- c(txt, paste(
+        c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO",
+        "FORMAT", seqGetData(gdsfile, "sample.id")), collapse="\t"))
+    writeLines(txt, ofile)
 
 
     ######################################################
@@ -1191,10 +1199,12 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             .cfunction("SEQ_OutVCF4"), .cfunction("SEQ_OutVCF4_Di_WrtFmt")),
         .writeraw = writeraw)
 
+    # finalize
     .Call(SEQ_DoneOutVCF4)
-
-    if (verbose)
-        cat("Done.\n", date(), "\n", sep="")
+    on.exit({
+        if (verbose)
+            cat("Done.\n", date(), "\n", sep="")
+    }, add=TRUE)
 
     # output
     if (!inherits(vcf.fn, "connection"))
