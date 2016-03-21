@@ -542,11 +542,15 @@ COREARRAY_DLL_LOCAL const char *Txt_Apply_VarIdx[] =
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho)
 {
-	int use_raw_flag = Rf_asLogical(GetListElement(param, ".useraw"));
+	int use_raw_flag = Rf_asLogical(GetListElement(param, "useraw"));
 	if (use_raw_flag == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
 
-	int dup_flag = Rf_asLogical(GetListElement(param, ".list_dup"));
+	int write_raw_flag = Rf_asLogical(GetListElement(param, "writeraw"));
+	if (write_raw_flag == NA_LOGICAL)
+		error("'.writeraw' must be TRUE or FALSE.");
+
+	int dup_flag = Rf_asLogical(GetListElement(param, "list_dup"));
 	if (dup_flag == NA_LOGICAL)
 		error("'.list_dup' must be TRUE or FALSE.");
 
@@ -626,8 +630,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// ===========================================================
 		// as.is
 
-		SEXP R_con_call=R_NilValue, R_con_param=R_NilValue;
-		const R_xlen_t R_con_idx_cnt = 128;
+		SEXP R_con_call  = R_NilValue;
+		SEXP R_con_param = R_NilValue;
+		const R_xlen_t R_con_bufsize = write_raw_flag ? 65536 : 128;
 		R_xlen_t R_con_idx = 0;
 
 		int DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
@@ -660,9 +665,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			R_rv_ptr = (C_Int8 *)RAW(rv_ans);
 			break;
 		case 7:
-			R_con_param = PROTECT(NEW_CHARACTER(R_con_idx_cnt));
-			R_con_call  = PROTECT(LCONS(GetListElement(param, "fun"),
-				LCONS(R_con_param, LCONS(GetListElement(param, "funparam"),
+			const char *fun_name = write_raw_flag ? "funbin" : "funline";
+			PROTECT(R_con_param = write_raw_flag ?
+				NEW_RAW(R_con_bufsize) : NEW_CHARACTER(R_con_bufsize));
+			PROTECT(R_con_call  = LCONS(GetListElement(param, fun_name),
+				LCONS(R_con_param, LCONS(GetListElement(param, "funcon"),
 				R_NilValue))));
 			nProtected += 2;
 			break;
@@ -759,42 +766,62 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 
 			// call R function
 			SEXP val = eval(R_fcall, rho);
+
+			// store data
 			switch (DatType)
 			{
-			case 1:
+			case 1:  // list
 				if (dup_flag) val = duplicate(val);
 				SET_ELEMENT(rv_ans, ans_index, val);
 				break;
-			case 2:
+			case 2:  // integer
 				*((int*)R_rv_ptr) = Rf_asInteger(val);
 				R_rv_ptr += sizeof(int);
 				break;
-			case 3:
+			case 3:  // double
 				*((double*)R_rv_ptr) = Rf_asReal(val);
 				R_rv_ptr += sizeof(double);
 				break;
-			case 4:
+			case 4:  // character
 				SET_STRING_ELT(rv_ans, ans_index, Rf_asChar(val));
 				break;
-			case 5:
+			case 5:  // logical
 				*((int*)R_rv_ptr) = Rf_asLogical(val);
 				R_rv_ptr += sizeof(int);
 				break;
-			case 6:
+			case 6:  // raw
 				*R_rv_ptr = Rf_asInteger(val);
 				R_rv_ptr ++;
 				break;
-			case 7:
-				if (!Rf_isString(val)) val = AS_CHARACTER(val);
-				R_xlen_t num_txt = XLENGTH(val);
-				for (R_xlen_t i=0; i < num_txt; i++)
+			case 7:  // con
+				if (write_raw_flag)
 				{
-					SET_STRING_ELT(R_con_param, R_con_idx, STRING_ELT(val, i));
-					R_con_idx ++;
-					if (R_con_idx >= R_con_idx_cnt)
+					if (TYPEOF(val) != RAWSXP) val = AS_RAW(val);
+					R_xlen_t n = XLENGTH(val);
+					Rbyte *p = RAW(val);
+					while (n > 0)
 					{
-						EVAL(R_con_call);
-						R_con_idx = 0;
+						R_xlen_t m = (R_con_idx+n <= R_con_bufsize) ? n :
+							(R_con_bufsize - R_con_idx);
+						memcpy(RAW(R_con_param) + R_con_idx, p, m);
+						R_con_idx += m; p += m; n -= m;
+						if (R_con_idx >= R_con_bufsize)
+						{
+							EVAL(R_con_call);
+							R_con_idx = 0;
+						}
+					}
+				} else {
+					if (!Rf_isString(val)) val = AS_CHARACTER(val);
+					for (R_xlen_t i=0; i < XLENGTH(val); i++)
+					{
+						SET_STRING_ELT(R_con_param, R_con_idx, STRING_ELT(val, i));
+						R_con_idx ++;
+						if (R_con_idx >= R_con_bufsize)
+						{
+							EVAL(R_con_call);
+							R_con_idx = 0;
+						}
 					}
 				}
 				break;
@@ -814,8 +841,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		if (R_con_idx > 0)
 		{
 			SET_LENGTH(R_con_param, R_con_idx);
-			R_con_call = PROTECT(LCONS(GetListElement(param, "fun"),
-				LCONS(R_con_param, LCONS(GetListElement(param, "funparam"),
+			const char *fun_name = write_raw_flag ? "funbin" : "funline";
+			R_con_call = PROTECT(LCONS(GetListElement(param, fun_name),
+				LCONS(R_con_param, LCONS(GetListElement(param, "funcon"),
 				R_NilValue))));
 			nProtected ++;
 			EVAL(R_con_call);

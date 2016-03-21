@@ -31,15 +31,6 @@
 #include "vectorization.h"
 
 
-#ifdef __SSE3__
-#   define MM_LOADU_128    _mm_lddqu_si128
-#else
-#   define MM_LOADU_128    _mm_loadu_si128
-#endif
-
-#define MM_LOADU_256    _mm256_loadu_si256
-
-
 /// get the number of non-zero
 size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 {

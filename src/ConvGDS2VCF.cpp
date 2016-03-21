@@ -20,12 +20,15 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "Common.h"
+#include "vectorization.h"
 #include <cstdio>
 #include <cstring>
 #include <vector>
 
 using namespace std;
 
+namespace SeqArray
+{
 
 // double quote the text if it is needed
 static string QuoteText(const char *p)
@@ -61,38 +64,6 @@ static string QuoteText(const char *p)
 
 
 
-extern "C"
-{
-// ========================================================================
-// Convert to VCF4: GDS -> VCF4
-// ========================================================================
-
-/// double quote text if needed
-COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
-{
-	SEXP NewText, ans;
-	PROTECT(NewText = AS_CHARACTER(text));
-	PROTECT(ans = NEW_CHARACTER(Rf_length(NewText)));
-
-	for (int i=0; i < Rf_length(NewText); i++)
-	{
-		string tmp = QuoteText(CHAR(STRING_ELT(NewText, i)));
-		if (LOGICAL(dQuote)[0] == TRUE)
-		{
-			if ((tmp[0] != '\"') || (tmp[tmp.size()-1] != '\"'))
-			{
-				tmp.insert(0, "\"");
-				tmp.push_back('\"');
-			}
-		}
-		SET_STRING_ELT(ans, i, mkChar(tmp.c_str()));
-	}
-
-	UNPROTECT(2);
-	return ans;
-}
-
-
 // ========================================================================
 
 /// used in SEQ_OutVCF4
@@ -102,6 +73,7 @@ static vector<SEXP> _VCF4_FORMAT_List;
 
 static size_t _VCF4_NumAllele;
 static size_t _VCF4_NumSample;
+static bool   _VCF4_WriteRaw;
 
 
 const size_t LINE_BUFFER_SIZE = 4096;
@@ -214,6 +186,7 @@ inline static void LineBuf_Append(const char *txt)
 	memcpy(LinePtr, txt, n);
 	LinePtr += n;
 }
+
 
 
 // ========================================================================
@@ -448,16 +421,71 @@ inline static void ExportInfoFormat(SEXP X)
 	*LinePtr++ = '\t';
 }
 
+}
+
+
+
+using namespace SeqArray;
+
+extern "C"
+{
+/// to replace mkCharLenCE to speed up, MUST to check the development of R core
+static SEXP Alloc_CharSEXP(const char *str, size_t len)
+{
+	#define intCHARSXP 73
+	#define CHAR_RW(x)	((char *) CHAR(x))
+
+    SEXP rv = allocVector(intCHARSXP, len);
+    memcpy(CHAR_RW(rv), str, len);
+    return rv;
+
+	#undef intCHARSXP
+	#undef CHAR_RW
+}
+
+
+// ========================================================================
+// Convert to VCF4: GDS -> VCF4
+// ========================================================================
+
+/// double quote text if needed
+COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
+{
+	SEXP NewText, ans;
+	PROTECT(NewText = AS_CHARACTER(text));
+	PROTECT(ans = NEW_CHARACTER(Rf_length(NewText)));
+
+	for (int i=0; i < Rf_length(NewText); i++)
+	{
+		string tmp = QuoteText(CHAR(STRING_ELT(NewText, i)));
+		if (LOGICAL(dQuote)[0] == TRUE)
+		{
+			if ((tmp[0] != '\"') || (tmp[tmp.size()-1] != '\"'))
+			{
+				tmp.insert(0, "\"");
+				tmp.push_back('\"');
+			}
+		}
+		SET_STRING_ELT(ans, i, mkChar(tmp.c_str()));
+	}
+
+	UNPROTECT(2);
+	return ans;
+}
+
+
 
 
 // ========================================================================
 
 
 /// initialize
-COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Sel, SEXP Info, SEXP Format)
+COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Sel, SEXP Info, SEXP Format,
+	SEXP WriteRaw)
 {
 	_VCF4_NumAllele = INTEGER(Sel)[0];
 	_VCF4_NumSample = INTEGER(Sel)[1];
+	_VCF4_WriteRaw  = Rf_asLogical(WriteRaw) == TRUE;
 
 	int *pInfo = INTEGER(Info);
 	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
@@ -518,7 +546,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 			{
 				if (j > 0)
 					*LinePtr++ = (*pAllele++) ? '|' : '/';
-				_Line_Append(*pSamp++);
+				_Line_Append_Geno(*pSamp++);
 			}
 		}
 
@@ -533,8 +561,171 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	}
 
 	// return
-	SEXP ans = PROTECT(NEW_CHARACTER(1));
-	SET_STRING_ELT(ans, 0, Rf_mkCharLen(LineBegin, LinePtr-LineBegin));
+	SEXP ans;
+	if (_VCF4_WriteRaw)
+	{
+		*LinePtr++ = '\n';
+		size_t size = LinePtr - LineBegin;
+		ans = PROTECT(NEW_RAW(size));
+		memcpy(RAW(ans), LineBegin, size);
+	} else {
+		ans = PROTECT(NEW_CHARACTER(1));
+		SET_STRING_ELT(ans, 0, Alloc_CharSEXP(LineBegin, LinePtr - LineBegin));
+	}
+	UNPROTECT(1);
+	return ans;
+}
+
+
+
+// --------------------------------------------------------------
+
+#ifdef __SSE2__
+
+static const __m128i char_unphased = _mm_set_epi8(
+	'\t', '.', '/', '.',   '\t', '.', '/', '.',
+	'\t', '.', '/', '.',   '\t', '.', '/', '.');
+static const __m128i char_phased = _mm_set_epi8(
+	'\t', '.', '|', '.',   '\t', '.', '|', '.',
+	'\t', '.', '|', '.',   '\t', '.', '|', '.');
+static const __m128i nines = _mm_set1_epi32(9);
+static const __m128i char_zero = _mm_set1_epi16('0');
+static const __m128i char_mask = _mm_set1_epi16(0xFF00);
+
+#endif
+
+#ifdef __AVX2__
+
+static const __m256i char_unphased_256 = _mm256_set_epi8(
+	'\t', '.', '/', '.',   '\t', '.', '/', '.',
+	'\t', '.', '/', '.',   '\t', '.', '/', '.',
+	'\t', '.', '/', '.',   '\t', '.', '/', '.',
+	'\t', '.', '/', '.',   '\t', '.', '/', '.');
+static const __m256i char_phased_256 = _mm256_set_epi8(
+	'\t', '.', '|', '.',   '\t', '.', '|', '.',
+	'\t', '.', '|', '.',   '\t', '.', '|', '.',
+	'\t', '.', '|', '.',   '\t', '.', '|', '.',
+	'\t', '.', '|', '.',   '\t', '.', '|', '.');
+static const __m256i nines_256 = _mm256_set1_epi32(9);
+static const __m256i char_zero_256 = _mm256_set1_epi16('0');
+static const __m256i char_mask_256 = _mm256_set1_epi16(0xFF00);
+
+#endif
+
+
+/// convert to VCF4, diploid without FORMAT variables
+COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4_Di_WrtFmt(SEXP X)
+{
+	// initialize line pointer
+	LineBuf_InitPtr();
+
+	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
+	ExportHead(X);
+
+	// INFO, FORMAT
+	ExportInfoFormat(X);
+
+	// 32-byte alignment
+	LineBuf_NeedSize(64);
+	size_t offset = (size_t)LinePtr & 0x1F;
+	if (offset > 0)
+	{
+		offset = 32 - offset;
+		memmove(LineBegin+offset, LineBegin, LinePtr-LineBegin);
+		LinePtr += offset;
+	}
+
+	// genotype
+	SEXP geno = VECTOR_ELT(X, 6);
+	int *pSamp = INTEGER(geno);
+
+	// phase information
+	SEXP phase = VECTOR_ELT(X, 7);
+	int *pAllele = INTEGER(phase);
+
+	// for-loop, genotypes
+	size_t n = _VCF4_NumSample;
+
+#ifdef __SSE2__
+
+	LineBuf_NeedSize(n*4 + 32);
+
+#ifdef __AVX2__
+	for (; n >= 8; n -= 8)
+	{
+		__m256i v1 = MM_LOADU_256(pSamp);
+		if (_mm256_movemask_epi8(_mm256_cmpgt_epi32(v1, nines_256))) goto tail;
+
+		__m256i v2 = MM_LOADU_256(pSamp+8);
+		if (_mm256_movemask_epi8(_mm256_cmpgt_epi32(v2, nines_256))) goto tail;
+		pSamp += 16;
+
+		__m256i phase = MM_LOADU_256(pAllele);
+		pAllele += 8;
+		__m256i m = _mm256_cmpeq_epi32(phase, _mm256_setzero_si256());
+		__m256i bkg = MM_BLEND_256(char_unphased_256, char_phased_256, m);
+
+		__m256i v = _mm256_add_epi16(_mm256_packs_epi32(v1, v2), char_zero_256);
+		v = _mm256_permute4x64_epi64(v, _MM_SHUFFLE(3,1,2,0));
+		m = _mm256_cmpgt_epi32(_mm256_setzero_si256(), v);
+		m = _mm256_or_si256(m, char_mask_256);
+		v = MM_BLEND_256(bkg, v, m);
+		_mm256_store_si256((__m256i *)LinePtr, v);
+		LinePtr += 32;
+	}
+#endif
+
+	for (; n >= 4; n -= 4)
+	{
+		__m128i v1 = MM_LOADU_128(pSamp);
+		if (_mm_movemask_epi8(_mm_cmpgt_epi32(v1, nines))) break;
+
+		__m128i v2 = MM_LOADU_128(pSamp+4);
+		if (_mm_movemask_epi8(_mm_cmpgt_epi32(v2, nines))) break;
+		pSamp += 8;
+
+		__m128i phase = MM_LOADU_128(pAllele);
+		pAllele += 4;
+		__m128i m = _mm_cmpeq_epi32(phase, _mm_setzero_si128());
+		__m128i bkg = MM_BLEND_128(char_unphased, char_phased, m);
+
+		__m128i v = _mm_add_epi16(_mm_packs_epi32(v1, v2), char_zero);
+		m = _mm_cmplt_epi16(v, _mm_setzero_si128());
+		m = _mm_or_si128(m, char_mask);
+		v = MM_BLEND_128(bkg, v, m);
+		_mm_store_si128((__m128i *)LinePtr, v);
+		LinePtr += 16;
+	}
+
+#ifdef __AVX2__
+tail:
+#endif
+
+#endif
+	// tail
+	for (; n > 0; n--)
+	{
+		LineBuf_NeedSize(32);
+		_Line_Append_Geno(*pSamp++);
+		*LinePtr++ = (*pAllele++) ? '|' : '/';
+		_Line_Append_Geno(*pSamp++);
+		*LinePtr++ = '\t';
+	}
+	LinePtr --;
+
+	// return
+	SEXP ans;
+	if (_VCF4_WriteRaw)
+	{
+		*LinePtr++ = '\n';
+		size_t size = LinePtr - LineBegin - offset;
+		ans = PROTECT(NEW_RAW(size));
+		memcpy(RAW(ans), LineBegin + offset, size);
+	} else {
+		ans = PROTECT(NEW_CHARACTER(1));
+		SET_STRING_ELT(ans, 0,
+			Alloc_CharSEXP(LineBegin + offset, LinePtr - LineBegin - offset));
+	}
 	UNPROTECT(1);
 	return ans;
 }

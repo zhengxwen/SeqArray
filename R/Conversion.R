@@ -984,19 +984,21 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
         if (ext == ".gz")
         {
-            ofile <- gzfile(vcf.fn, "wt")
+            ofile <- gzfile(vcf.fn, "wb")
         } else if (ext == ".bz")
         {
-            ofile <- bzfile(vcf.fn, "wt")
+            ofile <- bzfile(vcf.fn, "wb")
         } else if (ext == ".xz")
         {
-            ofile <- xzfile(vcf.fn, "wt")
+            ofile <- xzfile(vcf.fn, "wb")
         } else {
-            ofile <- file(vcf.fn, open="wt")
+            ofile <- file(vcf.fn, open="wb")
         }
         on.exit({ close(ofile) })
+        writeraw <- TRUE
     } else {
         ofile <- vcf.fn
+        writeraw <- FALSE
     }
 
     op <- options("useFancyQuotes")
@@ -1166,7 +1168,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
     # initialize
-    .Call(SEQ_InitOutVCF4, .seldim(gdsfile), len.info, len.fmt)
+    .Call(SEQ_InitOutVCF4, .seldim(gdsfile), len.info, len.fmt, writeraw)
 
     # variable names
     nm <- c("chromosome", "position", "annotation/id", "allele",
@@ -1183,9 +1185,11 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         s <- c(s, paste("fmt.", z$format$ID, sep=""))
     names(nm) <- s
 
-    # output lines variant by variant
-    seqApply(gdsfile, nm, margin="by.variant", as.is=ofile,
-        FUN = .cfunction("SEQ_OutVCF4"))
+    # output lines by variant
+    seqApply(gdsfile, nm, margin = "by.variant", as.is = ofile,
+        FUN = ifelse(length(nm.format) > 0L,
+            .cfunction("SEQ_OutVCF4"), .cfunction("SEQ_OutVCF4_Di_WrtFmt")),
+        .writeraw = writeraw)
 
     .Call(SEQ_DoneOutVCF4)
 

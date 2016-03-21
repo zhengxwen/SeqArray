@@ -195,6 +195,37 @@ inline static int POPCNT_U64(uint64_t x)
 
 
 
+// ===========================================================
+
+#ifdef __SSE__
+
+#   ifdef __SSE3__
+#       define MM_LOADU_128(p)    _mm_lddqu_si128((__m128i const*)(p))
+#   else
+#       define MM_LOADU_128(p)    _mm_loadu_si128((__m128i const*)(p))
+#   endif
+
+#   ifdef __SSE2__
+#       define MM_BLEND_128(a, b, mask)  \
+		    _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b))
+#   endif
+
+#endif
+
+
+#ifdef __AVX__
+
+#   define MM_LOADU_256(p)    _mm256_loadu_si256((__m256i const *)(p))
+
+#   ifdef __AVX2__
+#       define MM_BLEND_256(a, b, mask)  \
+		    _mm256_or_si256(_mm256_and_si256(mask, a), _mm256_andnot_si256(mask, b))
+#   endif
+
+#endif
+
+
+
 /// get the number of non-zero
 COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
 

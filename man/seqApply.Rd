@@ -9,7 +9,7 @@ margins of arrays or matrices.
 seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
     var.index=c("none", "relative", "absolute"),
-    .useraw=FALSE, .list_dup=TRUE, ...)
+    .useraw=FALSE, .writeraw=FALSE, .list_dup=TRUE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -28,6 +28,10 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         selection defined by \code{\link{seqSetFilter}}, \code{"absolute"}
         for indexing with respect to all data}
     \item{.useraw}{use RAW instead of INTEGER for genotypes and dosages}
+    \item{.writeraw}{applicable when \code{as.is} is a \code{connection}
+        object: if \code{TRUE} calls \code{\link{writeBin}} and requires
+        the user-defined function returns a RAW vector; otherwise call
+        \code{\link{writeLines}}}
     \item{.list_dup}{internal use only}
     \item{...}{optional arguments to \code{FUN}}
 }

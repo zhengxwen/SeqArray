@@ -307,7 +307,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
     var.index=c("none", "relative", "absolute"),
-    .useraw=FALSE, .list_dup=TRUE, ...)
+    .useraw=FALSE, .writeraw=FALSE, .list_dup=TRUE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -316,12 +316,13 @@ seqApply <- function(gdsfile, var.name, FUN,
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
     var.index <- match.arg(var.index)
-    param <- list(.useraw=.useraw, .list_dup=.list_dup)
+    param <- list(useraw=.useraw, writeraw=.writeraw, list_dup=.list_dup)
 
     if (inherits(as.is, "connection"))
     {
-        param$fun <- writeLines
-        param$funparam <- as.is
+        param$funbin <- base::writeBin
+        param$funline <- base::writeLines
+        param$funcon <- as.is
         as.is <- "con"
     } else
         as.is <- match.arg(as.is)
