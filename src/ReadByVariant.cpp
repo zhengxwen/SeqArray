@@ -22,6 +22,9 @@
 #include "ReadByVariant.h"
 
 
+namespace SeqArray
+{
+
 /// 
 CVarApplyByVariant::CVarApplyByVariant()
 {
@@ -31,21 +34,24 @@ CVarApplyByVariant::CVarApplyByVariant()
 }
 
 void CVarApplyByVariant::InitObject(TType Type, const char *Path,
-	PdGDSObj Root, int nVariant, C_BOOL *VariantSel, int nSample,
-	C_BOOL *SampleSel, bool _UseRaw)
+	CFileInfo &File, bool _UseRaw)
 {
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
 	// initialize
 	GDS_PATH_PREFIX_CHECK(Path);
 	VarType = Type;
-	Node = GDS_Node_Path(Root, Path, TRUE);
+	Node = File.GetObj(Path, TRUE);
 	SVType = GDS_Array_GetSVType(Node);
 	DimCnt = GDS_Array_DimCnt(Node);
 
-	TotalNum_Variant = nVariant;
-	VariantSelect = VariantSel;
-	Num_Sample = GetNumOfTRUE(SampleSel, nSample);
+	int nVariant = File.VariantNum();
+	int nSample  = File.SampleNum();
+
+	TSelection &Sel = File.Selection();
+	TotalNum_Variant = File.VariantNum();
+	VariantSelect = &Sel.Variant[0];
+	Num_Sample = GetNumOfTRUE(&Sel.Sample[0], File.SampleNum());
 	UseRaw = _UseRaw;
 	NumOfBits = GDS_Array_GetBitOf(Node);
 
@@ -70,7 +76,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 				throw ErrSeqArray(ERR_DIM, Path);
 
 			Path2 = GDS_PATH_PREFIX(Path, '@');
-			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
+			IndexNode = File.GetObj(Path2.c_str(), FALSE);
 			if (IndexNode == NULL)
 				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
 			if ((GDS_Array_DimCnt(IndexNode) != 1) ||
@@ -83,7 +89,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 				Selection.resize(DLen[1] * DLen[2]);
 				C_BOOL *p = SelPtr[1] = &Selection[0];
 				memset(p, TRUE, Selection.size());
-				C_BOOL *s = SampleSel;
+				C_BOOL *s = Sel.pSample();
 				for (int n=DLen[1]; n > 0; n--)
 				{
 					if (*s++ == FALSE)
@@ -108,7 +114,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			if ((DLen[0] != nVariant) || (DLen[1] != nSample))
 				throw ErrSeqArray(ERR_DIM, Path);
 
-			SelPtr[1] = SampleSel;
+			SelPtr[1] = Sel.pSample();
 			if (DimCnt > 2)
 				SelPtr[2] = NeedTRUE(DLen[2]);
 			break;
@@ -121,7 +127,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			GDS_Array_GetDim(Node, DLen, 2);
 
 			Path2 = GDS_PATH_PREFIX(Path, '@');
-			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
+			IndexNode = File.GetObj(Path2.c_str(), FALSE);
 			if (IndexNode != NULL)
 			{
 				if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
@@ -143,7 +149,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			GDS_Array_GetDim(Node, DLen, 3);
 
 			Path2 = GDS_PATH_PREFIX(Path, '@');
-			IndexNode = GDS_Node_Path(Root, Path2.c_str(), FALSE);
+			IndexNode = File.GetObj(Path2.c_str(), FALSE);
 			if (IndexNode != NULL)
 			{
 				if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
@@ -151,7 +157,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			} else
 				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
 
-			SelPtr[1] = SampleSel;
+			SelPtr[1] = Sel.pSample();
 			if (DimCnt > 2)
 				SelPtr[2] = NeedTRUE(DLen[2]);
 			break;
@@ -518,10 +524,13 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 		return it->second;
 }
 
+}
 
 
 extern "C"
 {
+using namespace SeqArray;
+
 // ===========================================================
 // Apply functions over margins on a working space
 // ===========================================================
@@ -557,15 +566,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	COREARRAY_TRY
 
 		// the selection
-		TInitObject::TSelection &Sel = Init.Selection(gdsfile, true);
-		// the GDS root node
-		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
+		CFileInfo &File = GetFileInfo(gdsfile);
+		TSelection &Sel = File.Selection();
 
 		// the number of calling PROTECT
 		int nProtected = 0;
 
 		// the number of selected variants
-		int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
+		int nVariant = File.VariantSelNum();
 		if (nVariant <= 0)
 			throw ErrSeqArray("There is no selected variant.");
 
@@ -621,9 +629,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 					s.c_str());
 			}
 
-			NodeList[i].InitObject(VarType, s.c_str(), Root, Sel.Variant.size(),
-				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0],
-				use_raw_flag != FALSE);
+			NodeList[i].InitObject(VarType, s.c_str(), File, use_raw_flag!=FALSE);
 		}
 
 

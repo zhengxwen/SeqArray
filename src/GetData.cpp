@@ -26,6 +26,8 @@
 
 extern "C"
 {
+using namespace SeqArray;
+
 // ===========================================================
 // Get data from a working space
 // ===========================================================
@@ -137,119 +139,93 @@ static void MAP_INDEX(PdAbstractArray Node, const vector<C_BOOL> &sel,
 /// Get data from a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 {
+	static const char *ERR_DIM = "Invalid dimension of '%s'.";
+
 	int use_raw = Rf_asLogical(UseRaw);
 	if (use_raw == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
+	const C_UInt32 UseMode = GDS_R_READ_DEFAULT_MODE |
+		(use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0);
 
 	COREARRAY_TRY
 
+		// File information
+		CFileInfo &File = GetFileInfo(gdsfile);
 		// the selection
-		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
-		// the GDS root node
-		PdGDSObj Root = GDS_R_SEXP2Obj(GetListElement(gdsfile, "root"), TRUE);
-
-		// 
-		C_BOOL *SelPtr[GDS_MAX_NUM_DIMENSION];
-		int DStart[GDS_MAX_NUM_DIMENSION], DLen[GDS_MAX_NUM_DIMENSION];
-		int DimCnt;
+		TSelection &Sel = File.Selection();
 
 		// the path of GDS variable
-		const char *s = CHAR(STRING_ELT(var_name, 0));
-		if (strcmp(s, "sample.id") == 0)
+		const char *name = CHAR(STRING_ELT(var_name, 0));
+		if (strcmp(name, "sample.id") == 0)
 		{
 			// ===========================================================
 			// sample.id
 
-			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
-			DimCnt = GDS_Array_DimCnt(N);
-			if (DimCnt != 1)
-				throw ErrSeqArray("Invalid dimension of 'sample.id'.");
-			if (Sel.Sample.empty())
-			{
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL, 0);
-			} else {
-				GDS_Array_GetDim(N, DLen, 1);
-				if ((int)Sel.Sample.size() != DLen[0])
-					throw ErrSeqArray("Invalid dimension of 'sample.id'.");
-				SelPtr[0] = &Sel.Sample[0];
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0], 0);
-			}
+			PdAbstractArray N = File.GetObj(name, TRUE);
+			// check
+			if ((GDS_Array_DimCnt(N) != 1) ||
+					(GDS_Array_GetTotalCount(N) != File.SampleNum()))
+				throw ErrSeqArray(ERR_DIM, name);
+			// read
+			C_BOOL *ss = Sel.pSample();
+			rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 
-		} else if ( (strcmp(s, "variant.id")==0) || (strcmp(s, "position")==0) ||
-			(strcmp(s, "chromosome")==0) || (strcmp(s, "allele")==0) ||
-			(strcmp(s, "annotation/id")==0) || (strcmp(s, "annotation/qual")==0) ||
-			(strcmp(s, "annotation/filter")==0) )
+		} else if ( (strcmp(name, "variant.id")==0) ||
+			(strcmp(name, "position")==0) ||
+			(strcmp(name, "chromosome")==0) ||
+			(strcmp(name, "allele")==0) ||
+			(strcmp(name, "annotation/id")==0) ||
+			(strcmp(name, "annotation/qual")==0) ||
+			(strcmp(name, "annotation/filter")==0) )
 		{
 			// ===========================================================
 			// variant.id, position, chromosome, allele, annotation/id
 			// annotation/qual, annotation/filter
 
-			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
-			DimCnt = GDS_Array_DimCnt(N);
-			if (DimCnt != 1)
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
-			if (Sel.Variant.empty())
-			{
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL, 0);
-			} else {
-				GDS_Array_GetDim(N, DLen, 1);
-				if ((int)Sel.Variant.size() != DLen[0])
-					throw ErrSeqArray("Invalid dimension of '%s'.", s);
-				SelPtr[0] = &Sel.Variant[0];
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0], 0);
-			}
+			PdAbstractArray N = File.GetObj(name, TRUE);
+			// check
+			if ((GDS_Array_DimCnt(N) != 1) ||
+					(GDS_Array_GetTotalCount(N) != File.VariantNum()))
+				throw ErrSeqArray(ERR_DIM, name);
+			// read
+			C_BOOL *ss = Sel.pVariant();
+			rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 
-		} else if (strcmp(s, "phase") == 0)
+		} else if (strcmp(name, "phase") == 0)
 		{
 			// ===========================================================
 			// phase/
 
-			PdAbstractArray N = GDS_Node_Path(Root, "phase/data", TRUE);
-			DimCnt = GDS_Array_DimCnt(N);
-			if ((DimCnt != 2) && (DimCnt != 3))
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
-			if (!Sel.Sample.empty() || !Sel.Variant.empty())
-			{
-				Sel.Reset();
+			PdAbstractArray N = File.GetObj("phase/data", TRUE);
+			// check
+			int ndim = GDS_Array_DimCnt(N);
+			C_Int32 dim[4];
+			GDS_Array_GetDim(N, dim, 3);
+			if (ndim<2 || ndim>3 || dim[0]!= File.VariantNum() ||
+					dim[1]!=File.SampleNum())
+				throw ErrSeqArray(ERR_DIM, name);
+			// read
+			C_BOOL *ss[3] = { Sel.pVariant(), Sel.pSample(), NULL };
+			if (ndim == 3)
+				ss[2] = NeedTRUEs(dim[2]);
+			rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 
-				// check
-				GDS_Array_GetDim(N, DLen, 3);
-				if (Sel.Variant.size() != (size_t)DLen[0])
-					throw ErrSeqArray("Invalid dimension of '%s'.", s);
-				if (Sel.Sample.size() != (size_t)DLen[1])
-					throw ErrSeqArray("Invalid dimension of '%s'.", s);
-
-				SelPtr[0] = &Sel.Variant[0];
-				SelPtr[1] = &Sel.Sample[0];
-
-				CVarApply Var;
-				if (DimCnt == 3)
-					SelPtr[2] = Var.NeedTRUE(DLen[2]);
-
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0], 0);
-
-			} else
-				rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL, 0);
-
-		} else if (strcmp(s, "genotype") == 0)
+		} else if (strcmp(name, "genotype") == 0)
 		{
 			// ===========================================================
 			// genotypic data
 
-			Sel.Reset();
-			int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
+			int nSample  = File.SampleSelNum();
+			int nVariant = File.VariantSelNum();
 
-			if (nVariant > 0)
+			if ((nSample > 0) && (nVariant > 0))
 			{
 				// initialize GDS genotype Node
 				CVarApplyByVariant NodeVar;
-				NodeVar.InitObject(CVariable::ctGenotype,
-					"genotype/data", Root, Sel.Variant.size(),
-					&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
-
-				// the number of calling PROTECT
+				NodeVar.InitObject(CVariable::ctGenotype, "genotype/data",
+					File, use_raw);
+				// size to be allocated
 				size_t SIZE = (size_t)NodeVar.Num_Sample * NodeVar.DLen[2];
-
 				if (use_raw)
 				{
 					rv_ans = PROTECT(NEW_RAW(nVariant * SIZE));
@@ -269,163 +245,148 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 
 				SEXP dim = PROTECT(NEW_INTEGER(3));
 					int *p = INTEGER(dim);
-					p[0] = NodeVar.DLen[2];
-					p[1] = NodeVar.Num_Sample;
-					p[2] = nVariant;
+					p[0] = NodeVar.DLen[2]; p[1] = nSample; p[2] = nVariant;
 				SET_DIM(rv_ans, dim);
 
 				// finally
 				UNPROTECT(2);
 			}
 
-		} else if (strcmp(s, "@genotype") == 0)
+		} else if (strcmp(name, "@genotype") == 0)
 		{
 			static const char *VarName = "genotype/@data";
-			PdAbstractArray N = GDS_Node_Path(Root, VarName, TRUE);
-			C_Int32 st  = 0;
-			C_Int32 cnt = GetGDSObjCount(N, VarName);
-			if (Sel.Variant.empty())
-			{
-				rv_ans = GDS_R_Array_Read(N, &st, &cnt, NULL, 0);
-			} else {
-				C_BOOL *SelList = &Sel.Variant[0];
-				rv_ans = GDS_R_Array_Read(N, &st, &cnt, &SelList, 0);
-			}
+			PdAbstractArray N = File.GetObj(VarName, TRUE);
+			// check
+			if ((GDS_Array_DimCnt(N) != 1) ||
+					(GDS_Array_GetTotalCount(N) != File.VariantNum()))
+				throw ErrSeqArray(ERR_DIM, VarName);
+			// read
+			C_BOOL *ss = Sel.pVariant();
+			rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 
-		} else if (strncmp(s, "annotation/info/@", 17) == 0)
+		} else if (strncmp(name, "annotation/info/@", 17) == 0)
 		{
-			PdAbstractArray N = GDS_Node_Path(Root, s, FALSE);
+			PdAbstractArray N = File.GetObj(name, FALSE);
 			if (N != NULL)
 			{
-				C_Int32 st  = 0;
-				C_Int32 cnt = GetGDSObjCount(N, s);
-				if (Sel.Variant.empty())
-				{
-					rv_ans = GDS_R_Array_Read(N, &st, &cnt, NULL, 0);
-				} else {
-					C_BOOL *SelList = &Sel.Variant[0];
-					rv_ans = GDS_R_Array_Read(N, &st, &cnt, &SelList, 0);
-				}
+				// check
+				if ((GDS_Array_DimCnt(N) != 1) ||
+						(GDS_Array_GetTotalCount(N) != File.VariantNum()))
+					throw ErrSeqArray(ERR_DIM, name);
+				// read
+				C_BOOL *ss = Sel.pVariant();
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 			}
-		} else if (strncmp(s, "annotation/info/", 16) == 0)
-		{
-			GDS_PATH_PREFIX_CHECK(s);
-			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
-			DimCnt = GDS_Array_DimCnt(N);
-			if ((DimCnt!=1) && (DimCnt!=2))
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
 
-			string path_ex = GDS_PATH_PREFIX(s, '@');
-			PdAbstractArray N_idx = GDS_Node_Path(Root, path_ex.c_str(), FALSE);
+		} else if (strncmp(name, "annotation/info/", 16) == 0)
+		{
+			// ===========================================================
+			// annotation/info
+
+			GDS_PATH_PREFIX_CHECK(name);
+			PdAbstractArray N = File.GetObj(name, TRUE);
+			int ndim = GDS_Array_DimCnt(N);
+			if ((ndim!=1) && (ndim!=2))
+				throw ErrSeqArray(ERR_DIM, name);
+
+			string name2 = GDS_PATH_PREFIX(name, '@');
+			PdAbstractArray N_idx = File.GetObj(name2.c_str(), FALSE);
 			if (N_idx == NULL)
 			{
 				// no index
-				if (!Sel.Variant.empty())
-				{
-					GDS_Array_GetDim(N, DLen, 2);
-					CVarApply Var;
-					SelPtr[0] = &Sel.Variant[0];
-					if (DimCnt == 2)
-						SelPtr[1] = Var.NeedTRUE(DLen[1]);
-					rv_ans = GDS_R_Array_Read(N, NULL, NULL, &SelPtr[0], 0);
-				} else
-					rv_ans = GDS_R_Array_Read(N, NULL, NULL, NULL, 0);
-
+				C_Int32 dim[4];
+				GDS_Array_GetDim(N, dim, 2);
+				C_BOOL *ss[2] = { Sel.pVariant(), NULL };
+				if (ndim == 2)
+					ss[1] = NeedTRUEs(dim[1]);
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 				rv_ans = VAR_LOGICAL(N, rv_ans);
 
 			} else {
 				// with index
-				if (!Sel.Variant.empty())
-				{
-					memset(DStart, 0, sizeof(DStart));
-					GDS_Array_GetDim(N, DLen, 2);
 
-					vector<int> len;
-					vector<C_BOOL> var_sel;
-					MAP_INDEX(N_idx, Sel.Variant, len, var_sel, DStart[0], DLen[0]);
+				// check
+				if ((GDS_Array_DimCnt(N_idx) != 1) ||
+						(GDS_Array_GetTotalCount(N_idx) != File.VariantNum()))
+					throw ErrSeqArray(ERR_DIM, name2.c_str());
 
-					CVarApply Var;
-					SelPtr[0] = &var_sel[0];
-					if (DimCnt == 2)
-						SelPtr[1] = Var.NeedTRUE(DLen[1]);
+				C_Int32 dim[4], dimst[4];
+				memset(dimst, 0, sizeof(dimst));
+				GDS_Array_GetDim(N, dim, 2);
 
-					PROTECT(rv_ans = NEW_LIST(2));
-						SEXP I32;
-						PROTECT(I32 = NEW_INTEGER(len.size()));
-						int *base = INTEGER(I32);
-						for (int i=0; i < (int)len.size(); i++)
-							base[i] = len[i];
-						SET_ELEMENT(rv_ans, 0, I32);
-						SET_ELEMENT(rv_ans, 1,
-							VAR_LOGICAL(N, GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0], 0)));
-					SEXP tmp = PROTECT(NEW_CHARACTER(2));
-						SET_STRING_ELT(tmp, 0, mkChar("length"));
-						SET_STRING_ELT(tmp, 1, mkChar("data"));
-						SET_NAMES(rv_ans, tmp);
-					UNPROTECT(3);
+				vector<int> len;
+				vector<C_BOOL> var_sel;
+				MAP_INDEX(N_idx, Sel.Variant, len, var_sel, dimst[0], dim[0]);
 
-				} else {
-					PROTECT(rv_ans = NEW_LIST(2));
-						SET_ELEMENT(rv_ans, 0,
-							GDS_R_Array_Read(N_idx, NULL, NULL, NULL, 0));
-						SET_ELEMENT(rv_ans, 1,
-							VAR_LOGICAL(N, GDS_R_Array_Read(N, NULL, NULL, NULL, 0)));
-					SEXP tmp = PROTECT(NEW_CHARACTER(2));
-						SET_STRING_ELT(tmp, 0, mkChar("length"));
-						SET_STRING_ELT(tmp, 1, mkChar("data"));
-						SET_NAMES(rv_ans, tmp);
-					UNPROTECT(2);
-				}
+				C_BOOL *ss[2] = { &var_sel[0], NULL };
+				if (ndim == 2)
+					ss[1] = NeedTRUEs(dim[1]);
+
+				PROTECT(rv_ans = NEW_LIST(2));
+					SEXP I32;
+					PROTECT(I32 = NEW_INTEGER(len.size()));
+					int *base = INTEGER(I32);
+					for (int i=0; i < (int)len.size(); i++)
+						base[i] = len[i];
+					SET_ELEMENT(rv_ans, 0, I32);
+					SET_ELEMENT(rv_ans, 1,
+						VAR_LOGICAL(N, GDS_R_Array_Read(N, dimst, dim, ss,
+						UseMode)));
+				SEXP tmp = PROTECT(NEW_CHARACTER(2));
+					SET_STRING_ELT(tmp, 0, mkChar("length"));
+					SET_STRING_ELT(tmp, 1, mkChar("data"));
+					SET_NAMES(rv_ans, tmp);
+				UNPROTECT(3);
 			}
 
-		} else if (strncmp(s, "annotation/format/@", 19) == 0)
+		} else if (strncmp(name, "annotation/format/@", 19) == 0)
 		{
-			string name(s);
-			name.erase(18, 1).append("/@data");
-			PdAbstractArray N = GDS_Node_Path(Root, name.c_str(), FALSE);
+			string name2(name);
+			name2.erase(18, 1).append("/@data");
+			PdAbstractArray N = File.GetObj(name2.c_str(), FALSE);
 			if (N != NULL)
 			{
-				C_Int32 st  = 0;
-				C_Int32 cnt = GetGDSObjCount(N, name.c_str());
-				if (Sel.Variant.empty())
-				{
-					rv_ans = GDS_R_Array_Read(N, &st, &cnt, NULL, 0);
-				} else {
-					C_BOOL *SelList = &Sel.Variant[0];
-					rv_ans = GDS_R_Array_Read(N, &st, &cnt, &SelList, 0);
-				}
+				// check
+				if ((GDS_Array_DimCnt(N) != 1) ||
+						(GDS_Array_GetTotalCount(N) != File.VariantNum()))
+					throw ErrSeqArray(ERR_DIM, name2.c_str());
+				// read
+				C_BOOL *ss = Sel.pVariant();
+				rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 			}
-		} else if (strncmp(s, "annotation/format/", 18) == 0)
-		{
-			Sel.Reset();
 
-			GDS_PATH_PREFIX_CHECK(s);
-			PdAbstractArray N =
-				GDS_Node_Path(Root, string(string(s)+"/data").c_str(), TRUE);
-			PdAbstractArray N_idx =
-				GDS_Node_Path(Root, string(string(s)+"/@data").c_str(), TRUE);
+		} else if (strncmp(name, "annotation/format/", 18) == 0)
+		{
+			// ===========================================================
+			// annotation/format
+
+			GDS_PATH_PREFIX_CHECK(name);
+			string name1 = string(name) + "/data";
+			string name2 = string(name) + "/@data";
+			PdAbstractArray N = File.GetObj(name1.c_str(), TRUE);
+			PdAbstractArray N_idx = File.GetObj(name2.c_str(), TRUE);
 
 			// check
-			DimCnt = GDS_Array_DimCnt(N);
-			if ((DimCnt!=2) && (DimCnt!=3))
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
-			memset(DStart, 0, sizeof(DStart));
-			GDS_Array_GetDim(N, DLen, 3);
+			int ndim = GDS_Array_DimCnt(N);
+			if ((ndim!=2) && (ndim!=3))
+				throw ErrSeqArray(ERR_DIM, name1.c_str());
+			C_Int32 dim[4];
+			GDS_Array_GetDim(N, dim, 3);
+			if (dim[1] != File.SampleNum())
+				throw ErrSeqArray(ERR_DIM, name1.c_str());
+			if ((GDS_Array_DimCnt(N_idx) != 1) ||
+					(GDS_Array_GetTotalCount(N_idx) != File.VariantNum()))
+				throw ErrSeqArray(ERR_DIM, name2.c_str());
 
-			if (Sel.Sample.size() != (size_t)DLen[1])
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
-			if (Sel.Variant.size() != (size_t)GDS_Array_GetTotalCount(N_idx))
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
-
+			C_Int32 dimst[4];
+			memset(dimst, 0, sizeof(dimst));
 			vector<int> len;
 			vector<C_BOOL> var_sel;
-			MAP_INDEX(N_idx, Sel.Variant, len, var_sel, DStart[0], DLen[0]);
+			MAP_INDEX(N_idx, Sel.Variant, len, var_sel, dimst[0], dim[0]);
 
-			CVarApply Var;
-			SelPtr[0] = &var_sel[0];
-			SelPtr[1] = &Sel.Sample[0];
-			if (DimCnt == 3)
-				SelPtr[2] = Var.NeedTRUE(DLen[2]);
+			C_BOOL *ss[3] = { &var_sel[0], Sel.pSample(), NULL };
+			if (ndim == 3)
+				ss[2] = NeedTRUEs(dim[2]);
 
 			PROTECT(rv_ans = NEW_LIST(2));
 				SEXP I32 = PROTECT(NEW_INTEGER(len.size()));
@@ -433,83 +394,57 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 				for (int i=0; i < (int)len.size(); i++)
 					base[i] = len[i];
 				SET_ELEMENT(rv_ans, 0, I32);
-				SEXP DAT = GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0], 0);
+				SEXP DAT = GDS_R_Array_Read(N, dimst, dim, ss, UseMode);
 				SET_ELEMENT(rv_ans, 1, DAT);
 			SEXP tmp = PROTECT(NEW_CHARACTER(2));
 				SET_STRING_ELT(tmp, 0, mkChar("length"));
 				SET_STRING_ELT(tmp, 1, mkChar("data"));
 				SET_NAMES(rv_ans, tmp);
+			UNPROTECT(3);
 
-				if (Rf_length(DAT) > 0)
-				{
-					SEXP name_list;
-					PROTECT(name_list = NEW_LIST(DimCnt));
-					PROTECT(tmp = NEW_CHARACTER(DimCnt));
-						SET_STRING_ELT(tmp, 0, mkChar("sample"));
-						SET_STRING_ELT(tmp, 1, mkChar("variant"));
-						SET_NAMES(name_list, tmp);
-					SET_DIMNAMES(VECTOR_ELT(rv_ans, 1), name_list);
-					UNPROTECT(5);
-				} else {
-					UNPROTECT(3);
-				}
-
-		} else if (strncmp(s, "sample.annotation/", 18) == 0)
+		} else if (strncmp(name, "sample.annotation/", 18) == 0)
 		{
-			GDS_PATH_PREFIX_CHECK(s);
-			PdAbstractArray N = GDS_Node_Path(Root, s, TRUE);
-			int nSamp = GDS_Array_GetTotalCount(
-				GDS_Node_Path(Root, "sample.id", TRUE));
+			// ===========================================================
+			// sample.annotation
 
-			DimCnt = GDS_Array_DimCnt(N);
-			if ((DimCnt!=1) && (DimCnt!=2))
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
-			GDS_Array_GetDim(N, DLen, 2);
-			if (DLen[0] != nSamp)
-				throw ErrSeqArray("Invalid dimension of '%s'.", s);
+			GDS_PATH_PREFIX_CHECK(name);
+			PdAbstractArray N = File.GetObj(name, TRUE);
+			// check
+			int ndim = GDS_Array_DimCnt(N);
+			if ((ndim!=1) && (ndim!=2))
+				throw ErrSeqArray(ERR_DIM, name);
+			C_Int32 dim[2];
+			GDS_Array_GetDim(N, dim, 2);
+			if (dim[0] != File.SampleNum())
+				throw ErrSeqArray(ERR_DIM, name);
 
-			CVarApply Var;
-			if (Sel.Sample.empty())
-				Sel.Sample.resize(nSamp, TRUE);
-			SelPtr[0] = &Sel.Sample[0];
-			if (DimCnt == 2)
-				SelPtr[1] = Var.NeedTRUE(DLen[1]);
+			C_BOOL *ss[2] = { Sel.pSample(), NULL };
+			if (ndim == 2)
+				ss[1] = NeedTRUEs(dim[1]);
+			rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 
-			memset(DStart, 0, sizeof(DStart));
-			rv_ans = GDS_R_Array_Read(N, DStart, DLen, &SelPtr[0], 0);
-
-		} else if (strcmp(s, "$chrom_pos") == 0)
+		} else if (strcmp(name, "$chrom_pos") == 0)
 		{
 			// ===========================================================
 			// chromosome-position
-			static const char *ERR_CHR_POS =
-				"Invalid dimension of 'chromosome' and 'position'.";
 
-			PdAbstractArray N1 = GDS_Node_Path(Root, "chromosome", TRUE);
-			PdAbstractArray N2 = GDS_Node_Path(Root, "position", TRUE);
-			C_Int64 n1 = GDS_Array_GetTotalCount(N1),
-				n2 = GDS_Array_GetTotalCount(N2);
-			if (n1 != n2)
-				throw ErrSeqArray(ERR_CHR_POS);
+			PdAbstractArray N1 = File.GetObj("chromosome", TRUE);
+			PdAbstractArray N2 = File.GetObj("position", TRUE);
+			C_Int64 n1 = GDS_Array_GetTotalCount(N1);
+			C_Int64 n2 = GDS_Array_GetTotalCount(N2);
+			if ((n1 != n2) || (n1 != File.VariantNum()))
+				throw ErrSeqArray("Invalid dimension of 'chromosome' and 'position'.");
 
 			vector<string> chr;
 			vector<C_Int32> pos;
-			C_Int32 st=0, cnt=n1;
 
-			if (Sel.Variant.empty())
-			{
-				chr.resize(n1); pos.resize(n1);
-				GDS_Array_ReadData(N1, &st, &cnt, &chr[0], svStrUTF8);
-				GDS_Array_ReadData(N2, &st, &cnt, &pos[0], svInt32);
-			} else {
-				if (Sel.Variant.size() != (size_t)n1)
-					throw ErrSeqArray(ERR_CHR_POS);
-				n1 = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
-				chr.resize(n1); pos.resize(n1);
-				SelPtr[0] = &Sel.Variant[0];
-				GDS_Array_ReadDataEx(N1, &st, &cnt, &SelPtr[0], &chr[0], svStrUTF8);
-				GDS_Array_ReadDataEx(N2, &st, &cnt, &SelPtr[0], &pos[0], svInt32);
-			}
+			int n = File.VariantSelNum();
+			chr.resize(n);
+			pos.resize(n);
+			C_BOOL *ss = Sel.pVariant();
+
+			GDS_Array_ReadDataEx(N1, NULL, NULL, &ss, &chr[0], svStrUTF8);
+			GDS_Array_ReadDataEx(N2, NULL, NULL, &ss, &pos[0], svInt32);
 
 			char buf1[1024] = { 0 };
 			char buf2[1024] = { 0 };
@@ -534,21 +469,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			}
 			UNPROTECT(1);
 
-		} else if (strcmp(s, "$dosage") == 0)
+		} else if (strcmp(name, "$dosage") == 0)
 		{
 			// ===========================================================
 			// dosage data
 
-			Sel.Reset();
-			int nVariant = GetNumOfTRUE(&Sel.Variant[0], Sel.Variant.size());
-
+			int nVariant = File.VariantSelNum();
 			if (nVariant > 0)
 			{
 				// initialize GDS genotype Node
 				CVarApplyByVariant NodeVar;
-				NodeVar.InitObject(CVariable::ctDosage,
-					"genotype/data", Root, Sel.Variant.size(),
-					&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
+				NodeVar.InitObject(CVariable::ctDosage, "genotype/data",
+					File, false);
 
 				if (use_raw)
 				{
@@ -579,7 +511,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 				"\tsample.id, variant.id, position, chromosome, allele, genotype\n"
 				"\tannotation/id, annotation/qual, annotation/filter\n"
 				"\tannotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME\n"
-				"\tsample.annotation/VARIABLE_NAME", s);
+				"\tsample.annotation/VARIABLE_NAME", name);
 		}
 
 	COREARRAY_CATCH

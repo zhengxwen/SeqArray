@@ -130,3 +130,9 @@ seqClose(f)
 ## |--+ sample.annotation   [  ]
 ## |  |--+ family   { VStr8 90 ZIP_RA(34.70%), 135B }
 ```
+
+
+## SIGNIFICANT USER-VISIBLE CHANGES (since v1.11.16)
+
+* `seqSummary(gds, "genotype")$seldim` returns a vector with 3 integers (ploidy, # of selected samples, # of selected variants) instead of 2 integers
+

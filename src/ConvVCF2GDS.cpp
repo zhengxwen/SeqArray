@@ -25,6 +25,8 @@
 #include <algorithm>
 
 
+namespace SeqArray
+{
 
 // ===========================================================
 // define 
@@ -714,9 +716,13 @@ static const char *_GetNameValue(const char *p, string &name, string &val)
 	return p;
 }
 
+}
+
 
 extern "C"
 {
+using namespace SeqArray;
+
 // ===========================================================
 // Convert from VCF4: VCF4 -> GDS
 // ===========================================================

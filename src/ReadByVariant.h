@@ -21,6 +21,10 @@
 
 #include "Common.h"
 
+
+namespace SeqArray
+{
+
 using namespace Vectorization;
 
 // ===================================================================== //
@@ -61,8 +65,7 @@ public:
 
 	CVarApplyByVariant();
 
-	void InitObject(TType Type, const char *Path, PdGDSObj Root,
-		int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
+	void InitObject(TType Type, const char *Path, CFileInfo &FileInfo,
 		bool _UseRaw);
 
 	void ResetObject();
@@ -85,11 +88,14 @@ public:
 	SEXP NeedRData(int &nProtected);
 };
 
+}
 
 
 extern "C"
 {
+
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho);
+
 } // extern "C"

@@ -28,6 +28,8 @@
 
 extern "C"
 {
+using namespace SeqArray;
+
 // TTypeGenoDim and TParam are also defined in "SNPRelate/src/dGenGWAS.h"
 
 enum TTypeGenoDim
@@ -91,15 +93,11 @@ static void SNPRelate_DoneSeqArray(TParam *Param)
 
 static void SNPRelate_InitSelSampOnly(C_BOOL *Sel, TParam *Param)
 {
-	int sum = 0;
-	C_BOOL *p = Sel;
-	for (int i=0; i < *Param->pTotalSampleNum; i++)
-		if (*p++) sum ++;
-	*Param->pSampleNum = sum;
+	*Param->pSampleNum = GetNumOfTRUE(Sel, *Param->pTotalSampleNum);
 
-	TInitObject::TSelection &s = Init.Selection(Param->SeqGDSFile);
-	s.Sample.resize(*Param->pTotalSampleNum);
-	memcpy(&s.Sample[0], Sel, *Param->pTotalSampleNum);
+	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
+	TSelection &s = File.Selection();
+	memcpy(s.pSample(), Sel, *Param->pTotalSampleNum);
 
 	Done_Object(Param);
 }
@@ -107,15 +105,11 @@ static void SNPRelate_InitSelSampOnly(C_BOOL *Sel, TParam *Param)
 
 static void SNPRelate_InitSelSNPOnly(C_BOOL *Sel, TParam *Param)
 {
-	int sum = 0;
-	C_BOOL *p = Sel;
-	for (int i=0; i < *Param->pTotalSNPNum; i++)
-		if (*p++) sum ++;
-	*Param->pSNPNum = sum;
+	*Param->pSNPNum = GetNumOfTRUE(Sel, *Param->pTotalSNPNum);
 
-	TInitObject::TSelection &s = Init.Selection(Param->SeqGDSFile);
-	s.Variant.resize(*Param->pTotalSNPNum);
-	memcpy(&s.Variant[0], Sel, *Param->pTotalSNPNum);
+	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
+	TSelection &s = File.Selection();
+	memcpy(s.pVariant(), Sel, *Param->pTotalSNPNum);
 
 	Done_Object(Param);
 }
@@ -136,11 +130,8 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		Obj = new CVarApplyByVariant;
 		Param->Object = Obj;
 
-		PdGDSFolder Root = GDS_R_SEXP2FileRoot(Param->SeqGDSFile);
-		TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile, true);
-		Obj->InitObject(CVariable::ctDosage,
-			"genotype/data", Root, Sel.Variant.size(),
-			&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], true);
+		CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
+		Obj->InitObject(CVariable::ctDosage, "genotype/data", File, true);
 
 		Param->GenoBuffer = new C_UInt8[Obj->Num_Sample];
 		Param->Index = 0;
@@ -207,7 +198,8 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			CVarApplyBySample *Obj = new CVarApplyBySample;
 			Param->Object = Obj;
 
-			TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
+			CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
+			TSelection &Sel = File.Selection();
 			Obj->InitObject(CVariable::ctGenotype,
 				"genotype/data", Root, Sel.Variant.size(),
 				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], false);
@@ -218,10 +210,8 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			CVarApplyByVariant *Obj = new CVarApplyByVariant;
 			Param->Object = Obj;
 
-			TInitObject::TSelection &Sel = Init.Selection(Param->SeqGDSFile);
-			Obj->InitObject(CVariable::ctGenotype,
-				"genotype/data", Root, Sel.Variant.size(),
-				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0], true);
+			CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
+			Obj->InitObject(CVariable::ctGenotype, "genotype/data", File, true);
 
 			size_t SIZE = (Obj->Num_Sample) * (Obj->DLen[2]);
 			Param->GenoBuffer = new C_UInt8[SIZE];
@@ -361,7 +351,8 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 
 static void SNPRelate_SetSnpSelection(C_BOOL *sel, TParam *Param)
 {
-	TInitObject::TSelection &s = Init.Selection(Param->SeqGDSFile);
+	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
+	TSelection &s = File.Selection();
 	C_BOOL *p = &s.Variant[0];
 
 	int sum = 0;
@@ -383,7 +374,8 @@ static void SNPRelate_SetSnpSelection(C_BOOL *sel, TParam *Param)
 
 static void SNPRelate_SetSampSelection(C_BOOL *sel, TParam *Param)
 {
-	TInitObject::TSelection &s = Init.Selection(Param->SeqGDSFile);
+	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
+	TSelection &s = File.Selection();
 	C_BOOL *p = &s.Sample[0];
 
 	int sum = 0;

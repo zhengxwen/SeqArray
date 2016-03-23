@@ -27,6 +27,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 #include <set>
 
@@ -34,12 +35,50 @@
 #include <cstring>
 #include "vectorization.h"
 
-using namespace std;
-using namespace CoreArray;
-
 
 namespace SeqArray
 {
+
+using namespace std;
+using namespace CoreArray;
+
+// ===========================================================
+// Indexing object
+// ===========================================================
+
+/// Indexing object
+/*
+template<typename TYPE> class COREARRAY_DLL_LOCAL CIndex
+{
+public:
+	/// Run-length encoding
+	struct TRLE
+	{
+		int Count;     ///< the number of the value
+		TYPE Value;    ///< value
+	};
+
+	/// represent chromosome codes as a RLE object in Map
+	void Init(PdGDSObj GDSObj);
+
+	///
+	void Seek(size_t pos)
+	{
+		if (pos > 
+	}
+
+
+protected:
+
+	/// 
+	vector<TRLE> List;
+	///
+	size_t ListIdx;
+	///
+	size_t TotalSize, Position;
+};
+*/
+
 
 // ===========================================================
 // Chromosome indexing
@@ -59,7 +98,10 @@ public:
 	typedef vector<TRange> TRangeList;
 
 	/// constructor
-	CChromIndex() { }
+	CChromIndex();
+
+	/// clear
+	void Clear();
 
 	/// represent chromosome codes as a RLE object in Map
 	void AddChrom(PdGDSFolder Root);
@@ -67,7 +109,7 @@ public:
 	/// the total length of a TRangeList object
 	size_t RangeTotalLength(const TRangeList &RngList);
 
-	/// 
+	/// map to TRangeList from chromosome coding
 	map<string, TRangeList> Map;
 };
 
@@ -103,6 +145,89 @@ protected:
 	set<TRange, less_range> _RangeSet;
 };
 
+
+
+
+// ===========================================================
+// Genomic Range Sets
+// ===========================================================
+
+
+
+// ===========================================================
+// SeqArray GDS file information
+// ===========================================================
+
+/// selection object used in GDS file
+struct COREARRAY_DLL_LOCAL TSelection
+{
+	vector<C_BOOL> Sample;   ///< sample selection
+	vector<C_BOOL> Variant;  ///< variant selection
+
+	inline C_BOOL *pSample() { return &Sample[0]; }
+	inline C_BOOL *pVariant() { return &Variant[0]; }
+};
+
+
+/// GDS file object
+class COREARRAY_DLL_LOCAL CFileInfo
+{
+public:
+	list<TSelection> SelList;  ///< a list of sample and variant selections
+	CChromIndex Chrom;  ///< chromosome indexing
+
+	/// constructor
+	CFileInfo(PdGDSFolder root=NULL);
+	/// destructor
+	~CFileInfo();
+
+	/// reset the root of GDS file
+	void ResetRoot(PdGDSFolder root);
+	/// get selection
+	TSelection &Selection();
+	/// check if Chrom has been initialized
+	void NeedChromInfo();
+	/// get gds object
+	PdAbstractArray GetObj(const char *name, C_BOOL MustExist);
+
+	/// the root of gds file
+	inline PdGDSFolder Root() { return _Root; }
+	/// the total number of samples
+	inline int SampleNum() { return _SampleNum; }
+	/// the total number of variants
+	inline int VariantNum() { return _VariantNum; }
+
+	int SampleSelNum();
+	int VariantSelNum();
+
+protected:
+	PdGDSFolder _Root;  ///< the root of GDS file
+	int _SampleNum;   ///< the total number of samples
+	int _VariantNum;  ///< the total number of variants
+};
+
+
+
+
+extern std::map<int, CFileInfo> COREARRAY_DLL_LOCAL GDSFile_ID_Info;
+
+/// get the associated CFileInfo
+COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile);
+
+
+
+
+// ===========================================================
+// Define Functions
+// ===========================================================
+
+/// return the length in val, it is safe to call when val=R_NilValue
+COREARRAY_DLL_LOCAL size_t RLength(SEXP val);
+
+/// get the list element named str, or return R_NilValue
+COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *name);
+
+COREARRAY_DLL_LOCAL C_BOOL *NeedTRUEs(size_t len);
 
 
 // ===========================================================

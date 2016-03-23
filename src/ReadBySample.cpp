@@ -22,6 +22,9 @@
 #include "ReadBySample.h"
 
 
+namespace SeqArray
+{
+
 static void GetFirstAndLength(C_BOOL *sel, size_t n, C_Int32 &st, C_Int32 &len)
 {
 	st = 0; len = 0;
@@ -467,10 +470,13 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 		return it->second;
 }
 
+}
 
 
 extern "C"
 {
+using namespace SeqArray;
+
 // ===========================================================
 // Apply functions over margins on a working space
 // ===========================================================
@@ -490,7 +496,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 	COREARRAY_TRY
 
 		// the selection
-		TInitObject::TSelection &Sel = Init.Selection(gdsfile);
+		CFileInfo &File = GetFileInfo(gdsfile);
+		TSelection &Sel = File.Selection();
 		// the GDS root node
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
 
