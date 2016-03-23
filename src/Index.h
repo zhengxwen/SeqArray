@@ -174,7 +174,6 @@ class COREARRAY_DLL_LOCAL CFileInfo
 {
 public:
 	list<TSelection> SelList;  ///< a list of sample and variant selections
-	CChromIndex Chrom;  ///< chromosome indexing
 
 	/// constructor
 	CFileInfo(PdGDSFolder root=NULL);
@@ -185,8 +184,12 @@ public:
 	void ResetRoot(PdGDSFolder root);
 	/// get selection
 	TSelection &Selection();
-	/// check if Chrom has been initialized
-	void NeedChromInfo();
+
+	/// return _Chrom which has been initialized
+	CChromIndex &Chromosome();
+	/// return _Position which has been initialized
+	vector<C_Int32> &Position();
+
 	/// get gds object
 	PdAbstractArray GetObj(const char *name, C_BOOL MustExist);
 
@@ -204,6 +207,9 @@ protected:
 	PdGDSFolder _Root;  ///< the root of GDS file
 	int _SampleNum;   ///< the total number of samples
 	int _VariantNum;  ///< the total number of variants
+
+	CChromIndex _Chrom;  ///< chromosome indexing
+	vector<C_Int32> _Position;  ///< position
 };
 
 
@@ -227,7 +233,15 @@ COREARRAY_DLL_LOCAL size_t RLength(SEXP val);
 /// get the list element named str, or return R_NilValue
 COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *name);
 
+/// requires a vector of TRUEs
 COREARRAY_DLL_LOCAL C_BOOL *NeedTRUEs(size_t len);
+
+/// Get pretty text for an integer with comma
+COREARRAY_DLL_LOCAL const char *PrettyInt(int val);
+
+/// Text matching, return -1 when no maching
+COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[]);
+
 
 
 // ===========================================================

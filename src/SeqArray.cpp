@@ -72,17 +72,6 @@ C_BOOL *CVarApply::NeedTRUE(size_t size)
 // Library Functions
 // ===========================================================
 
-/// Text matching, return -1 when no maching
-COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[])
-{
-	for (int i=0; *list; list++, i++)
-	{
-		if (strcmp(txt, *list) == 0)
-			return i;
-	}
-	return -1;
-}
-
 /// Get the total count requiring the number of dimension is one
 COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname)
 {
@@ -157,32 +146,6 @@ COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out)
 	} while (1);
 }
 
-
-static char pretty_num_buffer[32];
-
-/// Get pretty text for an integer with comma
-COREARRAY_DLL_LOCAL const char *PrettyInt(int val)
-{
-	char *p = pretty_num_buffer + sizeof(pretty_num_buffer);
-	*(--p) = 0;
-
-	bool sign = (val < 0);
-	if (sign) val = -val;
-
-	int digit = 0;
-	do {
-		*(--p) = (val % 10) + '0';
-		val /= 10;
-		if (((++digit) >= 3) && (val > 0))
-		{
-			*(--p) = ',';
-			digit = 0;
-		}
-	} while (val > 0);
-
-	if (sign) *(--p) = '-';
-	return p;
-}
 
 
 extern "C"
@@ -749,7 +712,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 	COREARRAY_TRY
 
 		CFileInfo &File = GetFileInfo(gdsfile);
-		File.NeedChromInfo();
 		TSelection &Sel = File.Selection();
 
 		vector<C_BOOL> &array = Sel.Variant;
@@ -762,7 +724,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 			{
 				memset(&array[0], TRUE, array.size());
 			} else {
-				CChromIndex &Chrom = File.Chrom;
+				CChromIndex &Chrom = File.Chromosome();
 				map<string, CChromIndex::TRangeList>::iterator it;
 				for (it=Chrom.Map.begin(); it != Chrom.Map.end(); it++)
 				{
@@ -781,11 +743,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 
 		} else {
 			// include != NULL
-			PdAbstractArray varPos = NULL;
+			vector<C_Int32> *varPos = NULL;
 			if (pFrom && pTo)
-				varPos = File.GetObj("position", TRUE);
+				varPos = &File.Position();
 
-			CChromIndex &Chrom = File.Chrom;
+			CChromIndex &Chrom = File.Chromosome();
 			map<string, CRangeSet> RngSets;
 
 			R_xlen_t n = XLENGTH(include);
@@ -826,7 +788,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 
 			if (varPos)
 			{
-				vector<C_Int32> buf;
 				map<string, CRangeSet>::iterator it;
 				for (it=RngSets.begin(); it != RngSets.end(); it++)
 				{
@@ -835,13 +796,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 					vector<CChromIndex::TRange>::const_iterator p;
 					for (p=rng.begin(); p != rng.end(); p++)
 					{
-						C_Int32 st  = p->Start;
-						C_Int32 cnt = p->Length;
-						buf.resize(cnt);
-						GDS_Array_ReadData(varPos, &st, &cnt, &buf[0], svInt32);
-
 						size_t i = p->Start;
-						for (int *s=&buf[0]; cnt > 0; cnt--)
+						size_t n = p->Length;
+						C_Int32 *s = &((*varPos)[0]) + i;
+						for (; n > 0; n--)
 						{
 							if (RngSet.IsIncluded(*s++))
 								array[i] = TRUE;

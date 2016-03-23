@@ -148,6 +148,7 @@ bool CRangeSet::IsIncluded(int point)
 // SeqArray GDS file information
 // ===========================================================
 
+static const char *ERR_DIM = "Invalid dimension of '%s'.";
 static const char *ERR_FILE_ROOT = "CFileInfo::FileRoot should be initialized.";
 
 CFileInfo::CFileInfo(PdGDSFolder root)
@@ -167,20 +168,22 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 {
 	if (_Root != root)
 	{
+		// initialize
 		_Root = root;
 		SelList.clear();
-		Chrom.Clear();
+		_Chrom.Clear();
+		_Position.clear();
 		// sample.id
 		PdAbstractArray N = GDS_Node_Path(root, "sample.id", TRUE);
 		C_Int64 n = GDS_Array_GetTotalCount(N);
 		if ((n < 0) || (n > 2147483647))
-			throw ErrSeqArray("Invalid dimension of 'sample.id'.");
+			throw ErrSeqArray(ERR_DIM, "sample.id");
 		_SampleNum = n;
 		// variant.id
 		N = GDS_Node_Path(root, "variant.id", TRUE);
 		n = GDS_Array_GetTotalCount(N);
 		if ((n < 0) || (n > 2147483647))
-			throw ErrSeqArray("Invalid dimension of 'variant.id'.");
+			throw ErrSeqArray(ERR_DIM, "variant.id");
 		_VariantNum = n;
 	}
 }
@@ -201,12 +204,31 @@ TSelection &CFileInfo::Selection()
 	return s;
 }
 
-void CFileInfo::NeedChromInfo()
+CChromIndex &CFileInfo::Chromosome()
 {
 	if (!_Root)
 		throw ErrSeqArray(ERR_FILE_ROOT);
-	if (Chrom.Map.empty())
-		Chrom.AddChrom(_Root);
+	if (_Chrom.Map.empty())
+		_Chrom.AddChrom(_Root);
+	return _Chrom;
+}
+
+vector<C_Int32> &CFileInfo::Position()
+{
+	if (!_Root)
+		throw ErrSeqArray(ERR_FILE_ROOT);
+	if (_Position.empty())
+	{
+		PdAbstractArray N = GetObj("position", TRUE);
+		// check
+		if ((GDS_Array_DimCnt(N) != 1) ||
+				(GDS_Array_GetTotalCount(N) != _VariantNum))
+			throw ErrSeqArray(ERR_DIM, "position");
+		// read
+		_Position.resize(_VariantNum, 0);
+		GDS_Array_ReadData(N, NULL, NULL, &_Position[0], svInt32);
+	}
+	return _Position;
 }
 
 PdAbstractArray CFileInfo::GetObj(const char *name, C_BOOL MustExist)
@@ -295,6 +317,44 @@ COREARRAY_DLL_LOCAL C_BOOL *NeedTRUEs(size_t len)
 	else if (len > TrueBuffer.size())
 		TrueBuffer.resize(len, TRUE);
 	return &TrueBuffer[0];
+}
+
+
+static char pretty_num_buffer[32];
+
+/// Get pretty text for an integer with comma
+COREARRAY_DLL_LOCAL const char *PrettyInt(int val)
+{
+	char *p = pretty_num_buffer + sizeof(pretty_num_buffer);
+	*(--p) = 0;
+
+	bool sign = (val < 0);
+	if (sign) val = -val;
+
+	int digit = 0;
+	do {
+		*(--p) = (val % 10) + '0';
+		val /= 10;
+		if (((++digit) >= 3) && (val > 0))
+		{
+			*(--p) = ',';
+			digit = 0;
+		}
+	} while (val > 0);
+
+	if (sign) *(--p) = '-';
+	return p;
+}
+
+/// Text matching, return -1 when no maching
+COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[])
+{
+	for (int i=0; *list; list++, i++)
+	{
+		if (strcmp(txt, *list) == 0)
+			return i;
+	}
+	return -1;
 }
 
 }

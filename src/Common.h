@@ -113,9 +113,6 @@ private:
 /// Get the number of TRUEs
 #define GetNumOfTRUE(ptr, n)    vec_i8_cnt_nonzero((C_Int8*)(ptr), n)
 
-/// Text matching, return -1 when no maching
-COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[]);
-
 /// Get the total count requiring the number of dimension is one
 COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname);
 
@@ -127,9 +124,6 @@ COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_
 
 /// Get strings split by comma
 COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out);
-
-/// Get pretty text for an integer with comma
-COREARRAY_DLL_LOCAL const char *PrettyInt(int val);
 
 
 
