@@ -149,7 +149,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 
 		int div = TotalNum / 25;
 		if (div <= 0) div = 1;
-		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose")) == TRUE);
+		bool Verbose = (Rf_asLogical(RGetListElement(param, "verbose")) == TRUE);
 
 		// for-loop
 		for (int i=1; i <= TotalNum; i++)
@@ -259,7 +259,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 
 		int div = TotalNum / 25;
 		if (div <= 0) div = 1;
-		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose"))==TRUE);
+		bool Verbose = (Rf_asLogical(RGetListElement(param, "verbose"))==TRUE);
 		vector<int> phase_buf(pcnt);
 
 		// for-loop
@@ -394,8 +394,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 
 		int div = TotalNum / 25;
 		if (div <= 0) div = 1;
-		SEXP NAs = GetListElement(param, "na");
-		bool Verbose = (Rf_asLogical(GetListElement(param, "verbose"))==TRUE);
+		SEXP NAs = RGetListElement(param, "na");
+		bool Verbose = (Rf_asLogical(RGetListElement(param, "verbose"))==TRUE);
 		vector<SEXP> RDList(FileCnt);
 
 		// for-loop

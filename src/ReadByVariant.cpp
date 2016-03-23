@@ -551,15 +551,15 @@ COREARRAY_DLL_LOCAL const char *Txt_Apply_VarIdx[] =
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho)
 {
-	int use_raw_flag = Rf_asLogical(GetListElement(param, "useraw"));
+	int use_raw_flag = Rf_asLogical(RGetListElement(param, "useraw"));
 	if (use_raw_flag == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
 
-	int write_raw_flag = Rf_asLogical(GetListElement(param, "writeraw"));
+	int write_raw_flag = Rf_asLogical(RGetListElement(param, "writeraw"));
 	if (write_raw_flag == NA_LOGICAL)
 		error("'.writeraw' must be TRUE or FALSE.");
 
-	int dup_flag = Rf_asLogical(GetListElement(param, "list_dup"));
+	int dup_flag = Rf_asLogical(RGetListElement(param, "list_dup"));
 	if (dup_flag == NA_LOGICAL)
 		error("'.list_dup' must be TRUE or FALSE.");
 
@@ -675,8 +675,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			const char *fun_name = write_raw_flag ? "funbin" : "funline";
 			PROTECT(R_con_param = write_raw_flag ?
 				NEW_RAW(R_con_bufsize) : NEW_CHARACTER(R_con_bufsize));
-			PROTECT(R_con_call  = LCONS(GetListElement(param, fun_name),
-				LCONS(R_con_param, LCONS(GetListElement(param, "funcon"),
+			PROTECT(R_con_call  = LCONS(RGetListElement(param, fun_name),
+				LCONS(R_con_param, LCONS(RGetListElement(param, "funcon"),
 				R_NilValue))));
 			nProtected += 2;
 			break;
@@ -849,8 +849,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		{
 			SET_LENGTH(R_con_param, R_con_idx);
 			const char *fun_name = write_raw_flag ? "funbin" : "funline";
-			R_con_call = PROTECT(LCONS(GetListElement(param, fun_name),
-				LCONS(R_con_param, LCONS(GetListElement(param, "funcon"),
+			R_con_call = PROTECT(LCONS(RGetListElement(param, fun_name),
+				LCONS(R_con_param, LCONS(RGetListElement(param, "funcon"),
 				R_NilValue))));
 			nProtected ++;
 			EVAL(R_con_call);

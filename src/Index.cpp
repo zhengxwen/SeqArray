@@ -259,7 +259,7 @@ std::map<int, CFileInfo> COREARRAY_DLL_LOCAL GDSFile_ID_Info;
 /// get the associated CFileInfo
 COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile)
 {
-	SEXP ID = GetListElement(gdsfile, "id");
+	SEXP ID = RGetListElement(gdsfile, "id");
 	if (Rf_isNull(ID))
 		throw ErrSeqArray("Invalid gds object.");
 
@@ -294,7 +294,7 @@ COREARRAY_DLL_LOCAL size_t RLength(SEXP val)
 	return (!Rf_isNull(val)) ? XLENGTH(val) : 0;
 }
 
-COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *name)
+COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name)
 {
 	SEXP elmt = R_NilValue;
 	SEXP names = getAttrib(list, R_NamesSymbol);

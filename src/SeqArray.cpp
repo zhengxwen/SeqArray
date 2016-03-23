@@ -168,7 +168,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_File_Init(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP SEQ_File_Done(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
+		int id = Rf_asInteger(RGetListElement(gdsfile, "id"));
 		map<int, CFileInfo>::iterator it = GDSFile_ID_Info.find(id);
 		if (it != GDSFile_ID_Info.end())
 			GDSFile_ID_Info.erase(it);
@@ -185,7 +185,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_File_Done(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushEmpty(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
+		int id = Rf_asInteger(RGetListElement(gdsfile, "id"));
 		map<int, CFileInfo>::iterator it =
 			GDSFile_ID_Info.find(id);
 		if (it != GDSFile_ID_Info.end())
@@ -201,7 +201,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushEmpty(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushLast(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
+		int id = Rf_asInteger(RGetListElement(gdsfile, "id"));
 		map<int, CFileInfo>::iterator it =
 			GDSFile_ID_Info.find(id);
 		if (it != GDSFile_ID_Info.end())
@@ -220,7 +220,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushLast(SEXP gdsfile)
 COREARRAY_DLL_EXPORT SEXP SEQ_FilterPop(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		int id = Rf_asInteger(GetListElement(gdsfile, "id"));
+		int id = Rf_asInteger(RGetListElement(gdsfile, "id"));
 		map<int, CFileInfo>::iterator it =
 			GDSFile_ID_Info.find(id);
 		if (it != GDSFile_ID_Info.end())

@@ -763,27 +763,27 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 		// initialize variables		
 
 		// the total number of samples
-		int nTotalSamp = Rf_asInteger(GetListElement(param, "sample.num"));
+		int nTotalSamp = Rf_asInteger(RGetListElement(param, "sample.num"));
 		// the variable name for genotypic data
-		string geno_id = CHAR(STRING_ELT(GetListElement(param, "genotype.var.name"), 0));
+		string geno_id = CHAR(STRING_ELT(RGetListElement(param, "genotype.var.name"), 0));
 		// raise an error
-		bool RaiseError = (Rf_asLogical(GetListElement(param, "raise.error")) == TRUE);
+		bool RaiseError = (Rf_asLogical(RGetListElement(param, "raise.error")) == TRUE);
 		// variant start
-		int variant_start = Rf_asInteger(GetListElement(param, "start"));
+		int variant_start = Rf_asInteger(RGetListElement(param, "start"));
 		// variant count
-		int variant_count = Rf_asInteger(GetListElement(param, "count"));
+		int variant_count = Rf_asInteger(RGetListElement(param, "count"));
 		// verbose
-		// bool Verbose = (LOGICAL(GetListElement(param, "verbose"))[0] == TRUE);
+		// bool Verbose = (LOGICAL(RGetListElement(param, "verbose"))[0] == TRUE);
 
 		// the number of ploidy
-		int num_ploidy = Rf_asInteger(GetListElement(header, "ploidy"));
+		int num_ploidy = Rf_asInteger(RGetListElement(header, "ploidy"));
 		if (num_ploidy <= 0)
 			throw ErrSeqArray("Invalid header$ploidy: %d.", num_ploidy);
 
 		// filter level list
 		vector<string> filter_list;
 		{
-			SEXP level = GetListElement(param, "filter.levels");
+			SEXP level = RGetListElement(param, "filter.levels");
 			const int n = RLength(level);
 			for (int i=0; i < n; i++)
 				filter_list.push_back(CHAR(STRING_ELT(level, i)));
@@ -821,15 +821,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			varPhase = varPhaseExtraIdx = varPhaseExtra = NULL;
 		}
 
-		// GetListElement: info
+		// RGetListElement: info
 		vector<TVCF_Field_Info> info_list;
 		set<string> info_missing;
 		{
-			SEXP info = GetListElement(header, "info");
-			SEXP info_ID = GetListElement(info, "ID");
-			SEXP info_inttype = GetListElement(info, "int_type");
-			SEXP info_intnum = GetListElement(info, "int_num");
-			SEXP info_flag = GetListElement(info, "import.flag");
+			SEXP info = RGetListElement(header, "info");
+			SEXP info_ID = RGetListElement(info, "ID");
+			SEXP info_inttype = RGetListElement(info, "int_type");
+			SEXP info_intnum = RGetListElement(info, "int_num");
+			SEXP info_flag = RGetListElement(info, "import.flag");
 			TVCF_Field_Info val;
 
 			for (size_t i=0; i < RLength(info_ID); i++)
@@ -847,15 +847,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF4(SEXP vcf_fn, SEXP header,
 			}
 		}
 
-		// GetListElement: format
+		// RGetListElement: format
 		vector<TVCF_Field_Format> format_list;
 		set<string> format_missing;
 		{
-			SEXP fmt = GetListElement(header, "format");
-			SEXP fmt_ID = GetListElement(fmt, "ID");
-			SEXP fmt_inttype = GetListElement(fmt, "int_type");
-			SEXP fmt_intnum = GetListElement(fmt, "int_num");
-			SEXP fmt_flag = GetListElement(fmt, "import.flag");
+			SEXP fmt = RGetListElement(header, "format");
+			SEXP fmt_ID = RGetListElement(fmt, "ID");
+			SEXP fmt_inttype = RGetListElement(fmt, "int_type");
+			SEXP fmt_intnum = RGetListElement(fmt, "int_num");
+			SEXP fmt_flag = RGetListElement(fmt, "import.flag");
 			TVCF_Field_Format val;
 
 			for (size_t i=0; i < RLength(fmt_ID); i++)

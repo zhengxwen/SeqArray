@@ -47,7 +47,6 @@ using namespace CoreArray;
 // ===========================================================
 
 /// Indexing object
-/*
 template<typename TYPE> class COREARRAY_DLL_LOCAL CIndex
 {
 public:
@@ -59,25 +58,22 @@ public:
 	};
 
 	/// represent chromosome codes as a RLE object in Map
-	void Init(PdGDSObj GDSObj);
+	// void Init(PdGDSObj GDSObj);
 
 	///
-	void Seek(size_t pos)
-	{
-		if (pos > 
-	}
+	void Seek(size_t pos) {}
 
 
 protected:
 
 	/// 
-	vector<TRLE> List;
+	vector<TRLE> _List;
 	///
 	size_t ListIdx;
 	///
 	size_t TotalSize, Position;
 };
-*/
+
 
 
 // ===========================================================
@@ -231,7 +227,7 @@ COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile);
 COREARRAY_DLL_LOCAL size_t RLength(SEXP val);
 
 /// get the list element named str, or return R_NilValue
-COREARRAY_DLL_LOCAL SEXP GetListElement(SEXP list, const char *name);
+COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name);
 
 /// requires a vector of TRUEs
 COREARRAY_DLL_LOCAL C_BOOL *NeedTRUEs(size_t len);
