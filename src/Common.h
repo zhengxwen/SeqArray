@@ -71,40 +71,6 @@ extern TInitObject Init;
 
 
 
-// ===========================================================
-// GDS Variable Type
-// ===========================================================
-
-class COREARRAY_DLL_LOCAL CVariable
-{
-public:
-	enum TType
-	{
-		ctNone,
-		ctBasic,       ///< sample.id, variant.id, etc
-		ctGenotype,    ///< genotypes or alleles
-		ctDosage,      ///< dosage of reference or specified allele
-		ctPhase,       ///< phase information
-		ctInfo,        ///< variant annotation info field
-		ctFormat,      ///< variant annotation format field
-		ctSampleAnnot  ///< sample annotation
-	};
-};
-
-
-class COREARRAY_DLL_LOCAL CVarApply: public CVariable
-{
-public:
-	C_BOOL *NeedTRUE(size_t size);
-
-	CVarApply() {}
-	virtual ~CVarApply() {}
-
-private:
-	vector<C_BOOL> _TRUE;
-};
-
-
 
 // ===========================================================
 // Library Functions

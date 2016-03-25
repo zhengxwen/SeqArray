@@ -116,7 +116,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 
 			SelPtr[1] = Sel.pSample();
 			if (DimCnt > 2)
-				SelPtr[2] = NeedTRUE(DLen[2]);
+				SelPtr[2] = NeedTRUEs(DLen[2]);
 			break;
 
 		case ctInfo:
@@ -138,7 +138,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			}
 
 			if (DimCnt > 1)
-				SelPtr[1] = NeedTRUE(DLen[1]);
+				SelPtr[1] = NeedTRUEs(DLen[1]);
 			break;
 
 		case ctFormat:
@@ -159,7 +159,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 
 			SelPtr[1] = Sel.pSample();
 			if (DimCnt > 2)
-				SelPtr[2] = NeedTRUE(DLen[2]);
+				SelPtr[2] = NeedTRUEs(DLen[2]);
 			break;
 
 		default:
@@ -398,7 +398,7 @@ void CVarApplyByVariant::ReadData(SEXP Val)
 	default:
 		C_Int32 st[3] = { IndexRaw, 0, 0 };
 		DLen[0] = NumIndexRaw;
-		SelPtr[0] = NeedTRUE(NumIndexRaw);
+		SelPtr[0] = NeedTRUEs(NumIndexRaw);
 
 		if (COREARRAY_SV_INTEGER(SVType))
 		{

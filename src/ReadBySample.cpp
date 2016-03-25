@@ -90,7 +90,7 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			if ((DimCnt != 1) || (GDS_Array_GetTotalCount(Node) != nSample))
 				throw ErrSeqArray(ERR_DIM, Path);
 			CellCount = 1;
-			SelPtr[0] = NeedTRUE(1);
+			SelPtr[0] = NeedTRUEs(1);
 			break;
 
 		case ctGenotype:
@@ -150,9 +150,9 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			CellCount *= DLen[2];
 			Init.Need_GenoBuffer(CellCount);
 
-			SelPtr[0] = NeedTRUE(1);
+			SelPtr[0] = NeedTRUEs(1);
 			SelPtr[1] = &Selection[0];
-			SelPtr[2] = NeedTRUE(DLen[2]);
+			SelPtr[2] = NeedTRUEs(DLen[2]);
 			break;
 
 		case ctPhase:
@@ -165,13 +165,13 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				throw ErrSeqArray(ERR_DIM, Path);
 
 			CellCount = Num_Variant;
-			SelPtr[0] = NeedTRUE(1);
+			SelPtr[0] = NeedTRUEs(1);
 			GetFirstAndLength(VariantSel, nVariant, VariantStart, VariantCount);
 			SelPtr[1] = VariantSel + VariantStart;
 			if (DimCnt > 2)
 			{
 				CellCount *= DLen[2];
-				SelPtr[2] = NeedTRUE(DLen[2]);
+				SelPtr[2] = NeedTRUEs(DLen[2]);
 			}
 			break;
 
@@ -223,11 +223,11 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 				}
 			}
 
-			SelPtr[0] = NeedTRUE(1);
+			SelPtr[0] = NeedTRUEs(1);
 			SelPtr[1] = &Selection[0];
 			if (DimCnt > 2)
 			{
-				SelPtr[2] = NeedTRUE(DLen[2]);
+				SelPtr[2] = NeedTRUEs(DLen[2]);
 				CellCount *= DLen[2];
 			}
 			break;
@@ -244,11 +244,11 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 
 			VariantStart = 0; VariantCount = DLen[1];
 			CellCount = 1;
-			SelPtr[0] = NeedTRUE(1);
+			SelPtr[0] = NeedTRUEs(1);
 			if (DimCnt > 1)
 			{
 				CellCount *= DLen[1];
-				SelPtr[1] = NeedTRUE(DLen[1]);
+				SelPtr[1] = NeedTRUEs(DLen[1]);
 			}
 			break;
 

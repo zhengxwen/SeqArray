@@ -144,11 +144,6 @@ protected:
 
 
 
-// ===========================================================
-// Genomic Range Sets
-// ===========================================================
-
-
 
 // ===========================================================
 // SeqArray GDS file information
@@ -209,13 +204,46 @@ protected:
 };
 
 
-
-
 extern std::map<int, CFileInfo> COREARRAY_DLL_LOCAL GDSFile_ID_Info;
 
 /// get the associated CFileInfo
 COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile);
 
+
+
+
+// ===========================================================
+// GDS Variable Type
+// ===========================================================
+
+class COREARRAY_DLL_LOCAL CVariable
+{
+public:
+	enum TType
+	{
+		ctNone,
+		ctBasic,       ///< sample.id, variant.id, etc
+		ctGenotype,    ///< genotypes or alleles
+		ctDosage,      ///< dosage of reference or specified allele
+		ctPhase,       ///< phase information
+		ctInfo,        ///< variant annotation info field
+		ctFormat,      ///< variant annotation format field
+		ctSampleAnnot  ///< sample annotation
+	};
+};
+
+
+class COREARRAY_DLL_LOCAL CVarApply: public CVariable
+{
+public:
+	C_BOOL *NeedTRUEs(size_t size);
+
+	CVarApply() {}
+	virtual ~CVarApply() {}
+
+private:
+	vector<C_BOOL> _TRUE;
+};
 
 
 
@@ -230,7 +258,7 @@ COREARRAY_DLL_LOCAL size_t RLength(SEXP val);
 COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name);
 
 /// requires a vector of TRUEs
-COREARRAY_DLL_LOCAL C_BOOL *NeedTRUEs(size_t len);
+COREARRAY_DLL_LOCAL C_BOOL *NeedArrayTRUEs(size_t len);
 
 /// Get pretty text for an integer with comma
 COREARRAY_DLL_LOCAL const char *PrettyInt(int val);

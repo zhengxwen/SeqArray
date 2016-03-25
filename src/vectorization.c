@@ -187,9 +187,14 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 // functions for int8
 // ===========================================================
 
-size_t vec_i8_count(int8_t *p, size_t n, int8_t val)
+/// return the pointer to the non-zero character starting from p
+const char *vec_i8_ptr_nonzero(const char *p, size_t n)
 {
-	return 0;
+	// tail
+	for (; n > 0; n--, p++)
+		if (*p) break;
+
+	return p;
 }
 
 void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)

@@ -207,7 +207,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			// read
 			C_BOOL *ss[3] = { Sel.pVariant(), Sel.pSample(), NULL };
 			if (ndim == 3)
-				ss[2] = NeedTRUEs(dim[2]);
+				ss[2] = NeedArrayTRUEs(dim[2]);
 			rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 
 		} else if (strcmp(name, "genotype") == 0)
@@ -248,8 +248,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 					p[0] = NodeVar.DLen[2]; p[1] = nSample; p[2] = nVariant;
 				SET_DIM(rv_ans, dim);
 
+				SEXP name_list = PROTECT(NEW_LIST(3));
+				SEXP tmp = PROTECT(NEW_CHARACTER(3));
+					SET_STRING_ELT(tmp, 0, mkChar("allele"));
+					SET_STRING_ELT(tmp, 1, mkChar("sample"));
+					SET_STRING_ELT(tmp, 2, mkChar("variant"));
+					SET_NAMES(name_list, tmp);
+				SET_DIMNAMES(rv_ans, name_list);
+
 				// finally
-				UNPROTECT(2);
+				UNPROTECT(4);
 			}
 
 		} else if (strcmp(name, "@genotype") == 0)
@@ -298,7 +306,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 				GDS_Array_GetDim(N, dim, 2);
 				C_BOOL *ss[2] = { Sel.pVariant(), NULL };
 				if (ndim == 2)
-					ss[1] = NeedTRUEs(dim[1]);
+					ss[1] = NeedArrayTRUEs(dim[1]);
 				rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 				rv_ans = VAR_LOGICAL(N, rv_ans);
 
@@ -320,7 +328,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 
 				C_BOOL *ss[2] = { &var_sel[0], NULL };
 				if (ndim == 2)
-					ss[1] = NeedTRUEs(dim[1]);
+					ss[1] = NeedArrayTRUEs(dim[1]);
 
 				PROTECT(rv_ans = NEW_LIST(2));
 					SEXP I32;
@@ -386,7 +394,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 
 			C_BOOL *ss[3] = { &var_sel[0], Sel.pSample(), NULL };
 			if (ndim == 3)
-				ss[2] = NeedTRUEs(dim[2]);
+				ss[2] = NeedArrayTRUEs(dim[2]);
 
 			PROTECT(rv_ans = NEW_LIST(2));
 				SEXP I32 = PROTECT(NEW_INTEGER(len.size()));
@@ -420,7 +428,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 
 			C_BOOL *ss[2] = { Sel.pSample(), NULL };
 			if (ndim == 2)
-				ss[1] = NeedTRUEs(dim[1]);
+				ss[1] = NeedArrayTRUEs(dim[1]);
 			rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 
 		} else if (strcmp(name, "$chrom_pos") == 0)
@@ -501,8 +509,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 					} while (NodeVar.NextCell());
 				}
 
+				SEXP name_list = PROTECT(NEW_LIST(2));
+				SEXP tmp = PROTECT(NEW_CHARACTER(2));
+					SET_STRING_ELT(tmp, 0, mkChar("sample"));
+					SET_STRING_ELT(tmp, 1, mkChar("variant"));
+					SET_NAMES(name_list, tmp);
+				SET_DIMNAMES(rv_ans, name_list);
+
 				// finally
-				UNPROTECT(1);
+				UNPROTECT(3);
 			}
 
 		} else {

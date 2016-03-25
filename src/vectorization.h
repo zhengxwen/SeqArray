@@ -234,8 +234,12 @@ COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
 // functions for int8
 // ===========================================================
 
+/// return the pointer to the non-zero character starting from p
+COREARRAY_DLL_DEFAULT const char *vec_i8_ptr_nonzero(const char *p, size_t n);
+
+
 /// count how many 'val' in 'p'
-COREARRAY_DLL_DEFAULT size_t vec_i8_count(int8_t *p, size_t n, int8_t val);
+// COREARRAY_DLL_DEFAULT size_t vec_i8_count(int8_t *p, size_t n, int8_t val);
 
 
 /// replace 'val' in the array of 'p' by 'substitute'

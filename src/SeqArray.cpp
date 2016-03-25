@@ -52,23 +52,6 @@ TInitObject Init;
 
 
 // ===========================================================
-// GDS Variable Type
-// ===========================================================
-
-C_BOOL *CVarApply::NeedTRUE(size_t size)
-{
-	if (size <= sizeof(Init.TRUE_ARRAY))
-	{
-		return Init.TRUE_ARRAY;
-	} else {
-		_TRUE.resize(size, TRUE);
-		return &_TRUE[0];
-	}
-}
-
-
-
-// ===========================================================
 // Library Functions
 // ===========================================================
 

@@ -63,7 +63,7 @@ head(seqGetData(f, "allele"))
 head(seqGetData(f, "$chrom_pos"))
 
 # get '$dosage'
-head(seqGetData(f, "$dosage"))
+seqGetData(f, "$dosage")[1:6, 1:10]
 
 
 

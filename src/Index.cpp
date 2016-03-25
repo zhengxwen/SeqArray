@@ -282,11 +282,38 @@ COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile)
 
 
 // ===========================================================
+// GDS Variable Type
+// ===========================================================
+
+static C_BOOL TRUEs[64] = {
+	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1
+};
+
+C_BOOL *CVarApply::NeedTRUEs(size_t size)
+{
+	if (size <= sizeof(TRUEs))
+	{
+		return TRUEs;
+	} else if (size > _TRUE.size())
+	{
+		_TRUE.resize(size, TRUE);
+	}
+	return &_TRUE[0];
+}
+
+
+
+
+
+
+// ===========================================================
 // Define Functions
 // ===========================================================
 
 // the buffer of TRUEs
-static C_BOOL TRUEs[16] = { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 static vector<C_BOOL> TrueBuffer;
 
 COREARRAY_DLL_LOCAL size_t RLength(SEXP val)
@@ -310,7 +337,7 @@ COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name)
 	return elmt;
 }
 
-COREARRAY_DLL_LOCAL C_BOOL *NeedTRUEs(size_t len)
+COREARRAY_DLL_LOCAL C_BOOL *NeedArrayTRUEs(size_t len)
 {
 	if (len <= sizeof(TRUEs))
 		return TRUEs;

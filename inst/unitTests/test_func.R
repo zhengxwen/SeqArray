@@ -94,11 +94,13 @@ test_dosage <- function()
 
 	gm <- seqGetData(f, "genotype")
 	dm <- seqGetData(f, "$dosage")
+	dimnames(dm) <- NULL
 	m <- (gm[1L,,]==0L) + (gm[2L,,]==0L)
 	checkEquals(dm, m, "dosage, integer")
 
 	gm <- seqGetData(f, "genotype", .useraw=TRUE)
 	dm <- seqGetData(f, "$dosage", .useraw=TRUE)
+	dimnames(dm) <- NULL
 	m <- (gm[1L,,]==0L) + (gm[2L,,]==0L)
 	m[gm[1L,,]==255L | gm[2L,,]==255L] <- 255L
 	m <- as.raw(m)
