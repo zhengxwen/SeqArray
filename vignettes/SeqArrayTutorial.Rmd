@@ -240,8 +240,7 @@ genofile <- seqOpen("tmp.gds", readonly=FALSE)
 genofile
 
 # delete "HM2", "HM3", "AA", "OR" and "DP"
-seqDelete(genofile, info.varname=c("HM2", "HM3", "AA", "OR"),
-    format.varname="DP")
+seqDelete(genofile, info.varname=c("HM2", "HM3", "AA", "OR"), format.varname="DP")
 
 # display
 genofile
@@ -389,7 +388,7 @@ seqApply(genofile, c(geno="genotype", id="annotation/id"),
 Now, let us consider an example of calculating the frequency of reference allele, and this calculation can be done using `seqApply()` and `seqParallel()`. Let's try the uniprocessor implementation first.
 ```{r}
 # calculate the frequency of reference allele,
-afreq <- seqApply(genofile, "genotype", FUN=function(x) mean(x==0, na.rm=TRUE),
+afreq <- seqApply(genofile, "genotype", FUN=function(x) mean(x==0L, na.rm=TRUE),
     as.is="double", margin="by.variant")
 length(afreq)
 summary(afreq)
@@ -405,7 +404,7 @@ seqParallelSetup(2)
 
 # run in parallel
 afreq <- seqParallel(, genofile, FUN = function(f) {
-        seqApply(f, "genotype", as.is="double", FUN=function(x) mean(x==0, na.rm=TRUE))
+        seqApply(f, "genotype", as.is="double", FUN=function(x) mean(x==0L, na.rm=TRUE))
     }, split = "by.variant")
 
 length(afreq)
@@ -579,7 +578,7 @@ m.sample <- local({
     m <- seqParallel(, genofile, FUN = function(f)
         {
             # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-            dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+            dm <- seqSummary(f, "genotype", verbose=FALSE)$seldim
 
             # need a global variable (only available in the bracket of "local")
             n <- integer(dm[2L])
@@ -700,7 +699,7 @@ genmat <- seqParallel(, genofile, FUN = function(f)
     {
         # get the number of samples and variants
         # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-        dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+        dm <- seqSummary(f, "genotype", verbose=FALSE)$seldim
 
         # need a global variable (only available in the bracket of "local")
         s <- matrix(0.0, nrow=dm[2L], ncol=dm[2L])
@@ -783,7 +782,7 @@ coeff <- seqParallel(, genofile, FUN = function(f)
     {
         # get the number of samples and variants
         # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-        dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+        dm <- seqSummary(f, "genotype", verbose=FALSE)$seldim
 
         # need global variables (only available in the bracket)
         n <- integer(dm[2L])

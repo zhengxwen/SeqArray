@@ -408,6 +408,23 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 				SET_STRING_ELT(tmp, 0, mkChar("length"));
 				SET_STRING_ELT(tmp, 1, mkChar("data"));
 				SET_NAMES(rv_ans, tmp);
+				if (XLENGTH(DAT) > 0)
+				{
+					SEXP name_list = PROTECT(NEW_LIST(ndim));
+					tmp = PROTECT(NEW_CHARACTER(ndim));
+					if (ndim == 2)
+					{
+						SET_STRING_ELT(tmp, 0, mkChar("sample"));
+						SET_STRING_ELT(tmp, 1, mkChar("variant"));
+					} else {
+						SET_STRING_ELT(tmp, 0, mkChar("n"));
+						SET_STRING_ELT(tmp, 1, mkChar("sample"));
+						SET_STRING_ELT(tmp, 2, mkChar("variant"));
+					}
+					SET_NAMES(name_list, tmp);
+					SET_DIMNAMES(VECTOR_ELT(rv_ans, 1), name_list);
+					UNPROTECT(2);
+				}
 			UNPROTECT(3);
 
 		} else if (strncmp(name, "sample.annotation/", 18) == 0)

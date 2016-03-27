@@ -489,6 +489,15 @@ SEXP CVarApplyByVariant::NeedRData(int &nProtected)
 			p = INTEGER(dim = NEW_INTEGER(2));
 			p[0] = DLen[2]; p[1] = Num_Sample;
 			SET_DIM(ans, dim);
+			{
+				SEXP name_list = PROTECT(NEW_LIST(2));
+				SEXP tmp = PROTECT(NEW_CHARACTER(2));
+				SET_STRING_ELT(tmp, 0, mkChar("allele"));
+				SET_STRING_ELT(tmp, 1, mkChar("sample"));
+				SET_NAMES(name_list, tmp);
+				SET_DIMNAMES(ans, name_list);
+				UNPROTECT(2);
+			}
 			break;
 
 		case ctPhase:
