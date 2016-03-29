@@ -25,6 +25,16 @@
 #include <cstring>
 #include <vector>
 
+extern "C"
+{
+#define class xclass
+#define private xprivate
+#include <R_ext/Connections.h>
+#undef xprivate
+#undef xclass
+}
+
+
 using namespace std;
 
 namespace SeqArray
@@ -73,7 +83,7 @@ static vector<SEXP> _VCF4_FORMAT_List;
 
 static size_t _VCF4_NumAllele;
 static size_t _VCF4_NumSample;
-static bool   _VCF4_WriteRaw;
+static Rconnection _VCF4_File;
 
 
 const size_t LINE_BUFFER_SIZE = 4096;
@@ -185,6 +195,15 @@ inline static void LineBuf_Append(const char *txt)
 	LineBuf_NeedSize(n + 16);
 	memcpy(LinePtr, txt, n);
 	LinePtr += n;
+}
+
+
+inline static void put_text(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	(*_VCF4_File->vfprintf)(_VCF4_File, fmt, args);
+	va_end(args);
 }
 
 
@@ -429,21 +448,6 @@ using namespace SeqArray;
 
 extern "C"
 {
-/// to replace mkCharLenCE to speed up, MUST to check the development of R core
-static SEXP Alloc_CharSEXP(const char *str, size_t len)
-{
-	#define intCHARSXP 73
-	#define CHAR_RW(x)	((char *) CHAR(x))
-
-    SEXP rv = allocVector(intCHARSXP, len);
-    memcpy(CHAR_RW(rv), str, len);
-    return rv;
-
-	#undef intCHARSXP
-	#undef CHAR_RW
-}
-
-
 // ========================================================================
 // Convert to VCF4: GDS -> VCF4
 // ========================================================================
@@ -481,11 +485,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 
 /// initialize
 COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Sel, SEXP Info, SEXP Format,
-	SEXP WriteRaw)
+	SEXP File)
 {
 	_VCF4_NumAllele = INTEGER(Sel)[0];
 	_VCF4_NumSample = INTEGER(Sel)[1];
-	_VCF4_WriteRaw  = Rf_asLogical(WriteRaw) == TRUE;
+	_VCF4_File = R_GetConnection(File);
 
 	int *pInfo = INTEGER(Info);
 	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
@@ -560,20 +564,21 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 		}
 	}
 
-	// return
-	SEXP ans;
-	if (_VCF4_WriteRaw)
+	*LinePtr++ = '\n';
+
+	// output
+	if (_VCF4_File->text)
 	{
-		*LinePtr++ = '\n';
-		size_t size = LinePtr - LineBegin;
-		ans = PROTECT(NEW_RAW(size));
-		memcpy(RAW(ans), LineBegin, size);
+		*LinePtr = 0;
+		put_text("%s", LineBegin);
 	} else {
-		ans = PROTECT(NEW_CHARACTER(1));
-		SET_STRING_ELT(ans, 0, Alloc_CharSEXP(LineBegin, LinePtr - LineBegin));
+		size_t size = LinePtr - LineBegin;
+		size_t n = R_WriteConnection(_VCF4_File, LineBegin, size);
+		if (size != n)
+			throw ErrSeqArray("writing error.");
 	}
-	UNPROTECT(1);
-	return ans;
+
+	return R_NilValue;
 }
 
 
@@ -711,22 +716,21 @@ tail:
 		*LinePtr++ = '\t';
 	}
 	LinePtr --;
+	*LinePtr++ = '\n';
 
-	// return
-	SEXP ans;
-	if (_VCF4_WriteRaw)
+	// output
+	if (_VCF4_File->text)
 	{
-		*LinePtr++ = '\n';
-		size_t size = LinePtr - LineBegin - offset;
-		ans = PROTECT(NEW_RAW(size));
-		memcpy(RAW(ans), LineBegin + offset, size);
+		*LinePtr = 0;
+		put_text("%s", LineBegin+offset);
 	} else {
-		ans = PROTECT(NEW_CHARACTER(1));
-		SET_STRING_ELT(ans, 0,
-			Alloc_CharSEXP(LineBegin + offset, LinePtr - LineBegin - offset));
+		size_t size = LinePtr - LineBegin - offset;
+		size_t n = R_WriteConnection(_VCF4_File, LineBegin + offset, size);
+		if (size != n)
+			throw ErrSeqArray("writing error.");
 	}
-	UNPROTECT(1);
-	return ans;
+
+	return R_NilValue;
 }
 
 } // extern "C"

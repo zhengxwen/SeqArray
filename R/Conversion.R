@@ -995,10 +995,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             ofile <- file(vcf.fn, open="wb")
         }
         on.exit({ close(ofile) })
-        writeraw <- TRUE
     } else {
         ofile <- vcf.fn
-        writeraw <- FALSE
     }
 
     op <- options("useFancyQuotes")
@@ -1176,7 +1174,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
     # initialize
-    .Call(SEQ_InitOutVCF4, .seldim(gdsfile), len.info, len.fmt, writeraw)
+    .Call(SEQ_InitOutVCF4, .seldim(gdsfile), len.info, len.fmt, ofile)
 
     # variable names
     nm <- c("chromosome", "position", "annotation/id", "allele",
@@ -1194,10 +1192,9 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     names(nm) <- s
 
     # output lines by variant
-    seqApply(gdsfile, nm, margin = "by.variant", as.is = ofile,
+    seqApply(gdsfile, nm, margin = "by.variant", as.is="none",
         FUN = ifelse(length(nm.format) > 0L,
-            .cfunction("SEQ_OutVCF4"), .cfunction("SEQ_OutVCF4_Di_WrtFmt")),
-        .writeraw = writeraw)
+            .cfunction("SEQ_OutVCF4"), .cfunction("SEQ_OutVCF4_Di_WrtFmt")))
 
     # finalize
     .Call(SEQ_DoneOutVCF4)
