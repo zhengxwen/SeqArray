@@ -634,6 +634,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4_Di_WrtFmt(SEXP X)
 	int *pAllele = INTEGER(phase);
 
 	// for-loop, genotypes
+	size_t offset = 0;
 	size_t n = _VCF4_NumSample;
 
 #ifdef __SSE2__
@@ -641,7 +642,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4_Di_WrtFmt(SEXP X)
 	LineBuf_NeedSize(n*4 + 64);
 
 	// 32-byte alignment
-	size_t offset = (size_t)LinePtr & 0x1F;
+	offset = (size_t)LinePtr & 0x1F;
 	if (offset > 0)
 	{
 		offset = 32 - offset;
