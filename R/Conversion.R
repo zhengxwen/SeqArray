@@ -456,7 +456,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     if (verbose)
     {
-        cat("The Variant Call Format (VCF) header:\n")
+        cat("Variant Call Format (VCF) Import\n")
         cat("    file format: ", header$fileformat, "\n", sep="")
         cat("    the number of sets of chromosomes (ploidy): ",
             header$ploidy, "\n", sep="")
@@ -848,32 +848,32 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     for (i in seq_along(vcf.fn))
     {
-        opfile <- file(vcf.fn[i], open="rt")
-        on.exit({ closefn.gds(gfile); close(opfile) })
+        infile <- file(vcf.fn[i], open="rt")
+        on.exit({ closefn.gds(gfile); close(infile) })
 
         if (verbose)
         {
-            cat(sprintf("Parsing '%s' (%s bytes)\n", vcf.fn[i],
+            cat(sprintf("Parsing '%s' (%s bytes)\n", basename(vcf.fn[i]),
                 .pretty(file.size(vcf.fn[i]))))
             flush.console()
         }
 
         # call C function
-        v <- .Call(SEQ_Parse_VCF4, vcf.fn[i], header, gfile$root,
-            list(sample.num = as.integer(length(samp.id)),
+        v <- .Call(SEQ_Parse_VCF, vcf.fn[i], header, gfile$root,
+            list(sample.num = length(samp.id),
                 genotype.var.name = genotype.var.name,
+                infile = infile,
                 raise.error = raise.error, filter.levels = filterlevels,
                 start = start, count = count,
-                verbose = verbose),
-            readLines, opfile, 512L,  # readLines(opfile, 512L)
-            ignore.chr.prefix, new.env())
+                chr.prefix = ignore.chr.prefix,
+                verbose = verbose), new.env())
 
         filterlevels <- unique(c(filterlevels, v))
         if (verbose)
             print(geno.node)
 
         on.exit({ closefn.gds(gfile) })
-        close(opfile)
+        close(infile)
     }
 
     if (length(filterlevels) > 0L)
@@ -912,7 +912,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (optimize)
     {
         if (verbose)
+        {
             cat("Optimize the access efficiency ...\n")
+            flush.console()
+        }
         cleanup.gds(out.fn, verbose=verbose)
         if (verbose) cat(date(), "\n", sep="")
     }
@@ -1174,7 +1177,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
     # initialize
-    .Call(SEQ_InitOutVCF4, .seldim(gdsfile), len.info, len.fmt, ofile)
+    .Call(SEQ_Init_ToVCF, .seldim(gdsfile), len.info, len.fmt, ofile)
 
     # variable names
     nm <- c("chromosome", "position", "annotation/id", "allele",
@@ -1192,12 +1195,12 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     names(nm) <- s
 
     # output lines by variant
-    seqApply(gdsfile, nm, margin = "by.variant", as.is="none",
-        FUN = ifelse(length(nm.format) > 0L,
-            .cfunction("SEQ_OutVCF4"), .cfunction("SEQ_OutVCF4_Di_WrtFmt")))
+    seqApply(gdsfile, nm, margin="by.variant", as.is="none",
+        FUN=.cfunction(ifelse(
+        	length(nm.format)>0L, "SEQ_ToVCF", "SEQ_ToVCF_Di_WrtFmt")))
 
     # finalize
-    .Call(SEQ_DoneOutVCF4)
+    .Call(SEQ_Done_ToVCF)
     on.exit({
         if (verbose)
             cat("Done.\n", date(), "\n", sep="")

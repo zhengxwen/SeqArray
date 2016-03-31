@@ -1,6 +1,6 @@
 // ===========================================================
 //
-// ConvGDS2VCF.cpp: the C++ code for the conversion from GDS to VCF
+// ConvGDS2VCF.cpp: format conversion from GDS to VCF
 //
 // Copyright (C) 2013-2016    Xiuwen Zheng
 //
@@ -30,8 +30,8 @@ extern "C"
 #define class xclass
 #define private xprivate
 #include <R_ext/Connections.h>
-#undef xprivate
-#undef xclass
+#undef class
+#undef private
 }
 
 
@@ -77,20 +77,21 @@ static string QuoteText(const char *p)
 // ========================================================================
 
 /// used in SEQ_OutVCF4
-static vector<int> _VCF4_INFO_Number;    ///<
-static vector<int> _VCF4_FORMAT_Number;  ///<
-static vector<SEXP> _VCF4_FORMAT_List;
+static vector<int> VCF_INFO_Number;    ///<
+static vector<int> VCF_FORMAT_Number;  ///<
+static vector<SEXP> VCF_FORMAT_List;
 
-static size_t _VCF4_NumAllele;
-static size_t _VCF4_NumSample;
-static Rconnection _VCF4_File;
+static size_t VCF_NumAllele;  ///< the number of alleles
+static size_t VCF_NumSample;  ///< the number of samples
+static Rconnection VCF_File = NULL;  ///< R connection object
 
 
-const size_t LINE_BUFFER_SIZE = 4096;
+static const size_t LINE_BUFFER_SIZE = 4096;
 static vector<char> LineBuffer;
 static char *LineBegin = NULL;
 static char *LinePtr   = NULL;
 static char *LineEnd   = NULL;
+
 
 inline static void LineBuf_Init()
 {
@@ -103,7 +104,7 @@ inline static void LineBuf_Done()
 {
 	LineBuffer.clear();
 	LineBegin = LinePtr = LineEnd = NULL;
-	_VCF4_FORMAT_List.clear();
+	VCF_FORMAT_List.clear();
 }
 
 inline static void LineBuf_InitPtr()
@@ -202,7 +203,7 @@ inline static void put_text(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	(*_VCF4_File->vfprintf)(_VCF4_File, fmt, args);
+	(*VCF_File->vfprintf)(VCF_File, fmt, args);
 	va_end(args);
 }
 
@@ -385,7 +386,7 @@ inline static void ExportInfoFormat(SEXP X)
 	//====  INFO  ====//
 
 	LineBuf_NeedSize(32);
-	size_t cnt_info = _VCF4_INFO_Number.size();
+	size_t cnt_info = VCF_INFO_Number.size();
 	size_t n = 0;
 	for (size_t i=0; i < cnt_info; i++)
 	{
@@ -403,7 +404,7 @@ inline static void ExportInfoFormat(SEXP X)
 				n ++;
 			}
 		} else {
-			int m = INFO_GetNum(D, _VCF4_INFO_Number[i]);
+			int m = INFO_GetNum(D, VCF_INFO_Number[i]);
 			if (m > 0)
 			{
 				if (n > 0) *LinePtr++ = ';';
@@ -420,11 +421,11 @@ inline static void ExportInfoFormat(SEXP X)
 
 	//====  FORMAT  ====//
 
-	_VCF4_FORMAT_List.clear();
+	VCF_FORMAT_List.clear();
 	LineBuf_NeedSize(32);
 	LinePtr[0] = 'G', LinePtr[1] = 'T'; LinePtr += 2;
 
-	size_t cnt_fmt = _VCF4_FORMAT_Number.size();
+	size_t cnt_fmt = VCF_FORMAT_Number.size();
 	for (size_t i=0; i < cnt_fmt; i++)
 	{
 		// name, "fmt.*"
@@ -434,7 +435,7 @@ inline static void ExportInfoFormat(SEXP X)
 		{
 			*LinePtr++ = ':';
 			LineBuf_Append(nm + 4);
-			_VCF4_FORMAT_List.push_back(D);
+			VCF_FORMAT_List.push_back(D);
 		}
 	}
 	*LinePtr++ = '\t';
@@ -443,11 +444,10 @@ inline static void ExportInfoFormat(SEXP X)
 }
 
 
-
-using namespace SeqArray;
-
 extern "C"
 {
+using namespace SeqArray;
+
 // ========================================================================
 // Convert to VCF4: GDS -> VCF4
 // ========================================================================
@@ -484,27 +484,27 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 
 
 /// initialize
-COREARRAY_DLL_EXPORT SEXP SEQ_InitOutVCF4(SEXP Sel, SEXP Info, SEXP Format,
+COREARRAY_DLL_EXPORT SEXP SEQ_Init_ToVCF(SEXP Sel, SEXP Info, SEXP Format,
 	SEXP File)
 {
-	_VCF4_NumAllele = INTEGER(Sel)[0];
-	_VCF4_NumSample = INTEGER(Sel)[1];
-	_VCF4_File = R_GetConnection(File);
+	VCF_NumAllele = INTEGER(Sel)[0];
+	VCF_NumSample = INTEGER(Sel)[1];
+	VCF_File = R_GetConnection(File);
 
 	int *pInfo = INTEGER(Info);
-	_VCF4_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
+	VCF_INFO_Number.assign(pInfo, pInfo + Rf_length(Info));
 
 	int *pFmt = INTEGER(Format);
-	_VCF4_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
+	VCF_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
 
-	_VCF4_FORMAT_List.reserve(256);
+	VCF_FORMAT_List.reserve(256);
 	LineBuf_Init();
 
 	return R_NilValue;
 }
 
 /// finalize
-COREARRAY_DLL_EXPORT SEXP SEQ_DoneOutVCF4()
+COREARRAY_DLL_EXPORT SEXP SEQ_Done_ToVCF()
 {
 	LineBuf_Done();
 	return R_NilValue;
@@ -513,7 +513,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_DoneOutVCF4()
 
 
 /// convert to VCF4
-COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
+COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 {
 	// initialize line pointer
 	LineBuf_InitPtr();
@@ -533,20 +533,20 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 	int *pAllele = INTEGER(phase);
 
 	// for-loop of samples
-	for (size_t i=0; i < _VCF4_NumSample; i ++)
+	for (size_t i=0; i < VCF_NumSample; i ++)
 	{
 		// add '\t'
 		if (i > 0) *LinePtr++ = '\t';
 
 		// genotypes
-		LineBuf_NeedSize(_VCF4_NumAllele << 4); // NumAllele*16
-		if (_VCF4_NumAllele == 2)
+		LineBuf_NeedSize(VCF_NumAllele << 4); // NumAllele*16
+		if (VCF_NumAllele == 2)
 		{
 			_Line_Append_Geno(*pSamp++);
 			*LinePtr++ = (*pAllele++) ? '|' : '/';
 			_Line_Append_Geno(*pSamp++);
 		} else {
-			for (size_t j=0; j < _VCF4_NumAllele; j++)
+			for (size_t j=0; j < VCF_NumAllele; j++)
 			{
 				if (j > 0)
 					*LinePtr++ = (*pAllele++) ? '|' : '/';
@@ -556,24 +556,24 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4(SEXP X)
 
 		// annotation
 		vector<SEXP>::iterator p;
-		for (p=_VCF4_FORMAT_List.begin(); p != _VCF4_FORMAT_List.end(); p++)
+		for (p=VCF_FORMAT_List.begin(); p != VCF_FORMAT_List.end(); p++)
 		{
 			*LinePtr++ = ':';
-			size_t n = Rf_length(*p) / _VCF4_NumSample;
-			FORMAT_Write(*p, n, i, _VCF4_NumSample);
+			size_t n = Rf_length(*p) / VCF_NumSample;
+			FORMAT_Write(*p, n, i, VCF_NumSample);
 		}
 	}
 
 	*LinePtr++ = '\n';
 
 	// output
-	if (_VCF4_File->text)
+	if (VCF_File->text)
 	{
 		*LinePtr = 0;
 		put_text("%s", LineBegin);
 	} else {
 		size_t size = LinePtr - LineBegin;
-		size_t n = R_WriteConnection(_VCF4_File, LineBegin, size);
+		size_t n = R_WriteConnection(VCF_File, LineBegin, size);
 		if (size != n)
 			throw ErrSeqArray("writing error.");
 	}
@@ -619,7 +619,7 @@ static const __m256i char_mask_256 = _mm256_set1_epi16(0xFF00);
 
 
 /// convert to VCF4, diploid without FORMAT variables
-COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4_Di_WrtFmt(SEXP X)
+COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 {
 	// initialize line pointer
 	LineBuf_InitPtr();
@@ -639,14 +639,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_OutVCF4_Di_WrtFmt(SEXP X)
 	int *pAllele = INTEGER(phase);
 
 	// for-loop, genotypes
-	size_t n = _VCF4_NumSample;
+	size_t n = VCF_NumSample;
+	size_t offset = 0;
 
 #ifdef __SSE2__
 
 	LineBuf_NeedSize(n*4 + 64);
 
 	// 32-byte alignment
-	size_t offset = (size_t)LinePtr & 0x1F;
+	offset = (size_t)LinePtr & 0x1F;
 	if (offset > 0)
 	{
 		offset = 32 - offset;
@@ -719,13 +720,13 @@ tail:
 	*LinePtr++ = '\n';
 
 	// output
-	if (_VCF4_File->text)
+	if (VCF_File->text)
 	{
 		*LinePtr = 0;
 		put_text("%s", LineBegin+offset);
 	} else {
 		size_t size = LinePtr - LineBegin - offset;
-		size_t n = R_WriteConnection(_VCF4_File, LineBegin + offset, size);
+		size_t n = R_WriteConnection(VCF_File, LineBegin + offset, size);
 		if (size != n)
 			throw ErrSeqArray("writing error.");
 	}
