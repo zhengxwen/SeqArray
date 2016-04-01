@@ -967,7 +967,7 @@ inline static bool StrCaseCmp(const char *prefix, const char *txt, size_t nmax)
 
 /// VCF format --> SeqArray GDS format
 COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
-	SEXP gds_root, SEXP param, SEXP rho)
+	SEXP gds_root, SEXP param, SEXP line_cnt, SEXP rho)
 {
 	const char *fn = CHAR(STRING_ELT(vcf_fn, 0));
 
@@ -988,9 +988,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 		// raise an error
 		VCF_RaiseError = (Rf_asLogical(RGetListElement(param, "raise.error")) == TRUE);
 		// variant start
-		int variant_start = Rf_asInteger(RGetListElement(param, "start"));
+		C_Int64 variant_start = (C_Int64)Rf_asReal(RGetListElement(param, "start"));
 		// variant count
-		int variant_count = Rf_asInteger(RGetListElement(param, "count"));
+		C_Int64 variant_count = (C_Int64)Rf_asReal(RGetListElement(param, "count"));
 		// input file
 		Init_VCF_Buffer(RGetListElement(param, "infile"));
 		// chromosome prefix
@@ -1112,7 +1112,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 		}
 
 		// variant id (integer)
-		C_Int32 variant_index = GDS_Array_GetTotalCount(varIdx);
+		C_Int64 variant_index = (C_Int64)Rf_asReal(line_cnt);
 
 		// the string buffer
 		string cell;
@@ -1174,7 +1174,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 			GetText(FALSE);
 
 			// -----------------------------------------------------
-			// variant id, TODO
+			// variant id
 			variant_index ++;
 			if (variant_index < variant_start)
 			{
@@ -1183,10 +1183,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 			} else if (variant_count >= 0)
 			{
 				if (variant_index >= variant_start+variant_count)
+				{
+					variant_index --;
 					break;
+				}
 			}
-			GDS_Array_AppendData(varIdx, 1, &variant_index, svInt32);
-
+			I32 = variant_index;
+			GDS_Array_AppendData(varIdx, 1, &I32, svInt32);
 
 			// column 1: CHROM
 			for (vector<const char *>::iterator p=ChrPref.begin(); p != ChrPref.end(); p++)
@@ -1658,6 +1661,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 		for (int i=0; i < (int)filter_list.size(); i++)
 			SET_STRING_ELT(rv_ans, i, mkChar(filter_list[i].c_str()));
 		nProtected ++;
+
+		REAL(line_cnt)[0] = variant_index;
 
 		UNPROTECT(nProtected);
 

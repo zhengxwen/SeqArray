@@ -5,8 +5,8 @@
     Reformats Variant Call Format (VCF) files.
 }
 \usage{
-seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
-    storage.option="ZIP_RA.default", info.import=NULL, fmt.import=NULL,
+seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
+    info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", reference=NULL, start=1L, count=-1L,
     optimize=TRUE, raise.error=TRUE, digest=TRUE, verbose=TRUE)
 }
@@ -15,14 +15,14 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, genotype.var.name="GT",
     \item{out.fn}{the file name of output GDS file}
     \item{header}{if NULL, \code{header} is set to be
         \code{\link{seqVCF_Header}(vcf.fn)}}
-    \item{genotype.var.name}{the ID for genotypic data in the FORMAT column;
-        "GT" by default, VCFv4.0}
     \item{storage.option}{specify the storage and compression options,
         by default \code{\link{seqStorageOption}("ZIP_RA.default")}}
     \item{info.import}{characters, the variable name(s) in the INFO field
         for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
         for import; or \code{NULL} for all variables}
+    \item{genotype.var.name}{the ID for genotypic data in the FORMAT column;
+        "GT" by default, VCFv4.0}
     \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
         chromosome which should be ignored, like "chr"; it is not
         case-sensitive}
@@ -108,8 +108,7 @@ seqClose(f)
 
 
 # convert without the INFO and FORMAT fields
-seqVCF2GDS(vcf.fn, "tmp.gds",
-    info.import=character(0), fmt.import=character(0))
+seqVCF2GDS(vcf.fn, "tmp.gds", info.import=character(0), fmt.import=character(0))
 
 # display
 (f <- seqOpen("tmp.gds"))

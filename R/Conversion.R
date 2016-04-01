@@ -383,8 +383,8 @@ seqVCF_SampID <- function(vcf.fn)
 #
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
-    genotype.var.name="GT", storage.option="ZIP_RA.default",
-    info.import=NULL, fmt.import=NULL, ignore.chr.prefix="chr",
+    storage.option="ZIP_RA.default", info.import=NULL, fmt.import=NULL,
+    genotype.var.name="GT", ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, verbose=TRUE)
 {
@@ -845,6 +845,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # for-loop each file
 
     filterlevels <- header$filter$ID
+    linecnt <- double(1L)
 
     for (i in seq_along(vcf.fn))
     {
@@ -866,11 +867,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 raise.error = raise.error, filter.levels = filterlevels,
                 start = start, count = count,
                 chr.prefix = ignore.chr.prefix,
-                verbose = verbose), new.env())
+                verbose = verbose),
+            linecnt, new.env())
 
         filterlevels <- unique(c(filterlevels, v))
-        if (verbose)
-            print(geno.node)
+        if (verbose) print(geno.node)
 
         on.exit({ closefn.gds(gfile) })
         close(infile)

@@ -33,7 +33,7 @@ Development Version: v1.11.18
 
 
 
-## Installation
+## Installation (requiring >=R_v3.3.0)
 
 * Bioconductor repository:
 ```R

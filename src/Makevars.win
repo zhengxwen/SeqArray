@@ -2,5 +2,5 @@
 ###                     SeqArray Codes                         ###
 ###                                                            ###
 
-# additional preprocessor options
-PKG_CPPFLAGS = -I. -DUSING_R -DNO_R_v3_3
+# additional preprocessor options, requiring >=R_v3.3
+PKG_CPPFLAGS = -I. -DUSING_R
