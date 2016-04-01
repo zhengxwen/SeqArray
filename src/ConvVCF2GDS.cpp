@@ -31,6 +31,17 @@ extern "C"
 #include <R_ext/Connections.h>
 #undef class
 #undef private
+
+
+// NO_R_v3_3 can be defined in Makevars
+#ifdef NO_R_v3_3
+static Rconnection __R_GetConnection(SEXP x)
+{
+	extern Rconnection getConnection(int n);
+	return getConnection(Rf_asInteger(x));
+}
+#define R_GetConnection __R_GetConnection
+#endif
 }
 
 
@@ -918,6 +929,24 @@ inline static void getStringArray(char *p, char *end, vector<string> &UTF8s)
 extern "C"
 {
 using namespace SeqArray;
+
+// ===========================================================
+// Get the number of lines
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP SEQ_NumLines(SEXP File)
+{
+	Init_VCF_Buffer(File);
+	C_Int64 n = 0;
+	while (!VCF_EOF())
+	{
+		SkipLine();
+		n ++;
+	}
+	return (n > INT_MAX) ? ScalarReal(n) : ScalarInteger(n);
+}
+
+
 
 // ===========================================================
 // Conversion: VCF --> GDS

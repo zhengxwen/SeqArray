@@ -34,12 +34,12 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     n <- 0L
     for (i in seq_along(vcf.fn))
     {
-        opfile <- file(vcf.fn[i], open="rt")
-        on.exit(close(opfile))
+        infile <- file(vcf.fn[i], open="rt")
+        on.exit(close(infile))
 
         # read header
         ans <- NULL
-        while (length(s <- readLines(opfile, n=1L)) > 0L)
+        while (length(s <- readLines(infile, n=1L)) > 0L)
         {
             n <- n + 1L
             if (substr(s, 1L, 6L) != "#CHROM")
@@ -53,7 +53,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                         quiet=TRUE)[-seq_len(9)]
                     if (length(s) > nSample) nSample <- length(s)
                 }
-                s <- readLines(opfile, n=1L)
+                s <- readLines(infile, n=1L)
                 if (length(s) > 0L)
                 {
                     ss <- scan(text=s, what=character(), sep="\t", quiet=TRUE)
@@ -62,7 +62,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                 if (getnum)
                 {
                     nVariant <- nVariant + length(s) +
-                        length(count.fields(opfile))
+                        .Call(SEQ_NumLines, infile)
                 }
                 break
             }
@@ -76,7 +76,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
             }
         }
 
-        close(opfile)
+        close(infile)
         on.exit()
     }
 
@@ -356,17 +356,17 @@ seqVCF_SampID <- function(vcf.fn)
     stopifnot(length(vcf.fn) == 1L)
 
     # open the vcf file
-    opfile <- file(vcf.fn[1L], open="rt")
-    on.exit(close(opfile))
+    infile <- file(vcf.fn[1L], open="rt")
+    on.exit(close(infile))
 
     # read header
     samp.id <- NULL
-    while (length(s <- readLines(opfile, n=1L)) > 0L)
+    while (length(s <- readLines(infile, n=1L)) > 0L)
     {
         if (substr(s, 1L, 6L) == "#CHROM")
         {
             samp.id <- scan(text=s, what=character(0), sep="\t",
-                quiet=TRUE)[-seq_len(9)]
+                quiet=TRUE)[-seq_len(9L)]
             break
         }
     }

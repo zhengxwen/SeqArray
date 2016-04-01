@@ -10,7 +10,7 @@ useDynLib(SeqArray,
 
     SEQ_Summary, SEQ_System,
 
-    SEQ_Parse_VCF, SEQ_Quote,
+    SEQ_Parse_VCF, SEQ_Quote, SEQ_NumLines,
     SEQ_Init_ToVCF, SEQ_Done_ToVCF, SEQ_ToVCF, SEQ_ToVCF_Di_WrtFmt,
     SEQ_GetData, SEQ_Apply_Variant, SEQ_Apply_Sample, SEQ_NumOfAllele,
 
