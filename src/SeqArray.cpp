@@ -325,7 +325,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 		TSelection &Sel = File.Selection();
 		C_BOOL *pArray = Sel.pSample();
 		int Count = File.SampleNum();
-		PdAbstractArray varSamp = File.GetObj("sample.id", TRUE);
 
 		if (Rf_isLogical(samp_sel) || IS_RAW(samp_sel))
 		{
@@ -544,7 +543,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 		TSelection &Sel = File.Selection();
 		C_BOOL *pArray = Sel.pVariant();
 		int Count = File.VariantNum();
-		PdAbstractArray varVariant = File.GetObj("variant.id", TRUE);
 
 		if (Rf_isLogical(var_sel) || IS_RAW(var_sel))
 		{

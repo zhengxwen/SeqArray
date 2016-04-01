@@ -576,7 +576,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 
 		// the selection
 		CFileInfo &File = GetFileInfo(gdsfile);
-		TSelection &Sel = File.Selection();
 
 		// the number of calling PROTECT
 		int nProtected = 0;
