@@ -96,6 +96,7 @@ static int VCF_ColumnNum;    ///< the current column number
 static C_Int64 VCF_NextLineNum;  ///< the next line number
 static int VCF_NextColumnNum;    ///< the next column number
 
+static bool VCF_RaiseError;  ///< raise conversion error if true
 
 /// initialize text buffer
 inline static void InitText()
@@ -108,7 +109,7 @@ inline static void InitText()
 }
 
 /// get a string with a seperator '\t', which is saved in _Text_Buffer
-static void GetText(int last_column)
+inline static void GetText(int last_column)
 {
 	if (VCF_File->EOF_signalled)
 		throw ErrSeqArray("it is the end of file.");
@@ -206,7 +207,7 @@ static void GetText(int last_column)
 }
 
 /// skip the current line
-static void SkipLine()
+inline static void SkipLine()
 {
 	VCF_ColumnNum = VCF_NextColumnNum;
 	VCF_LineNum = VCF_NextLineNum;
@@ -269,6 +270,8 @@ inline static void SkipTextWithDot()
 // ===========================================================
 // VCF structure
 // ===========================================================
+
+static string BlackString;
 
 const static int FIELD_TYPE_INT      = 1;
 const static int FIELD_TYPE_FLOAT    = 2;
@@ -384,7 +387,7 @@ struct COREARRAY_DLL_LOCAL TVCF_Format
 	/// data -- C_Float32
 	vector< vector<C_Float64> > F64ss;
 	/// data -- UTF8 string
-	vector< vector<string> > UTF8ss;
+	vector< vector<string> > S8ss;
 
 
 	TVCF_Format()
@@ -395,97 +398,139 @@ struct COREARRAY_DLL_LOCAL TVCF_Format
 		used = false;
 	}
 
-	template<typename TYPE> void Check(vector<TYPE> &array, int num_allele,
-		const TYPE &missing)
+	template<typename TYPE> inline void Check(vector<TYPE> &array,
+		size_t num_allele, const TYPE &missing)
 	{
+		size_t n = array.size();
 		switch (number)
 		{
 		case -1:
+			// Number=.
 			break;
 
 		case -2:
-			// # of alternate alleles, A
-			if ((int)array.size() > (num_allele-1))
+			// # of alternate alleles, Number=A
+			num_allele --;
+			if (n < num_allele)
+			{
+				array.resize(num_allele, missing);
+			} else if (n > num_allele)
 			{
 				throw ErrSeqArray(
 					"FORMAT ID '%s' (Number=A) should have %d value(s), but receives %d.",
-					name.c_str(), num_allele-1, (int)array.size());
-			} else
-				array.resize(num_allele-1, missing);
-			break;		
+					name.c_str(), (int)num_allele, (int)n);
+			}
+			break;
 
 		case -3:
-			// # of all possible genotypes, G
-			if ((int)array.size() > (num_allele+1)*num_allele/2)
+			// # of all possible genotypes, Number=G
+			num_allele = (num_allele+1) * num_allele / 2;
+			if (n < num_allele)
+			{
+				array.resize(num_allele, missing);
+			} else if (n > num_allele)
 			{
 				throw ErrSeqArray(
 					"FORMAT ID '%s' (Number=G) should have %d value(s), but receives %d.",
-					name.c_str(), (num_allele+1)*num_allele/2,
-					(int)array.size());
-			} else
-				array.resize((num_allele+1)*num_allele/2, missing);
-			break;		
+					name.c_str(), (int)num_allele, (int)n);
+			}
+			break;
 
 		case -4:
-			// # of alleles, R
-			if ((int)array.size() > num_allele)
+			// # of alleles, Number=R
+			if (n < num_allele)
+			{
+				array.resize(num_allele, missing);
+			} else if (n > num_allele)
 			{
 				throw ErrSeqArray(
 					"FORMAT ID '%s' (Number=R) should have %d value(s), but receives %d.",
-					name.c_str(), num_allele, (int)array.size());
-			} else
-				array.resize(num_allele, missing);
-			break;		
+					name.c_str(), (int)num_allele, (int)n);
+			}
+			break;
 
 		default:
 			if (number >= 0)
 			{
-				if ((int)array.size() > number)
+				if (n < (size_t)number)
+				{
+					array.resize(number, missing);
+				} else if (n > (size_t)number)
 				{
 					throw ErrSeqArray(
 						"FORMAT ID '%s' should have %d value(s), but receives %d.",
-						name.c_str(), number, (int)array.size());
-				} else {
-					array.resize(number, missing);
+						name.c_str(), number, (int)n);
 				}
 			} else
 				throw ErrSeqArray("Invalid value 'number' in TVCF_Format.");
 		}
 	}
 
-	void WriteFixedLength()
+	void WriteFixedLength(vector<C_Int32> &I32s, vector<double> &F64s,
+		vector<string> &S8s)
 	{
 		if (number < 0)
 		{
 			throw ErrSeqArray(
 				"Invalid call 'WriteFixedLength' in TVCF_Format.");
 		}
+
 		switch (type)
 		{
 		case FIELD_TYPE_INT:
-			for (vector< vector<C_Int32> >::iterator it = I32ss.begin();
-				it != I32ss.end(); it ++)
 			{
-				GDS_Array_AppendData(data_obj, number, &((*it)[0]), svInt32);
+				size_t n = I32ss.size();
+				I32s.resize(n * number);
+				C_Int32 *p = &I32s[0];
+				if (number == 1)
+				{
+					for (size_t i=0; i < n; i++)
+						*p++ = I32ss[i][0];
+				} else {
+					size_t size = sizeof(C_Int32) * number;
+					for (size_t i=0; i < n; i++)
+					{
+						memmove(p, &I32ss[i][0], size);
+						p += number;
+					}
+				}
+				GDS_Array_AppendData(data_obj, n*number, &I32s[0], svInt32);
 			}
 			break;
 
 		case FIELD_TYPE_FLOAT:
-			for (vector< vector<double> >::iterator it = F64ss.begin();
-				it != F64ss.end(); it ++)
 			{
-				GDS_Array_AppendData(data_obj, number, &((*it)[0]), svFloat64);
+				size_t n = F64ss.size();
+				F64s.resize(n * number);
+				double *p = &F64s[0];
+				if (number == 1)
+				{
+					for (size_t i=0; i < n; i++)
+						*p++ = F64ss[i][0];
+				} else {
+					size_t size = sizeof(double) * number;
+					for (size_t i=0; i < n; i++)
+					{
+						memmove(p, &F64ss[i][0], size);
+						p += number;
+					}
+				}
+				GDS_Array_AppendData(data_obj, n*number, &F64s[0], svFloat64);
 			}
 			break;
 
 		case FIELD_TYPE_STRING:
-			for (vector< vector<string> >::iterator it = UTF8ss.begin();
-				it != UTF8ss.end(); it ++)
 			{
-				vector<string> &text = (*it);
-				size_t n = text.size();
-				for (size_t j=0; j < n; j ++)
-					GDS_Array_AppendString(data_obj, text[j].c_str());
+				size_t n = S8ss.size();
+				S8s.resize(n * number);
+				string *p = &S8s[0];
+				for (size_t i=0; i < n; i++)
+				{
+					string *s = &S8ss[i][0];
+					for (size_t m=number; m > 0; m--)
+						*p++ = *s++;
+				}
+				GDS_Array_AppendData(data_obj, n*number, &S8s[0], svStrUTF8);
 			}
 			break;
 
@@ -494,76 +539,85 @@ struct COREARRAY_DLL_LOCAL TVCF_Format
 		}
 	}
 
-	int WriteVariableLength(int nTotalSample, vector<C_Int32> &I32s,
-		vector<double> &F64s)
+	size_t WriteVariableLength(size_t num_samp, vector<C_Int32> &I32s,
+		vector<double> &F64s, vector<string> &S8s)
 	{
 		if (number >= 0)
 		{
 			throw ErrSeqArray(
 				"Invalid call 'WriteVariableLength' in TVCF_Format.");
 		}
-		int nMax = 0;
+
+		size_t nmax = 0;
 		switch (type)
 		{
 		case FIELD_TYPE_INT:
-			for (int j=0; j < nTotalSample; j++)
+			for (size_t i=0; i < num_samp; i++)
 			{
-				if (nMax < (int)I32ss[j].size())
-					nMax = I32ss[j].size();
+				size_t n = I32ss[i].size();
+				if (nmax < n) nmax = n;
 			}
-			I32s.resize(nTotalSample);
-			for (int i=0; i < nMax; i++)
+			I32s.resize(num_samp*nmax);
+			for (size_t i=0; i < num_samp; i++)
 			{
-				for (int j=0; j < nTotalSample; j++)
-				{
-					vector<C_Int32> &B = I32ss[j];
-					I32s[j] = (i < (int)B.size()) ? B[i] : NA_INTEGER;
-				}
-				GDS_Array_AppendData(data_obj, nTotalSample,
-					&(I32s[0]), svInt32);
+				C_Int32 *p = &I32s[0] + i;
+				vector<C_Int32> &A = I32ss[i];
+				size_t n = A.size();
+				C_Int32 *s = &A[0];
+				for (size_t j=0; j < n; j++, p += num_samp)
+					*p = *s++;
+				for (; n < nmax; n++, p += num_samp)
+					*p = NA_INTEGER;
 			}
+			GDS_Array_AppendData(data_obj, num_samp*nmax, &(I32s[0]), svInt32);
 			break;
 
 		case FIELD_TYPE_FLOAT:
-			for (int j=0; j < nTotalSample; j++)
+			for (size_t i=0; i < num_samp; i++)
 			{
-				if (nMax < (int)F64ss[j].size())
-					nMax = F64ss[j].size();
+				size_t n = F64ss[i].size();
+				if (nmax < n) nmax = n;
 			}
-			F64s.resize(nTotalSample);
-			for (int i=0; i < nMax; i++)
+			F64s.resize(num_samp*nmax);
+			for (size_t i=0; i < num_samp; i++)
 			{
-				for (int j=0; j < nTotalSample; j++)
-				{
-					vector<double> &L = F64ss[j];
-					F64s[j] = (i < (int)L.size()) ? L[i] : R_NaN;
-				}
-				GDS_Array_AppendData(data_obj, nTotalSample,
-					&(F64s[0]), svFloat64);
+				double *p = &F64s[0] + i;
+				vector<double> &A = F64ss[i];
+				size_t n = A.size();
+				double *s = &A[0];
+				for (size_t j=0; j < n; j++, p += num_samp)
+					*p = *s++;
+				for (; n < nmax; n++, p += num_samp)
+					*p = R_NaN;
 			}
+			GDS_Array_AppendData(data_obj, num_samp*nmax, &(F64s[0]), svFloat64);
 			break;
 
 		case FIELD_TYPE_STRING:
-			for (int j=0; j < nTotalSample; j++)
+			for (size_t i=0; i < num_samp; i++)
 			{
-				if (nMax < (int)UTF8ss[j].size())
-					nMax = UTF8ss[j].size();
+				size_t n = S8ss[i].size();
+				if (nmax < n) nmax = n;
 			}
-			for (int i=0; i < nMax; i++)
+			S8s.resize(num_samp*nmax);
+			for (size_t i=0; i < num_samp; i++)
 			{
-				for (int j=0; j < nTotalSample; j++)
-				{
-					vector<string> &B = UTF8ss[j];
-					GDS_Array_AppendString(data_obj,
-						(i < (int)B.size()) ? B[i].c_str() : "");
-				}
+				string *p = &S8s[0] + i;
+				vector<string> &A = S8ss[i];
+				size_t n = A.size();
+				string *s = &A[0];
+				for (size_t j=0; j < n; j++, p += num_samp)
+					*p = *s++;
+				for (; n < nmax; n++, p += num_samp)
+					*p = BlackString;
 			}
+			GDS_Array_AppendData(data_obj, num_samp*nmax, &(S8s[0]), svStrUTF8);
 			break;
 
 		default:
 			throw ErrSeqArray("Invalid FORMAT Type.");
 		}
-		return nMax;
+		return nmax;
 	}
 };
 
@@ -572,8 +626,6 @@ struct COREARRAY_DLL_LOCAL TVCF_Format
 // ===========================================================
 // Text conversion
 // ===========================================================
-
-static string BlackString;
 
 inline static string SHORT(const char *p, const char *end)
 {
@@ -591,10 +643,11 @@ inline static string SHORT(const char *p, const char *end)
 static const char *ERR_INT_CONV = "Invalid integer conversion '%s'";
 static const char *ERR_INT_OUT_RANGE = "Integer conversion is out of range '%s'";
 static const char *ERR_GENO_CONV = "Invalid integer conversion for genotypes '%s'";
+static const char *ERR_GENO_OUT_RANGE = "Genotype is out of range '%s'";
 static const char *ERR_FLOAT_CONV = "Invalid float conversion '%s'";
 
 /// get an integer from a string
-inline static int getInt32(const char *p, const char *end, bool raise_error)
+inline static int getInt32(const char *p, const char *end)
 {
 	while ((p < end) && (*p == ' '))
 		p ++;
@@ -604,7 +657,7 @@ inline static int getInt32(const char *p, const char *end, bool raise_error)
 	{
 		p ++;
 		while ((p < end) && (*p == ' ')) p ++;
-		if ((p < end) && raise_error)
+		if ((p < end) && VCF_RaiseError)
 			throw ErrSeqArray(ERR_INT_CONV, SHORT(start, end).c_str());
 		return NA_INTEGER;
 	}
@@ -619,7 +672,7 @@ inline static int getInt32(const char *p, const char *end, bool raise_error)
 		if ('0' <= ch && ch <= '9')
 		{
 			val = val*10 + (ch - '0');
-			if (raise_error && (val > INT_MAX))
+			if (VCF_RaiseError && (val > INT_MAX))
 				throw ErrSeqArray(ERR_INT_OUT_RANGE, SHORT(start, end).c_str());
 		} else {
 			if (ch == ' ')
@@ -628,7 +681,7 @@ inline static int getInt32(const char *p, const char *end, bool raise_error)
 					p ++;
 				if (p >= end) break;
 			}
-			if (raise_error)
+			if (VCF_RaiseError)
 				throw ErrSeqArray(ERR_INT_CONV, SHORT(start, end).c_str());
 			return NA_INTEGER;
 		}
@@ -638,8 +691,8 @@ inline static int getInt32(const char *p, const char *end, bool raise_error)
 }
 
 /// get multiple integers from a string
-static void getInt32Array(const char *p, const char *end, vector<C_Int32> &I32s,
-	bool raise_error)
+inline static void getInt32Array(const char *p, const char *end,
+	vector<C_Int32> &I32s)
 {
 	I32s.clear();
 
@@ -655,7 +708,7 @@ static void getInt32Array(const char *p, const char *end, vector<C_Int32> &I32s,
 			while ((p < end) && (*p == ' ')) p ++;
 			if ((p < end) && (*p != ','))
 			{
-				if (raise_error)
+				if (VCF_RaiseError)
 					throw ErrSeqArray(ERR_INT_CONV, SHORT(start, end).c_str());
 				while ((p < end) && (*p != ',')) p ++;
 			}
@@ -674,7 +727,7 @@ static void getInt32Array(const char *p, const char *end, vector<C_Int32> &I32s,
 			if ('0' <= ch && ch <= '9')
 			{
 				val = val*10 + (ch - '0');
-				if (raise_error && (val > INT_MAX))
+				if (VCF_RaiseError && (val > INT_MAX))
 					throw ErrSeqArray(ERR_INT_OUT_RANGE, SHORT(start, end).c_str());
 				p ++;
 			} else {
@@ -691,7 +744,7 @@ static void getInt32Array(const char *p, const char *end, vector<C_Int32> &I32s,
 					p ++;
 					break;
 				} else {
-					if (raise_error)
+					if (VCF_RaiseError)
 						throw ErrSeqArray(ERR_INT_CONV, SHORT(start, end).c_str());
 					else
 						while ((p < end) && (*p != ',')) p ++;
@@ -708,14 +761,14 @@ static void getInt32Array(const char *p, const char *end, vector<C_Int32> &I32s,
 }
 
 /// get a genotype from a string
-inline static C_Int16 getGeno(const char *p, const char *end, bool raise_error)
+inline static C_Int16 getGeno(const char *p, const char *end, int num_allele)
 {
 	const char *start = p;
 	if ((p < end) && (*p == '.'))
 	{
 		p ++;
 		while ((p < end) && (*p == ' ')) p ++;
-		if ((p < end) && raise_error)
+		if ((p < end) && VCF_RaiseError)
 			throw ErrSeqArray(ERR_INT_CONV, SHORT(start, end).c_str());
 		return -1;
 	}
@@ -727,7 +780,7 @@ inline static C_Int16 getGeno(const char *p, const char *end, bool raise_error)
 		if ('0' <= ch && ch <= '9')
 		{
 			val = val*10 + (ch - '0');
-			if (raise_error && (val > 32767))
+			if (VCF_RaiseError && (val > 32767))
 				throw ErrSeqArray(ERR_INT_OUT_RANGE, SHORT(start, end).c_str());
 		} else {
 			if (ch == ' ')
@@ -736,10 +789,17 @@ inline static C_Int16 getGeno(const char *p, const char *end, bool raise_error)
 					p ++;
 				if (p >= end) break;
 			}
-			if (raise_error)
+			if (VCF_RaiseError)
 				throw ErrSeqArray(ERR_GENO_CONV, SHORT(start, end).c_str());
 			return -1;
 		}
+	}
+
+	if (val >= num_allele)
+	{
+		if (VCF_RaiseError)
+			throw ErrSeqArray(ERR_GENO_OUT_RANGE, SHORT(start, end).c_str());
+		val = -1;
 	}
 
 	return val;
@@ -747,7 +807,7 @@ inline static C_Int16 getGeno(const char *p, const char *end, bool raise_error)
 
 
 /// get a real number from a string
-inline static double getFloat(char *p, char *end, bool raise_error)
+inline static double getFloat(char *p, char *end)
 {
 	while ((p < end) && (*p == ' ')) p ++;
 	while ((p < end) && (*(end-1) == ' ')) end --;
@@ -761,7 +821,7 @@ inline static double getFloat(char *p, char *end, bool raise_error)
 
 		if (endptr == p)
 		{
-			if (raise_error)
+			if (VCF_RaiseError)
 				throw ErrSeqArray(ERR_FLOAT_CONV, SHORT(start, end).c_str());
 			val = R_NaN;
 		} else {
@@ -770,7 +830,7 @@ inline static double getFloat(char *p, char *end, bool raise_error)
 			if (p < end)
 			{
 				val = R_NaN;
-				if (raise_error)
+				if (VCF_RaiseError)
 					throw ErrSeqArray(ERR_FLOAT_CONV, SHORT(start, end).c_str());
 			}
 		}
@@ -782,8 +842,7 @@ inline static double getFloat(char *p, char *end, bool raise_error)
 }
 
 /// get multiple real numbers from a string
-static void getFloatArray(char *p, char *end, vector<double> &F64s,
-	bool raise_error)
+inline static void getFloatArray(char *p, char *end, vector<double> &F64s)
 {
 	while ((p < end) && (*(end-1) == ' ')) end --;
 	*end = 0;  // no worry, see VCF_BUFFER_SIZE_PLUS
@@ -810,7 +869,7 @@ static void getFloatArray(char *p, char *end, vector<double> &F64s,
 
 			if (endptr == p)
 			{
-				if (raise_error)
+				if (VCF_RaiseError)
 					throw ErrSeqArray(ERR_FLOAT_CONV, SHORT(start, end).c_str());
 				val = R_NaN;
 				while ((p < end) && (*p != ',')) p ++;
@@ -819,7 +878,7 @@ static void getFloatArray(char *p, char *end, vector<double> &F64s,
 				while ((p < end) && (*p == ' ')) p ++;
 				if ((p < end) && (*p != ','))
 				{
-					if (raise_error)
+					if (VCF_RaiseError)
 						throw ErrSeqArray(ERR_FLOAT_CONV, SHORT(start, end).c_str());
 					val = R_NaN;
 					while ((p < end) && (*p != ',')) p ++;
@@ -836,7 +895,7 @@ static void getFloatArray(char *p, char *end, vector<double> &F64s,
 
 
 /// get an integer from a string
-static void getStringArray(char *p, char *end, vector<string> &UTF8s)
+inline static void getStringArray(char *p, char *end, vector<string> &UTF8s)
 {
 	UTF8s.clear();
 	while (p < end)
@@ -898,7 +957,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 		// the variable name for genotypic data
 		string geno_id = CHAR(STRING_ELT(RGetListElement(param, "genotype.var.name"), 0));
 		// raise an error
-		bool RaiseError = (Rf_asLogical(RGetListElement(param, "raise.error")) == TRUE);
+		VCF_RaiseError = (Rf_asLogical(RGetListElement(param, "raise.error")) == TRUE);
 		// variant start
 		int variant_start = Rf_asInteger(RGetListElement(param, "start"));
 		// variant count
@@ -1015,7 +1074,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 						format_list.back().F64ss.resize(num_samp);
 						break;
 					case FIELD_TYPE_STRING:
-						format_list.back().UTF8ss.resize(num_samp);
+						format_list.back().S8ss.resize(num_samp);
 						break;
 					default:
 						throw ErrSeqArray("Invalid FORMAT Type.");
@@ -1040,8 +1099,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 		F64s.reserve(num_samp);
 
 		// the string buffer
-		vector<string> StrList;
-		StrList.reserve(num_samp);
+		vector<string> S8s;
+		S8s.reserve(num_samp);
 
 		// genotypes
 		vector< vector<C_Int16> > Genotypes;
@@ -1115,7 +1174,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 			// -----------------------------------------------------
 			// column 2: POS
 			GetText(FALSE);
-			I32 = getInt32(Text_pBegin, Text_pEnd, RaiseError);
+			I32 = getInt32(Text_pBegin, Text_pEnd);
 			GDS_Array_AppendData(varPos, 1, &I32, svInt32);
 
 
@@ -1155,7 +1214,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 			// -----------------------------------------------------
 			// column 6: QUAL
 			GetText(FALSE);
-			F64 = getFloat(Text_pBegin, Text_pEnd, RaiseError);
+			F64 = getFloat(Text_pBegin, Text_pEnd);
 			GDS_Array_AppendData(varQual, 1, &F64, svFloat64);
 
 
@@ -1244,14 +1303,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 						switch (pI->type)
 						{
 						case FIELD_TYPE_INT:
-							getInt32Array(ValBegin, ValEnd, I32s, RaiseError);
+							getInt32Array(ValBegin, ValEnd, I32s);
 							pI->Index(I32s, num_allele);
 							GDS_Array_AppendData(pI->data_obj, I32s.size(),
 								&(I32s[0]), svInt32);
 							break;
 
 						case FIELD_TYPE_FLOAT:
-							getFloatArray(ValBegin, ValEnd, F64s, RaiseError);
+							getFloatArray(ValBegin, ValEnd, F64s);
 							pI->Index(F64s, num_allele);
 							GDS_Array_AppendData(pI->data_obj, F64s.size(),
 								&(F64s[0]), svFloat64);
@@ -1269,10 +1328,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 							break;
 
 						case FIELD_TYPE_STRING:
-							getStringArray(ValBegin, ValEnd, StrList);
-							pI->Index(StrList, num_allele);
-							GDS_Array_AppendData(pI->data_obj, StrList.size(),
-								&(StrList[0]), svStrUTF8);
+							getStringArray(ValBegin, ValEnd, S8s);
+							pI->Index(S8s, num_allele);
+							GDS_Array_AppendData(pI->data_obj, S8s.size(),
+								&(S8s[0]), svStrUTF8);
 							break;
 
 						default:
@@ -1309,7 +1368,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 						GDS_Array_AppendData(pI->data_obj, 1, &I32, svInt32);
 						break;
 					case FIELD_TYPE_STRING:
-						pI->Fill(StrList, BlackString);
+						pI->Fill(S8s, BlackString);
 						break;
 					default:
 						throw ErrSeqArray("Invalid INFO Type.");
@@ -1414,7 +1473,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 					const char *start = p;
 					while ((p<end) && (*p!='|') && (*p!='/'))
 						p ++;
-					pAllele.push_back(getGeno(start, p, RaiseError));
+					pAllele.push_back(getGeno(start, p, num_allele));
 					if (p < end)
 					{
 						if (*p == '|')
@@ -1485,18 +1544,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 						switch (pFmt->type)
 						{
 						case FIELD_TYPE_INT:
-							getInt32Array(start, end, pFmt->I32ss[si], RaiseError);
+							getInt32Array(start, end, pFmt->I32ss[si]);
 							pFmt->Check(pFmt->I32ss[si], num_allele, NA_INTEGER);
 							break;
 
 						case FIELD_TYPE_FLOAT:
-							getFloatArray(start, end, pFmt->F64ss[si], RaiseError);
+							getFloatArray(start, end, pFmt->F64ss[si]);
 							pFmt->Check(pFmt->F64ss[si], num_allele, R_NaN);
 							break;
 
 						case FIELD_TYPE_STRING:
-							getStringArray(start, end, pFmt->UTF8ss[si]);
-							pFmt->Check(pFmt->UTF8ss[si], num_allele, BlackString);
+							getStringArray(start, end, pFmt->S8ss[si]);
+							pFmt->Check(pFmt->S8ss[si], num_allele, BlackString);
 							break;
 
 						default:
@@ -1547,12 +1606,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
 						if (p->number > 0)
 						{
 							// fixed-length array
-							p->WriteFixedLength();
+							p->WriteFixedLength(I32s, F64s, S8s);
 							I32 = 1;
 						} else if (p->number < 0)
 						{
 							// variable-length array
-							I32 = p->WriteVariableLength(num_samp, I32s, F64s);
+							I32 = p->WriteVariableLength(num_samp, I32s, F64s, S8s);
 						} else {
 							throw ErrSeqArray("Invalid FORMAT Number.");
 						}
