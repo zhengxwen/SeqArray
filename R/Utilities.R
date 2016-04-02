@@ -227,13 +227,13 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         } else
             ans <- FUN(gdsfile, ...)
 
-    } else if (identical(cl, TRUE) | is.numeric(cl))
+    } else if (isTRUE(cl) | is.numeric(cl))
     {
         # library
         if (!requireNamespace("parallel"))
             stop("the 'parallel' package should be installed.")
 
-        if (identical(cl, TRUE))
+        if (isTRUE(cl))
         {
             cl <- parallel::detectCores() - 1L
             if (cl <= 1L) cl <- 2L
@@ -264,8 +264,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             FUN = function(i, .fun)
             {
                 # export to global variables
-                assign(".process_index", i, envir = .GlobalEnv)
-                assign(".process_count", cl, envir = .GlobalEnv)
+                assign(".seq_process_index", i, envir = .GlobalEnv)
+                assign(".seq_process_count", cl, envir = .GlobalEnv)
 
                 if (!is.null(gdsfile))
                 {
@@ -328,8 +328,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                 FUN, .split, .selection.flag, ...)
         {
             # export to global variables
-            assign(".process_index", .proc_idx, envir = .GlobalEnv)
-            assign(".process_count", .proc_cnt, envir = .GlobalEnv)
+            assign(".seq_process_index", .proc_idx, envir = .GlobalEnv)
+            assign(".seq_process_count", .proc_cnt, envir = .GlobalEnv)
 
             # load the package
             library("SeqArray")

@@ -931,10 +931,10 @@ extern "C"
 using namespace SeqArray;
 
 // ===========================================================
-// Get the number of lines
+// Get the number of lines in a VCF file
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_NumLines(SEXP File)
+COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File)
 {
 	Init_VCF_Buffer(File);
 	C_Int64 n = 0;
@@ -944,6 +944,34 @@ COREARRAY_DLL_EXPORT SEXP SEQ_NumLines(SEXP File)
 		n ++;
 	}
 	return (n > INT_MAX) ? ScalarReal(n) : ScalarInteger(n);
+}
+
+
+
+// ===========================================================
+// Split VCF files
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum)
+{
+	int num = Rf_asInteger(pnum);
+	SEXP ans = PROTECT(NEW_LIST(2));
+	SEXP start_array = PROTECT(NEW_NUMERIC(num));
+	SEXP count_array = PROTECT(NEW_NUMERIC(num));
+	SET_ELEMENT(ans, 0, start_array);
+	SET_ELEMENT(ans, 1, count_array);
+
+	double scale = Rf_asReal(count) / num;
+	double st = Rf_asReal(start);
+	for (int i=0; i < num; i++)
+	{
+		REAL(start_array)[i] = round(st);
+		st += scale;
+		REAL(count_array)[i] = round(st) - REAL(start_array)[i];
+	}
+
+	UNPROTECT(3);
+	return ans;
 }
 
 
@@ -966,7 +994,7 @@ inline static bool StrCaseCmp(const char *prefix, const char *txt, size_t nmax)
 
 
 /// VCF format --> SeqArray GDS format
-COREARRAY_DLL_EXPORT SEXP SEQ_Parse_VCF(SEXP vcf_fn, SEXP header,
+COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 	SEXP gds_root, SEXP param, SEXP line_cnt, SEXP rho)
 {
 	const char *fn = CHAR(STRING_ELT(vcf_fn, 0));

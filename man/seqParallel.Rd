@@ -42,8 +42,8 @@ Windows, users have to create a cluster object via \code{\link{makeCluster}}.
 of forking on Windows.
 
     The user-defined function could use two predefined variables
-\code{.process_count} and \code{.process_index} to tell the total number of
-cluster nodes and which cluster node being used.
+\code{.seq_process_count} and \code{.seq_process_index} to tell the total
+number of cluster nodes and which cluster node being used.
 
     \code{seqParallel(, gdsfile=NULL, FUN=..., split="none")} might be used to
 setup multiple streams of pseudo-random numbers, and see
@@ -110,7 +110,7 @@ seqParallel(, gdsfile, FUN = function(f) {
 ################################################################
 
 seqParallel(, NULL, FUN = function() {
-        paste(.process_index, .process_count, sep="/")
+        paste(.seq_process_index, .seq_process_count, sep="/")
     }, split = "none")
 
 

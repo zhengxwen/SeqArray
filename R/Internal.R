@@ -270,6 +270,35 @@
 
 
 #######################################################################
+# need parallel? how many? return 1 if no parallel
+#
+.NumParallel <- function(cl)
+{
+    if (is.null(cl) | identical(cl, FALSE))
+    {
+        ans <- 1L
+    } else if (is.numeric(cl))
+    {
+        if (length(cl) != 1L)
+            stop("'parallel' should be length-one.")
+        if (cl <= 1) cl <- 1L
+        ans <- as.integer(cl)
+    } else if (isTRUE(cl))
+    {
+        .LoadParallelPackage()
+        ans <- parallel::detectCores() - 1L
+        if (ans <= 1L) ans <- 2L
+    } else if (inherits(cl, "cluster"))
+    {
+        .LoadParallelPackage()
+        ans <- length(cl)
+    } else
+        stop("Invalid 'parallel'.")
+    ans
+}
+
+
+#######################################################################
 # Parallel functions
 #
 .DynamicClusterCall <- function(cl, .num, .fun, .combinefun,
@@ -507,16 +536,6 @@
         visible=visible)
     args <- c(args, eval(parse(text=paste("list(", storage.param, ")"))))
     do.call(add.gdsn, args)
-}
-
-
-
-#######################################################################
-# GDS node variable type
-#
-.DetectVarType <- function(srcfiles, varname)
-{
-    
 }
 
 

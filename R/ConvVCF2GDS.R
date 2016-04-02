@@ -62,7 +62,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                 if (getnum)
                 {
                     nVariant <- nVariant + length(s) +
-                        .Call(SEQ_NumLines, infile)
+                        .Call(SEQ_VCF_NumLines, infile)
                 }
                 break
             }
@@ -91,7 +91,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 
     ValString <- function(txt)
     {
-        # split by "="
+        # psplit by "="
         x <- as.integer(regexpr("=", txt, fixed=TRUE))
         rv <- matrix("", nrow=length(txt), ncol=2L)
         for (i in seq_along(txt))
@@ -386,7 +386,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     storage.option="ZIP_RA.default", info.import=NULL, fmt.import=NULL,
     genotype.var.name="GT", ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
-    digest=TRUE, verbose=TRUE)
+    digest=TRUE, parallel=getOption("seqarray.parallel", FALSE),
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
@@ -412,9 +413,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(raise.error), length(raise.error)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    pnum <- .NumParallel(parallel)
 
     if (verbose) cat(date(), "\n", sep="")
+
     genotype.storage <- "bit2"
+    vcf.fn <- normalizePath(vcf.fn, mustWork=TRUE)
 
     # check sample id
     samp.id <- NULL
@@ -459,11 +463,13 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         cat("    file format: ", header$fileformat, "\n", sep="")
         cat("    the number of sets of chromosomes (ploidy): ",
             header$ploidy, "\n", sep="")
-        cat("    the number of samples: ", length(samp.id), "\n", sep="")
+        cat("    the number of samples: ", .pretty(length(samp.id)),
+            "\n", sep="")
         cat("    GDS genotype storage: ", genotype.storage, "\n", sep="")
     }
 
     # check header
+    oldheader <- header
     tmp <- FALSE
     if (!is.null(header$format))
     {
@@ -517,12 +523,83 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     }
 
 
+    #######################################################################
+    # format conversion in parallel
+
+    if (pnum > 1L)
+    {
+        num_var <- seqVCF_Header(vcf.fn, getnum=TRUE)$num.variant
+
+        if (start < 1L)
+            stop("'start' should be a positive integer if conversion in parallel.")
+        else if (start > num_var)
+            stop("'start' should not be greater than the total number of variants.")
+        if (count < 0L)
+            count <- num_var - start + 1L
+        if (start+count > num_var+1L)
+            stop("Invalid 'count'.")
+        if (verbose)
+        {
+            cat("    the total variants for import: ", .pretty(count),
+                "\n", sep="")
+        }
+
+        if (count >= pnum)
+        {
+            psplit <- .Call(SEQ_VCF_Split, start, count, pnum)
+
+            # need unique temporary file names
+            ptmpfn <- character()
+            while (length(ptmpfn) < pnum)
+            {
+                s <- tempfile(pattern="tmp", tmpdir=dirname(out.fn))
+                if (!(s %in% ptmpfn)) ptmpfn <- c(ptmpfn, s)
+            }
+
+            if (verbose)
+            {
+                cat(sprintf("    saving to %d files:\n", pnum))
+                cat(sprintf("      %s (%s..%s) ...\n", ptmpfn,
+                    .pretty(psplit[[1L]]),
+                    .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
+            }
+
+            on.exit({ unlink(ptmpfn, force=TRUE) }, add=TRUE)
+
+            # conversion in parallel
+            seqParallel(parallel, NULL, FUN = function(
+                vcf.fn, header, storage.option, info.import, fmt.import,
+                genotype.var.name, ignore.chr.prefix, raise.error,
+                ptmpfn, psplit)
+            {
+                library(SeqArray)
+
+                seqVCF2GDS(vcf.fn, ptmpfn[.seq_process_index], header=oldheader,
+                    storage.option=storage.option, info.import=info.import,
+                    fmt.import=fmt.import, genotype.var.name=genotype.var.name,
+                    ignore.chr.prefix=ignore.chr.prefix,
+                    start = psplit[[1L]][.seq_process_index],
+                    count = psplit[[2L]][.seq_process_index],
+                    optimize=FALSE, raise.error=raise.error, digest=FALSE,
+                    parallel=FALSE, verbose=FALSE)
+
+                invisible()
+
+            }, split="none",
+                vcf.fn=vcf.fn, header=header, storage.option=storage.option,
+                info.import=info.import, fmt.import=fmt.import,
+                genotype.var.name=genotype.var.name,
+                ignore.chr.prefix=ignore.chr.prefix, raise.error=raise.error,
+                ptmpfn=ptmpfn, psplit=psplit)
+        }
+    }
+
 
     #######################################################################
     # create a GDS file
 
     gfile <- createfn.gds(out.fn)
-    on.exit(closefn.gds(gfile))
+    on.exit({ if (!is.null(gfile)) closefn.gds(gfile) }, add=TRUE)
 
     put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
     put.attr.gdsn(gfile$root, "FileVersion", "v1.0")
@@ -843,37 +920,87 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     ##################################################
     # for-loop each file
 
-    filterlevels <- header$filter$ID
-    linecnt <- double(1L)
-
-    for (i in seq_along(vcf.fn))
+    if (pnum <= 1L)
     {
-        infile <- file(vcf.fn[i], open="rt")
-        on.exit({ closefn.gds(gfile); close(infile) })
+        filterlevels <- header$filter$ID
+        linecnt <- double(1L)
 
-        if (verbose)
+        infile <- NULL
+        on.exit({ if (!is.null(infile)) close(infile) }, add=TRUE)
+
+        for (i in seq_along(vcf.fn))
         {
-            cat(sprintf("Parsing '%s' (%s bytes)\n", basename(vcf.fn[i]),
-                .pretty(file.size(vcf.fn[i]))))
-            flush.console()
+            infile <- file(vcf.fn[i], open="rt")
+            if (verbose)
+            {
+                cat(sprintf("Parsing '%s' (%s bytes)\n", basename(vcf.fn[i]),
+                    .pretty(file.size(vcf.fn[i]))))
+                flush.console()
+            }
+
+            # call C function
+            v <- .Call(SEQ_VCF_Parse, vcf.fn[i], header, gfile$root,
+                list(sample.num = length(samp.id),
+                    genotype.var.name = genotype.var.name,
+                    infile = infile,
+                    raise.error = raise.error, filter.levels = filterlevels,
+                    start = start, count = count,
+                    chr.prefix = ignore.chr.prefix,
+                    verbose = verbose),
+                linecnt, new.env())
+
+            filterlevels <- unique(c(filterlevels, v))
+            if (verbose) print(geno.node)
+
+            close(infile)
+            infile <- NULL
         }
 
-        # call C function
-        v <- .Call(SEQ_Parse_VCF, vcf.fn[i], header, gfile$root,
-            list(sample.num = length(samp.id),
-                genotype.var.name = genotype.var.name,
-                infile = infile,
-                raise.error = raise.error, filter.levels = filterlevels,
-                start = start, count = count,
-                chr.prefix = ignore.chr.prefix,
-                verbose = verbose),
-            linecnt, new.env())
+    } else {
+        ## merge all temporary files
 
-        filterlevels <- unique(c(filterlevels, v))
-        if (verbose) print(geno.node)
+        # open all temporary files
+        gdslist <- vector("list", length(ptmpfn))
+        for (i in seq_along(ptmpfn))
+            gdslist[[i]] <- seqOpen(ptmpfn[i])
 
-        on.exit({ closefn.gds(gfile) })
-        close(infile)
+        # all GDS variables to be merged
+        varnm <- c("variant.id", "position", "chromosome", "allele",
+            "genotype/data", "genotype/@data", "phase/data",
+            "annotation/id", "annotation/qual")
+
+        if (is.null(index.gdsn(gfile, "phase/data", silent=TRUE)))
+            varnm <- setdiff(varnm, "phase/data")
+
+        s <- ls.gdsn(index.gdsn(gfile, "annotation/info"), include.hidden=TRUE)
+        varnm <- c(varnm, paste0("annotation/info/", s))
+
+        s <- ls.gdsn(index.gdsn(gfile, "annotation/format"))
+        varnm <- c(varnm, paste0("annotation/format/", rep(s, each=2L),
+            c("/data", "/@data")))
+
+        for (nm in varnm)
+        {
+            v <- index.gdsn(gfile, nm)
+            for (f in gdslist)
+                append.gdsn(v, index.gdsn(f, nm))
+        }
+
+        # merge filter variable (a factor variable)
+        s <- character()
+        for (f in gdslist)
+        {
+            s <- c(s, as.character(
+                read.gdsn(index.gdsn(f, "annotation/filter"))))
+        }
+        s <- as.factor(s)
+        append.gdsn(varFilter, s)
+        s <- levels(s)
+        filterlevels <- c(s, setdiff(header$filter$ID, s))
+
+        # close files
+        for (i in seq_along(ptmpfn))
+            seqClose(gdslist[[i]])
     }
 
     if (length(filterlevels) > 0L)
@@ -883,9 +1010,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         if (NROW(header$filter) > 0L)
         {
-            # TODO
-            dp <- header$filter$Description[match(filterlevels,
-                header$filter$ID)]
+            s <- c(header$filter$ID,
+                setdiff(filterlevels, header$filter$ID))
+            dp <- header$filter$Description[match(filterlevels, s)]
             dp[is.na(dp)] <- ""
         } else
             dp <- rep("", length(filterlevels))
@@ -893,10 +1020,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         put.attr.gdsn(varFilter, "Description", dp)
     }
 
+
     .DigestFile(gfile, digest, verbose)
 
-    on.exit()
     closefn.gds(gfile)
+    gfile <- NULL
 
 
     ##################################################

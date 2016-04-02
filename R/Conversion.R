@@ -259,7 +259,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
     # initialize
-    .Call(SEQ_Init_ToVCF, .seldim(gdsfile), len.info, len.fmt, ofile)
+    .Call(SEQ_ToVCF_Init, .seldim(gdsfile), len.info, len.fmt, ofile)
 
     # variable names
     nm <- c("chromosome", "position", "annotation/id", "allele",
@@ -282,7 +282,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         	length(nm.format)>0L, "SEQ_ToVCF", "SEQ_ToVCF_Di_WrtFmt")))
 
     # finalize
-    .Call(SEQ_Done_ToVCF)
+    .Call(SEQ_ToVCF_Done)
     on.exit({
         if (verbose)
             cat("Done.\n", date(), "\n", sep="")

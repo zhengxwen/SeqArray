@@ -495,7 +495,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 
 
 /// initialize
-COREARRAY_DLL_EXPORT SEXP SEQ_Init_ToVCF(SEXP Sel, SEXP Info, SEXP Format,
+COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP Sel, SEXP Info, SEXP Format,
 	SEXP File)
 {
 	VCF_NumAllele = INTEGER(Sel)[0];
@@ -515,7 +515,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Init_ToVCF(SEXP Sel, SEXP Info, SEXP Format,
 }
 
 /// finalize
-COREARRAY_DLL_EXPORT SEXP SEQ_Done_ToVCF()
+COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Done()
 {
 	LineBuf_Done();
 	return R_NilValue;
