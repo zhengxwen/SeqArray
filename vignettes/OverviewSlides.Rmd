@@ -192,7 +192,7 @@ system.time(
 
 **SeqArray will be of great interest to**
 
-- R users involved in data analyses of large-scale sequencing variants
+- R users involved in data analyses of large-scale sequence variants
 - particularly those with limited experience of parallel / high-performance computing
 
 **SeqVarTools (Bioconductor)**

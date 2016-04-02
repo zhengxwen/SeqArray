@@ -45,7 +45,7 @@ biocLite("SeqArray")
 ```R
 library("devtools")
 install_github("zhengxwen/gdsfmt")
-install_github("zhengxwen/SeqArray")
+install_github("zhengxwen/SeqArray", ref="R_v3.3")
 ```
 The `install_github()` approach requires that you build from source, i.e. `make` and compilers must be installed on your system -- see the [R FAQ](http://cran.r-project.org/faqs.html) for your operating system; you may also need to install dependencies manually.
 
