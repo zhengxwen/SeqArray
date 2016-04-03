@@ -281,6 +281,7 @@
     {
         if (length(cl) != 1L)
             stop("'parallel' should be length-one.")
+        .LoadParallelPackage()
         if (cl <= 1) cl <- 1L
         ans <- as.integer(cl)
     } else if (isTRUE(cl))

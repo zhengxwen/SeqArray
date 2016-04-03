@@ -8,7 +8,8 @@
 seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", reference=NULL, start=1L, count=-1L,
-    optimize=TRUE, raise.error=TRUE, digest=TRUE, verbose=TRUE)
+    optimize=TRUE, raise.error=TRUE, digest=TRUE, parallel=FALSE,
+    verbose=TRUE, .internal=NULL)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -39,7 +40,12 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
         or a digest algorithm is specified}
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
+        processing) or other value; \code{parallel} is passed to the argument
+        \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
+        for more details.}
     \item{verbose}{if \code{TRUE}, show information}
+    \item{.internal}{users should not use this argument}
 }
 \value{
     Return the file name of GDS format with an absolute path.

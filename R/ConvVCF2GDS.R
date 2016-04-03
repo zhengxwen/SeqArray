@@ -91,7 +91,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 
     ValString <- function(txt)
     {
-        # psplit by "="
+        # string splited by "="
         x <- as.integer(regexpr("=", txt, fixed=TRUE))
         rv <- matrix("", nrow=length(txt), ncol=2L)
         for (i in seq_along(txt))
@@ -386,8 +386,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     storage.option="ZIP_RA.default", info.import=NULL, fmt.import=NULL,
     genotype.var.name="GT", ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
-    digest=TRUE, parallel=getOption("seqarray.parallel", FALSE),
-    verbose=TRUE)
+    digest=TRUE, parallel=FALSE, verbose=TRUE, .internal=NULL)
 {
     # check
     stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
@@ -459,7 +458,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     if (verbose)
     {
-        cat("Variant Call Format (VCF) Import\n")
+        cat("Variant Call Format (VCF) Import:\n")
         cat("    file format: ", header$fileformat, "\n", sep="")
         cat("    the number of sets of chromosomes (ploidy): ",
             header$ploidy, "\n", sep="")
@@ -528,7 +527,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     if (pnum > 1L)
     {
-        num_var <- seqVCF_Header(vcf.fn, getnum=TRUE)$num.variant
+        if (verbose)
+        {
+            cat("    calculating the total number of variants ...\n")
+            flush.console()
+        }
+
+        # get the number of variants in each VCF file
+        num_array <- unlist(seqParApply(parallel, vcf.fn, function(fn) {
+            seqVCF_Header(vcf.fn, getnum=TRUE)$num.variant
+        }))
+        num_var <- sum(num_array)
+        cum_numvar <- cumsum(num_array)
 
         if (start < 1L)
             stop("'start' should be a positive integer if conversion in parallel.")
@@ -540,8 +550,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             stop("Invalid 'count'.")
         if (verbose)
         {
-            cat("    the total variants for import: ", .pretty(count),
-                "\n", sep="")
+            cat("    the total number of variants for import: ",
+                .pretty(count), "\n", sep="")
         }
 
         if (count >= pnum)
@@ -553,8 +563,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             while (length(ptmpfn) < pnum)
             {
                 s <- tempfile(pattern="tmp", tmpdir=dirname(out.fn))
+                file.create(s)
                 if (!(s %in% ptmpfn)) ptmpfn <- c(ptmpfn, s)
             }
+            on.exit({ unlink(ptmpfn, force=TRUE) }, add=TRUE)
 
             if (verbose)
             {
@@ -562,26 +574,27 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 cat(sprintf("      %s (%s..%s) ...\n", ptmpfn,
                     .pretty(psplit[[1L]]),
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
+                flush.console()
             }
-
-            on.exit({ unlink(ptmpfn, force=TRUE) }, add=TRUE)
 
             # conversion in parallel
             seqParallel(parallel, NULL, FUN = function(
                 vcf.fn, header, storage.option, info.import, fmt.import,
                 genotype.var.name, ignore.chr.prefix, raise.error,
-                ptmpfn, psplit)
+                ptmpfn, psplit, cum_numvar)
             {
-                library(SeqArray)
+                library("SeqArray")
 
-                seqVCF2GDS(vcf.fn, ptmpfn[.seq_process_index], header=oldheader,
+                # the process id, starting from one
+                i <- get(".seq_process_index", envir=.GlobalEnv)
+
+                seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
                     storage.option=storage.option, info.import=info.import,
                     fmt.import=fmt.import, genotype.var.name=genotype.var.name,
                     ignore.chr.prefix=ignore.chr.prefix,
-                    start = psplit[[1L]][.seq_process_index],
-                    count = psplit[[2L]][.seq_process_index],
+                    start = psplit[[1L]][i], count = psplit[[2L]][i],
                     optimize=FALSE, raise.error=raise.error, digest=FALSE,
-                    parallel=FALSE, verbose=FALSE)
+                    parallel=FALSE, verbose=FALSE, .internal=cum_numvar)
 
                 invisible()
 
@@ -590,7 +603,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 info.import=info.import, fmt.import=fmt.import,
                 genotype.var.name=genotype.var.name,
                 ignore.chr.prefix=ignore.chr.prefix, raise.error=raise.error,
-                ptmpfn=ptmpfn, psplit=psplit)
+                ptmpfn=ptmpfn, psplit=psplit, cum_numvar=cum_numvar)
+
+        } else {
+            pnum <- 1L
+            message("Not need to run in parallel!")
         }
     }
 
@@ -600,6 +617,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     gfile <- createfn.gds(out.fn)
     on.exit({ if (!is.null(gfile)) closefn.gds(gfile) }, add=TRUE)
+    if (verbose)
+        cat("Output:\n    ", basename(out.fn), "\n", sep="")
 
     put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
     put.attr.gdsn(gfile$root, "FileVersion", "v1.0")
@@ -930,6 +949,17 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         for (i in seq_along(vcf.fn))
         {
+            # skip this file?
+            if (!is.null(.internal))
+            {
+                cnt <- .internal[i]
+                if (is.finite(cnt) & (start > cnt))
+                {
+                    linecnt <- linecnt + cnt
+                    next
+                }
+            }
+
             infile <- file(vcf.fn[i], open="rt")
             if (verbose)
             {
@@ -1010,9 +1040,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         if (NROW(header$filter) > 0L)
         {
-            s <- c(header$filter$ID,
-                setdiff(filterlevels, header$filter$ID))
-            dp <- header$filter$Description[match(filterlevels, s)]
+            dp <- header$filter$Description[match(filterlevels, header$filter$ID)]
             dp[is.na(dp)] <- ""
         } else
             dp <- rep("", length(filterlevels))
