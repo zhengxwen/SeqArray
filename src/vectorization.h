@@ -285,6 +285,13 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage2(const int32_t *p,
 
 
 
+// ===========================================================
+// functions for char
+// ===========================================================
+
+COREARRAY_DLL_DEFAULT const char *vec_char_find_CRLF(const char *p, size_t n);
+
+
 
 #ifdef __cplusplus
 }

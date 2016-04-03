@@ -20,6 +20,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "Common.h"
+#include "vectorization.h"
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -70,6 +71,15 @@ inline static void Init_VCF_Buffer(SEXP File)
 	VCF_Buffer_EndPtr = VCF_Buffer_Ptr = &VCF_Buffer[0];
 }
 
+/// finalize
+inline static void Done_VCF_Buffer()
+{
+	VCF_File = NULL;
+	VCF_Buffer.clear();
+	VCF_Buffer_Ptr = VCF_Buffer_EndPtr;
+}
+
+
 /// read file buffer
 inline static void Read_VCF_Buffer()
 {
@@ -117,6 +127,13 @@ inline static void InitText()
 	Text_pBegin = Text_pEnd = &Text_Buffer[0];
 	VCF_LineNum = VCF_ColumnNum = 0;
 	VCF_NextLineNum = VCF_NextColumnNum = 1;
+}
+
+/// finalize text buffer
+inline static void DoneText()
+{
+	Text_Buffer.clear();
+	Text_pBegin = Text_pEnd;
 }
 
 /// get a string with a seperator '\t', which is saved in _Text_Buffer
@@ -224,18 +241,20 @@ inline static void SkipLine()
 	VCF_LineNum = VCF_NextLineNum;
 
 	int ch = -1;
+	// search for '\n' or '\r'
 	while (true)
 	{
-		while (VCF_Buffer_Ptr < VCF_Buffer_EndPtr)
+		VCF_Buffer_Ptr = (char*)vec_char_find_CRLF(VCF_Buffer_Ptr,
+			VCF_Buffer_EndPtr - VCF_Buffer_Ptr);
+
+		if (VCF_Buffer_Ptr < VCF_Buffer_EndPtr)
 		{
 			ch = *VCF_Buffer_Ptr;
-			if (ch=='\n' || ch=='\r') break;
-			VCF_Buffer_Ptr ++;
-		}
-		if (VCF_Buffer_Ptr < VCF_Buffer_EndPtr || VCF_File->EOF_signalled)
 			break;
-		else
+		} else if (!VCF_File->EOF_signalled)
 			Read_VCF_Buffer();
+		else
+			break;
 	}
 
 	// skip '\n' and '\r'
@@ -934,16 +953,36 @@ using namespace SeqArray;
 // Get the number of lines in a VCF file
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File)
+COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead)
 {
 	Init_VCF_Buffer(File);
+
+	if (Rf_asLogical(SkipHead) == TRUE)
+	{
+		InitText();
+		// get the starting line
+		while (!VCF_EOF())
+		{
+			GetText(NA_INTEGER);
+			if (strncmp(Text_pBegin, "#CHROM", 6) == 0)
+			{
+				SkipLine();
+				break;
+			}
+		}
+		DoneText();
+	}
+
+	// get the number of left lines
 	C_Int64 n = 0;
 	while (!VCF_EOF())
 	{
-		SkipLine();
 		n ++;
+		SkipLine();
 	}
-	return (n > INT_MAX) ? ScalarReal(n) : ScalarInteger(n);
+
+	Done_VCF_Buffer();
+	return ScalarReal(n);
 }
 
 
@@ -1694,9 +1733,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		UNPROTECT(nProtected);
 
-		VCF_File = NULL;
-		VCF_Buffer.clear();
-		Text_Buffer.clear();
+		Done_VCF_Buffer();
+		DoneText();
 
 	CORE_CATCH({
 		char buf[4096];

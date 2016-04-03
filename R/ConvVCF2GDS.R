@@ -62,7 +62,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                 if (getnum)
                 {
                     nVariant <- nVariant + length(s) +
-                        .Call(SEQ_VCF_NumLines, infile)
+                        .Call(SEQ_VCF_NumLines, infile, FALSE)
                 }
                 break
             }

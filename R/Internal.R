@@ -295,6 +295,8 @@
         ans <- length(cl)
     } else
         stop("Invalid 'parallel'.")
+    if (ans > 128L)
+        stop("It is unable to allocate resources for more than 128 nodes.")
     ans
 }
 
