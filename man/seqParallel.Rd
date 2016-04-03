@@ -9,7 +9,8 @@
 seqParallel(cl=getOption("seqarray.parallel", FALSE), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, ...)
-seqParApply(cl=NULL, x, FUN, load.balancing=TRUE, ...)
+seqParApply(cl=getOption("seqarray.parallel", FALSE), x, FUN,
+    load.balancing=TRUE, ...)
 }
 \arguments{
     \item{cl}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:

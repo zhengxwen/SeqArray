@@ -535,10 +535,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         # get the number of variants in each VCF file
         num_array <- unlist(seqParApply(parallel, vcf.fn, function(fn) {
-            seqVCF_Header(vcf.fn, getnum=TRUE)$num.variant
+            seqVCF_Header(fn, getnum=TRUE)$num.variant
         }))
         num_var <- sum(num_array)
-        cum_numvar <- cumsum(num_array)
 
         if (start < 1L)
             stop("'start' should be a positive integer if conversion in parallel.")
@@ -603,7 +602,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 info.import=info.import, fmt.import=fmt.import,
                 genotype.var.name=genotype.var.name,
                 ignore.chr.prefix=ignore.chr.prefix, raise.error=raise.error,
-                ptmpfn=ptmpfn, psplit=psplit, cum_numvar=cum_numvar)
+                ptmpfn=ptmpfn, psplit=psplit, cum_numvar=cumsum(num_array))
 
         } else {
             pnum <- 1L

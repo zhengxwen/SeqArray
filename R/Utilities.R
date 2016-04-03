@@ -368,7 +368,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
 }
 
 
-seqParApply <- function(cl=NULL, x, FUN, load.balancing=TRUE, ...)
+seqParApply <- function(cl=getOption("seqarray.parallel", FALSE), x, FUN,
+    load.balancing=TRUE, ...)
 {
     pnum <- .NumParallel(cl)
     stopifnot(is.logical(load.balancing))
