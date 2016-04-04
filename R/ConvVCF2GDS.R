@@ -386,7 +386,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     storage.option="ZIP_RA.default", info.import=NULL, fmt.import=NULL,
     genotype.var.name="GT", ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
-    digest=TRUE, parallel=FALSE, verbose=TRUE, .internal=NULL)
+    digest=TRUE, parallel=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
@@ -413,6 +413,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     pnum <- .NumParallel(parallel)
+
+    variant_count <- attr(vcf.fn, "variant_count")
+    if (!is.null(variant_count))
+    {
+        if (!is.numeric(variant_count))
+            stop("the attribute 'variant_count' of 'vcf.fn' should be a numeric vector.")
+        if (length(variant_count) != length(vcf.fn))
+            stop("the attribute 'variant_count' of 'vcf.fn' should be as the same length as 'vcf.fn'.")
+    }
 
     if (verbose) cat(date(), "\n", sep="")
 
@@ -534,7 +543,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         }
 
         # get the number of variants in each VCF file
-        num_array <- unlist(seqParApply(parallel, vcf.fn, function(fn) {
+        num_array <- unlist(seqParApply(parallel, vcf.fn, function(fn)
+        {
+            library("SeqArray")
             seqVCF_Header(fn, getnum=TRUE)$num.variant
         }))
         num_var <- sum(num_array)
@@ -561,7 +572,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             ptmpfn <- character()
             while (length(ptmpfn) < pnum)
             {
-                s <- tempfile(pattern="tmp", tmpdir=dirname(out.fn))
+                s <- tempfile(pattern=sprintf("tmp%02d_", length(ptmpfn)+1L),
+                    tmpdir=dirname(out.fn))
                 file.create(s)
                 if (!(s %in% ptmpfn)) ptmpfn <- c(ptmpfn, s)
             }
@@ -570,7 +582,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (verbose)
             {
                 cat(sprintf("    saving to %d files:\n", pnum))
-                cat(sprintf("      %s (%s..%s) ...\n", ptmpfn,
+                cat(sprintf("      %s [%s..%s]\n", ptmpfn,
                     .pretty(psplit[[1L]]),
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
                 flush.console()
@@ -580,9 +592,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             seqParallel(parallel, NULL, FUN = function(
                 vcf.fn, header, storage.option, info.import, fmt.import,
                 genotype.var.name, ignore.chr.prefix, raise.error,
-                ptmpfn, psplit, cum_numvar)
+                ptmpfn, psplit, num_array)
             {
                 library("SeqArray")
+
+                attr(vcf.fn, "variant_count") <- num_array
 
                 # the process id, starting from one
                 i <- get(".seq_process_index", envir=.GlobalEnv)
@@ -593,7 +607,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     ignore.chr.prefix=ignore.chr.prefix,
                     start = psplit[[1L]][i], count = psplit[[2L]][i],
                     optimize=FALSE, raise.error=raise.error, digest=FALSE,
-                    parallel=FALSE, verbose=FALSE, .internal=cum_numvar)
+                    parallel=FALSE, verbose=FALSE)
 
                 invisible()
 
@@ -602,7 +616,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 info.import=info.import, fmt.import=fmt.import,
                 genotype.var.name=genotype.var.name,
                 ignore.chr.prefix=ignore.chr.prefix, raise.error=raise.error,
-                ptmpfn=ptmpfn, psplit=psplit, cum_numvar=cumsum(num_array))
+                ptmpfn=ptmpfn, psplit=psplit, num_array=num_array)
 
         } else {
             pnum <- 1L
@@ -948,13 +962,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         for (i in seq_along(vcf.fn))
         {
-            # skip this file?
-            if (!is.null(.internal))
+            if (!is.null(variant_count))
             {
-                cnt <- .internal[i]
+                cnt <- cumsum(variant_count)[i]
                 if (is.finite(cnt) & (start > cnt))
                 {
-                    linecnt <- linecnt + cnt
+                    linecnt <- as.double(cnt)
                     next
                 }
             }
@@ -1002,11 +1015,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             varnm <- setdiff(varnm, "phase/data")
 
         s <- ls.gdsn(index.gdsn(gfile, "annotation/info"), include.hidden=TRUE)
-        varnm <- c(varnm, paste0("annotation/info/", s))
+        if (length(s) > 0L)
+            varnm <- c(varnm, paste0("annotation/info/", s))
 
         s <- ls.gdsn(index.gdsn(gfile, "annotation/format"))
-        varnm <- c(varnm, paste0("annotation/format/", rep(s, each=2L),
-            c("/data", "/@data")))
+        if (length(s) > 0L)
+        {
+            varnm <- c(varnm, paste0("annotation/format/", rep(s, each=2L),
+                c("/data", "/@data")))
+        }
 
         for (nm in varnm)
         {

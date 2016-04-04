@@ -9,7 +9,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", reference=NULL, start=1L, count=-1L,
     optimize=TRUE, raise.error=TRUE, digest=TRUE, parallel=FALSE,
-    verbose=TRUE, .internal=NULL)
+    verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format}
@@ -45,7 +45,6 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
         \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
         for more details.}
     \item{verbose}{if \code{TRUE}, show information}
-    \item{.internal}{users should not use this argument}
 }
 \value{
     Return the file name of GDS format with an absolute path.

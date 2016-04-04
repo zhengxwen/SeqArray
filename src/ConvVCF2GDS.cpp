@@ -1000,13 +1000,22 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum)
 	SET_ELEMENT(ans, 0, start_array);
 	SET_ELEMENT(ans, 1, count_array);
 
-	double scale = Rf_asReal(count) / num;
+	double cnt = Rf_asReal(count);
+	double scale = cnt / num;
 	double st = Rf_asReal(start);
 	for (int i=0; i < num; i++)
 	{
-		REAL(start_array)[i] = round(st);
+		double st1 = round(st);
+		REAL(start_array)[i] = st1;
 		st += scale;
-		REAL(count_array)[i] = round(st) - REAL(start_array)[i];
+
+		C_Int64 m = (C_Int64)(round(st) - REAL(start_array)[i]);
+		if (m & 0x01) // avoid odd number
+			{ m ++; st ++; }
+		if ((st1 + m) > (cnt + 1))
+			m = round(cnt + 1 - st1);
+
+		REAL(count_array)[i] = m;
 	}
 
 	UNPROTECT(3);
@@ -1045,8 +1054,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		// =========================================================
 		// initialize variables		
-
-		InitText();
 
 		// the total number of samples
 		size_t num_samp = Rf_asInteger(RGetListElement(param, "sample.num"));
@@ -1220,6 +1227,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		// =========================================================
 		// skip the header
+
+		InitText();
 
 		while (!VCF_EOF())
 		{
@@ -1754,7 +1763,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 	if (has_error) error(GDS_GetError());
 
 	// output
-	return(rv_ans);
+	return rv_ans;
 }
 
 } // extern "C"
