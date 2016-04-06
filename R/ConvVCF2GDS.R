@@ -473,7 +473,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             header$ploidy, "\n", sep="")
         cat("    the number of samples: ", .pretty(length(samp.id)),
             "\n", sep="")
-        cat("    GDS genotype storage: ", genotype.storage, "\n", sep="")
+        cat("    genotype storage: ", genotype.storage, "\n", sep="")
     }
 
     # check header
@@ -581,7 +581,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
             if (verbose)
             {
-                cat(sprintf("    saving to %d files:\n", pnum))
+                cat(sprintf("    Writing to %d files:\n", pnum))
                 cat(sprintf("      %s [%s..%s]\n", ptmpfn,
                     .pretty(psplit[[1L]]),
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
@@ -617,6 +617,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 genotype.var.name=genotype.var.name,
                 ignore.chr.prefix=ignore.chr.prefix, raise.error=raise.error,
                 ptmpfn=ptmpfn, psplit=psplit, num_array=num_array)
+
+            # may not need to optimize data
+            # optimize <- FALSE
+
+            if (verbose)
+                cat("    Done (", date(), ").\n", sep="")
 
         } else {
             pnum <- 1L

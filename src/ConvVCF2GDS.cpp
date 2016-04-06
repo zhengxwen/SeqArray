@@ -1076,7 +1076,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		size_t num_ploidy = Rf_asInteger(RGetListElement(header, "ploidy"));
 		if (num_ploidy <= 0)
 			throw ErrSeqArray("Invalid header$ploidy: %d.", (int)num_ploidy);
+
 		size_t num_ploidy_less = num_ploidy - 1;
+		size_t num_samp_ploidy = num_samp * num_ploidy;
+		size_t num_samp_ploidy_less = num_samp * num_ploidy_less;
 
 		// filter level list
 		vector<string> filter_list;
@@ -1107,7 +1110,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		const int GenoNumBits= GDS_Array_GetBitOf(varGeno);
 		if (GenoNumBits != 2)
 			throw ErrSeqArray("Invalid data type in genotype/data, it should be bit2.");
-		const int GenoBitMask = ~((-1) << GenoNumBits);
 
 		PdAbstractArray varPhase, varPhaseExtraIdx, varPhaseExtra;
 		if (num_ploidy > 1)
@@ -1187,12 +1189,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		// variant id (integer)
 		C_Int64 variant_index = (C_Int64)Rf_asReal(line_cnt);
+		C_Int64 variant_start_index = variant_index;
 
 		// the string buffer
 		string cell;
 		cell.reserve(1024);
 
 		// the numeric buffer
+		vector<C_Int8> I8s;
+		I8s.reserve(num_samp);
+
 		C_Int32 I32;
 		vector<C_Int32> I32s;
 		I32s.reserve(num_samp);
@@ -1206,13 +1212,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		S8s.reserve(num_samp);
 
 		// genotypes
-		vector< vector<C_Int16> > Genotypes;
-		Genotypes.resize(num_samp);
-		for (size_t i=0; i < num_samp; i++)
-			Genotypes[i].reserve(num_ploidy*2);
+		vector<C_Int16> Genotypes;
+		Genotypes.resize(num_samp_ploidy);
 
-		vector<C_Int8> I8s;
-		I8s.reserve(num_samp * num_ploidy * 2);
+		// phase
+		vector<C_Int8> Phases;
+		Phases.resize(num_samp_ploidy_less);
 
 		vector< TVCF_Info >::iterator pI;
 		vector< TVCF_Format* >::iterator pF;
@@ -1552,6 +1557,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			// -----------------------------------------------------
 			// Columns for samples
 
+			// pointer to genotype buffer
+			C_Int16 *pGeno = &Genotypes[0];
+			// pointer to phase buffer
+			C_Int8 *pPhase = &Phases[0];
+
 			// for-loop
 			for (size_t si=0; si < num_samp; si ++)
 			{
@@ -1562,7 +1572,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					Text_pBegin ++;
 
 				// -------------------------------------------------
-				// the first field -- genotypes
+				// the first field -- genotypes (GT)
 
 				const char *p = Text_pBegin;
 				while ((Text_pBegin<Text_pEnd) && (*Text_pBegin!=':'))
@@ -1572,64 +1582,67 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 				if ((Text_pBegin<Text_pEnd) && (*Text_pBegin==':'))
 					Text_pBegin ++;
 
-				I8s.clear();
-				vector<C_Int16> &pAllele = Genotypes[si];
-				pAllele.clear();
+				I32s.clear(); // genotype extra data
+				I8s.clear(); // phase extra data
+				size_t tmp_num_ploidy = 0;
 
 				while (p < end)
 				{
 					const char *start = p;
 					while ((p<end) && (*p!='|') && (*p!='/'))
 						p ++;
-					pAllele.push_back(getGeno(start, p, num_allele));
+					C_Int16 g = getGeno(start, p, num_allele);
+
+					tmp_num_ploidy ++;
+					if (tmp_num_ploidy <= num_ploidy)
+						*pGeno ++ = g;
+					else
+						I32s.push_back(g);
+
 					if (p < end)
 					{
+						C_Int8 v;
 						if (*p == '|')
 						{
-							I8s.push_back(1); p ++;
+							v = 1; p ++;
 						} else if (*p == '/')
 						{
-							I8s.push_back(0); p ++;
+							v = 0; p ++;
 						}
+						if (tmp_num_ploidy <= num_ploidy_less)
+							*pPhase ++ = v;
+						else
+							I8s.push_back(v);
 					}
 				}
 
-				// check pAllele
-				size_t n = pAllele.size();
-				if (n < num_ploidy)
+				for (size_t m=tmp_num_ploidy; m < num_ploidy; m++)
+					*pGeno ++ = -1;
+				for (size_t m=tmp_num_ploidy; m < num_ploidy_less; m++)
+					*pPhase ++ = 0;
+
+				// check "genotype/extra", e.g., triploid call: 0/0/1
+				if (!I32s.empty())
 				{
-					pAllele.resize(num_ploidy, -1);
-				} else if (n > num_ploidy)
-				{
-					// write to "genotype/extra", e.g., triploid call: 0/0/1
-					size_t m = n - num_ploidy;
-					GDS_Array_AppendData(varGenoExtra, m, &(pAllele[num_ploidy]), svInt16);
+					GDS_Array_AppendData(varGenoExtra, I32s.size(), &(I32s[0]), svInt32);
 					I32 = si + 1;
 					GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-					I32 = variant_index;
+					I32 = variant_index - variant_start_index;
 					GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-					I32 = m;
+					I32 = I32s.size();
 					GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
 				}
 
-				if (varPhase)
+				// check "phase/extra", e.g., triploid call: 0/0/1
+				if (varPhase && !I8s.empty())
 				{
-					// write phasing information
-					if (I8s.size() < num_ploidy_less)
-						I8s.resize(num_ploidy_less, 0);
-					GDS_Array_AppendData(varPhase, num_ploidy_less, &(I8s[0]), svInt8);
-					if (I8s.size() > num_ploidy_less)
-					{
-						// E.g., triploid call: 0/0/1
-						size_t m = I8s.size() - num_ploidy_less;
-						GDS_Array_AppendData(varPhaseExtra, m, &(I8s[num_ploidy_less]), svInt8);
-						I32 = si + 1;
-						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-						I32 = variant_index;
-						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-						I32 = m;
-						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-					}
+					GDS_Array_AppendData(varPhaseExtra, I8s.size(), &(I8s[0]), svInt8);
+					I32 = si + 1;
+					GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+					I32 = variant_index - variant_start_index;
+					GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+					I32 = I8s.size();
+					GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
 				}
 
 				// -------------------------------------------------
@@ -1677,29 +1690,31 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			// -------------------------------------------------
 			// write genotypes
 
-			// determine how many bits (GenoNumBits = 2)
-			int num_bits = GenoNumBits;
+			// determine how many bits
+			int num_bits = 2;
 			// plus ONE for missing value
 			while ((num_allele + 1) > (1 << num_bits))
-				num_bits += GenoNumBits;
-			I32 = num_bits / GenoNumBits;
+				num_bits += 2;
+			I32 = num_bits >> 1;
 			GDS_Array_AppendData(varGenoLen, 1, &I32, svInt32);
 
-			const size_t geno_size = num_samp * num_ploidy * size_t(num_bits/2);
-			I8s.resize(geno_size);
-			C_Int8 *p8 = &I8s[0];
-
-			for (int bits=0; bits < num_bits; bits += GenoNumBits)
+			for (int bits=0; bits < num_bits; )
 			{
-				for (size_t si=0; si < num_samp; si++)
-				{
-					C_Int16 *p = &(Genotypes[si][0]);
-					for (size_t m=num_ploidy; m > 0 ; m--)
-						*p8++ = ((*p++) >> bits) & GenoBitMask;
-				}
+				GDS_Array_AppendData(varGeno, num_samp_ploidy, &Genotypes[0],
+					svInt16);
+				bits += 2;
+				if (bits < num_bits)
+					vec_i16_shr_b2(&Genotypes[0], num_samp_ploidy);
 			}
 
-			GDS_Array_AppendData(varGeno, geno_size, &(I8s[0]), svInt8);
+			// -------------------------------------------------
+			// write phase information
+
+			if (varPhase)
+			{
+				GDS_Array_AppendData(varPhase, num_samp_ploidy_less,
+					&(Phases[0]), svInt8);
+			}
 
 			// -------------------------------------------------
 			// for-loop all format IDs: write
@@ -1751,11 +1766,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		{
 			snprintf(buf, sizeof(buf),
 				"%s\nFILE: %s\nLINE: %lld, COLUMN: %d, %s\n",
-				GDS_GetError(), fn, VCF_LineNum, VCF_ColumnNum,
+				GDS_GetError(), fn, (long long int)VCF_LineNum, VCF_ColumnNum,
 				string(Text_pBegin, Text_pEnd).c_str());
 		} else {
 			snprintf(buf, sizeof(buf), "%s\nFILE: %s\nLINE: %lld\n",
-				GDS_GetError(), fn, VCF_LineNum);
+				GDS_GetError(), fn, (long long int)VCF_LineNum);
 		}
 		GDS_SetError(buf);
 		has_error = true;

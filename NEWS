@@ -4,7 +4,18 @@ CHANGES IN VERSION 1.12.0
     o the version number was bumped for the Bioconductor release version 3.3
 
 
-CHANGES IN VERSION 1.11.0-1.11.16
+CHANGES IN VERSION 1.11.19-1.11.20
+-------------------------
+
+    o utilizes the official C API `R_GetConnection()` to accelerate text
+      import and export, requiring R (>=v3.3.0); alternative version (backward
+      compatible with R_v2.15.0) is also available on github
+
+    o ~4x speedup in the sequential version of `seqVCF2GDS()`, and
+      `seqVCF2GDS()` can run in parallel
+
+
+CHANGES IN VERSION 1.11.0-1.11.18
 -------------------------
 
     o rewrite `seqSummary()`
@@ -42,7 +53,7 @@ CHANGES IN VERSION 1.11.0-1.11.16
     o 'as.is' in `seqApply()` allows a 'connection' object (created by file,
       gzfile, etc)
 
-    o seqSummary(f, "genotype")$seldim returns a vector with 3 integers
+    o `seqSummary(f, "genotype")$seldim` returns a vector with 3 integers
       (ploidy, # of selected samples, # of selected variants) instead of
       2 integers
 

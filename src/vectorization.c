@@ -370,6 +370,36 @@ void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 
 
 // ===========================================================
+// functions for int16
+// ===========================================================
+
+/// shifting *p right by 2 bits, assuming p is 2-byte aligned
+void vec_i16_shr_b2(int16_t *p, size_t n)
+{
+#ifdef __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 1;
+	for (; (n > 0) && (h > 0); n--, h--)
+		*p++ >>= 2;
+
+	// body, SSE2
+	for (; n >= 8; n-=8, p+=8)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		_mm_store_si128((__m128i *)p, _mm_srli_epi16(v, 2));
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--)
+		*p++ >>= 2;
+}
+
+
+
+// ===========================================================
 // functions for int32
 // ===========================================================
 
@@ -378,7 +408,7 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 {
 	size_t ans = 0;
 
-#ifdef COREARRAY_REGISTER_BIT64
+#ifdef __LP64__
 	if (n > 2147483648U) // 2^31
 	{
 		while (n > 0)
@@ -453,7 +483,7 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 {
 	size_t n1 = 0, n2 = 0;
 
-#ifdef COREARRAY_REGISTER_BIT64
+#ifdef __LP64__
 	if (n > 2147483648U) // 2^31
 	{
 		size_t m1 = 0, m2 = 0;
