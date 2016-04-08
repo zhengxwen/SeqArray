@@ -142,11 +142,11 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 #######################################################################
 # Storage options for the SeqArray GDS file
 #
-seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
-    "ZIP_RA.fast", "ZIP_RA.max", "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max",
-    "none"), mode=NULL, float.mode="float32",
-    geno.compress=NULL, info.compress=NULL, format.compress=NULL,
-    index.compress=NULL, ...)
+seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
+    "ZIP_RA.max", "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max",
+    "LZMA_RA", "LZMA_RA.fast", "LZMA_RA.max", "none"), mode=NULL,
+    float.mode="float32", geno.compress=NULL, info.compress=NULL,
+    format.compress=NULL, index.compress=NULL, ...)
 {
     # check
     compression <- match.arg(compression)
@@ -164,6 +164,11 @@ seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
     if (!is.null(index.compress))
         stopifnot(is.character(index.compress), length(index.compress)==1L)
 
+    if (compression %in% c("ZIP_RA.max", "LZ4_RA.max", "LZMA_RA.max"))
+        suffix <- ":8M"
+    else
+        suffix <- ":2M"
+
     rv <- list(compression = compression,
         mode = mode, float.mode = float.mode,
         geno.compress = ifelse(is.null(geno.compress), compression,
@@ -171,7 +176,7 @@ seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
         info.compress = ifelse(is.null(info.compress), compression,
             info.compress),
         format.compress = ifelse(is.null(format.compress),
-            ifelse(compression=="", "", paste(compression, ":8M", sep="")),
+            ifelse(compression=="", "", paste0(compression, suffix)),
             format.compress),
         index.compress = ifelse(is.null(index.compress), compression,
             index.compress),
