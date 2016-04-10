@@ -5,7 +5,7 @@
     Reformats Variant Call Format (VCF) files.
 }
 \usage{
-seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
+seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", reference=NULL, start=1L, count=-1L,
     optimize=TRUE, raise.error=TRUE, digest=TRUE, parallel=FALSE,
@@ -17,7 +17,9 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
     \item{header}{if NULL, \code{header} is set to be
         \code{\link{seqVCF_Header}(vcf.fn)}}
     \item{storage.option}{specify the storage and compression options,
-        by default \code{\link{seqStorageOption}("ZIP_RA.default")}}
+        by default \code{\link{seqStorageOption}("ZIP_RA")}; or
+        \code{"LZMA_RA"} to use LZMZ compression algorithm with higher
+        compression ratio}
     \item{info.import}{characters, the variable name(s) in the INFO field
         for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
@@ -41,9 +43,10 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
         "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
         or a digest algorithm is specified}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
-        processing) or other value; \code{parallel} is passed to the argument
-        \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
-        for more details.}
+        processing), a numeric value indicating the number of cores or other
+        value; \code{parallel} is passed to the argument \code{cl} in
+        \code{\link{seqParallel}}, see \code{\link{seqParallel}} for more
+        details.}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
@@ -59,7 +62,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA.default",
 
     If there are more than one files in \code{vcf.fn}, \code{seqVCF2GDS} will
 merge all VCF files together if they contain the same samples. It is useful
-to merge genomic variants if VCF data are divided by chromosomes.
+to merge multiple VCF files if data are divided by chromosomes.
 
     The real numbers in the VCF file(s) are stored in 32-bit floating-point
 format by default. Users can set
@@ -69,12 +72,16 @@ adopted by setting
 \code{storage.option=seqStorageOption(float.mode="packedreal16:scale=0.0001")}.
 
     By default, the compression method is "ZIP_RA" (zlib algorithm with default
-compression level + multiple independent data blocks). Users can maximize the
+compression level + independent data blocks). Users can maximize the
 compression ratio by \code{storage.option="ZIP_RA.max"} or
 \code{storage.option=seqStorageOption("ZIP_RA.max")}.
     LZ4 (\url{http://cyan4973.github.io/lz4/}) is an option via
 \code{storage.option="LZ4_RA"} or
 \code{storage.option=seqStorageOption("LZ4_RA")}.
+    LZMA (xz, \url{http://tukaani.org/xz/}) is another option via
+\code{storage.option="LZMA_RA"} or
+\code{storage.option=seqStorageOption("LZMA_RA")}, and it is known to have
+higher compression ratio than zlib.
 }
 \references{
     The variant call format and VCFtools.
@@ -94,8 +101,12 @@ compression ratio by \code{storage.option="ZIP_RA.max"} or
 # the VCF file
 vcf.fn <- seqExampleFileName("vcf")
 
-# convert
+# conversion
 seqVCF2GDS(vcf.fn, "tmp.gds")
+
+# conversion in parallel
+seqVCF2GDS(vcf.fn, "tmp_p2.gds", parallel=2L)
+
 
 # display
 (f <- seqOpen("tmp.gds"))
@@ -121,7 +132,7 @@ seqClose(f)
 
 
 # delete the temporary file
-unlink("tmp.gds")
+unlink(c("tmp.gds", "tmp_p2.gds"), force=TRUE)
 }
 
 \keyword{gds}

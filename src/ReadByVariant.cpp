@@ -547,13 +547,23 @@ using namespace SeqArray;
 COREARRAY_DLL_LOCAL const char *Txt_Apply_AsIs[] =
 {
 	"none", "list", "integer", "double", "character", "logical",
-	"raw", "con", NULL
+	"raw", NULL
 };
 
 COREARRAY_DLL_LOCAL const char *Txt_Apply_VarIdx[] =
 {
 	"none", "relative", "absolute", NULL
 };
+
+
+/// output to a connection
+inline static void put_text(Rconnection file, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	(*file->vfprintf)(file, fmt, args);
+	va_end(args);
+}
 
 
 /// Apply functions over margins on a working space
@@ -563,10 +573,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	int use_raw_flag = Rf_asLogical(RGetListElement(param, "useraw"));
 	if (use_raw_flag == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
-
-	int write_raw_flag = Rf_asLogical(RGetListElement(param, "writeraw"));
-	if (write_raw_flag == NA_LOGICAL)
-		error("'.writeraw' must be TRUE or FALSE.");
 
 	int dup_flag = Rf_asLogical(RGetListElement(param, "list_dup"));
 	if (dup_flag == NA_LOGICAL)
@@ -644,15 +650,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// ===========================================================
 		// as.is
 
-		SEXP R_con_call  = R_NilValue;
-		SEXP R_con_param = R_NilValue;
-		// 256KB or 128 lines
-		const R_xlen_t R_con_bufsize = write_raw_flag ? (1024*256) : 128;
-		R_xlen_t R_con_idx = 0;
-
-		int DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
-		if (DatType < 0)
-			throw ErrSeqArray("'as.is' is not valid!");
+		Rconnection OutputConn = NULL;
+		int DatType;
+		if (!Rf_inherits(as_is, "connection"))
+		{
+			DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
+			if (DatType < 0)
+				throw ErrSeqArray("'as.is' is not valid!");
+		} else {
+			OutputConn = R_GetConnection(as_is);
+			DatType = 7;
+		}
 
 		C_Int8 *R_rv_ptr = NULL;
 		switch (DatType)
@@ -678,15 +686,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		case 6:
 			rv_ans = PROTECT(NEW_RAW(nVariant)); nProtected ++;
 			R_rv_ptr = (C_Int8 *)RAW(rv_ans);
-			break;
-		case 7:
-			const char *fun_name = write_raw_flag ? "funbin" : "funline";
-			PROTECT(R_con_param = write_raw_flag ?
-				NEW_RAW(R_con_bufsize) : NEW_CHARACTER(R_con_bufsize));
-			PROTECT(R_con_call  = LCONS(RGetListElement(param, fun_name),
-				LCONS(R_con_param, LCONS(RGetListElement(param, "funcon"),
-				R_NilValue))));
-			nProtected += 2;
 			break;
 		}
 
@@ -808,36 +807,28 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				*R_rv_ptr = Rf_asInteger(val);
 				R_rv_ptr ++;
 				break;
-			case 7:  // con
-				if (write_raw_flag)
+			case 7:  // connection
+				if (OutputConn->text)
 				{
-					if (TYPEOF(val) != RAWSXP) val = AS_RAW(val);
-					R_xlen_t n = XLENGTH(val);
-					Rbyte *p = RAW(val);
-					while (n > 0)
+					if (Rf_isList(val))
 					{
-						R_xlen_t m = (R_con_idx+n <= R_con_bufsize) ? n :
-							(R_con_bufsize - R_con_idx);
-						memcpy(RAW(R_con_param) + R_con_idx, p, m);
-						R_con_idx += m; p += m; n -= m;
-						if (R_con_idx >= R_con_bufsize)
-						{
-							EVAL(R_con_call);
-							R_con_idx = 0;
-						}
+						throw ErrSeqArray("the user-defined function should return a character vector.");
+					} else if (!Rf_isString(val))
+					{
+						val = AS_CHARACTER(val);
+					}
+					size_t n = XLENGTH(val);
+					for (size_t i=0; i < n; i++)
+					{
+						put_text(OutputConn, "%s\n", CHAR(STRING_ELT(val, i)));
 					}
 				} else {
-					if (!Rf_isString(val)) val = AS_CHARACTER(val);
-					for (R_xlen_t i=0; i < XLENGTH(val); i++)
-					{
-						SET_STRING_ELT(R_con_param, R_con_idx, STRING_ELT(val, i));
-						R_con_idx ++;
-						if (R_con_idx >= R_con_bufsize)
-						{
-							EVAL(R_con_call);
-							R_con_idx = 0;
-						}
-					}
+					if (TYPEOF(val) != RAWSXP)
+						throw ErrSeqArray("the user-defined function should return a RAW vector.");
+					size_t n = XLENGTH(val);
+					size_t m = R_WriteConnection(OutputConn, RAW(val), n);
+					if (n != m)
+						throw ErrSeqArray("writing error.");
 				}
 				break;
 			}
@@ -851,18 +842,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			}
 
 		} while (!ifend);
-
-		// if as.is == "con"
-		if (R_con_idx > 0)
-		{
-			SET_LENGTH(R_con_param, R_con_idx);
-			const char *fun_name = write_raw_flag ? "funbin" : "funline";
-			R_con_call = PROTECT(LCONS(RGetListElement(param, fun_name),
-				LCONS(R_con_param, LCONS(RGetListElement(param, "funcon"),
-				R_NilValue))));
-			nProtected ++;
-			EVAL(R_con_call);
-		}
 
 		// finally
 		UNPROTECT(nProtected);

@@ -25,27 +25,6 @@
 #include <cstring>
 #include <vector>
 
-extern "C"
-{
-#define class xclass
-#define private xprivate
-#include <R_ext/Connections.h>
-#undef class
-#undef private
-
-
-// NO_R_v3_3 can be defined in Makevars
-#ifdef NO_R_v3_3
-static Rconnection __R_GetConnection(SEXP x)
-{
-	extern Rconnection getConnection(int n);
-	return getConnection(Rf_asInteger(x));
-}
-#define R_GetConnection __R_GetConnection
-#endif
-}
-
-
 using namespace std;
 
 namespace SeqArray

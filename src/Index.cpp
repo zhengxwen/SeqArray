@@ -24,6 +24,18 @@
 using namespace std;
 
 
+extern "C"
+{
+extern Rconnection getConnection(int n);
+
+COREARRAY_DLL_LOCAL Rconnection My_R_GetConnection(SEXP x)
+{
+	return getConnection(Rf_asInteger(x));
+}
+
+}
+
+
 namespace SeqArray
 {
 // ===========================================================

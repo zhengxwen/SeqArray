@@ -393,6 +393,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.character(out.fn), length(out.fn)==1L)
     stopifnot(is.null(header) | inherits(header, "SeqVCFHeaderClass"))
 
+    storage.tmp <- storage.option
     if (is.character(storage.option))
         storage.option <- seqStorageOption(storage.option)
     stopifnot(inherits(storage.option, "SeqGDSStorageClass"))
@@ -474,6 +475,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         cat("    the number of samples: ", .pretty(length(samp.id)),
             "\n", sep="")
         cat("    genotype storage: ", genotype.storage, "\n", sep="")
+
+        if (!is.character(storage.tmp))
+            storage.tmp <- "customized"
+        cat("    compression method: ", storage.tmp, "\n", sep="")
     }
 
     # check header
@@ -566,23 +571,23 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         if (count >= pnum)
         {
+            fn <- basename(sub("^([^.]*).*", "\\1", out.fn))
             psplit <- .Call(SEQ_VCF_Split, start, count, pnum)
 
             # need unique temporary file names
             ptmpfn <- character()
             while (length(ptmpfn) < pnum)
             {
-                s <- tempfile(pattern=sprintf("tmp%02d_", length(ptmpfn)+1L),
-                    tmpdir=dirname(out.fn))
+                s <- tempfile(pattern=sprintf("%s_tmp%02d_",
+                    fn, length(ptmpfn)+1L), tmpdir=dirname(out.fn))
                 file.create(s)
                 if (!(s %in% ptmpfn)) ptmpfn <- c(ptmpfn, s)
             }
-            on.exit({ unlink(ptmpfn, force=TRUE) }, add=TRUE)
 
             if (verbose)
             {
                 cat(sprintf("    Writing to %d files:\n", pnum))
-                cat(sprintf("      %s [%s..%s]\n", ptmpfn,
+                cat(sprintf("      %s [%s..%s]\n", basename(ptmpfn),
                     .pretty(psplit[[1L]]),
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
                 flush.console()
@@ -637,7 +642,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     gfile <- createfn.gds(out.fn)
     on.exit({ if (!is.null(gfile)) closefn.gds(gfile) }, add=TRUE)
     if (verbose)
-        cat("Output:\n    ", basename(out.fn), "\n", sep="")
+        cat("Output:\n    ", out.fn, "\n", sep="")
 
     put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
     put.attr.gdsn(gfile$root, "FileVersion", "v1.0")
@@ -1036,6 +1041,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             v <- index.gdsn(gfile, nm)
             for (f in gdslist)
                 append.gdsn(v, index.gdsn(f, nm))
+            readmode.gdsn(v)
         }
 
         # merge filter variable (a factor variable)
@@ -1047,12 +1053,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         }
         s <- as.factor(s)
         append.gdsn(varFilter, s)
+        readmode.gdsn(varFilter)
         s <- levels(s)
         filterlevels <- c(s, setdiff(header$filter$ID, s))
 
         # close files
         for (i in seq_along(ptmpfn))
             seqClose(gdslist[[i]])
+
+        unlink(ptmpfn, force=TRUE)
     }
 
     if (length(filterlevels) > 0L)

@@ -10,7 +10,7 @@
 #######################################################################
 # Merge multiple GDS files
 #
-seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA.default",
+seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA",
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     verbose=TRUE)
 {

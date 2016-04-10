@@ -36,6 +36,24 @@
 #include "vectorization.h"
 
 
+extern "C"
+{
+#define class xclass
+#define private xprivate
+#include <R_ext/Connections.h>
+#undef class
+#undef private
+
+
+// NO_R_v3_3 can be defined in Makevars
+#ifdef NO_R_v3_3
+COREARRAY_DLL_LOCAL Rconnection My_R_GetConnection(SEXP x);
+#define R_GetConnection My_R_GetConnection
+#endif
+}
+
+
+
 namespace SeqArray
 {
 
