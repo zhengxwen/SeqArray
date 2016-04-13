@@ -4,7 +4,7 @@ CHANGES IN VERSION 1.12.0
     o the version number was bumped for the Bioconductor release version 3.3
 
 
-CHANGES IN VERSION 1.11.19-1.11.20
+CHANGES IN VERSION 1.11.19-1.11.21
 -------------------------
 
     o utilizes the official C API `R_GetConnection()` to accelerate text

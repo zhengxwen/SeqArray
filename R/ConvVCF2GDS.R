@@ -17,6 +17,7 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
+# seqVCF_Header <- function(vcf.fn, getnum=FALSE, use.index=TRUE)
 seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 {
     # check
@@ -469,6 +470,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (verbose)
     {
         cat("Variant Call Format (VCF) Import:\n")
+        cat("    file(s):\n")
+        cat(sprintf("        %s\n", basename(vcf.fn)))
         cat("    file format: ", header$fileformat, "\n", sep="")
         cat("    the number of sets of chromosomes (ploidy): ",
             header$ploidy, "\n", sep="")
@@ -587,7 +590,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (verbose)
             {
                 cat(sprintf("    Writing to %d files:\n", pnum))
-                cat(sprintf("      %s [%s..%s]\n", basename(ptmpfn),
+                cat(sprintf("        %s [%s..%s]\n", basename(ptmpfn),
                     .pretty(psplit[[1L]]),
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
                 flush.console()

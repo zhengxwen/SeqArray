@@ -43,10 +43,10 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA",
         "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
         or a digest algorithm is specified}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
-        processing), a numeric value indicating the number of cores or other
-        value; \code{parallel} is passed to the argument \code{cl} in
-        \code{\link{seqParallel}}, see \code{\link{seqParallel}} for more
-        details.}
+        processing), a numeric value indicating the number of cores, or a
+        cluster object for parallel processing; \code{parallel} is passed to
+        the argument \code{cl} in \code{\link{seqParallel}}, see
+        \code{\link{seqParallel}} for more details}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
