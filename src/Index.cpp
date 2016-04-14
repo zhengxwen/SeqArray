@@ -243,6 +243,16 @@ vector<C_Int32> &CFileInfo::Position()
 	return _Position;
 }
 
+CIndex<C_UInt8> &CFileInfo::GenoIndex()
+{
+	if (_GenoIndex.Empty())
+	{
+		PdAbstractArray I = GetObj("genotype/@data", TRUE);
+		_GenoIndex.Init(I);
+	}
+	return _GenoIndex;
+}
+
 PdAbstractArray CFileInfo::GetObj(const char *name, C_BOOL MustExist)
 {
 	if (!_Root)
@@ -297,23 +307,51 @@ COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile)
 // GDS Variable Type
 // ===========================================================
 
-static C_BOOL TRUEs[64] = {
+static C_BOOL ArrayTRUEs[64] = {
 	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
 	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
 	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
 	1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1
 };
 
+CVarApply::CVarApply()
+{ }
+
+CVarApply::~CVarApply()
+{ }
+
 C_BOOL *CVarApply::NeedTRUEs(size_t size)
 {
-	if (size <= sizeof(TRUEs))
+	if (size <= sizeof(ArrayTRUEs))
 	{
-		return TRUEs;
+		return ArrayTRUEs;
 	} else if (size > _TRUE.size())
 	{
 		_TRUE.resize(size, TRUE);
 	}
 	return &_TRUE[0];
+}
+
+
+CVarApplyList::~CVarApplyList()
+{
+	for (iterator p = begin(); p != end(); p++)
+	{
+		CVarApply *v = (*p);
+		*p = NULL;
+		delete v;
+	}
+}
+
+bool CVarApplyList::CallNext()
+{
+	bool has_next = true;
+	for (iterator p = begin(); p != end(); p++)
+	{
+		if (!(*p)->Next())
+			has_next = false;
+	}
+	return has_next;
 }
 
 
@@ -387,7 +425,7 @@ void CProgress::ShowProgress()
 			if (percent > 0)
 				seconds = seconds / percent * (1 - percent);
 			else
-				seconds = 999.9;
+				seconds = 999.9 * 60 * 60;
 			// show
 			if (NewLine)
 			{
@@ -437,7 +475,7 @@ void CProgress::ShowProgress()
 // Define Functions
 // ===========================================================
 
-// the buffer of TRUEs
+// the buffer of ArrayTRUEs
 static vector<C_BOOL> TrueBuffer;
 
 COREARRAY_DLL_LOCAL size_t RLength(SEXP val)
@@ -463,8 +501,8 @@ COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name)
 
 COREARRAY_DLL_LOCAL C_BOOL *NeedArrayTRUEs(size_t len)
 {
-	if (len <= sizeof(TRUEs))
-		return TRUEs;
+	if (len <= sizeof(ArrayTRUEs))
+		return ArrayTRUEs;
 	else if (len > TrueBuffer.size())
 		TrueBuffer.resize(len, TRUE);
 	return &TrueBuffer[0];

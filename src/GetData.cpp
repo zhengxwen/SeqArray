@@ -221,7 +221,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			if ((nSample > 0) && (nVariant > 0))
 			{
 				// initialize GDS genotype Node
-				CVarApplyByVariant NodeVar;
+				CApplyByVariant NodeVar;
 				NodeVar.InitObject(CVariable::ctGenotype, "genotype/data",
 					File, use_raw);
 				// size to be allocated
@@ -233,14 +233,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 					do {
 						NodeVar.ReadGenoData(base);
 						base += SIZE;
-					} while (NodeVar.NextCell());
+					} while (NodeVar.Next());
 				} else {
 					rv_ans = PROTECT(NEW_INTEGER(nVariant * SIZE));
 					int *base = INTEGER(rv_ans);
 					do {
 						NodeVar.ReadGenoData(base);
 						base += SIZE;
-					} while (NodeVar.NextCell());
+					} while (NodeVar.Next());
 				}
 
 				SEXP dim = PROTECT(NEW_INTEGER(3));
@@ -503,7 +503,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			if (nVariant > 0)
 			{
 				// initialize GDS genotype Node
-				CVarApplyByVariant NodeVar;
+				CApplyByVariant NodeVar;
 				NodeVar.InitObject(CVariable::ctDosage, "genotype/data",
 					File, false);
 
@@ -515,7 +515,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 					do {
 						NodeVar.ReadDosage(base);
 						base += (size_t)NodeVar.Num_Sample;
-					} while (NodeVar.NextCell());
+					} while (NodeVar.Next());
 				} else {
 					rv_ans = allocMatrix(INTSXP, NodeVar.Num_Sample, nVariant);
 					PROTECT(rv_ans);
@@ -523,7 +523,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 					do {
 						NodeVar.ReadDosage(base);
 						base += (size_t)NodeVar.Num_Sample;
-					} while (NodeVar.NextCell());
+					} while (NodeVar.Next());
 				}
 
 				SEXP name_list = PROTECT(NEW_LIST(2));

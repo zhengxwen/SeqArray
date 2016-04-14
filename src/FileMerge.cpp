@@ -116,7 +116,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 
 		MERGE_VAR_DEF
 
-		vector<CVarApplyByVariant> Files(FileCnt);
+		vector<CApplyByVariant> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
 		{
 			SEXP file = VECTOR_ELT(files, i);
@@ -160,7 +160,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 
 			for (int j=0; j < FileCnt; j++)
 			{
-				CVarApplyByVariant &FILE = Files[j];
+				CApplyByVariant &FILE = Files[j];
 				const size_t size = (size_t)FILE.Num_Sample * ploidy;
 
 				if (*pIdx[j] == i)  // deal with this variant?
@@ -180,7 +180,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 						allele_map[k] = x;
 					}
 					FILE.ReadGenoData(pGeno);
-					FILE.NextCell();
+					FILE.Next();
 					// replace
 					size_t m = size;
 					const int *map = &allele_map[0];
@@ -241,7 +241,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 
 		int nProtected = 0;
 
-		vector<CVarApplyByVariant> Files(FileCnt);
+		vector<CApplyByVariant> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
 		{
 			SEXP file = VECTOR_ELT(files, i);
@@ -269,7 +269,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 
 			for (int j=0; j < FileCnt; j++)
 			{
-				CVarApplyByVariant &FILE = Files[j];
+				CApplyByVariant &FILE = Files[j];
 				const size_t size = (size_t)FILE.Num_Sample * (ploidy-1);
 
 				if (*pIdx[j] == i)  // deal with this variant?
@@ -277,7 +277,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 					++ pIdx[j];
 					SEXP RD = FILE.NeedRData(nProtected);
 					FILE.ReadData(RD);
-					FILE.NextCell();
+					FILE.Next();
 					memcpy(pp, INTEGER(RD), sizeof(int)*size);
 				} else
 					vec_int32_set(pp, size, 0);
@@ -311,7 +311,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 		string VarName  = CHAR(STRING_ELT(varname, 0));
 		string VarName2 = GDS_PATH_PREFIX(VarName, '@');
 
-		vector<CVarApplyByVariant> Files(FileCnt);
+		vector<CApplyByVariant> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
 		{
 			SEXP file = VECTOR_ELT(files, i);
@@ -332,13 +332,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 			bool has = false;
 			for (int j=0; j < FileCnt; j++)
 			{
-				CVarApplyByVariant &FILE = Files[j];
+				CApplyByVariant &FILE = Files[j];
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
 					++ pIdx[j];
 					SEXP RD = FILE.NeedRData(nProtected);
 					FILE.ReadData(RD);
-					FILE.NextCell();
+					FILE.Next();
 					GDS_R_Append(info_var, RD);
 					if (info_idx)
 					{
@@ -378,7 +378,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 		string VarName  = CHAR(STRING_ELT(varname, 0));
 		string VarName2 = GDS_PATH_PREFIX(VarName, '@');
 
-		vector<CVarApplyByVariant> Files(FileCnt);
+		vector<CApplyByVariant> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
 		{
 			SEXP file = VECTOR_ELT(files, i);
@@ -407,10 +407,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
 					++ pIdx[j];
-					CVarApplyByVariant &FILE = Files[j];
+					CApplyByVariant &FILE = Files[j];
 					RD = FILE.NeedRData(nProtected);
 					FILE.ReadData(RD);
-					FILE.NextCell();
+					FILE.Next();
 				}
 				RDList[j] = RD;
 			}
@@ -432,7 +432,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 			{
 				for (int j=0; j < FileCnt; j++)
 				{
-					CVarApplyByVariant &FILE = Files[j];
+					CApplyByVariant &FILE = Files[j];
 					if (!Rf_isNull(RDList[j]))
 					{
 						size_t len = XLENGTH(RDList[j]);

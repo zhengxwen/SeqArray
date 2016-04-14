@@ -161,6 +161,11 @@ public:
 		Value = Values[AccIndex];
 	}
 
+	bool Empty()
+	{
+		return (TotalLength <= 0);
+	}
+
 protected:
 	/// total number, = sum(Lengths)
 	size_t TotalLength;
@@ -281,6 +286,9 @@ public:
 	/// return _Position which has been initialized
 	vector<C_Int32> &Position();
 
+	/// return _GenoIndex which has been initialized
+	CIndex<C_UInt8> &GenoIndex();
+
 	/// get gds object
 	PdAbstractArray GetObj(const char *name, C_BOOL MustExist);
 
@@ -301,6 +309,7 @@ protected:
 
 	CChromIndex _Chrom;  ///< chromosome indexing
 	vector<C_Int32> _Position;  ///< position
+	CIndex<C_UInt8> _GenoIndex;  ///< the indexing object for genotypes
 };
 
 
@@ -319,7 +328,7 @@ COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile);
 class COREARRAY_DLL_LOCAL CVariable
 {
 public:
-	enum TType
+	enum TVarType
 	{
 		ctNone,
 		ctBasic,       ///< sample.id, variant.id, etc
@@ -333,16 +342,48 @@ public:
 };
 
 
+/// The abstract class for applying functions marginally
 class COREARRAY_DLL_LOCAL CVarApply: public CVariable
 {
-public:
-	C_BOOL *NeedTRUEs(size_t size);
+protected:
+	ssize_t MarginalSize;    ///< the size in MarginalSelect
+	C_BOOL *MarginalSelect;  ///< pointer to variant selection
 
-	CVarApply() {}
-	virtual ~CVarApply() {}
+public:
+	TVarType VarType;      ///< VCF data type
+	PdAbstractArray Node;  ///< the GDS variable
+	C_Int32 Position;  ///< the index of variant/sample, starting from ZERO
+
+	/// constructor
+	CVarApply();
+	/// destructor
+	virtual ~CVarApply();
+
+	/// reset
+	virtual void Reset() = 0;
+	/// move to the next element
+	virtual bool Next() = 0;
+
+	/// return an R object for the next call 'ReadData()'
+	virtual SEXP NeedRData(int &nProtected) = 0;
+	/// read data to R object
+	virtual void ReadData(SEXP Val) = 0;
+
+	/// need a pointer to size of TRUEs
+	C_BOOL *NeedTRUEs(size_t size);
 
 private:
 	vector<C_BOOL> _TRUE;
+};
+
+
+class CVarApplyList: public vector<CVarApply*>
+{
+public:
+	~CVarApplyList();
+
+	/// return false if any return false, otherwise return true
+	bool CallNext();
 };
 
 

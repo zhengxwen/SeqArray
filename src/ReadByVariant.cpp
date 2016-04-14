@@ -25,15 +25,210 @@
 namespace SeqArray
 {
 
+using namespace Vectorization;
+
+static const char *ERR_DIM = "Invalid dimension of '%s'.";
+
+
+// ===========================================================
+// Object for reading genotypes variant by variant
+
+CApplyByVariant_Geno::CApplyByVariant_Geno(CFileInfo &File, bool use_raw)
+{
+	static const char *VAR_NAME = "genotype/data";
+
+	// initialize
+	VarType = ctGenotype;
+	Node = File.GetObj("genotype/data", TRUE);
+
+	// check
+	if (GDS_Array_DimCnt(Node) != 3)
+		throw ErrSeqArray(ERR_DIM, VAR_NAME);
+	C_Int32 DLen[3];
+	GDS_Array_GetDim(Node, DLen, 3);
+	if ((DLen[0] < File.VariantNum()) || (DLen[1] != File.SampleNum()))
+		throw ErrSeqArray(ERR_DIM, VAR_NAME);
+
+	// initialize
+	MarginalSize = File.VariantNum();
+	MarginalSelect = File.Selection().pVariant();
+	GenoIndex = &File.GenoIndex();
+	Num_Sample = File.SampleSelNum();
+	RowCount = DLen[1] * DLen[2];
+	CellCount = Num_Sample * DLen[2];
+	UseRaw = use_raw;
+
+	// initialize selection
+	Selection.resize(RowCount);
+	C_BOOL *p = &Selection[0];
+	memset(p, TRUE, Selection.size());
+	C_BOOL *s = File.Selection().pSample();
+	for (int n=DLen[1]; n > 0; n--)
+	{
+		if (*s++ == FALSE)
+		{
+			for (int m=DLen[2]; m > 0; m--) *p ++ = FALSE;
+		} else {
+			p += DLen[2];
+		}
+	}
+
+	ExtPtr.reset(RowCount);
+	VarGeno = NULL;
+	Reset();
+}
+
+int CApplyByVariant_Geno::_ReadGenoData(int *Base)
+{
+	C_UInt8 NumIndexRaw;
+	C_Int64 Index;
+	GenoIndex->GetInfo(Position, Index, NumIndexRaw);
+
+	if (NumIndexRaw >= 1)
+	{
+		CdIterator it;
+		GDS_Iter_Position(Node, &it, Index*RowCount);
+		GDS_Iter_RDataEx(&it, Base, RowCount, svInt32, &Selection[0]);
+
+		const int bit_mask = 0x03;
+		int missing = bit_mask;
+		for (C_UInt8 i=1; i < NumIndexRaw; i++)
+		{
+			GDS_Iter_RDataEx(&it, ExtPtr.get(), RowCount, svUInt8, &Selection[0]);
+
+			C_UInt8 shift = i * 2;
+			C_UInt8 *s = (C_UInt8*)ExtPtr.get();
+			int *p = Base;
+			for (ssize_t n=CellCount; n > 0; n--)
+				*p++ |= int(*s++) << shift;
+
+			missing = (missing << 2) | bit_mask;
+		}
+
+		return missing;
+	} else {
+		memset(Base, 0, sizeof(int)*CellCount);
+		return 0;
+	}
+}
+
+C_UInt8 CApplyByVariant_Geno::_ReadGenoData(C_UInt8 *Base)
+{
+	C_UInt8 NumIndexRaw;
+	C_Int64 Index;
+	GenoIndex->GetInfo(Position, Index, NumIndexRaw);
+
+	if (NumIndexRaw >= 1)
+	{
+		CdIterator it;
+		GDS_Iter_Position(Node, &it, Index*RowCount);
+		GDS_Iter_RDataEx(&it, Base, RowCount, svUInt8, &Selection[0]);
+
+		const C_UInt8 bit_mask = 0x03;
+		C_UInt8 missing = bit_mask;
+		if (NumIndexRaw > 4)
+		{
+			NumIndexRaw = 4;
+			warning("RAW type may not be sufficient to store genotypes.");
+		}
+
+		for (C_UInt8 i=1; i < NumIndexRaw; i++)
+		{
+			GDS_Iter_RDataEx(&it, ExtPtr.get(), RowCount, svUInt8, &Selection[0]);
+
+			C_UInt8 shift = i * 2;
+			C_UInt8 *s = (C_UInt8*)ExtPtr.get();
+			C_UInt8 *p = Base;
+			for (ssize_t n=CellCount; n > 0; n--)
+				*p++ |= (*s++) << shift;
+
+			missing = (missing << 2) | bit_mask;
+		}
+
+		return missing;
+	} else {
+		memset(Base, 0, CellCount);
+		return 0;
+	}
+}
+
+void CApplyByVariant_Geno::Reset()
+{
+	Position = 0;
+	if (!MarginalSelect[0]) Next();
+}
+
+bool CApplyByVariant_Geno::Next()
+{
+	C_BOOL *p = MarginalSelect + Position;
+	do {
+		Position ++;
+		if (*(++p)) break;
+	} while (Position < MarginalSize);
+	return (Position < MarginalSize);
+}
+
+void CApplyByVariant_Geno::ReadData(SEXP Val)
+{
+	if (UseRaw)
+		ReadGenoData(RAW(Val));
+	else
+		ReadGenoData(INTEGER(Val));
+}
+
+SEXP CApplyByVariant_Geno::NeedRData(int &nProtected)
+{
+	if (VarGeno == NULL)
+	{
+		if (UseRaw)
+			PROTECT(VarGeno = NEW_RAW(CellCount));
+		else
+			PROTECT(VarGeno = NEW_INTEGER(CellCount));
+		nProtected ++;
+
+		SEXP dim = NEW_INTEGER(2);
+		int *p = INTEGER(dim);
+		p[0] = CellCount/Num_Sample; p[1] = Num_Sample;
+		SET_DIM(VarGeno, dim);
+
+		SEXP name_list = PROTECT(NEW_LIST(2));
+		SEXP tmp = PROTECT(NEW_CHARACTER(2));
+		SET_STRING_ELT(tmp, 0, mkChar("allele"));
+		SET_STRING_ELT(tmp, 1, mkChar("sample"));
+		SET_NAMES(name_list, tmp);
+		SET_DIMNAMES(VarGeno, name_list);
+		UNPROTECT(2);
+	}
+
+	return VarGeno;
+}
+
+void CApplyByVariant_Geno::ReadGenoData(int *Base)
+{
+	int missing = _ReadGenoData(Base);
+	vec_i32_replace(Base, CellCount, missing, NA_INTEGER);
+}
+
+void CApplyByVariant_Geno::ReadGenoData(C_UInt8 *Base)
+{
+	C_UInt8 missing = _ReadGenoData(Base);
+	vec_i8_replace((C_Int8*)Base, CellCount, missing, NA_RAW);
+}
+
+
+
+// ===========================================================
+// Object for reading a variable variant by variant
+
 /// 
-CVarApplyByVariant::CVarApplyByVariant()
+CApplyByVariant::CApplyByVariant()
 {
 	Node = IndexNode = NULL;
-	VariantSelect = NULL;
+	MarginalSelect = NULL;
 	UseRaw = false;
 }
 
-void CVarApplyByVariant::InitObject(TType Type, const char *Path,
+void CApplyByVariant::InitObject(TVarType Type, const char *Path,
 	CFileInfo &File, bool _UseRaw)
 {
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
@@ -50,7 +245,7 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 
 	TSelection &Sel = File.Selection();
 	TotalNum_Variant = File.VariantNum();
-	VariantSelect = &Sel.Variant[0];
+	MarginalSelect = &Sel.Variant[0];
 	Num_Sample = GetNumOfTRUE(&Sel.Sample[0], File.SampleNum());
 	UseRaw = _UseRaw;
 	NumOfBits = GDS_Array_GetBitOf(Node);
@@ -163,63 +358,63 @@ void CVarApplyByVariant::InitObject(TType Type, const char *Path,
 			break;
 
 		default:
-			throw ErrSeqArray("Internal Error in 'CVarApplyByVariant::InitObject'.");
+			throw ErrSeqArray("Internal Error in 'CApplyByVariant::InitObject'.");
 	}
 
-	ResetObject();
+	Reset();
 }
 
 
-void CVarApplyByVariant::ResetObject()
+void CApplyByVariant::Reset()
 {
-	CurIndex = 0;
+	Position = 0;
 	IndexRaw = 0;
 	if (IndexNode)
 	{
 		C_Int32 Cnt=1;
-		GDS_Array_ReadData(IndexNode, &CurIndex, &Cnt, &NumIndexRaw, svInt32);
+		GDS_Array_ReadData(IndexNode, &Position, &Cnt, &NumIndexRaw, svInt32);
 		if (NumIndexRaw < 0) NumIndexRaw = 0;
 	} else
 		NumIndexRaw = 1;
 
-	if (!VariantSelect[0]) NextCell();
+	if (!MarginalSelect[0]) Next();
 }
 
 
-bool CVarApplyByVariant::NextCell()
+bool CApplyByVariant::Next()
 {
-	CurIndex ++;
+	Position ++;
 
 	if (IndexNode)
 	{
 		IndexRaw += NumIndexRaw;
 		C_Int32 Cnt=1, L;
-		while ((CurIndex<TotalNum_Variant) && !VariantSelect[CurIndex])
+		while ((Position<TotalNum_Variant) && !MarginalSelect[Position])
 		{
-			GDS_Array_ReadData(IndexNode, &CurIndex, &Cnt, &L, svInt32);
+			GDS_Array_ReadData(IndexNode, &Position, &Cnt, &L, svInt32);
 			if (L > 0)
 				IndexRaw += L;
-			CurIndex ++;
+			Position ++;
 		}
-		if (CurIndex < TotalNum_Variant)
+		if (Position < TotalNum_Variant)
 		{
-			GDS_Array_ReadData(IndexNode, &CurIndex, &Cnt, &NumIndexRaw,
+			GDS_Array_ReadData(IndexNode, &Position, &Cnt, &NumIndexRaw,
 				svInt32);
 			if (NumIndexRaw < 0) NumIndexRaw = 0;
 		} else
 			NumIndexRaw = 0;
 	} else {
-		while ((CurIndex<TotalNum_Variant) && !VariantSelect[CurIndex])
-			CurIndex ++;
-		IndexRaw = CurIndex;
+		while ((Position<TotalNum_Variant) && !MarginalSelect[Position])
+			Position ++;
+		IndexRaw = Position;
 		NumIndexRaw = 1;
 	}
 
-	return (CurIndex < TotalNum_Variant);
+	return (Position < TotalNum_Variant);
 }
 
 
-inline int CVarApplyByVariant::_ReadGenoData(int *Base)
+inline int CApplyByVariant::_ReadGenoData(int *Base)
 {
 	// the size of Init.GENO_BUFFER has been checked in 'Init()'
 	const ssize_t SlideCnt = ssize_t(DLen[1]) * ssize_t(DLen[2]);
@@ -252,7 +447,7 @@ inline int CVarApplyByVariant::_ReadGenoData(int *Base)
 }
 
 
-inline C_UInt8 CVarApplyByVariant::_ReadGenoData(C_UInt8 *Base)
+inline C_UInt8 CApplyByVariant::_ReadGenoData(C_UInt8 *Base)
 {
 	// the size of Init.GENO_BUFFER has been checked in 'Init()'
 	const ssize_t SlideCnt = ssize_t(DLen[1]) * ssize_t(DLen[2]);
@@ -303,21 +498,21 @@ inline C_UInt8 CVarApplyByVariant::_ReadGenoData(C_UInt8 *Base)
 }
 
 
-void CVarApplyByVariant::ReadGenoData(int *Base)
+void CApplyByVariant::ReadGenoData(int *Base)
 {
 	int missing = _ReadGenoData(Base);
 	vec_i32_replace(Base, CellCount, missing, NA_INTEGER);
 }
 
 
-void CVarApplyByVariant::ReadGenoData(C_UInt8 *Base)
+void CApplyByVariant::ReadGenoData(C_UInt8 *Base)
 {
 	C_UInt8 missing = _ReadGenoData(Base);
 	vec_i8_replace((C_Int8*)Base, CellCount, missing, NA_RAW);
 }
 
 
-void CVarApplyByVariant::ReadDosage(int *Base)
+void CApplyByVariant::ReadDosage(int *Base)
 {
 	int *p = (int *)ExtPtr.get();
 	int missing = _ReadGenoData(p);
@@ -345,7 +540,7 @@ void CVarApplyByVariant::ReadDosage(int *Base)
 }
 
 
-void CVarApplyByVariant::ReadDosage(C_UInt8 *Base)
+void CApplyByVariant::ReadDosage(C_UInt8 *Base)
 {
 	C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
 	C_UInt8 missing = _ReadGenoData(p);
@@ -375,7 +570,7 @@ void CVarApplyByVariant::ReadDosage(C_UInt8 *Base)
 }
 
 
-void CVarApplyByVariant::ReadData(SEXP Val)
+void CApplyByVariant::ReadData(SEXP Val)
 {
 	if (NumIndexRaw <= 0) return;
 
@@ -417,7 +612,7 @@ void CVarApplyByVariant::ReadData(SEXP Val)
 }
 
 
-SEXP CVarApplyByVariant::NeedRData(int &nProtected)
+SEXP CApplyByVariant::NeedRData(int &nProtected)
 {
 	if (NumIndexRaw <= 0) return R_NilValue;
 
@@ -595,15 +790,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// ===========================================================
 		// initialize the GDS Node list
 
-		vector<CVarApplyByVariant> NodeList(Rf_length(var_name));
-		vector<CVarApplyByVariant>::iterator it;
+		CVarApplyList NodeList;
 
 		// for-loop
 		for (int i=0; i < Rf_length(var_name); i++)
 		{
 			// the path of GDS variable
 			string s = CHAR(STRING_ELT(var_name, i));
-			CVarApplyByVariant::TType VarType;
+			CApplyByVariant::TVarType VarType;
 
 			if ( s=="variant.id" || s=="position" || s=="chromosome" ||
 				s=="allele" || s=="annotation/id" || s=="annotation/qual" ||
@@ -612,27 +806,27 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				// =======================================================
 				// variant.id, position, chromosome, allele, annotation/id
 				// annotation/qual, annotation/filter
-				VarType = CVarApplyByVariant::ctBasic;
+				VarType = CApplyByVariant::ctBasic;
 			} else if (s == "genotype")
 			{
-				VarType = CVarApplyByVariant::ctGenotype;
+				VarType = CApplyByVariant::ctGenotype;
 				s.append("/data");
 			} else if (s == "phase")
 			{
 				// =======================================================
 				// phase/
-				VarType = CVarApplyByVariant::ctPhase;
+				VarType = CApplyByVariant::ctPhase;
 				s.append("/data");
 			} else if (strncmp(s.c_str(), "annotation/info/", 16) == 0)
 			{
-				VarType = CVarApplyByVariant::ctInfo;
+				VarType = CApplyByVariant::ctInfo;
 			} else if (strncmp(s.c_str(), "annotation/format/", 18) == 0)
 			{
-				VarType = CVarApplyByVariant::ctFormat;
+				VarType = CApplyByVariant::ctFormat;
 				s.append("/data");
 			} else if (s == "$dosage")
 			{
-				VarType = CVarApplyByVariant::ctDosage;
+				VarType = CApplyByVariant::ctDosage;
 				s = "genotype/data";
 			} else {
 				throw ErrSeqArray(
@@ -643,7 +837,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 					s.c_str());
 			}
 
-			NodeList[i].InitObject(VarType, s.c_str(), File, use_raw_flag!=FALSE);
+			CApplyByVariant *Obj = new CApplyByVariant;
+			Obj->InitObject(VarType, s.c_str(), File, use_raw_flag!=FALSE);
+			NodeList.push_back(Obj);
 		}
 
 
@@ -735,7 +931,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// ===========================================================
 		// for-loop calling
 
-		bool ifend = false;
 		int ans_index = 0;
 		do {
 			switch (VarIdx)
@@ -743,12 +938,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			case 1:  // relative
 				INTEGER(R_Index)[0] = ans_index + 1; break;
 			case 2:  // absolute
-				INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1; break;
+				INTEGER(R_Index)[0] = NodeList[0]->Position + 1; break;
 			}
 
 			if (NodeList.size() <= 1)
 			{
-				R_call_param = NodeList[0].NeedRData(nProtected);
+				R_call_param = NodeList[0]->NeedRData(nProtected);
 				map<SEXP, SEXP>::iterator it = R_fcall_map.find(R_call_param);
 				if (it == R_fcall_map.end())
 				{
@@ -765,16 +960,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				} else
 					R_fcall = it->second;
 
-				NodeList[0].ReadData(R_call_param);
+				NodeList[0]->ReadData(R_call_param);
 
 			} else {
-				int idx = 0;
-				for (it=NodeList.begin(); it != NodeList.end(); it ++)
+				CVarApply **p = &NodeList[0];
+				size_t n = NodeList.size();
+				for (size_t i=0; i < n; i++, p++)
 				{
-					SEXP tmp = it->NeedRData(nProtected);
-					it->ReadData(tmp);
-					SET_ELEMENT(R_call_param, idx, tmp);
-					idx ++;
+					SEXP tmp = (*p)->NeedRData(nProtected);
+					(*p)->ReadData(tmp);
+					SET_ELEMENT(R_call_param, i, tmp);
 				}
 			}
 
@@ -828,20 +1023,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 					size_t n = XLENGTH(val);
 					size_t m = R_WriteConnection(OutputConn, RAW(val), n);
 					if (n != m)
-						throw ErrSeqArray("writing error.");
+						throw ErrSeqArray("error in writing to a connection.");
 				}
 				break;
 			}
 			ans_index ++;
 
-			// check the end
-			for (it=NodeList.begin(); it != NodeList.end(); it ++)
-			{
-				if (!it->NextCell())
-					{ ifend = true; break; }
-			}
-
-		} while (!ifend);
+		// check the end
+		} while (NodeList.CallNext());
 
 		// finally
 		UNPROTECT(nProtected);
