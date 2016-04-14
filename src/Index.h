@@ -31,6 +31,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <ctime>
 
 #include <cctype>
 #include <cstring>
@@ -365,6 +366,7 @@ private:
 	bool NewLine;
 	double _start, _step;
 	C_Int64 _hit;
+	time_t timer;
 };
 
 

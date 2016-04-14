@@ -322,7 +322,7 @@ C_BOOL *CVarApply::NeedTRUEs(size_t size)
 // GDS Variable Type
 // ===========================================================
 
-static int Progress_Num_Step = 64;
+static int Progress_Num_Step = 50;
 static int Progress_Line_Num = 100000;
 
 inline static void put_text(Rconnection conn, const char *fmt, ...)
@@ -350,6 +350,7 @@ CProgress::CProgress(C_Int64 count, SEXP conn, bool newline)
 		_start = _step = 0;
 		_hit = Progress_Line_Num;
 	}
+	time(&timer);
 	ShowProgress();
 }
 
@@ -375,19 +376,41 @@ void CProgress::ShowProgress()
 	{
 		if (TotalCount > 0)
 		{
-			double percentage = (double)Counter / TotalCount;
-			int n = (int)round(percentage * Progress_Num_Step);
+			double percent = (double)Counter / TotalCount;
+			int n = (int)round(percent * Progress_Num_Step);
 			string s(Progress_Num_Step, '.');
 			for (int i=0; i < n; i++) s[i] = '>';
+			// ETC: estimated time to complete
+			time_t now;
+			time(&now);
+			double seconds = difftime(now, timer);
+			if (percent > 0)
+				seconds = seconds / percent * (1 - percent);
+			else
+				seconds = 999.9;
+			// show
 			if (NewLine)
 			{
-				put_text(File, "[%s] (%.1f%%)\n", s.c_str(), percentage*100);
+				if (seconds < 3600)
+				{
+					put_text(File, "[%s] (%.0f%%, ETC: %.1fm)\n", s.c_str(),
+						percent*100, seconds/60);
+				} else {
+					put_text(File, "[%s] (%.0f%%, ETC: %.1fh)\n", s.c_str(),
+						percent*100, seconds/(60*60));
+				}
 			} else {
-				put_text(File, "\r[%s] (%.1f%%)", s.c_str(), percentage*100);
+				if (seconds < 3600)
+				{
+					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fm)    ", s.c_str(),
+						percent*100, seconds/60);
+				} else {
+					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fh)    ", s.c_str(),
+						percent*100, seconds/(60*60));
+				}
 				if (Counter >= TotalCount)
 					put_text(File, "\n");
 			}
-			(*File->fflush)(File);
 		} else {
 			int n = Counter / Progress_Line_Num;
 			string s(n, '.');
@@ -403,8 +426,8 @@ void CProgress::ShowProgress()
 				else
 					put_text(File, "\r[: (0 line)]");
 			}
-			(*File->fflush)(File);
 		}
+		(*File->fflush)(File);
 	}
 }
 
