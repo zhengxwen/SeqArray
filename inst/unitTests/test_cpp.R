@@ -137,3 +137,34 @@ test_int_replace <- function()
 
 	invisible()
 }
+
+
+test_position_index <- function()
+{
+	set.seed(1000)
+
+	for (k in 1:25)
+	{
+		len <- sample.int(2L, 50000L, replace=TRUE)
+
+		f <- createfn.gds("test.gds")
+		n <- add.gdsn(f, "new", len)
+
+		ii <- sample.int(length(len), 100L)
+		c.val <- SeqArray:::.cfunction2("test_position_index")(n, ii)
+
+		s <- c(); v <- c()
+		for (i in ii)
+		{
+			s <- c(s, ifelse(i > 1L, sum(len[1:(i-1L)]), 0L))
+			v <- c(v, len[i])
+		}
+		checkEquals(c.val[[1L]], s, "test_position_index: accumulated sum")
+		checkEquals(c.val[[2L]], v, "test_position_index: current value")
+
+		closefn.gds(f)
+		unlink("test.gds", force=TRUE)
+	}
+
+	invisible()
+}

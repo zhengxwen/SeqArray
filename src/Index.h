@@ -24,6 +24,7 @@
 #define _HEADER_SEQ_INDEX_
 
 #include <R_GDS_CPP.h>
+#include <dTrait.h>
 
 #include <string>
 #include <vector>
@@ -60,36 +61,116 @@ namespace SeqArray
 using namespace std;
 using namespace CoreArray;
 
+
+class ErrSeqArray;
+
 // ===========================================================
 // Indexing object
 // ===========================================================
 
-/// Indexing object
+/// Indexing object with run-length encoding
 template<typename TYPE> class COREARRAY_DLL_LOCAL CIndex
 {
 public:
-	/// Run-length encoding
-	struct TRLE
+	/// values according to Lengths, used in run-length encoding
+	vector<TYPE> Values;
+	/// lengths according to Values, used in run-length encoding
+	vector<C_UInt32> Lengths;
+
+	/// constructor
+	CIndex()
 	{
-		int Count;     ///< the number of the value
-		TYPE Value;    ///< value
-	};
+		TotalLength = 0;
+		Position = 0;
+		AccSum = 0;
+		AccIndex = AccOffset = 0;
+	}
 
-	/// represent chromosome codes as a RLE object in Map
-	// void Init(PdGDSObj GDSObj);
+	/// load data and represent as run-length encoding
+	void Init(PdContainer Obj)
+	{
+		Values.clear();
+		Lengths.clear();
+		TYPE Buffer[65536];
+		C_Int64 n = GDS_Array_GetTotalCount(Obj);
+		if (n > INT_MAX)
+			throw "Invalid dimension in CIndex.";
 
-	///
-	void Seek(size_t pos) {}
+		CdIterator it;
+		GDS_Iter_GetStart(Obj, &it);
+		TotalLength = n;
+		TYPE last = (TYPE)-1;
+		C_UInt32 repeat = 0;
 
+		while (n > 0)
+		{
+			ssize_t m = (n <= 65536) ? n : 65536;
+			GDS_Iter_RData(&it, Buffer, m, TdTraits<TYPE>::SVType);
+			n -= m;
+			for (TYPE *p = Buffer; m > 0; m--)
+			{
+				TYPE v = *p++;
+				if (v < 0) v = 0;
+				if (v == last)
+				{
+					repeat ++;
+				} else {
+					if (repeat > 0)
+					{
+						Values.push_back(last);
+						Lengths.push_back(repeat);					
+					}
+					last = v; repeat = 1;
+				}
+			}
+		}
+
+		Position = 0;
+		AccSum = 0;
+		AccIndex = AccOffset = 0;
+	}
+
+	/// return the accumulated sum of values and current value in Lengths and Values given by a position
+	void GetInfo(size_t pos, C_Int64 &Sum, TYPE &Value)
+	{
+		if (pos >= TotalLength)
+			throw "Invalid position in CIndex.";
+		if (pos < Position)
+		{
+			Position = 0;
+			AccSum = 0;
+			AccIndex = AccOffset = 0;
+		}
+		for (; Position < pos; )
+		{
+			size_t L = Lengths[AccIndex];
+			size_t n = L - AccOffset;
+			if ((Position + n) <= pos)
+			{
+				AccSum += (Values[AccIndex] * n);
+				AccIndex ++; AccOffset = 0;
+			} else {
+				n = pos - Position;
+				AccSum += (Values[AccIndex] * n);
+				AccOffset += n;
+			}
+			Position += n;
+		}
+		Sum = AccSum;
+		Value = Values[AccIndex];
+	}
 
 protected:
-
-	/// 
-	vector<TRLE> _List;
-	///
-	size_t ListIdx;
-	///
-	size_t TotalSize, Position;
+	/// total number, = sum(Lengths)
+	size_t TotalLength;
+	/// the position relative to the total length
+	size_t Position;
+	/// the accumulated sum of values in Lengths and Values according to Position
+	C_Int64 AccSum;
+	/// the index in Lengths according to Position
+	size_t AccIndex;
+	/// the offset according the value of Lengths[AccIndex]
+	size_t AccOffset;
 };
 
 
@@ -261,6 +342,29 @@ public:
 
 private:
 	vector<C_BOOL> _TRUE;
+};
+
+
+
+// ===========================================================
+// Progress object
+// ===========================================================
+
+class COREARRAY_DLL_LOCAL CProgress
+{
+public:
+	CProgress(C_Int64 count, SEXP conn, bool newline);
+
+	void Forward();
+	void ShowProgress();
+
+private:
+	C_Int64 TotalCount;  ///< the total number
+	C_Int64 Counter;  ///< the current counter
+	Rconnection File;  ///< R connection
+	bool NewLine;
+	double _start, _step;
+	C_Int64 _hit;
 };
 
 

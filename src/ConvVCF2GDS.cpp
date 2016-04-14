@@ -1049,8 +1049,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		Init_VCF_Buffer(RGetListElement(param, "infile"));
 		// chromosome prefix
 		SEXP ChrPrefix = RGetListElement(param, "chr.prefix");
+		// progress file
+		SEXP progfile = RGetListElement(param, "progfile");
 		// verbose
 		// bool Verbose = (LOGICAL(RGetListElement(param, "verbose"))[0] == TRUE);
+
+		// progress information
+		CProgress Progress(variant_count, progfile, true);
 
 		// the number of ploidy
 		size_t num_ploidy = Rf_asInteger(RGetListElement(header, "ploidy"));
@@ -1725,6 +1730,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					}
 				}
 			}
+
+			// update progress
+			Progress.Forward();
 		}
 
 		// set returned value: levels(filter)

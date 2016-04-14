@@ -104,6 +104,25 @@
     if (num > 1L) "s" else ""
 }
 
+.pretty_size <- function(s)
+{
+    size <- function(x)
+    {
+        if (x >= 1024^4)
+            sprintf("%.1fT", x / 1024^4)
+        else if (x >= 1024^3)
+            sprintf("%.1fG", x / 1024^3)
+        else if (x >= 1024^2)
+            sprintf("%.1fM", x / 1024^2)
+        else if (x >= 1024)
+            sprintf("%.1fK", x / 1024)
+        else
+            sprintf("%g bytes", x)
+    }
+
+    sapply(s, size)
+}
+
 
 
 #######################################################################

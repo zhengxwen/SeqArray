@@ -471,7 +471,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     {
         cat("Variant Call Format (VCF) Import:\n")
         cat("    file(s):\n")
-        cat(sprintf("        %s\n", basename(vcf.fn)))
+        cat(sprintf("        %s (%s)\n", basename(vcf.fn),
+            .pretty_size(file.size(vcf.fn))), sep="")
         cat("    file format: ", header$fileformat, "\n", sep="")
         cat("    the number of sets of chromosomes (ploidy): ",
             header$ploidy, "\n", sep="")
@@ -482,6 +483,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (!is.character(storage.tmp))
             storage.tmp <- "customized"
         cat("    compression method: ", storage.tmp, "\n", sep="")
+        flush.console()
     }
 
     # check header
@@ -971,8 +973,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         filterlevels <- header$filter$ID
         linecnt <- double(1L)
 
+        progfile <- file(paste0(out.fn, ".progress"), "wt")
+        cat(out.fn, "\n", file=progfile, sep="")
+
         infile <- NULL
-        on.exit({ if (!is.null(infile)) close(infile) }, add=TRUE)
+        on.exit({
+            close(progfile)
+            unlink(paste0(out.fn, ".progress"), force=TRUE)
+            if (!is.null(infile)) close(infile)
+        }, add=TRUE)
 
         for (i in seq_along(vcf.fn))
         {
@@ -989,8 +998,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             infile <- file(vcf.fn[i], open="rt")
             if (verbose)
             {
-                cat(sprintf("Parsing '%s' (%s bytes)\n", basename(vcf.fn[i]),
-                    .pretty(file.size(vcf.fn[i]))))
+                cat(sprintf("Parsing '%s'\n", basename(vcf.fn[i])))
                 flush.console()
             }
 
@@ -1002,6 +1010,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     raise.error = raise.error, filter.levels = filterlevels,
                     start = start, count = count,
                     chr.prefix = ignore.chr.prefix,
+                    progfile = progfile,
                     verbose = verbose),
                 linecnt, new.env())
 
@@ -1039,12 +1048,16 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 c("/data", "/@data")))
         }
 
+        if (verbose) cat("Merging:\n")
+
         for (nm in varnm)
         {
             v <- index.gdsn(gfile, nm)
             for (f in gdslist)
                 append.gdsn(v, index.gdsn(f, nm))
             readmode.gdsn(v)
+            if (verbose) cat("   ", nm)
+            .DigestCode(v, digest, verbose)
         }
 
         # merge filter variable (a factor variable)
@@ -1057,6 +1070,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         s <- as.factor(s)
         append.gdsn(varFilter, s)
         readmode.gdsn(varFilter)
+        if (verbose) cat("    annotation/filter")
+        .DigestCode(varFilter, digest, verbose)
         s <- levels(s)
         filterlevels <- c(s, setdiff(header$filter$ID, s))
 
@@ -1082,8 +1097,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         put.attr.gdsn(varFilter, "Description", dp)
     }
 
-
-    .DigestFile(gfile, digest, verbose)
+    if (pnum <= 1L)
+        .DigestFile(gfile, digest, verbose)
 
     closefn.gds(gfile)
     gfile <- NULL

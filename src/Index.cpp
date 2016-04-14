@@ -318,6 +318,95 @@ C_BOOL *CVarApply::NeedTRUEs(size_t size)
 
 
 
+// ===========================================================
+// GDS Variable Type
+// ===========================================================
+
+static int Progress_Num_Step = 64;
+static int Progress_Line_Num = 100000;
+
+inline static void put_text(Rconnection conn, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	(*conn->vfprintf)(conn, fmt, args);
+	va_end(args);
+}
+
+CProgress::CProgress(C_Int64 count, SEXP conn, bool newline)
+{
+	TotalCount = count;
+	Counter = 0;
+	if (conn)
+		File = My_R_GetConnection(conn);
+	else
+		File = NULL;
+	NewLine = newline;
+	if (count > 0)
+	{
+		_start = _step = (double)count / Progress_Num_Step;
+		_hit = (C_Int64)(_start);
+	} else {
+		_start = _step = 0;
+		_hit = Progress_Line_Num;
+	}
+	ShowProgress();
+}
+
+void CProgress::Forward()
+{
+	Counter ++;
+	if (Counter >= _hit)
+	{
+		if (TotalCount > 0)
+		{
+			_start += _step;
+			_hit = (C_Int64)(_start);
+		} else {
+			_hit += Progress_Line_Num;
+		}
+		ShowProgress();
+	}
+}
+
+void CProgress::ShowProgress()
+{
+	if (File)
+	{
+		if (TotalCount > 0)
+		{
+			double percentage = (double)Counter / TotalCount;
+			int n = (int)round(percentage * Progress_Num_Step);
+			string s(Progress_Num_Step, '.');
+			for (int i=0; i < n; i++) s[i] = '>';
+			if (NewLine)
+			{
+				put_text(File, "[%s] (%.1f%%)\n", s.c_str(), percentage*100);
+			} else {
+				put_text(File, "\r[%s] (%.1f%%)", s.c_str(), percentage*100);
+				if (Counter >= TotalCount)
+					put_text(File, "\n");
+			}
+			(*File->fflush)(File);
+		} else {
+			int n = Counter / Progress_Line_Num;
+			string s(n, '.');
+			if (NewLine)
+			{
+				if (Counter > 0)
+					put_text(File, "[:%s (%dk lines)]\n", s.c_str(), Counter/1000);
+				else
+					put_text(File, "[: (0 line)]\n");
+			} else {
+				if (Counter > 0)
+					put_text(File, "\r[:%s (%dK lines)]", s.c_str(), Counter/1000);
+				else
+					put_text(File, "\r[: (0 line)]");
+			}
+			(*File->fflush)(File);
+		}
+	}
+}
 
 
 
