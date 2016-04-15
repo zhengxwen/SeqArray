@@ -27,28 +27,29 @@ namespace SeqArray
 
 using namespace Vectorization;
 
-// ===================================================================== //
+
+// =====================================================================
 
 /// Object for reading genotypes variant by variant
-class COREARRAY_DLL_LOCAL CApplyByVariant_Geno: public CVarApply
+class COREARRAY_DLL_LOCAL CApply_Variant_Geno: public CVarApply
 {
 protected:
 	CIndex<C_UInt8> *GenoIndex;  ///< indexing genotypes
-	ssize_t Num_Sample;  ///< the number of selected samples
-	ssize_t RowCount;    ///< the total number of entries at a site
+	ssize_t NumSample;  ///< the number of selected samples
+	ssize_t SiteCount;   ///< the total number of entries at a site
 	ssize_t CellCount;   ///< the selected number of entries at a site
+	int Ploidy;          ///< ploidy
 	bool UseRaw;         ///< whether use RAW type
 	vector<C_BOOL> Selection;  ///< the buffer of selection
 	AUTO_PTR ExtPtr;           ///< a pointer to the additional buffer
 	SEXP VarGeno;    ///< genotype R object
 
-private:
 	inline int _ReadGenoData(int *Base);
 	inline C_UInt8 _ReadGenoData(C_UInt8 *Base);
 
 public:
 	/// constructor
-	CApplyByVariant_Geno(CFileInfo &File, bool use_raw);
+	CApply_Variant_Geno(CFileInfo &File, bool use_raw);
 
 	virtual void Reset();
 	virtual bool Next();
@@ -61,6 +62,27 @@ public:
 	void ReadGenoData(C_UInt8 *Base);
 };
 
+
+// =====================================================================
+
+/// Object for reading genotypes (dosages) variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Dosage: public CApply_Variant_Geno
+{
+public:
+	/// constructor
+	CApply_Variant_Dosage(CFileInfo &File, bool use_raw);
+
+	virtual void ReadData(SEXP Val);
+	virtual SEXP NeedRData(int &nProtected);
+
+	/// read dosages in 32-bit integer
+	void ReadDosage(int *Base);
+	/// read dosages in unsigned 8-bit intetger
+	void ReadDosage(C_UInt8 *Base);
+};
+
+
+// =====================================================================
 
 /// Object for reading a variable variant by variant
 class COREARRAY_DLL_LOCAL CApplyByVariant: public CVarApply
@@ -87,7 +109,7 @@ private:
 
 public:
 	int TotalNum_Variant;   ///< the total number of variants
-	int Num_Sample;         ///< the number of selected samples
+	int NumSample;         ///< the number of selected samples
 
 	int DimCnt;             ///< the number of dimensions
 	C_Int32 DLen[4];        ///< the dimension size

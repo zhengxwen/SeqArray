@@ -100,7 +100,7 @@ public:
 		CdIterator it;
 		GDS_Iter_GetStart(Obj, &it);
 		TotalLength = n;
-		TYPE last = (TYPE)-1;
+		TYPE last = (TYPE)(-1);
 		C_UInt32 repeat = 0;
 
 		while (n > 0)
@@ -124,6 +124,12 @@ public:
 					last = v; repeat = 1;
 				}
 			}
+		}
+
+		if (repeat > 0)
+		{
+			Values.push_back(last);
+			Lengths.push_back(repeat);					
 		}
 
 		Position = 0;
@@ -295,9 +301,11 @@ public:
 	/// the root of gds file
 	inline PdGDSFolder Root() { return _Root; }
 	/// the total number of samples
-	inline int SampleNum() { return _SampleNum; }
+	inline int SampleNum() const { return _SampleNum; }
 	/// the total number of variants
-	inline int VariantNum() { return _VariantNum; }
+	inline int VariantNum() const { return _VariantNum; }
+	/// ploidy
+	inline int Ploidy() const { return _Ploidy; }
 
 	int SampleSelNum();
 	int VariantSelNum();
@@ -306,6 +314,7 @@ protected:
 	PdGDSFolder _Root;  ///< the root of GDS file
 	int _SampleNum;   ///< the total number of samples
 	int _VariantNum;  ///< the total number of variants
+	int _Ploidy;      ///< ploidy
 
 	CChromIndex _Chrom;  ///< chromosome indexing
 	vector<C_Int32> _Position;  ///< position
@@ -346,11 +355,11 @@ public:
 class COREARRAY_DLL_LOCAL CVarApply: public CVariable
 {
 protected:
+	TVarType fVarType;       ///< VCF data type
 	ssize_t MarginalSize;    ///< the size in MarginalSelect
 	C_BOOL *MarginalSelect;  ///< pointer to variant selection
 
 public:
-	TVarType VarType;      ///< VCF data type
 	PdAbstractArray Node;  ///< the GDS variable
 	C_Int32 Position;  ///< the index of variant/sample, starting from ZERO
 
@@ -368,6 +377,11 @@ public:
 	virtual SEXP NeedRData(int &nProtected) = 0;
 	/// read data to R object
 	virtual void ReadData(SEXP Val) = 0;
+
+
+	/// variable type
+	inline TVarType VarType() const { return fVarType; }
+
 
 	/// need a pointer to size of TRUEs
 	C_BOOL *NeedTRUEs(size_t size);
@@ -397,6 +411,7 @@ class COREARRAY_DLL_LOCAL CProgress
 public:
 	CProgress(C_Int64 count, SEXP conn, bool newline);
 
+	void ResetTimer();
 	void Forward();
 	void ShowProgress();
 
@@ -407,7 +422,7 @@ private:
 	bool NewLine;
 	double _start, _step;
 	C_Int64 _hit;
-	time_t timer;
+	time_t start_timer;
 };
 
 

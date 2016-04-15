@@ -133,7 +133,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
 		Obj->InitObject(CVariable::ctDosage, "genotype/data", File, true);
 
-		Param->GenoBuffer = new C_UInt8[Obj->Num_Sample];
+		Param->GenoBuffer = new C_UInt8[Obj->NumSample];
 		Param->Index = 0;
 	}
 
@@ -154,7 +154,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		{
 			Obj->ReadDosage(OutBuf);
 			Obj->Next();
-			OutBuf += Obj->Num_Sample;
+			OutBuf += Obj->NumSample;
 			Param->Index ++;
 		}
 	} else {
@@ -167,7 +167,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 
 			C_UInt8 *g = (OutBuf ++);
 			C_UInt8 *p = Param->GenoBuffer;
-			for (size_t n=Obj->Num_Sample; n > 0; n--)
+			for (size_t n=Obj->NumSample; n > 0; n--)
 			{
 				*g = *p ++;
 				g += size;
@@ -213,7 +213,7 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
 			Obj->InitObject(CVariable::ctGenotype, "genotype/data", File, true);
 
-			size_t SIZE = (Obj->Num_Sample) * (Obj->DLen[2]);
+			size_t SIZE = (Obj->NumSample) * (Obj->DLen[2]);
 			Param->GenoBuffer = new C_UInt8[SIZE];
 		}
 		Param->Index = 0;

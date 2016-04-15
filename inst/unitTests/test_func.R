@@ -111,3 +111,29 @@ test_dosage <- function()
 	seqClose(f)
 	invisible()
 }
+
+
+test_random_genotype <- function()
+{
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
+
+	seqResetFilter(f)
+	gm <- seqGetData(f, "genotype")
+	dimnames(gm) <- NULL
+	mm <- array(data=0L, dim=dim(gm))
+
+	ii <- sample.int(dim(gm)[3L], dim(gm)[3L])
+	for (i in ii)
+	{
+		seqSetFilter(f, variant.sel=i, verbose=FALSE)
+		mm[,,i] <- seqGetData(f, "genotype")
+	}
+
+	checkEquals(gm, mm, "genotype: random access")
+
+	# close the GDS file
+	seqClose(f)
+	invisible()
+}

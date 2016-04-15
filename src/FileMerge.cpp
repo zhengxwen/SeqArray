@@ -161,7 +161,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 			for (int j=0; j < FileCnt; j++)
 			{
 				CApplyByVariant &FILE = Files[j];
-				const size_t size = (size_t)FILE.Num_Sample * ploidy;
+				const size_t size = (size_t)FILE.NumSample * ploidy;
 
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
@@ -270,7 +270,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 			for (int j=0; j < FileCnt; j++)
 			{
 				CApplyByVariant &FILE = Files[j];
-				const size_t size = (size_t)FILE.Num_Sample * (ploidy-1);
+				const size_t size = (size_t)FILE.NumSample * (ploidy-1);
 
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
@@ -422,7 +422,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 				if (!Rf_isNull(RDList[j]))
 				{
 					size_t len = XLENGTH(RDList[j]);
-					int m = len / Files[j].Num_Sample;
+					int m = len / Files[j].NumSample;
 					if (m > step) step = m;
 				}
 			}
@@ -436,15 +436,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 					if (!Rf_isNull(RDList[j]))
 					{
 						size_t len = XLENGTH(RDList[j]);
-						int m = len / FILE.Num_Sample;
+						int m = len / FILE.NumSample;
 						if (k < m)
 						{
 							GDS_R_AppendEx(fmt_var, RDList[j],
-								k * FILE.Num_Sample, FILE.Num_Sample);
+								k * FILE.NumSample, FILE.NumSample);
 						} else
-							GDS_R_AppendEx(fmt_var, NAs, 0, FILE.Num_Sample);
+							GDS_R_AppendEx(fmt_var, NAs, 0, FILE.NumSample);
 					} else
-						GDS_R_AppendEx(fmt_var, NAs, 0, FILE.Num_Sample);
+						GDS_R_AppendEx(fmt_var, NAs, 0, FILE.NumSample);
 				}
 			}
 

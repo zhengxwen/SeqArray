@@ -69,7 +69,7 @@ void CVarApplyBySample::InitObject(TVarType Type, const char *Path, PdGDSObj Roo
 		}
 	}
 
-	VarType = Type;
+	fVarType = Type;
 	SVType = GDS_Array_GetSVType(Node);
 	DimCnt = GDS_Array_DimCnt(Node);
 
@@ -366,7 +366,7 @@ void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
 
 void CVarApplyBySample::ReadData(SEXP Val)
 {
-	if (VarType == ctGenotype)
+	if (fVarType == ctGenotype)
 	{
 		if (UseRaw)
 			ReadGenoData(RAW(Val));
@@ -400,7 +400,7 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 		SEXP ans = R_NilValue, dim;
 		if (COREARRAY_SV_INTEGER(SVType))
 		{
-			if (VarType == ctGenotype)
+			if (fVarType == ctGenotype)
 			{
 				if (UseRaw)
 					PROTECT(ans = NEW_RAW(CellCount));
@@ -434,7 +434,7 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 		}
 
 		int *p;
-		switch (VarType)
+		switch (fVarType)
 		{
 		case ctGenotype:
 			p = INTEGER(dim = NEW_INTEGER(2));

@@ -185,18 +185,33 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 		SelList.clear();
 		_Chrom.Clear();
 		_Position.clear();
+
 		// sample.id
-		PdAbstractArray N = GDS_Node_Path(root, "sample.id", TRUE);
-		C_Int64 n = GDS_Array_GetTotalCount(N);
+		PdAbstractArray Node = GDS_Node_Path(root, "sample.id", TRUE);
+		C_Int64 n = GDS_Array_GetTotalCount(Node);
 		if ((n < 0) || (n > 2147483647))
 			throw ErrSeqArray(ERR_DIM, "sample.id");
 		_SampleNum = n;
+
 		// variant.id
-		N = GDS_Node_Path(root, "variant.id", TRUE);
-		n = GDS_Array_GetTotalCount(N);
+		Node = GDS_Node_Path(root, "variant.id", TRUE);
+		n = GDS_Array_GetTotalCount(Node);
 		if ((n < 0) || (n > 2147483647))
 			throw ErrSeqArray(ERR_DIM, "variant.id");
 		_VariantNum = n;
+
+		// genotypes
+		_Ploidy = -1;
+		Node = GDS_Node_Path(root, "genotype/data", FALSE);
+		if (Node != NULL)
+		{
+			if (GDS_Array_DimCnt(Node) == 3)
+			{
+				C_Int32 DLen[3];
+				GDS_Array_GetDim(Node, DLen, 3);
+				_Ploidy = DLen[2];
+			}
+		}
 	}
 }
 
@@ -315,7 +330,13 @@ static C_BOOL ArrayTRUEs[64] = {
 };
 
 CVarApply::CVarApply()
-{ }
+{
+	fVarType = ctNone;
+	MarginalSize = 0;
+	MarginalSelect = NULL;
+	Node = NULL;
+	Position = 0;
+}
 
 CVarApply::~CVarApply()
 { }
@@ -388,8 +409,13 @@ CProgress::CProgress(C_Int64 count, SEXP conn, bool newline)
 		_start = _step = 0;
 		_hit = Progress_Line_Num;
 	}
-	time(&timer);
+	time(&start_timer);
 	ShowProgress();
+}
+
+void CProgress::ResetTimer()
+{
+	time(&start_timer);
 }
 
 void CProgress::Forward()
@@ -414,37 +440,42 @@ void CProgress::ShowProgress()
 	{
 		if (TotalCount > 0)
 		{
+			char ss[Progress_Num_Step + 1];
 			double percent = (double)Counter / TotalCount;
 			int n = (int)round(percent * Progress_Num_Step);
-			string s(Progress_Num_Step, '.');
-			for (int i=0; i < n; i++) s[i] = '>';
+			memset(ss, '.', sizeof(ss));
+			memset(ss, '>', n);
+			ss[Progress_Num_Step] = 0;
+
 			// ETC: estimated time to complete
 			time_t now;
 			time(&now);
-			double seconds = difftime(now, timer);
+			double seconds = difftime(now, start_timer);
 			if (percent > 0)
 				seconds = seconds / percent * (1 - percent);
 			else
 				seconds = 999.9 * 60 * 60;
+			percent *= 100;
+
 			// show
 			if (NewLine)
 			{
 				if (seconds < 3600)
 				{
-					put_text(File, "[%s] (%.0f%%, ETC: %.1fm)\n", s.c_str(),
-						percent*100, seconds/60);
+					put_text(File, "[%s] (%.0f%%, ETC: %.1fm)\n", ss,
+						percent, seconds/60);
 				} else {
-					put_text(File, "[%s] (%.0f%%, ETC: %.1fh)\n", s.c_str(),
-						percent*100, seconds/(60*60));
+					put_text(File, "[%s] (%.0f%%, ETC: %.1fh)\n", ss,
+						percent, seconds/(60*60));
 				}
 			} else {
 				if (seconds < 3600)
 				{
-					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fm)    ", s.c_str(),
-						percent*100, seconds/60);
+					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fm)    ", ss,
+						percent, seconds/60);
 				} else {
-					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fh)    ", s.c_str(),
-						percent*100, seconds/(60*60));
+					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fh)    ", ss,
+						percent, seconds/(60*60));
 				}
 				if (Counter >= TotalCount)
 					put_text(File, "\n");

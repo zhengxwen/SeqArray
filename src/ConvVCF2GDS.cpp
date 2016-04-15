@@ -1054,9 +1054,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		// verbose
 		// bool Verbose = (LOGICAL(RGetListElement(param, "verbose"))[0] == TRUE);
 
-		// progress information
-		CProgress Progress(variant_count, progfile, true);
-
 		// the number of ploidy
 		size_t num_ploidy = Rf_asInteger(RGetListElement(header, "ploidy"));
 		if (num_ploidy <= 0)
@@ -1216,7 +1213,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 
 		// =========================================================
-		// skip the header
+		// skip the header and data rows
 
 		InitText();
 
@@ -1230,8 +1227,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			}
 		}
 
+		while (!VCF_EOF() && (variant_index+1 < variant_start))
+		{
+			variant_index ++;
+			SkipLine();
+		}
+
+
 		// =========================================================
 		// parse the context
+
+		// progress information
+		CProgress Progress(variant_count, progfile, true);
 
 		while (!VCF_EOF())
 		{
@@ -1242,11 +1249,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			// -----------------------------------------------------
 			// variant id
 			variant_index ++;
-			if (variant_index < variant_start)
-			{
-				SkipLine();
-				continue;
-			} else if (variant_count >= 0)
+			if (variant_count >= 0)
 			{
 				if (variant_index >= variant_start+variant_count)
 				{
