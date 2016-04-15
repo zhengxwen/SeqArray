@@ -35,11 +35,11 @@ class COREARRAY_DLL_LOCAL CApply_Variant_Geno: public CVarApply
 {
 protected:
 	CIndex<C_UInt8> *GenoIndex;  ///< indexing genotypes
-	ssize_t NumSample;  ///< the number of selected samples
-	ssize_t SiteCount;   ///< the total number of entries at a site
-	ssize_t CellCount;   ///< the selected number of entries at a site
-	int Ploidy;          ///< ploidy
-	bool UseRaw;         ///< whether use RAW type
+	ssize_t SiteCount;  ///< the total number of entries at a site
+	ssize_t CellCount;  ///< the selected number of entries at a site
+	ssize_t _SampNum;   ///< the number of selected samples
+	int _Ploidy;  ///< ploidy
+	bool UseRaw;  ///< whether use RAW type
 	vector<C_BOOL> Selection;  ///< the buffer of selection
 	AUTO_PTR ExtPtr;           ///< a pointer to the additional buffer
 	SEXP VarGeno;    ///< genotype R object
@@ -49,7 +49,10 @@ protected:
 
 public:
 	/// constructor
+	CApply_Variant_Geno();
 	CApply_Variant_Geno(CFileInfo &File, bool use_raw);
+
+	void Init(CFileInfo &File, bool use_raw);
 
 	virtual void Reset();
 	virtual bool Next();
@@ -60,6 +63,9 @@ public:
 	void ReadGenoData(int *Base);
 	/// read genotypes in unsigned 8-bit intetger
 	void ReadGenoData(C_UInt8 *Base);
+
+	inline int SampNum() const { return _SampNum; }
+	inline int Ploidy() const { return _Ploidy; }
 };
 
 
@@ -109,7 +115,7 @@ private:
 
 public:
 	int TotalNum_Variant;   ///< the total number of variants
-	int NumSample;         ///< the number of selected samples
+	int _SampNum;         ///< the number of selected samples
 
 	int DimCnt;             ///< the number of dimensions
 	C_Int32 DLen[4];        ///< the dimension size
@@ -121,16 +127,6 @@ public:
 
 	virtual void Reset();
 	virtual bool Next();
-
-	/// read genotypes in 32-bit integer
-	void ReadGenoData(int *Base);
-	/// read genotypes in unsigned 8-bit intetger
-	void ReadGenoData(C_UInt8 *Base);
-
-	/// read dosages in 32-bit integer
-	void ReadDosage(int *Base);
-	/// read dosages in unsigned 8-bit intetger
-	void ReadDosage(C_UInt8 *Base);
 
 	/// read data to R object
 	virtual void ReadData(SEXP Val);

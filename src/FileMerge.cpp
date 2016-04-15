@@ -116,12 +116,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 
 		MERGE_VAR_DEF
 
-		vector<CApplyByVariant> Files(FileCnt);
+		vector<CApply_Variant_Geno> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
 		{
 			SEXP file = VECTOR_ELT(files, i);
-			Files[i].InitObject(CVariable::ctGenotype, "genotype/data",
-				GetFileInfo(file), false);
+			Files[i].Init(GetFileInfo(file), false);
 		}
 
 		vector<PdAbstractArray> pAllele(FileCnt);
@@ -160,8 +159,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 
 			for (int j=0; j < FileCnt; j++)
 			{
-				CApplyByVariant &FILE = Files[j];
-				const size_t size = (size_t)FILE.NumSample * ploidy;
+				CApply_Variant_Geno &FILE = Files[j];
+				const size_t size = (size_t)FILE.SampNum() * ploidy;
 
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
@@ -270,7 +269,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 			for (int j=0; j < FileCnt; j++)
 			{
 				CApplyByVariant &FILE = Files[j];
-				const size_t size = (size_t)FILE.NumSample * (ploidy-1);
+				const size_t size = (size_t)FILE._SampNum * (ploidy-1);
 
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
@@ -422,7 +421,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 				if (!Rf_isNull(RDList[j]))
 				{
 					size_t len = XLENGTH(RDList[j]);
-					int m = len / Files[j].NumSample;
+					int m = len / Files[j]._SampNum;
 					if (m > step) step = m;
 				}
 			}
@@ -436,15 +435,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 					if (!Rf_isNull(RDList[j]))
 					{
 						size_t len = XLENGTH(RDList[j]);
-						int m = len / FILE.NumSample;
+						int m = len / FILE._SampNum;
 						if (k < m)
 						{
 							GDS_R_AppendEx(fmt_var, RDList[j],
-								k * FILE.NumSample, FILE.NumSample);
+								k * FILE._SampNum, FILE._SampNum);
 						} else
-							GDS_R_AppendEx(fmt_var, NAs, 0, FILE.NumSample);
+							GDS_R_AppendEx(fmt_var, NAs, 0, FILE._SampNum);
 					} else
-						GDS_R_AppendEx(fmt_var, NAs, 0, FILE.NumSample);
+						GDS_R_AppendEx(fmt_var, NAs, 0, FILE._SampNum);
 				}
 			}
 

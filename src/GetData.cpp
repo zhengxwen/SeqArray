@@ -497,30 +497,30 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			// ===========================================================
 			// dosage data
 
-			int nVariant = File.VariantSelNum();
-			if (nVariant > 0)
+			ssize_t nSample  = File.SampleSelNum();
+			ssize_t nVariant = File.VariantSelNum();
+
+			if ((nSample > 0) && (nVariant > 0))
 			{
 				// initialize GDS genotype Node
-				CApplyByVariant NodeVar;
-				NodeVar.InitObject(CVariable::ctDosage, "genotype/data",
-					File, false);
+				CApply_Variant_Dosage NodeVar(File, false);
 
 				if (use_raw)
 				{
-					rv_ans = allocMatrix(RAWSXP, NodeVar.NumSample, nVariant);
+					rv_ans = allocMatrix(RAWSXP, nSample, nVariant);
 					PROTECT(rv_ans);
 					C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
 					do {
 						NodeVar.ReadDosage(base);
-						base += (size_t)NodeVar.NumSample;
+						base += nSample;
 					} while (NodeVar.Next());
 				} else {
-					rv_ans = allocMatrix(INTSXP, NodeVar.NumSample, nVariant);
+					rv_ans = allocMatrix(INTSXP, nSample, nVariant);
 					PROTECT(rv_ans);
 					int *base = INTEGER(rv_ans);
 					do {
 						NodeVar.ReadDosage(base);
-						base += (size_t)NodeVar.NumSample;
+						base += nSample;
 					} while (NodeVar.Next());
 				}
 

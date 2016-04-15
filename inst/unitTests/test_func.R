@@ -86,6 +86,35 @@ test_allele_freq <- function()
 }
 
 
+test_random_genotype <- function()
+{
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
+
+	seqResetFilter(f)
+	gm <- seqGetData(f, "genotype")
+
+	set.seed(100)
+	for (i in 1:10)
+	{
+		x <- sample.int(dim(gm)[3L], round(dim(gm)[3L]/3))
+		y <- sample.int(dim(gm)[2L], round(dim(gm)[2L]/3))
+		seqSetFilter(f, variant.sel=x, sample.sel=y, verbose=FALSE)
+		m1 <- seqGetData(f, "genotype")
+
+		f1 <- rep(FALSE, dim(gm)[3L]); f1[x] <- TRUE
+		f2 <- rep(FALSE, dim(gm)[2L]); f2[y] <- TRUE
+		m2 <- gm[, f2, f1]
+		checkEquals(m1, m2, "genotype: random access")
+	}
+
+	# close the GDS file
+	seqClose(f)
+	invisible()
+}
+
+
 test_dosage <- function()
 {
 	# open the GDS file
@@ -113,25 +142,28 @@ test_dosage <- function()
 }
 
 
-test_random_genotype <- function()
+test_random_dosage <- function()
 {
 	# open the GDS file
 	gds.fn <- seqExampleFileName("gds")
 	f <- seqOpen(gds.fn)
 
 	seqResetFilter(f)
-	gm <- seqGetData(f, "genotype")
-	dimnames(gm) <- NULL
-	mm <- array(data=0L, dim=dim(gm))
+	gm <- seqGetData(f, "$dosage")
 
-	ii <- sample.int(dim(gm)[3L], dim(gm)[3L])
-	for (i in ii)
+	set.seed(200)
+	for (i in 1:10)
 	{
-		seqSetFilter(f, variant.sel=i, verbose=FALSE)
-		mm[,,i] <- seqGetData(f, "genotype")
-	}
+		x <- sample.int(dim(gm)[2L], round(dim(gm)[2L]/3))
+		y <- sample.int(dim(gm)[1L], round(dim(gm)[1L]/3))
+		seqSetFilter(f, variant.sel=x, sample.sel=y, verbose=FALSE)
+		m1 <- seqGetData(f, "$dosage")
 
-	checkEquals(gm, mm, "genotype: random access")
+		f1 <- rep(FALSE, dim(gm)[2L]); f1[x] <- TRUE
+		f2 <- rep(FALSE, dim(gm)[1L]); f2[y] <- TRUE
+		m2 <- gm[f2, f1]
+		checkEquals(m1, m2, "dosage: random access")
+	}
 
 	# close the GDS file
 	seqClose(f)
