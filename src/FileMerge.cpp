@@ -118,10 +118,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 
 		vector<CApply_Variant_Geno> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
-		{
-			SEXP file = VECTOR_ELT(files, i);
-			Files[i].Init(GetFileInfo(file), false);
-		}
+			Files[i].Init(GetFileInfo(VECTOR_ELT(files, i)), false);
 
 		vector<PdAbstractArray> pAllele(FileCnt);
 		for (int i=0; i < FileCnt; i++)
@@ -240,13 +237,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 
 		int nProtected = 0;
 
-		vector<CApplyByVariant> Files(FileCnt);
+		vector<CApply_Variant_Phase> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
-		{
-			SEXP file = VECTOR_ELT(files, i);
-			Files[i].InitObject(CVariable::ctPhase, "phase/data",
-				GetFileInfo(file), false);
-		}
+			Files[i].Init(GetFileInfo(VECTOR_ELT(files, i)), false);
 
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(export_file);
 		PdAbstractArray phase_var = GDS_Node_Path(Root, "phase/data", TRUE);
@@ -268,8 +261,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergePhase(SEXP num, SEXP varidx, SEXP files,
 
 			for (int j=0; j < FileCnt; j++)
 			{
-				CApplyByVariant &FILE = Files[j];
-				const size_t size = (size_t)FILE._SampNum * (ploidy-1);
+				CApply_Variant_Phase &FILE = Files[j];
+				const size_t size = (size_t)FILE.SampNum() * (ploidy-1);
 
 				if (*pIdx[j] == i)  // deal with this variant?
 				{

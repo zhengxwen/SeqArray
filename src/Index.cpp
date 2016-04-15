@@ -268,6 +268,20 @@ CIndex<C_UInt8> &CFileInfo::GenoIndex()
 	return _GenoIndex;
 }
 
+CIndex<int> &CFileInfo::VarIndex(const string &varname)
+{
+	CIndex<int> &I = _VarIndex[varname];
+	if (I.Empty())
+	{
+		PdAbstractArray N = GDS_Node_Path(_Root, varname.c_str(), FALSE);
+		if (N == NULL)
+			I.InitOne(_VariantNum);
+		else
+			I.Init(N);
+	}
+	return I;
+}
+
 PdAbstractArray CFileInfo::GetObj(const char *name, C_BOOL MustExist)
 {
 	if (!_Root)
@@ -340,6 +354,24 @@ CVarApply::CVarApply()
 
 CVarApply::~CVarApply()
 { }
+
+void CVarApply::Reset()
+{
+	Position = 0;
+	if (MarginalSize > 0)
+		if (!MarginalSelect[0]) Next();
+}
+
+bool CVarApply::Next()
+{
+	C_BOOL *p = MarginalSelect + Position;
+	while (Position < MarginalSize)
+	{
+		Position ++;
+		if (*(++p)) break;
+	}
+	return (Position < MarginalSize);
+}
 
 C_BOOL *CVarApply::NeedTRUEs(size_t size)
 {
@@ -444,7 +476,8 @@ void CProgress::ShowProgress()
 			double percent = (double)Counter / TotalCount;
 			int n = (int)round(percent * Progress_Num_Step);
 			memset(ss, '.', sizeof(ss));
-			memset(ss, '>', n);
+			memset(ss, '=', n);
+			if (n < Progress_Num_Step-1) ss[n] = '>';
 			ss[Progress_Num_Step] = 0;
 
 			// ETC: estimated time to complete
@@ -491,7 +524,7 @@ void CProgress::ShowProgress()
 					put_text(File, "[: (0 line)]\n");
 			} else {
 				if (Counter > 0)
-					put_text(File, "\r[:%s (%dK lines)]", s.c_str(), Counter/1000);
+					put_text(File, "\r[:%s (%dk lines)]", s.c_str(), Counter/1000);
 				else
 					put_text(File, "\r[: (0 line)]");
 			}
@@ -528,6 +561,44 @@ COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name)
 		}
 	}
 	return elmt;
+}
+
+/// Allocate R object given by SVType
+COREARRAY_DLL_LOCAL SEXP RObject_GDS(PdAbstractArray Node, size_t n,
+	int &nProtected, bool bit1_is_logical)
+{
+	SEXP ans = R_NilValue;
+	C_SVType SVType = GDS_Array_GetSVType(Node);
+
+	if (COREARRAY_SV_INTEGER(SVType))
+	{
+		char classname[128];
+		GDS_Node_GetClassName(Node, classname, sizeof(classname));
+		if (strcmp(classname, "dBit1") == 0)
+		{
+			if (bit1_is_logical)
+				PROTECT(ans = NEW_LOGICAL(n));
+			else
+				PROTECT(ans = NEW_INTEGER(n));
+		} else if (GDS_R_Is_Logical(Node))
+		{
+			PROTECT(ans = NEW_LOGICAL(n));
+		} else {
+			PROTECT(ans = NEW_INTEGER(n));
+			nProtected += GDS_R_Set_IfFactor(Node, ans);
+		}
+		nProtected ++;
+	} else if (COREARRAY_SV_FLOAT(SVType))
+	{
+		PROTECT(ans = NEW_NUMERIC(n));
+		nProtected ++;
+	} else if (COREARRAY_SV_STRING(SVType))
+	{
+		PROTECT(ans = NEW_CHARACTER(n));
+		nProtected ++;
+	}
+
+	return ans;
 }
 
 COREARRAY_DLL_LOCAL C_BOOL *NeedArrayTRUEs(size_t len)

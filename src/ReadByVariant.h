@@ -30,6 +30,22 @@ using namespace Vectorization;
 
 // =====================================================================
 
+/// Object for reading basic variabls variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Basic: public CVarApply
+{
+protected:
+	C_SVType SVType;
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_Basic(CFileInfo &File, const char *varname);
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
+
+// =====================================================================
+
 /// Object for reading genotypes variant by variant
 class COREARRAY_DLL_LOCAL CApply_Variant_Geno: public CVarApply
 {
@@ -54,9 +70,7 @@ public:
 
 	void Init(CFileInfo &File, bool use_raw);
 
-	virtual void Reset();
-	virtual bool Next();
-	virtual void ReadData(SEXP Val);
+	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
 
 	/// read genotypes in 32-bit integer
@@ -78,13 +92,42 @@ public:
 	/// constructor
 	CApply_Variant_Dosage(CFileInfo &File, bool use_raw);
 
-	virtual void ReadData(SEXP Val);
+	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
 
 	/// read dosages in 32-bit integer
 	void ReadDosage(int *Base);
 	/// read dosages in unsigned 8-bit intetger
 	void ReadDosage(C_UInt8 *Base);
+};
+
+
+// =====================================================================
+
+/// Object for reading phasing information variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Phase: public CVarApply
+{
+protected:
+	ssize_t SiteCount;  ///< the total number of entries at a site
+	ssize_t CellCount;  ///< the selected number of entries at a site
+	ssize_t _SampNum;   ///< the number of selected samples
+	int _Ploidy;  ///< ploidy
+	bool UseRaw;  ///< whether use RAW type
+	vector<C_BOOL> Selection;  ///< the buffer of selection
+	SEXP VarPhase;  ///< genotype R object
+
+public:
+	/// constructor
+	CApply_Variant_Phase();
+	CApply_Variant_Phase(CFileInfo &File, bool use_raw);
+
+	void Init(CFileInfo &File, bool use_raw);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+
+	inline int SampNum() const { return _SampNum; }
+	inline int Ploidy() const { return _Ploidy; }
 };
 
 
@@ -129,7 +172,7 @@ public:
 	virtual bool Next();
 
 	/// read data to R object
-	virtual void ReadData(SEXP Val);
+	virtual void ReadData(SEXP val);
 	/// return an R object for the next call 'ReadData()'
 	virtual SEXP NeedRData(int &nProtected);
 };

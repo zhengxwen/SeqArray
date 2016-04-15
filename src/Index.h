@@ -137,6 +137,19 @@ public:
 		AccIndex = AccOffset = 0;
 	}
 
+	/// load data and represent as run-length encoding
+	void InitOne(int num)
+	{
+		Values.clear();
+		Values.push_back(1);
+		Lengths.clear();
+		Lengths.push_back(num);
+		TotalLength = num;
+		Position = 0;
+		AccSum = 0;
+		AccIndex = AccOffset = 0;
+	}
+
 	/// return the accumulated sum of values and current value in Lengths and Values given by a position
 	void GetInfo(size_t pos, C_Int64 &Sum, TYPE &Value)
 	{
@@ -295,6 +308,9 @@ public:
 	/// return _GenoIndex which has been initialized
 	CIndex<C_UInt8> &GenoIndex();
 
+	/// return the indexing object according to variable name
+	CIndex<int> &VarIndex(const string &varname);
+
 	/// get gds object
 	PdAbstractArray GetObj(const char *name, C_BOOL MustExist);
 
@@ -319,6 +335,7 @@ protected:
 	CChromIndex _Chrom;  ///< chromosome indexing
 	vector<C_Int32> _Position;  ///< position
 	CIndex<C_UInt8> _GenoIndex;  ///< the indexing object for genotypes
+	map< string, CIndex<int> > _VarIndex;  ///< the indexing objects for INFO/FORMAT variables
 };
 
 
@@ -369,19 +386,17 @@ public:
 	virtual ~CVarApply();
 
 	/// reset
-	virtual void Reset() = 0;
+	virtual void Reset();
 	/// move to the next element
-	virtual bool Next() = 0;
+	virtual bool Next();
 
 	/// return an R object for the next call 'ReadData()'
 	virtual SEXP NeedRData(int &nProtected) = 0;
 	/// read data to R object
-	virtual void ReadData(SEXP Val) = 0;
-
+	virtual void ReadData(SEXP val) = 0;
 
 	/// variable type
 	inline TVarType VarType() const { return fVarType; }
-
 
 	/// need a pointer to size of TRUEs
 	C_BOOL *NeedTRUEs(size_t size);
@@ -436,6 +451,10 @@ COREARRAY_DLL_LOCAL size_t RLength(SEXP val);
 
 /// get the list element named str, or return R_NilValue
 COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name);
+
+/// Allocate R object given by SVType
+COREARRAY_DLL_LOCAL SEXP RObject_GDS(PdAbstractArray Node, size_t n,
+	int &nProtected, bool bit1_is_logical);
 
 /// requires a vector of TRUEs
 COREARRAY_DLL_LOCAL C_BOOL *NeedArrayTRUEs(size_t len);
