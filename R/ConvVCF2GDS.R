@@ -908,17 +908,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         s <- header$format$Number[i]
         if (grepl("^[[:digit:]]", s))
         {
-            initdim <- as.integer(s)
-            if (initdim <= 0)
+            if (as.integer(s) <= 0)
             {
                 print(header[, i])
                 stop("The length should be >0.")
-            } else if (initdim > 1)
-                initdim <- c(initdim, nSamp, 0L)
-            else
-                initdim <- c(nSamp, 0L)
+            }
         } else {
-            initdim <- c(nSamp, 0L)
             if (s == ".")
                 int_num[i] <- -1L
             else if (s == "A")
@@ -941,7 +936,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             put.attr.gdsn(node, "Type", header$format$Type[i])
             put.attr.gdsn(node, "Description", header$format$Description[i])
 
-            .AddVar(storage.option, node, "data", storage=mode, valdim=initdim)
+            .AddVar(storage.option, node, "data", storage=mode, valdim=c(nSamp, 0L))
             .AddVar(storage.option, node, "@data", storage="int32", visible=FALSE)
         }
     }

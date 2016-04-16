@@ -10,9 +10,13 @@ CHANGES IN VERSION 1.11.19-1.11.21
     o utilizes the official C API `R_GetConnection()` to accelerate text
       import and export, requiring R (>=v3.3.0); alternative version (backward
       compatible with R_v2.15.0) is also available on github
+      (https://github.com/zhengxwen/SeqArray/releases/tag/v1.11.18)
 
     o ~4x speedup in the sequential version of `seqVCF2GDS()`, and
       `seqVCF2GDS()` can run in parallel
+
+    o variables in "annotation/format/" should be two-dimensional as what
+      mentioned in the vignette.
 
 
 CHANGES IN VERSION 1.11.0-1.11.18

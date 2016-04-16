@@ -465,7 +465,7 @@ void CApplyByVariant::InitObject(TVarType Type, const char *Path,
 	DimCnt = GDS_Array_DimCnt(Node);
 
 	int nVariant = File.VariantNum();
-	int nSample  = File.SampleNum();
+	// int nSample  = File.SampleNum();
 
 	TSelection &Sel = File.Selection();
 	TotalNum_Variant = File.VariantNum();

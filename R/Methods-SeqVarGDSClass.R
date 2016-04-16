@@ -249,13 +249,13 @@ setMethod("info",
 .variableLengthToMatrix <- function(x) {
   xl <- list()
   i <- 1
-  for (j in 1:length(x)) {
-    for (k in 1:nrow(x[[j]])) {
+  for (j in seq_along(x)) {
+    for (k in seq_len(NROW(x[[j]]))) {
       xl[[i]] <- x[[j]][k,]
       i <- i + 1
     }
   }
-  matrix(xl, nrow=nrow(x[[1]]), ncol=length(x))
+  matrix(xl, nrow=NROW(x[[1]]), ncol=length(x))
 }
 
 setMethod("geno",
@@ -298,7 +298,7 @@ setMethod("geno",
                               if (is.null(v[[j]])) {
                                   vm[j,,] <- NA
                               } else {
-                                  vm[j,,] <- t(v[[j]][,,1])
+                                  vm[j,,] <- v[[j]]
                               }
                           }
                           v <- vm
