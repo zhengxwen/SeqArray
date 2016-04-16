@@ -142,11 +142,11 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 #######################################################################
 # Storage options for the SeqArray GDS file
 #
-seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
-    "ZIP_RA.fast", "ZIP_RA.max", "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max",
-    "none"), mode=NULL, float.mode="float32",
-    geno.compress=NULL, info.compress=NULL, format.compress=NULL,
-    index.compress=NULL, ...)
+seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
+    "ZIP_RA.max", "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max",
+    "LZMA_RA", "LZMA_RA.fast", "LZMA_RA.max", "none"), mode=NULL,
+    float.mode="float32", geno.compress=NULL, info.compress=NULL,
+    format.compress=NULL, index.compress=NULL, ...)
 {
     # check
     compression <- match.arg(compression)
@@ -164,6 +164,11 @@ seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
     if (!is.null(index.compress))
         stopifnot(is.character(index.compress), length(index.compress)==1L)
 
+    if (compression %in% c("ZIP_RA.max", "LZ4_RA.max", "LZMA_RA.max"))
+        suffix <- ":8M"
+    else
+        suffix <- ":2M"
+
     rv <- list(compression = compression,
         mode = mode, float.mode = float.mode,
         geno.compress = ifelse(is.null(geno.compress), compression,
@@ -171,7 +176,7 @@ seqStorageOption <- function(compression=c("ZIP_RA.default", "ZIP_RA",
         info.compress = ifelse(is.null(info.compress), compression,
             info.compress),
         format.compress = ifelse(is.null(format.compress),
-            ifelse(compression=="", "", paste(compression, ":8M", sep="")),
+            ifelse(compression=="", "", paste0(compression, suffix)),
             format.compress),
         index.compress = ifelse(is.null(index.compress), compression,
             index.compress),
@@ -210,10 +215,10 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             stop("'split' should be 'none' if 'gdsfile=NULL'.")
     }
 
-    if (is.null(cl) | identical(cl, FALSE) | identical(cl, 1L) | identical(cl, 1))
+    pnum <- .NumParallel(cl)
+    if (pnum <= 1L)
     {
-        #################################################################
-        # a single process
+        ## a single process
 
         if (.selection.flag)
         {
@@ -227,84 +232,9 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         } else
             ans <- FUN(gdsfile, ...)
 
-    } else if (identical(cl, TRUE) | is.numeric(cl))
-    {
-        # library
-        if (!requireNamespace("parallel"))
-            stop("the 'parallel' package should be installed.")
-
-        if (identical(cl, TRUE))
-        {
-            cl <- parallel::detectCores() - 1L
-            if (cl <= 1L) cl <- 2L
-        }
-        stopifnot(length(cl) == 1L)
-        if (cl <= 0L)
-            cl <- getOption("mc.cores", 2L)
-        if (.Platform$OS.type == "windows")
-            cl <- 1L
-        if (cl <= 0L)
-            stop("Invalid number of cores!")
-
-        if (split %in% c("by.variant", "by.sample"))
-        {
-            dm <- .seldim(gdsfile)
-            if (split == "by.variant")
-            {
-                if (dm[3L] <= 0) stop("No variants selected.")
-                if (cl > dm[2L]) cl <- dm[2L]
-            } else {
-                if (dm[2L] <= 0) stop("No samples selected.")
-                if (cl > dm[1L]) cl <- dm[1L]
-            }
-        }
-
-        ans <- parallel::mclapply(seq_len(cl),
-            mc.preschedule=FALSE, mc.cores=cl, mc.cleanup=TRUE,
-            FUN = function(i, .fun)
-            {
-                # export to global variables
-                assign(".process_index", i, envir = .GlobalEnv)
-                assign(".process_count", cl, envir = .GlobalEnv)
-
-                if (!is.null(gdsfile))
-                {
-                    sel <- .Call(SEQ_SplitSelection, gdsfile, split, i, cl,
-                        .selection.flag)
-
-                    # call the user-defined function
-                    if (.selection.flag)
-                        FUN(gdsfile, sel, ...)
-                    else
-                        FUN(gdsfile, ...)
-                } else {
-                    # call the user-defined function
-                    FUN(...)
-                }
-            }, .fun = FUN)
-
-        if (is.list(ans))
-        {
-            if (identical(.combine, "unlist"))
-            {
-                ans <- unlist(ans, recursive=FALSE)
-            } else if (is.function(.combine))
-            {
-                rv <- ans[[1]]
-                for (i in seq_len(length(ans)-1L) + 1L)
-                    rv <- .combine(rv, ans[[i]])
-                ans <- rv
-            }
-        }
-
     } else if (inherits(cl, "cluster"))
     {
-        #################################################################
-        # multiple processes
-
-        # library
-        if (!requireNamespace("parallel"))
-            stop("the 'parallel' package should be installed.")
+        ## multiple processes with a predefined cluster
 
         if (split %in% c("by.variant", "by.sample"))
         {
@@ -328,8 +258,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                 FUN, .split, .selection.flag, ...)
         {
             # export to global variables
-            assign(".process_index", .proc_idx, envir = .GlobalEnv)
-            assign(".process_count", .proc_cnt, envir = .GlobalEnv)
+            assign(".seq_process_index", .proc_idx, envir = .GlobalEnv)
+            assign(".seq_process_count", .proc_cnt, envir = .GlobalEnv)
 
             # load the package
             library("SeqArray")
@@ -366,8 +296,73 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
 
         if (is.list(ans) & identical(.combine, "unlist"))
             ans <- unlist(ans, recursive=FALSE)
+
     } else {
-        stop("Invalid 'cl' in seqParallel.")
+
+        ## multiple processes with a predefined number of cores
+
+        if (.Platform$OS.type == "windows")
+        {
+            # no forking on windows
+            cl <- parallel::makeCluster(pnum)
+            on.exit({ parallel::stopCluster(cl) })
+
+            return(seqParallel(cl, gdsfile, FUN, split, .combine,
+                .selection.flag, ...))
+        }
+
+        if (split %in% c("by.variant", "by.sample"))
+        {
+            dm <- .seldim(gdsfile)
+            if (split == "by.variant")
+            {
+                if (dm[3L] <= 0) stop("No variants selected.")
+                if (cl > dm[2L]) cl <- dm[2L]
+            } else {
+                if (dm[2L] <= 0) stop("No samples selected.")
+                if (cl > dm[1L]) cl <- dm[1L]
+            }
+        } else {
+            sel <- list(sample.sel=raw(), variant.sel=raw())
+        }
+
+        ans <- parallel::mclapply(seq_len(pnum),
+            mc.preschedule=FALSE, mc.cores=pnum, mc.cleanup=TRUE,
+            FUN = function(i, .fun)
+            {
+                # export to global variables
+                assign(".seq_process_index", i, envir = .GlobalEnv)
+                assign(".seq_process_count", cl, envir = .GlobalEnv)
+
+                if (!is.null(gdsfile))
+                {
+                    sel <- .Call(SEQ_SplitSelection, gdsfile, split, i, cl,
+                        .selection.flag)
+
+                    # call the user-defined function
+                    if (.selection.flag)
+                        FUN(gdsfile, sel, ...)
+                    else
+                        FUN(gdsfile, ...)
+                } else {
+                    # call the user-defined function
+                    FUN(...)
+                }
+            }, .fun = FUN)
+
+        if (is.list(ans))
+        {
+            if (identical(.combine, "unlist"))
+            {
+                ans <- unlist(ans, recursive=FALSE)
+            } else if (is.function(.combine))
+            {
+                rv <- ans[[1L]]
+                for (i in seq_len(length(ans)-1L) + 1L)
+                    rv <- .combine(rv, ans[[i]])
+                ans <- rv
+            }
+        }
     }
 
     # output
@@ -375,6 +370,37 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         invisible()
     else
         ans
+}
+
+
+seqParApply <- function(cl=getOption("seqarray.parallel", FALSE), x, FUN,
+    load.balancing=TRUE, ...)
+{
+    pnum <- .NumParallel(cl)
+    stopifnot(is.logical(load.balancing))
+
+    if (pnum <= 1L)
+    {
+        ## a single process
+        rv <- lapply(x, FUN, ...)
+    } else {
+        if (!inherits(cl, "cluster"))
+        {
+            if (.Platform$OS.type == "windows")
+                cl <- parallel::makeCluster(pnum)
+            else
+                cl <- parallel::makeForkCluster(pnum)
+            on.exit({ parallel::stopCluster(cl) })
+        }
+
+        # a load balancing version
+        if (isTRUE(load.balancing))
+            rv <- parallel::clusterApplyLB(cl, x, FUN, ...)
+        else
+            rv <- parallel::clusterApply(cl, x, FUN, ...)
+    }
+
+    rv
 }
 
 

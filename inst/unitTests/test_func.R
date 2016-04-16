@@ -86,6 +86,35 @@ test_allele_freq <- function()
 }
 
 
+test_random_genotype <- function()
+{
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
+
+	seqResetFilter(f)
+	gm <- seqGetData(f, "genotype")
+
+	set.seed(100)
+	for (i in 1:10)
+	{
+		x <- sample.int(dim(gm)[3L], round(dim(gm)[3L]/3))
+		y <- sample.int(dim(gm)[2L], round(dim(gm)[2L]/3))
+		seqSetFilter(f, variant.sel=x, sample.sel=y, verbose=FALSE)
+		m1 <- seqGetData(f, "genotype")
+
+		f1 <- rep(FALSE, dim(gm)[3L]); f1[x] <- TRUE
+		f2 <- rep(FALSE, dim(gm)[2L]); f2[y] <- TRUE
+		m2 <- gm[, f2, f1]
+		checkEquals(m1, m2, "genotype: random access")
+	}
+
+	# close the GDS file
+	seqClose(f)
+	invisible()
+}
+
+
 test_dosage <- function()
 {
 	# open the GDS file
@@ -109,5 +138,76 @@ test_dosage <- function()
 
 	# close the GDS file
 	seqClose(f)
+	invisible()
+}
+
+
+test_random_dosage <- function()
+{
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
+
+	seqResetFilter(f)
+	gm <- seqGetData(f, "$dosage")
+
+	set.seed(200)
+	for (i in 1:10)
+	{
+		x <- sample.int(dim(gm)[2L], round(dim(gm)[2L]/3))
+		y <- sample.int(dim(gm)[1L], round(dim(gm)[1L]/3))
+		seqSetFilter(f, variant.sel=x, sample.sel=y, verbose=FALSE)
+		m1 <- seqGetData(f, "$dosage")
+
+		f1 <- rep(FALSE, dim(gm)[2L]); f1[x] <- TRUE
+		f2 <- rep(FALSE, dim(gm)[1L]); f2[y] <- TRUE
+		m2 <- gm[f2, f1]
+		checkEquals(m1, m2, "dosage: random access")
+	}
+
+	# close the GDS file
+	seqClose(f)
+	invisible()
+}
+
+
+test_random_phase <- function()
+{
+	# open the GDS file
+	file.copy(seqExampleFileName("gds"), "test.gds", overwrite=TRUE)
+
+	f <- openfn.gds("test.gds", FALSE)
+	m <- read.gdsn(index.gdsn(f, "phase/data"))
+	s <- sample.int(2, length(m), TRUE) - 1L
+	dim(s) <- dim(m)
+	add.gdsn(index.gdsn(f, "phase"), "data", s, replace=TRUE)
+	closefn.gds(f)
+
+	f <- seqOpen("test.gds")
+	seqResetFilter(f)
+	gm <- seqGetData(f, "phase")
+
+	set.seed(300)
+	for (i in 1:10)
+	{
+		x <- sample.int(dim(gm)[2L], round(dim(gm)[2L]/3))
+		y <- sample.int(dim(gm)[1L], round(dim(gm)[1L]/3))
+		seqSetFilter(f, variant.sel=x, sample.sel=y, verbose=FALSE)
+		m1 <- seqGetData(f, "phase")
+
+		f1 <- rep(FALSE, dim(gm)[2L]); f1[x] <- TRUE
+		f2 <- rep(FALSE, dim(gm)[1L]); f2[y] <- TRUE
+		m2 <- gm[f2, f1]
+		checkEquals(m1, m2, "phasing information: random access (1)")
+
+		v <- seqApply(f, "phase", function(x) x, as.is="list")
+		m3 <- matrix(unlist(v), nrow=length(v[[1L]]))
+		checkEquals(m1, m3, "phasing information: random access (2)")
+	}
+
+	# close the GDS file
+	seqClose(f)
+	unlink("test.gds", force=TRUE)
+
 	invisible()
 }

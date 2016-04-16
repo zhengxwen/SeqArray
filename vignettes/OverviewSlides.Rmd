@@ -49,30 +49,29 @@ Thousands of gigabyte genetic data sets provide significant challenges in data m
 ## File Contents
 
 ```
-File: SeqArray/extdata/CEU_Exon.gds (396.3 KB)
-+    [  ] *
+File: SeqArray/extdata/CEU_Exon.gds (387.3K)
 |--+ description   [  ] *
-|--+ sample.id   { VStr8 90 ZIP_RA(30.83%), 222 bytes }
-|--+ variant.id   { Int32 1348 ZIP_RA(35.72%), 1.9 KB }
-|--+ position   { Int32 1348 ZIP_RA(86.44%), 4.7 KB }
-|--+ chromosome   { VStr8 1348 ZIP_RA(2.66%), 91 bytes }
-|--+ allele   { VStr8 1348 ZIP_RA(17.19%), 928 bytes }
+|--+ sample.id   { VStr8 90 ZIP_ra(30.8%), 222B }
+|--+ variant.id   { Int32 1348 ZIP_ra(35.7%), 1.9K }
+|--+ position   { Int32 1348 ZIP_ra(86.4%), 4.6K }
+|--+ chromosome   { VStr8 1348 ZIP_ra(2.66%), 91B }
+|--+ allele   { VStr8 1348 ZIP_ra(17.2%), 928B }
 |--+ genotype   [  ] *
-|  |--+ data   { Bit2 2x90x1348 ZIP_RA(28.39%), 17.2 KB }
+|  \--+ data   { Bit2 2x90x1348 ZIP_ra(28.4%), 16.8K } *
 |--+ phase   [  ]
-|  |--+ data   { Bit1 90x1348 ZIP_RA(0.36%), 55 bytes }
+|  \--+ data   { Bit1 90x1348 ZIP_ra(0.36%), 55B } *
 |--+ annotation   [  ]
-|  |--+ id   { VStr8 1348 ZIP_RA(41.02%), 6.0 KB }
-|  |--+ qual   { Float32 1348 ZIP_RA(0.91%), 49 bytes }
-|  |--+ filter   { Int32,factor 1348 ZIP_RA(0.89%), 48 bytes } *
+|  |--+ id   { VStr8 1348 ZIP_ra(41.0%), 5.8K }
+|  |--+ qual   { Float32 1348 ZIP_ra(0.91%), 49B }
+|  |--+ filter   { Int32,factor 1348 ZIP_ra(0.89%), 48B } *
 |  |--+ info   [  ]
-|  |  |--+ AA   { VStr8 1348 ZIP_RA(24.22%), 653 bytes } *
-|  |  |--+ HM2   { Bit1 1348 ZIP_RA(117.16%), 198 bytes } *
-|  |--+ format   [  ]
-|  |  |--+ DP   [  ] *
-|  |  |  |--+ data   { Int32 90x1348 ZIP_RA(33.83%), 164.2 KB }
-|--+ sample.annotation   [  ]
-|  |--+ family   { VStr8 90 ZIP_RA(34.70%), 135 bytes }
+|  |  |--+ AA   { VStr8 1348 ZIP_ra(24.2%), 653B } *
+|  |  \--+ HM2   { Bit1 1348 ZIP_ra(117.2%), 198B } *
+|  \--+ format   [  ]
+|     \--+ DP   [  ] *
+|        \--+ data   { Int32 90x1348 ZIP_ra(33.8%), 160.3K }
+\--+ sample.annotation   [  ]
+   \--+ family   { VStr8 90 ZIP_ra(34.7%), 135B }
 ```
 
 
@@ -192,7 +191,7 @@ system.time(
 
 **SeqArray will be of great interest to**
 
-- R users involved in data analyses of large-scale sequencing variants
+- R users involved in data analyses of large-scale sequence variants
 - particularly those with limited experience of parallel / high-performance computing
 
 **SeqVarTools (Bioconductor)**

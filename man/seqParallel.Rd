@@ -1,5 +1,6 @@
 \name{seqParallel}
 \alias{seqParallel}
+\alias{seqParApply}
 \title{Apply Functions in Parallel}
 \description{
     Applies a user-defined function in parallel.
@@ -8,6 +9,8 @@
 seqParallel(cl=getOption("seqarray.parallel", FALSE), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, ...)
+seqParApply(cl=getOption("seqarray.parallel", FALSE), x, FUN,
+    load.balancing=TRUE, ...)
 }
 \arguments{
     \item{cl}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
@@ -18,7 +21,7 @@ seqParallel(cl=getOption("seqarray.parallel", FALSE), gdsfile, FUN,
         See details}
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object, or \code{NULL}}
     \item{FUN}{the function to be applied, should be like
-        \code{FUN(gdsfile, ...)}}
+        \code{FUN(gdsfile, ...)} or \code{FUN(...)}}
     \item{split}{split the dataset by variant or sample according to multiple
         processes, or "none" for no split}
     \item{.combine}{define a fucntion for combining results from different
@@ -28,22 +31,25 @@ seqParallel(cl=getOption("seqarray.parallel", FALSE), gdsfile, FUN,
         function, like "+".}
     \item{.selection.flag}{\code{TRUE} -- passes a logical vector of selection
         to the second argument of \code{FUN(gdsfile, selection, ...)}}
+    \item{x}{a vector (atomic or list), passed to \code{FUN}}
+    \item{load.balancing}{if \code{TRUE}, call \code{\link{clusterApplyLB}}
+        instead of \code{\link{clusterApply}}}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{
     When \code{cl} is \code{TRUE} or a numeric value, forking techniques are
 used to create a new child process as a copy of the current R process, see
-\code{?parallel::mcfork}. However, forking is not available on Windows, so
-serial processing is used instead. In order to use multiple processes on
-Windows, users have to create a cluster object via \code{\link{makeCluster}}.
+\code{?parallel::mcfork}. However, forking is not available on Windows, and
+\code{\link{makeCluster}} is called to make a cluster which will be
+deallocated after calling \code{FUN}.
 
     It is strongly suggested to use \code{seqParallel} together with
 \code{seqParallelSetup}. \code{seqParallelSetup} could work around the problem
-of forking on Windows.
+of forking on Windows, without allocating clusters frequently.
 
     The user-defined function could use two predefined variables
-\code{.process_count} and \code{.process_index} to tell the total number of
-cluster nodes and which cluster node being used.
+\code{.seq_process_count} and \code{.seq_process_index} to tell the total
+number of cluster nodes and which cluster node being used.
 
     \code{seqParallel(, gdsfile=NULL, FUN=..., split="none")} might be used to
 setup multiple streams of pseudo-random numbers, and see
@@ -110,7 +116,7 @@ seqParallel(, gdsfile, FUN = function(f) {
 ################################################################
 
 seqParallel(, NULL, FUN = function() {
-        paste(.process_index, .process_count, sep="/")
+        paste(.seq_process_index, .seq_process_count, sep="/")
     }, split = "none")
 
 

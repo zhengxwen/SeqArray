@@ -118,33 +118,29 @@ static void SNPRelate_InitSelSNPOnly(C_BOOL *Sel, TParam *Param)
 static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 	C_UInt8 *OutBuf, TTypeGenoDim OutDim, TParam *Param)
 {
-	if (Param->Object && !dynamic_cast<CVarApplyByVariant*>(Param->Object))
+	if (Param->Object && !dynamic_cast<CApply_Variant_Dosage*>(Param->Object))
 	{
 		delete Param->Object;
 		Param->Object = NULL;
 	}
 
-	CVarApplyByVariant *Obj = (CVarApplyByVariant*)(Param->Object);
+	CApply_Variant_Dosage *Obj = (CApply_Variant_Dosage*)(Param->Object);
 	if (!Obj)
 	{
-		Obj = new CVarApplyByVariant;
+		Obj = new CApply_Variant_Dosage(GetFileInfo(Param->SeqGDSFile), true);
 		Param->Object = Obj;
-
-		CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
-		Obj->InitObject(CVariable::ctDosage, "genotype/data", File, true);
-
-		Param->GenoBuffer = new C_UInt8[Obj->Num_Sample];
+		Param->GenoBuffer = new C_UInt8[Obj->SampNum()];
 		Param->Index = 0;
 	}
 
 	if (Param->Index > SnpStart)
 	{
-		Obj->ResetObject();
+		Obj->Reset();
 		Param->Index = 0;
 	}
 	while (Param->Index < SnpStart)
 	{
-		Obj->NextCell();
+		Obj->Next();
 		Param->Index ++;
 	}
 
@@ -153,8 +149,8 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		for (int sn = SnpCount; sn > 0; sn--)
 		{
 			Obj->ReadDosage(OutBuf);
-			Obj->NextCell();
-			OutBuf += Obj->Num_Sample;
+			Obj->Next();
+			OutBuf += Obj->SampNum();
 			Param->Index ++;
 		}
 	} else {
@@ -162,12 +158,12 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		for (size_t sn = size; sn > 0; sn--)
 		{
 			Obj->ReadDosage(Param->GenoBuffer);
-			Obj->NextCell();
+			Obj->Next();
 			Param->Index ++;
 
 			C_UInt8 *g = (OutBuf ++);
 			C_UInt8 *p = Param->GenoBuffer;
-			for (size_t n=Obj->Num_Sample; n > 0; n--)
+			for (size_t n=Obj->SampNum(); n > 0; n--)
 			{
 				*g = *p ++;
 				g += size;
@@ -180,7 +176,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 	C_UInt8 *OutBuf, TTypeGenoDim OutDim, TParam *Param)
 {
-	if (dynamic_cast<CVarApplyByVariant*>(Param->Object))
+	if (dynamic_cast<CApply_Variant_Dosage*>(Param->Object))
 	{
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(Param->SeqGDSFile);
 		if (GDS_Node_Path(Root, "genotype/~data", FALSE))
@@ -207,36 +203,33 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			size_t SIZE = (Obj->Num_Variant) * (Obj->DLen[2]);
 			Param->GenoBuffer = new C_UInt8[SIZE];
 		} else {
-			CVarApplyByVariant *Obj = new CVarApplyByVariant;
+			CApply_Variant_Dosage *Obj = new CApply_Variant_Dosage(
+				GetFileInfo(Param->SeqGDSFile), true);
 			Param->Object = Obj;
-
-			CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
-			Obj->InitObject(CVariable::ctGenotype, "genotype/data", File, true);
-
-			size_t SIZE = (Obj->Num_Sample) * (Obj->DLen[2]);
+			size_t SIZE = (Obj->SampNum()) * (Obj->Ploidy());
 			Param->GenoBuffer = new C_UInt8[SIZE];
 		}
 		Param->Index = 0;
 	}	
 
 	// reading
-	if (dynamic_cast<CVarApplyByVariant*>(Param->Object))
+	if (dynamic_cast<CApply_Variant_Dosage*>(Param->Object))
 	{
-		CVarApplyByVariant *Obj = (CVarApplyByVariant*)(Param->Object);
-		Obj->ResetObject();
+		CApply_Variant_Dosage *Obj = (CApply_Variant_Dosage*)(Param->Object);
+		Obj->Reset();
 
 		if (OutDim == RDim_Sample_X_SNP)
 		{
 			do {
 				Obj->ReadGenoData(Param->GenoBuffer);
-				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->DLen[2]);
+				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->Ploidy());
 
 				for (size_t n=SampCount; n > 0; n--)
 				{
 					C_UInt8 *pp = p;
-					p += Obj->DLen[2];
+					p += Obj->Ploidy();
 					C_UInt8 val = 0;
-					for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
+					for (size_t m=Obj->Ploidy(); m > 0; m--, pp++)
 					{
 						if (*pp == 0)
 						{
@@ -249,21 +242,21 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 					}
 					*OutBuf ++ = val;
 				}
-			} while (Obj->NextCell());
+			} while (Obj->Next());
 
 		} else {
 			const size_t SNPNum = *Param->pSNPNum;
 			do {
 				Obj->ReadGenoData(Param->GenoBuffer);
-				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->DLen[2]);
+				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->Ploidy());
 				C_UInt8 *g = (OutBuf ++);
 
 				for (size_t n=SampCount; n > 0; n--)
 				{
 					C_UInt8 *pp = p;
-					p += Obj->DLen[2];
+					p += Obj->Ploidy();
 					C_UInt8 val = 0;
-					for (size_t m=Obj->DLen[2]; m > 0; m--, pp++)
+					for (size_t m=Obj->Ploidy(); m > 0; m--, pp++)
 					{
 						if (*pp == 0)
 						{
@@ -276,7 +269,7 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 					}
 					*g = val; g += SNPNum;
 				}
-			} while (Obj->NextCell());
+			} while (Obj->Next());
 		}
 
 	} else {
@@ -285,19 +278,19 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 		// indexing
 		if (Param->Index > SampStart)
 		{
-			Obj->ResetObject();
+			Obj->Reset();
 			Param->Index = 0;
 		}
 		while (Param->Index < SampStart)
 		{
-			Obj->NextCell();
+			Obj->Next();
 			Param->Index ++;
 		}
 
 		for (int sn = SampCount; sn > 0; sn--)
 		{
 			Obj->ReadGenoData(Param->GenoBuffer);
-			Obj->NextCell();
+			Obj->Next();
 			Param->Index ++;
 
 			if (OutDim == RDim_SNP_X_Sample)

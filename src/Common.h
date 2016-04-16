@@ -97,22 +97,6 @@ COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out);
 // Private functions
 // ===========================================================
 
-/// check CoreArray function
-inline static const char *SKIP(const char *p)
-{
-	while (isspace(*p)) p ++;
-	return p;
-}
-
-/// check CoreArray function
-inline static string SHORT_TEXT(const char *p, int MaxNum=16)
-{
-	if ((int)strlen(p) <= MaxNum)
-		return string(p);
-	else
-		return string(p, MaxNum) + "...";
-}
-
 /// get PdGDSObj from a SEXP object
 inline static void GDS_PATH_PREFIX_CHECK(const char *path)
 {

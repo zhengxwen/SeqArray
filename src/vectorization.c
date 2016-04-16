@@ -370,6 +370,36 @@ void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 
 
 // ===========================================================
+// functions for int16
+// ===========================================================
+
+/// shifting *p right by 2 bits, assuming p is 2-byte aligned
+void vec_i16_shr_b2(int16_t *p, size_t n)
+{
+#ifdef __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 1;
+	for (; (n > 0) && (h > 0); n--, h--)
+		*p++ >>= 2;
+
+	// body, SSE2
+	for (; n >= 8; n-=8, p+=8)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		_mm_store_si128((__m128i *)p, _mm_srli_epi16(v, 2));
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--)
+		*p++ >>= 2;
+}
+
+
+
+// ===========================================================
 // functions for int32
 // ===========================================================
 
@@ -378,7 +408,7 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 {
 	size_t ans = 0;
 
-#ifdef COREARRAY_REGISTER_BIT64
+#ifdef __LP64__
 	if (n > 2147483648U) // 2^31
 	{
 		while (n > 0)
@@ -453,7 +483,7 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 {
 	size_t n1 = 0, n2 = 0;
 
-#ifdef COREARRAY_REGISTER_BIT64
+#ifdef __LP64__
 	if (n > 2147483648U) // 2^31
 	{
 		size_t m1 = 0, m2 = 0;
@@ -739,4 +769,73 @@ void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
 			missing_substitute :
 			(p[0]==val ? 1 : 0) + (p[1]==val ? 1 : 0);
 	}
+}
+
+
+
+// ===========================================================
+// functions for char
+// ===========================================================
+
+const char *vec_char_find_CRLF(const char *p, size_t n)
+{
+#ifdef __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
+	for (; (n > 0) && (h > 0); n--, h--, p++)
+		if (*p=='\n' || *p=='\r') return p;
+
+	// body, SSE2
+	const __m128i mask1 = _mm_set1_epi8('\n');
+	const __m128i mask2 = _mm_set1_epi8('\r');
+
+#   ifdef __AVX2__
+
+	// header 2, 32-byte aligned
+	if ((n >= 16) && ((size_t)p & 0x10))
+	{
+		__m128i v  = _mm_load_si128((__m128i const*)p);
+		__m128i c1 = _mm_cmpeq_epi8(v, mask1);
+		__m128i c2 = _mm_cmpeq_epi8(v, mask2);
+		if (_mm_movemask_epi8(_mm_or_si128(c1, c2)))
+			goto tail;
+		n -= 16; p += 16;
+	}
+
+	// body, AVX2
+	const __m256i mask3 = _mm256_set1_epi8('\n');
+	const __m256i mask4 = _mm256_set1_epi8('\r');
+
+	for (; n >= 32; n-=32, p+=32)
+	{
+		__m256i v = _mm256_load_si256((__m256i const*)p);
+		__m256i c1 = _mm256_cmpeq_epi8(v, mask3);
+		__m256i c2 = _mm256_cmpeq_epi8(v, mask4);
+		if (_mm256_movemask_epi8(_mm256_or_si256(c1, c2)))
+			goto tail;
+	}
+
+#endif
+
+	for (; n >= 16; n-=16, p+=16)
+	{
+		__m128i v  = _mm_load_si128((__m128i const*)p);
+		__m128i c1 = _mm_cmpeq_epi8(v, mask1);
+		__m128i c2 = _mm_cmpeq_epi8(v, mask2);
+		if (_mm_movemask_epi8(_mm_or_si128(c1, c2)))
+			break;
+	}
+
+#ifdef __AVX2__
+tail:
+#endif
+
+#endif
+
+	// tail
+	for (; n > 0; n--, p++)
+		if (*p=='\n' || *p=='\r') break;
+
+	return p;
 }

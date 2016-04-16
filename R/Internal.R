@@ -104,6 +104,25 @@
     if (num > 1L) "s" else ""
 }
 
+.pretty_size <- function(s)
+{
+    size <- function(x)
+    {
+        if (x >= 1024^4)
+            sprintf("%.1fT", x / 1024^4)
+        else if (x >= 1024^3)
+            sprintf("%.1fG", x / 1024^3)
+        else if (x >= 1024^2)
+            sprintf("%.1fM", x / 1024^2)
+        else if (x >= 1024)
+            sprintf("%.1fK", x / 1024)
+        else
+            sprintf("%g bytes", x)
+    }
+
+    sapply(s, size)
+}
+
 
 
 #######################################################################
@@ -266,6 +285,38 @@
     if (!requireNamespace("parallel"))
         stop("The 'parallel' package should be installed.")
     invisible()
+}
+
+
+#######################################################################
+# need parallel? how many? return 1 if no parallel
+#
+.NumParallel <- function(cl)
+{
+    if (is.null(cl) | identical(cl, FALSE))
+    {
+        ans <- 1L
+    } else if (is.numeric(cl))
+    {
+        if (length(cl) != 1L)
+            stop("'parallel' should be length-one.")
+        .LoadParallelPackage()
+        if (cl <= 1) cl <- 1L
+        ans <- as.integer(cl)
+    } else if (isTRUE(cl))
+    {
+        .LoadParallelPackage()
+        ans <- parallel::detectCores() - 1L
+        if (ans <= 1L) ans <- 2L
+    } else if (inherits(cl, "cluster"))
+    {
+        .LoadParallelPackage()
+        ans <- length(cl)
+    } else
+        stop("Invalid 'parallel'.")
+    if (ans > 128L)
+        stop("It is unable to allocate resources for more than 128 nodes.")
+    ans
 }
 
 
@@ -507,16 +558,6 @@
         visible=visible)
     args <- c(args, eval(parse(text=paste("list(", storage.param, ")"))))
     do.call(add.gdsn, args)
-}
-
-
-
-#######################################################################
-# GDS node variable type
-#
-.DetectVarType <- function(srcfiles, varname)
-{
-    
 }
 
 

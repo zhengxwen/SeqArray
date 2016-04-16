@@ -325,7 +325,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 		TSelection &Sel = File.Selection();
 		C_BOOL *pArray = Sel.pSample();
 		int Count = File.SampleNum();
-		PdAbstractArray varSamp = File.GetObj("sample.id", TRUE);
 
 		if (Rf_isLogical(samp_sel) || IS_RAW(samp_sel))
 		{
@@ -544,7 +543,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 		TSelection &Sel = File.Selection();
 		C_BOOL *pArray = Sel.pVariant();
 		int Count = File.VariantNum();
-		PdAbstractArray varVariant = File.GetObj("variant.id", TRUE);
 
 		if (Rf_isLogical(var_sel) || IS_RAW(var_sel))
 		{
@@ -1048,40 +1046,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SelectFlag(SEXP select, SEXP len)
 	}
 
 	return rv_ans;
-}
-
-
-
-// ===========================================================
-// analysis
-// ===========================================================
-
-/// the number of alleles per site
-COREARRAY_DLL_EXPORT SEXP SEQ_NumOfAllele(SEXP allele_node)
-{
-	COREARRAY_TRY
-
-		// GDS nodes
-		PdAbstractArray N = GDS_R_SEXP2Obj(allele_node, TRUE);
-		if (GDS_Array_DimCnt(N) != 1)
-			throw ErrSeqArray("Invalid dimension of 'allele'!");
-		int Count = GetGDSObjCount(N, "allele");
-
-		// allocate integers
-		PROTECT(rv_ans = NEW_INTEGER(Count));
-		int *base = INTEGER(rv_ans);
-		string s;
-
-		for (C_Int32 i=0; i < Count; i ++)
-		{
-			static const C_Int32 ONE = 1;
-			GDS_Array_ReadData(N, &i, &ONE, &s, svStrUTF8);
-			base[i] = GetNumOfAllele(s.c_str());
-		}
-
-		UNPROTECT(1);
-
-	COREARRAY_CATCH
 }
 
 

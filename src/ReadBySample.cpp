@@ -42,10 +42,10 @@ static void GetFirstAndLength(C_BOOL *sel, size_t n, C_Int32 &st, C_Int32 &len)
 CVarApplyBySample::CVarApplyBySample()
 {
 	Node = NULL;
-	SampleSelect = NULL;
+	MarginalSelect = NULL;
 }
 
-void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
+void CVarApplyBySample::InitObject(TVarType Type, const char *Path, PdGDSObj Root,
 	int nVariant, C_BOOL *VariantSel, int nSample, C_BOOL *SampleSel,
 	bool _UseRaw)
 {
@@ -69,12 +69,12 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 		}
 	}
 
-	VarType = Type;
+	fVarType = Type;
 	SVType = GDS_Array_GetSVType(Node);
 	DimCnt = GDS_Array_DimCnt(Node);
 
 	TotalNum_Sample = nSample;
-	SampleSelect = SampleSel;
+	MarginalSelect = SampleSel;
 	Num_Variant = GetNumOfTRUE(VariantSel, nVariant);
 	UseRaw = _UseRaw;
 	NumOfBits = GDS_Array_GetBitOf(Node);
@@ -256,26 +256,26 @@ void CVarApplyBySample::InitObject(TType Type, const char *Path, PdGDSObj Root,
 			throw ErrSeqArray("Internal Error in 'CVarApplyBySample::InitObject'.");
 	}
 
-	ResetObject();
+	Reset();
 }
 
-void CVarApplyBySample::ResetObject()
+void CVarApplyBySample::Reset()
 {
-	CurIndex = 0;
-	if (!SampleSelect[0]) NextCell();
+	Position = 0;
+	if (!MarginalSelect[0]) Next();
 }
 
-bool CVarApplyBySample::NextCell()
+bool CVarApplyBySample::Next()
 {
-	CurIndex ++;
-	while ((CurIndex<TotalNum_Sample) && !SampleSelect[CurIndex])
-		CurIndex ++;
-	return (CurIndex < TotalNum_Sample);
+	Position ++;
+	while ((Position<TotalNum_Sample) && !MarginalSelect[Position])
+		Position ++;
+	return (Position < TotalNum_Sample);
 }
 
 void CVarApplyBySample::ReadGenoData(int *Base)
 {
-	C_Int32 st[3] = { CurIndex, VariantStart, 0 };
+	C_Int32 st[3] = { Position, VariantStart, 0 };
 	C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
 	C_UInt8 *s = &Init.GENO_BUFFER[0];
 
@@ -316,7 +316,7 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 
 void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
 {
-	C_Int32 st[3] = { CurIndex, VariantStart, 0 };
+	C_Int32 st[3] = { Position, VariantStart, 0 };
 	C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
 	C_UInt8 *s = &Init.GENO_BUFFER[0];
 
@@ -366,14 +366,14 @@ void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
 
 void CVarApplyBySample::ReadData(SEXP Val)
 {
-	if (VarType == ctGenotype)
+	if (fVarType == ctGenotype)
 	{
 		if (UseRaw)
 			ReadGenoData(RAW(Val));
 		else
 			ReadGenoData(INTEGER(Val));
 	} else {
-		C_Int32 st[3] = { CurIndex, VariantStart, 0 };
+		C_Int32 st[3] = { Position, VariantStart, 0 };
 		C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
 
 		if (COREARRAY_SV_INTEGER(SVType))
@@ -400,7 +400,7 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 		SEXP ans = R_NilValue, dim;
 		if (COREARRAY_SV_INTEGER(SVType))
 		{
-			if (VarType == ctGenotype)
+			if (fVarType == ctGenotype)
 			{
 				if (UseRaw)
 					PROTECT(ans = NEW_RAW(CellCount));
@@ -434,7 +434,7 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 		}
 
 		int *p;
-		switch (VarType)
+		switch (fVarType)
 		{
 		case ctGenotype:
 			p = INTEGER(dim = NEW_INTEGER(2));
@@ -537,7 +537,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 		{
 			// the path of GDS variable
 			string s = CHAR(STRING_ELT(var_name, i));
-			CVarApplyBySample::TType VarType;
+			CVarApplyBySample::TVarType VarType;
 
 			if (s == "sample.id")
 			{
@@ -643,7 +643,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			case 1:  // relative
 				INTEGER(R_Index)[0] = ans_index + 1; break;
 			case 2:
-				INTEGER(R_Index)[0] = NodeList.begin()->CurIndex + 1; break;
+				INTEGER(R_Index)[0] = NodeList.begin()->Position + 1; break;
 			}
 
 			if (NodeList.size() <= 1)
@@ -697,7 +697,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			// check the end
 			for (it=NodeList.begin(); it != NodeList.end(); it ++)
 			{
-				if (!it->NextCell())
+				if (!it->Next())
 					{ ifend = true; break; }
 			}
 
