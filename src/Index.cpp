@@ -413,7 +413,7 @@ bool CVarApplyList::CallNext()
 // GDS Variable Type
 // ===========================================================
 
-static int Progress_Num_Step = 50;
+static int Progress_ShowNum = 50;
 static int Progress_Line_Num = 100000;
 
 inline static void put_text(Rconnection conn, const char *fmt, ...)
@@ -424,30 +424,37 @@ inline static void put_text(Rconnection conn, const char *fmt, ...)
 	va_end(args);
 }
 
-CProgress::CProgress(C_Int64 count, SEXP conn, bool newline)
+CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 {
 	TotalCount = count;
-	Counter = 0;
+	Counter = (start >= 0) ? start : 0;
+	double percent;
 	if (conn)
 		File = My_R_GetConnection(conn);
 	else
 		File = NULL;
 	NewLine = newline;
+
 	if (count > 0)
 	{
-		_start = _step = (double)count / Progress_Num_Step;
+		int n = 100;
+		if (n > count) n = count;
+		if (n < 1) n = 1;
+		_start = _step = (double)count / n;
 		_hit = (C_Int64)(_start);
+		if (Counter > count) Counter = count;
+		percent = (double)Counter / count;
 	} else {
 		_start = _step = 0;
 		_hit = Progress_Line_Num;
+		percent = 0;
 	}
-	time(&start_timer);
-	ShowProgress();
-}
 
-void CProgress::ResetTimer()
-{
-	time(&start_timer);
+	time_t s; time(&s);
+	_timer.reserve(128);
+	_timer.push_back(pair<double, time_t>(percent, s));
+
+	ShowProgress();
 }
 
 void CProgress::Forward()
@@ -472,20 +479,24 @@ void CProgress::ShowProgress()
 	{
 		if (TotalCount > 0)
 		{
-			char ss[Progress_Num_Step + 1];
+			char ss[Progress_ShowNum + 1];
 			double percent = (double)Counter / TotalCount;
-			int n = (int)round(percent * Progress_Num_Step);
+			int n = (int)round(percent * Progress_ShowNum);
 			memset(ss, '.', sizeof(ss));
 			memset(ss, '=', n);
-			if (n < Progress_Num_Step-1) ss[n] = '>';
-			ss[Progress_Num_Step] = 0;
+			if (n < Progress_ShowNum) ss[n] = '>';
+			ss[Progress_ShowNum] = 0;
 
 			// ETC: estimated time to complete
-			time_t now;
-			time(&now);
-			double seconds = difftime(now, start_timer);
-			if (percent > 0)
-				seconds = seconds / percent * (1 - percent);
+			n = (int)_timer.size() - 20;  // 20% as a sliding window size
+			if (n < 0) n = 0;
+			time_t now; time(&now);
+			_timer.push_back(pair<double, time_t>(percent, now));
+
+			double seconds = difftime(now, _timer[n].second);
+			double diff = percent - _timer[n].first;
+			if (diff > 0)
+				seconds = seconds / diff * (1 - percent);
 			else
 				seconds = 999.9 * 60 * 60;
 			percent *= 100;
@@ -493,21 +504,29 @@ void CProgress::ShowProgress()
 			// show
 			if (NewLine)
 			{
-				if (seconds < 3600)
+				if (seconds < 60)
 				{
-					put_text(File, "[%s] (%.0f%%, ETC: %.1fm)\n", ss,
+					put_text(File, "[%s] %2.0f%%, ETC: %.0fs\n", ss,
+						percent, seconds);
+				} else if (seconds < 3600)
+				{
+					put_text(File, "[%s] %2.0f%%, ETC: %.1fm\n", ss,
 						percent, seconds/60);
 				} else {
-					put_text(File, "[%s] (%.0f%%, ETC: %.1fh)\n", ss,
+					put_text(File, "[%s] %2.0f%%, ETC: %.1fh\n", ss,
 						percent, seconds/(60*60));
 				}
 			} else {
-				if (seconds < 3600)
+				if (seconds < 60)
 				{
-					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fm)    ", ss,
+					put_text(File, "\r[%s] %2.0f%%, ETC: %.0fs  ", ss,
+						percent, seconds);
+				} else if (seconds < 3600)
+				{
+					put_text(File, "\r[%s] %2.0f%%, ETC: %.1fm  ", ss,
 						percent, seconds/60);
 				} else {
-					put_text(File, "\r[%s] (%.0f%%, ETC: %.1fh)    ", ss,
+					put_text(File, "\r[%s] %2.0f%%, ETC: %.1fh  ", ss,
 						percent, seconds/(60*60));
 				}
 				if (Counter >= TotalCount)
@@ -530,6 +549,57 @@ void CProgress::ShowProgress()
 			}
 		}
 		(*File->fflush)(File);
+	}
+}
+
+
+CProgressStdOut::CProgressStdOut(C_Int64 count, bool verbose):
+	CProgress(0, count, NULL, false)
+{
+	if (count < 0)
+		throw ErrSeqArray("%s, 'count' should be greater than zero.", __func__);
+	Verbose = verbose;
+	ShowProgress();
+}
+
+void CProgressStdOut::ShowProgress()
+{
+	if (Verbose && (TotalCount > 0))
+	{
+		char ss[Progress_ShowNum + 1];
+		double percent = (double)Counter / TotalCount;
+		int n = (int)round(percent * Progress_ShowNum);
+		memset(ss, '.', sizeof(ss));
+		memset(ss, '=', n);
+		if (n < Progress_ShowNum) ss[n] = '>';
+		ss[Progress_ShowNum] = 0;
+
+		// ETC: estimated time to complete
+		n = (int)_timer.size() - 20;  // 20% as a sliding window size
+		if (n < 0) n = 0;
+		time_t now; time(&now);
+		_timer.push_back(pair<double, time_t>(percent, now));
+
+		double seconds = difftime(now, _timer[n].second);
+		double diff = percent - _timer[n].first;
+		if (diff > 0)
+			seconds = seconds / diff * (1 - percent);
+		else
+			seconds = 999.9 * 60 * 60;
+		percent *= 100;
+
+		// show
+		if (seconds < 60)
+		{
+			Rprintf("\r[%s] %2.0f%%, ETC: %.0fs  ", ss, percent, seconds);
+		} else if (seconds < 3600)
+		{
+			Rprintf("\r[%s] %2.0f%%, ETC: %.1fm  ", ss, percent, seconds/60);
+		} else {
+			Rprintf("\r[%s] %2.0f%%, ETC: %.1fh  ", ss, percent, seconds/(60*60));
+		}
+		if (Counter >= TotalCount)
+			Rprintf("\n");
 	}
 }
 

@@ -78,6 +78,7 @@ SEXP CApply_Variant_Basic::NeedRData(int &nProtected)
 CApply_Variant_Geno::CApply_Variant_Geno():
 	CVarApply()
 {
+	fVarType = ctGenotype;
 	SiteCount = CellCount = 0;
 	_SampNum = 0; _Ploidy = 0;
 	UseRaw = FALSE;
@@ -87,6 +88,7 @@ CApply_Variant_Geno::CApply_Variant_Geno():
 CApply_Variant_Geno::CApply_Variant_Geno(CFileInfo &File, bool use_raw):
 	CVarApply()
 {
+	fVarType = ctGenotype;
 	Init(File, use_raw);
 }
 
@@ -95,7 +97,6 @@ void CApply_Variant_Geno::Init(CFileInfo &File, bool use_raw)
 	static const char *VAR_NAME = "genotype/data";
 
 	// initialize
-	fVarType = ctGenotype;
 	Node = File.GetObj(VAR_NAME, TRUE);
 
 	// check
@@ -349,6 +350,7 @@ void CApply_Variant_Dosage::ReadDosage(C_UInt8 *Base)
 CApply_Variant_Phase::CApply_Variant_Phase():
 	CVarApply()
 {
+	fVarType = ctPhase;
 	SiteCount = CellCount = 0;
 	_SampNum = 0; _Ploidy = 0;
 	UseRaw = FALSE;
@@ -358,6 +360,7 @@ CApply_Variant_Phase::CApply_Variant_Phase():
 CApply_Variant_Phase::CApply_Variant_Phase(CFileInfo &File, bool use_raw):
 	CVarApply()
 {
+	fVarType = ctPhase;
 	Init(File, use_raw);
 }
 
@@ -366,7 +369,6 @@ void CApply_Variant_Phase::Init(CFileInfo &File, bool use_raw)
 	static const char *VAR_NAME = "phase/data";
 
 	// initialize
-	fVarType = ctPhase;
 	Node = File.GetObj(VAR_NAME, TRUE);
 
 	// check
@@ -436,8 +438,58 @@ SEXP CApply_Variant_Phase::NeedRData(int &nProtected)
 
 
 
+// =====================================================================
+// Object for reading format variables variant by variant
+
+/*
+CApply_Variant_Format::CApply_Variant_Format()
+{
+	fVarType = ctFormat;
+	
+}
+
+CApply_Variant_Format::CApply_Variant_Format(CFileInfo &File,
+	const char *var_name, bool use_raw)
+{
+	fVarType = ctFormat;
+	Init(File, var_name, use_raw);
+}
+
+void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name,
+	bool use_raw)
+{
 
 
+			if ((DimCnt!=2) && (DimCnt!=3))
+				throw ErrSeqArray(ERR_DIM, Path);
+			GDS_Array_GetDim(Node, DLen, 3);
+
+			Path2 = GDS_PATH_PREFIX(Path, '@');
+			IndexNode = File.GetObj(Path2.c_str(), FALSE);
+			if (IndexNode != NULL)
+			{
+				if ((GDS_Array_DimCnt(IndexNode) != 1) || (GDS_Array_GetTotalCount(IndexNode) != nVariant))
+					throw ErrSeqArray(ERR_DIM, Path2.c_str());
+			} else
+				throw ErrSeqArray("'%s' is missing!", Path2.c_str());
+
+			SelPtr[1] = Sel.pSample();
+			if (DimCnt > 2)
+				SelPtr[2] = NeedTRUEs(DLen[2]);
+			break;
+}
+
+void CApply_Variant_Format::ReadData(SEXP val)
+{
+
+}
+
+SEXP CApply_Variant_Format::NeedRData(int &nProtected)
+{
+
+}
+
+*/
 
 
 
@@ -757,6 +809,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	if (use_raw_flag == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
 
+	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
+	if (prog_flag == NA_LOGICAL)
+		error("'.progress' must be TRUE or FALSE.");
+
 	int dup_flag = Rf_asLogical(RGetListElement(param, "list_dup"));
 	if (dup_flag == NA_LOGICAL)
 		error("'.list_dup' must be TRUE or FALSE.");
@@ -914,6 +970,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// ===========================================================
 		// for-loop calling
 
+		CProgressStdOut progress(nVariant, prog_flag);
+
 		int ans_index = 0;
 		do {
 			switch (VarIdx)
@@ -1011,6 +1069,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				break;
 			}
 			ans_index ++;
+
+			progress.Forward();
 
 		// check the end
 		} while (NodeList.CallNext());

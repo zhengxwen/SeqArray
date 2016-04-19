@@ -406,7 +406,7 @@ private:
 };
 
 
-class CVarApplyList: public vector<CVarApply*>
+class COREARRAY_DLL_LOCAL CVarApplyList: public vector<CVarApply*>
 {
 public:
 	~CVarApplyList();
@@ -424,20 +424,29 @@ public:
 class COREARRAY_DLL_LOCAL CProgress
 {
 public:
-	CProgress(C_Int64 count, SEXP conn, bool newline);
+	CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline);
 
-	void ResetTimer();
 	void Forward();
-	void ShowProgress();
+	virtual void ShowProgress();
 
-private:
+protected:
 	C_Int64 TotalCount;  ///< the total number
 	C_Int64 Counter;  ///< the current counter
 	Rconnection File;  ///< R connection
 	bool NewLine;
 	double _start, _step;
 	C_Int64 _hit;
-	time_t start_timer;
+	vector< pair<double, time_t> > _timer;
+};
+
+class COREARRAY_DLL_LOCAL CProgressStdOut: public CProgress
+{
+public:
+	CProgressStdOut(C_Int64 count, bool verbose);
+	virtual void ShowProgress();
+
+protected:
+	bool Verbose;
 };
 
 

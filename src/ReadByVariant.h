@@ -132,6 +132,38 @@ public:
 
 
 // =====================================================================
+/*
+/// Object for reading format variables variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Format: public CVarApply
+{
+protected:
+	CIndex<C_UInt8> *VarIndex;  ///< indexing the format variable
+	ssize_t SiteCount;  ///< the total number of entries at a site
+	ssize_t CellCount;  ///< the selected number of entries at a site
+	ssize_t _SampNum;   ///< the number of selected samples
+	int _Ploidy;  ///< ploidy
+
+	C_SVType SVType;        ///< data type for GDS reading
+	C_BOOL *SelPtr[3];      ///< pointers to selection
+	bool UseRaw;  ///< whether use RAW type
+	map<size_t, SEXP> VarList; ///< a list of SEXP variables
+
+public:
+	/// constructor
+	CApply_Variant_Format();
+	CApply_Variant_Format(CFileInfo &File, const char *var_name, bool use_raw);
+
+	void Init(CFileInfo &File, const char *var_name, bool use_raw);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+
+	inline int SampNum() const { return _SampNum; }
+};
+*/
+
+
+// =====================================================================
 
 /// Object for reading a variable variant by variant
 class COREARRAY_DLL_LOCAL CApplyByVariant: public CVarApply
