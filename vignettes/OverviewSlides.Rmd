@@ -1,12 +1,12 @@
 ---
 title: "SeqArray Overview"
 author: "Dr. Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
-date: "JSM 2013 / Updated on Mar 4, 2016"
+date: "JSM 2013 / Updated on Apr 20, 2016"
 output: slidy_presentation
 vignette: >
   %\VignetteIndexEntry{SeqArray Overview}
   %\VignetteDepends{gdsfmt}
-  %\VignetteKeywords{GWAS, whole-genome, sequencing, SNV}
+  %\VignetteKeywords{GWAS, Whole-genome, Sequencing, SNV}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 

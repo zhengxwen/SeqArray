@@ -19,7 +19,7 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Common.h"
+#include "Index.h"
 
 #include <set>
 #include <algorithm>

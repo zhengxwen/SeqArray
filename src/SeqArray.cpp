@@ -19,7 +19,7 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Common.h"
+#include "Index.h"
 
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
@@ -33,103 +33,8 @@
 
 
 // ===========================================================
-// The Initialized Object
-// ===========================================================
-
-TInitObject::TInitObject(): GENO_BUFFER(1024)
-{
-	memset(TRUE_ARRAY, TRUE, sizeof(TRUE_ARRAY));
-}
-
-void TInitObject::Need_GenoBuffer(size_t size)
-{
-	if (size > GENO_BUFFER.size())
-		GENO_BUFFER.resize(size);
-}
-
-TInitObject Init;
-
-
-
-// ===========================================================
 // Library Functions
 // ===========================================================
-
-/// Get the total count requiring the number of dimension is one
-COREARRAY_DLL_LOCAL int GetGDSObjCount(PdAbstractArray Obj, const char *varname)
-{
-	if (GDS_Array_DimCnt(Obj) != 1)
-		throw SeqArray::ErrSeqArray("Invalid dimension of '%s'!", varname);
-	return GDS_Array_GetTotalCount(Obj);
-}
-
-/// Get the number of alleles
-COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list)
-{
-	int n = 0;
-	while (*allele_list)
-	{
-		if (*allele_list != ',')
-		{
-			n ++;
-			while ((*allele_list != ',') && (*allele_list != 0))
-				allele_list ++;
-			if (*allele_list == ',')
-			{
-				allele_list ++;
-				if (*allele_list == 0)
-				{
-					n ++;
-					break;
-				}
-			}
-		}
-	}
-	return n;
-}
-
-/// Get the index in an allele list
-COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list)
-{
-	const size_t len = strlen(allele);
-	const char *st = allele_list;
-	int idx = 0;
-	while (*allele_list)
-	{
-		while ((*allele_list != ',') && (*allele_list != 0))
-			allele_list ++;
-		size_t n = allele_list - st;
-		if ((len==n) && (strncmp(allele, st, n)==0))
-			return idx;
-		if (*allele_list == ',')
-		{
-			idx ++;
-			allele_list ++;
-			st = allele_list;
-		}
-	}
-	return -1;
-}
-
-/// Get strings split by comma
-COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out)
-{
-	out.clear();
-	const char *p, *s;
-	p = s = alleles;
-	do {
-		if ((*p == 0) || (*p == ','))
-		{
-			out.push_back(string(s, p));
-			if (*p == ',') p ++;
-			s = p;
-			if (*p == 0) break;
-		}
-		p ++;
-	} while (1);
-}
-
-
 
 extern "C"
 {

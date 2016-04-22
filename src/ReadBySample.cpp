@@ -148,7 +148,7 @@ void CVarApplyBySample::InitObject(TVarType Type, const char *Path, PdGDSObj Roo
 			}
 
 			CellCount *= DLen[2];
-			Init.Need_GenoBuffer(CellCount);
+			GENO_BUFFER.resize(CellCount);
 
 			SelPtr[0] = NeedTRUEs(1);
 			SelPtr[1] = &Selection[0];
@@ -277,7 +277,7 @@ void CVarApplyBySample::ReadGenoData(int *Base)
 {
 	C_Int32 st[3] = { Position, VariantStart, 0 };
 	C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
-	C_UInt8 *s = &Init.GENO_BUFFER[0];
+	C_UInt8 *s = &GENO_BUFFER[0];
 
 	GDS_Array_ReadDataEx(Node, st, cn, SelPtr, s, svUInt8);
 	const int bit_mask = ~((-1) << NumOfBits);
@@ -318,7 +318,7 @@ void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
 {
 	C_Int32 st[3] = { Position, VariantStart, 0 };
 	C_Int32 cn[3] = { 1, VariantCount, DLen[2] };
-	C_UInt8 *s = &Init.GENO_BUFFER[0];
+	C_UInt8 *s = &GENO_BUFFER[0];
 
 	GDS_Array_ReadDataEx(Node, st, cn, SelPtr, s, svUInt8);
 	const int bit_mask = ~((-1) << NumOfBits);

@@ -52,6 +52,10 @@ extern "C"
 COREARRAY_DLL_LOCAL Rconnection My_R_GetConnection(SEXP x);
 #define R_GetConnection My_R_GetConnection
 #endif
+
+
+/// define missing value of RAW
+#define NA_RAW     0xFF
 }
 
 
@@ -455,6 +459,9 @@ protected:
 // Define Functions
 // ===========================================================
 
+/// Get the number of TRUEs
+#define GetNumOfTRUE(ptr, n)    vec_i8_cnt_nonzero((C_Int8*)(ptr), n)
+
 /// return the length in val, it is safe to call when val=R_NilValue
 COREARRAY_DLL_LOCAL size_t RLength(SEXP val);
 
@@ -473,6 +480,25 @@ COREARRAY_DLL_LOCAL const char *PrettyInt(int val);
 
 /// Text matching, return -1 when no maching
 COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[]);
+
+/// Get the number of alleles
+COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list);
+
+/// Get the index in an allele list
+COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list);
+
+/// Get strings split by comma
+COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out);
+
+
+/// get PdGDSObj from a SEXP object
+COREARRAY_DLL_LOCAL void GDS_PATH_PREFIX_CHECK(const char *path);
+
+/// check variable name
+COREARRAY_DLL_LOCAL void GDS_VARIABLE_NAME_CHECK(const char *p);
+
+/// get PdGDSObj from a SEXP object
+COREARRAY_DLL_LOCAL string GDS_PATH_PREFIX(const string &path, char prefix);
 
 
 

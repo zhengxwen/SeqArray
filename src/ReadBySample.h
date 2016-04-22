@@ -19,7 +19,7 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Common.h"
+#include "Index.h"
 
 
 namespace SeqArray
@@ -41,6 +41,7 @@ protected:
 	bool UseRaw;            ///< whether use RAW type
 
 	vector<C_BOOL> Selection;  ///< the buffer of selection
+	vector<C_UInt8> GENO_BUFFER;  /// the buffer of genotypes
 
 public:
 	int TotalNum_Sample;    ///< the total number of samples
