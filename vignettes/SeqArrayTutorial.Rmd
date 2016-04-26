@@ -120,7 +120,7 @@ The optional folders include `phase` (phasing information), `annotation`, and `s
 1. `id`, ID semi-colon separated list of unique identifiers where available. If this is a dbSNP variant it is encouraged to use the rs number(s). No identifier should be present in more than one data record. If there is no identifier available, then a blank string is used.
 2. `qual`, phred-scaled quality score for the assertion made in ALT.
 3. `filter`, PASS if this position has passed all filters, i.e. a call is made at this position.
-4. `info`, additional information for each variant, according to the INFO field in a VCF file,
+4. `info`, a vector or a matrix, additional information for each variant, according to the INFO field in a VCF file,
     1. `VARIABLE_NAME`, variable. If it is fixed-length, missing value indicates that there is no entry for that variant in the VCF file.
     2. `@VARIABLE_NAME` (*optional*). If `VARIABLE_NAME` is variable-length, one-dimensional array. The prefix `@` is used to indicate the index data. It should be equal-size as `variant.id`, which is used to specify the data size of each variant.
     3. `OTHER_VARIABLES`, ...

@@ -81,7 +81,7 @@ CApply_Variant_Geno::CApply_Variant_Geno():
 {
 	fVarType = ctGenotype;
 	SiteCount = CellCount = 0;
-	_SampNum = 0; _Ploidy = 0;
+	SampNum = 0; Ploidy = 0;
 	UseRaw = FALSE;
 	VarGeno = NULL;
 }
@@ -113,9 +113,9 @@ void CApply_Variant_Geno::Init(CFileInfo &File, bool use_raw)
 	MarginalSelect = File.Selection().pVariant();
 	GenoIndex = &File.GenoIndex();
 	SiteCount = ssize_t(DLen[1]) * DLen[2];
-	_SampNum = File.SampleSelNum();
-	CellCount = _SampNum * DLen[2];
-	_Ploidy = File.Ploidy();
+	SampNum = File.SampleSelNum();
+	CellCount = SampNum * DLen[2];
+	Ploidy = File.Ploidy();
 	UseRaw = use_raw;
 
 	// initialize selection
@@ -230,7 +230,7 @@ SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
 
 		SEXP dim = NEW_INTEGER(2);
 		int *p = INTEGER(dim);
-		p[0] = _Ploidy; p[1] = _SampNum;
+		p[0] = Ploidy; p[1] = SampNum;
 		SET_DIM(VarGeno, dim);
 
 		SEXP name_list = PROTECT(NEW_LIST(2));
@@ -280,7 +280,7 @@ SEXP CApply_Variant_Dosage::NeedRData(int &nProtected)
 {
 	if (VarGeno == NULL)
 	{
-		VarGeno = UseRaw ? NEW_RAW(_SampNum) : NEW_INTEGER(_SampNum);
+		VarGeno = UseRaw ? NEW_RAW(SampNum) : NEW_INTEGER(SampNum);
 		PROTECT(VarGeno);
 		nProtected ++;
 	}
@@ -293,14 +293,14 @@ void CApply_Variant_Dosage::ReadDosage(int *Base)
 	int missing = _ReadGenoData(p);
 
 	// count the number of reference allele
-	if (_Ploidy == 2) // diploid
+	if (Ploidy == 2) // diploid
 	{
-		vec_i32_cnt_dosage2(p, Base, _SampNum, 0, missing, NA_INTEGER);
+		vec_i32_cnt_dosage2(p, Base, SampNum, 0, missing, NA_INTEGER);
 	} else {
-		for (int n=_SampNum; n > 0; n--)
+		for (int n=SampNum; n > 0; n--)
 		{
 			int cnt = 0;
-			for (int m=_Ploidy; m > 0; m--, p++)
+			for (int m=Ploidy; m > 0; m--, p++)
 			{
 				if (*p == 0)
 				{
@@ -320,16 +320,16 @@ void CApply_Variant_Dosage::ReadDosage(C_UInt8 *Base)
 	C_UInt8 missing = _ReadGenoData(p);
 
 	// count the number of reference allele
-	if (_Ploidy == 2) // diploid
+	if (Ploidy == 2) // diploid
 	{
-		vec_i8_cnt_dosage2((int8_t *)p, (int8_t *)Base, _SampNum, 0,
+		vec_i8_cnt_dosage2((int8_t *)p, (int8_t *)Base, SampNum, 0,
 			missing, NA_RAW);
 	} else {
 		C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
-		for (int n=_SampNum; n > 0; n--)
+		for (int n=SampNum; n > 0; n--)
 		{
 			C_UInt8 cnt = 0;
-			for (int m=_Ploidy; m > 0; m--, p++)
+			for (int m=Ploidy; m > 0; m--, p++)
 			{
 				if (*p == 0)
 				{
@@ -353,7 +353,7 @@ CApply_Variant_Phase::CApply_Variant_Phase():
 {
 	fVarType = ctPhase;
 	SiteCount = CellCount = 0;
-	_SampNum = 0; _Ploidy = 0;
+	SampNum = 0; Ploidy = 0;
 	UseRaw = FALSE;
 	VarPhase = NULL;
 }
@@ -385,9 +385,9 @@ void CApply_Variant_Phase::Init(CFileInfo &File, bool use_raw)
 	MarginalSize = File.VariantNum();
 	MarginalSelect = File.Selection().pVariant();
 	SiteCount = ssize_t(DLen[1]) * DLen[2];
-	_SampNum = File.SampleSelNum();
-	CellCount = _SampNum * DLen[2];
-	_Ploidy = File.Ploidy();
+	SampNum = File.SampleSelNum();
+	CellCount = SampNum * DLen[2];
+	Ploidy = File.Ploidy();
 	UseRaw = use_raw;
 
 	// initialize selection
@@ -426,11 +426,11 @@ SEXP CApply_Variant_Phase::NeedRData(int &nProtected)
 		VarPhase = UseRaw ? NEW_RAW(CellCount) : NEW_INTEGER(CellCount);
 		PROTECT(VarPhase);
 		nProtected ++;
-		if (_Ploidy > 2)
+		if (Ploidy > 2)
 		{
 			SEXP dim = NEW_INTEGER(2);
 			int *p = INTEGER(dim);
-			p[0] = _Ploidy-1; p[1] = _SampNum;
+			p[0] = Ploidy-1; p[1] = SampNum;
 			SET_DIM(VarPhase, dim);
 		}
 	}
@@ -560,7 +560,7 @@ void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name)
 	MarginalSize = File.VariantNum();
 	MarginalSelect = File.Selection().pVariant();
 	VarIndex = &File.VarIndex(GDS_PATH_PREFIX(var_name, '@'));
-	_SampNum = File.SampleSelNum();
+	SampNum = File.SampleSelNum();
 	_TotalSampNum = File.SampleNum();
 
 	// initialize selection
@@ -608,10 +608,10 @@ SEXP CApply_Variant_Format::NeedRData(int &nProtected)
 	map<int, SEXP>::iterator it = VarList.find(NumIndexRaw);
 	if (it == VarList.end())
 	{
-		SEXP ans = RObject_GDS(Node, _SampNum*NumIndexRaw, nProtected, false);
+		SEXP ans = RObject_GDS(Node, SampNum*NumIndexRaw, nProtected, false);
 		SEXP dim = NEW_INTEGER(2);
 		int *p = INTEGER(dim);
-		p[0] = _SampNum; p[1] = NumIndexRaw;
+		p[0] = SampNum; p[1] = NumIndexRaw;
 		SET_DIM(ans, dim);
 
 		SEXP name_list = PROTECT(NEW_LIST(2));

@@ -129,7 +129,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 	{
 		Obj = new CApply_Variant_Dosage(GetFileInfo(Param->SeqGDSFile), true);
 		Param->Object = Obj;
-		Param->GenoBuffer = new C_UInt8[Obj->SampNum()];
+		Param->GenoBuffer = new C_UInt8[Obj->SampNum];
 		Param->Index = 0;
 	}
 
@@ -150,7 +150,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 		{
 			Obj->ReadDosage(OutBuf);
 			Obj->Next();
-			OutBuf += Obj->SampNum();
+			OutBuf += Obj->SampNum;
 			Param->Index ++;
 		}
 	} else {
@@ -163,7 +163,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 
 			C_UInt8 *g = (OutBuf ++);
 			C_UInt8 *p = Param->GenoBuffer;
-			for (size_t n=Obj->SampNum(); n > 0; n--)
+			for (size_t n=Obj->SampNum; n > 0; n--)
 			{
 				*g = *p ++;
 				g += size;
@@ -206,7 +206,7 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			CApply_Variant_Dosage *Obj = new CApply_Variant_Dosage(
 				GetFileInfo(Param->SeqGDSFile), true);
 			Param->Object = Obj;
-			size_t SIZE = (Obj->SampNum()) * (Obj->Ploidy());
+			size_t SIZE = (Obj->SampNum) * (Obj->Ploidy);
 			Param->GenoBuffer = new C_UInt8[SIZE];
 		}
 		Param->Index = 0;
@@ -222,14 +222,14 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 		{
 			do {
 				Obj->ReadGenoData(Param->GenoBuffer);
-				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->Ploidy());
+				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->Ploidy);
 
 				for (size_t n=SampCount; n > 0; n--)
 				{
 					C_UInt8 *pp = p;
-					p += Obj->Ploidy();
+					p += Obj->Ploidy;
 					C_UInt8 val = 0;
-					for (size_t m=Obj->Ploidy(); m > 0; m--, pp++)
+					for (size_t m=Obj->Ploidy; m > 0; m--, pp++)
 					{
 						if (*pp == 0)
 						{
@@ -248,15 +248,15 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			const size_t SNPNum = *Param->pSNPNum;
 			do {
 				Obj->ReadGenoData(Param->GenoBuffer);
-				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->Ploidy());
+				C_UInt8 *p = Param->GenoBuffer + (SampStart * Obj->Ploidy);
 				C_UInt8 *g = (OutBuf ++);
 
 				for (size_t n=SampCount; n > 0; n--)
 				{
 					C_UInt8 *pp = p;
-					p += Obj->Ploidy();
+					p += Obj->Ploidy;
 					C_UInt8 val = 0;
-					for (size_t m=Obj->Ploidy(); m > 0; m--, pp++)
+					for (size_t m=Obj->Ploidy; m > 0; m--, pp++)
 					{
 						if (*pp == 0)
 						{

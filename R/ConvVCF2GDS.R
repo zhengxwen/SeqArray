@@ -714,14 +714,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     put.attr.gdsn(varGeno, "Description", geno_format$Description[1L])
 
     # add data to the folder of genotype
-    if (header$ploidy > 1L)
+    if (header$ploidy > 0L)
     {
         geno.node <- .AddVar(storage.option, varGeno, "data",
             storage=genotype.storage, valdim=c(header$ploidy, nSamp, 0L))
-    } else {
-        geno.node <- .AddVar(storage.option, varGeno, "data",
-            storage=genotype.storage, valdim=c(1L, nSamp, 0L))
-    }
+    } else
+        stop("Invalid ploidy.")
     node <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
         visible=FALSE)
 
@@ -738,19 +736,21 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     {
         # add data
         if (header$ploidy > 2L)
-        {
-            .AddVar(storage.option, varPhase, "data", storage="bit1",
-                valdim=c(header$ploidy-1L, nSamp, 0L))
-        } else {
-            .AddVar(storage.option, varPhase, "data", storage="bit1",
-                valdim=c(nSamp, 0L))
-        }
+            dm <- c(header$ploidy-1L, nSamp, 0L)
+        else if (header$ploidy > 1L)
+            dm <- c(nSamp, 0L)
+        else
+            dm <- NULL
 
-        node <- .AddVar(storage.option, varPhase, "extra.index",
-            storage="int32", valdim=c(3L,0L))
-        put.attr.gdsn(node, "R.colnames",
-            c("sample.index", "variant.index", "length"))
-        .AddVar(storage.option, varPhase, "extra", storage="bit1")
+        if (!is.null(dm))
+        {
+            .AddVar(storage.option, varPhase, "data", storage="bit1", valdim=dm)
+            node <- .AddVar(storage.option, varPhase, "extra.index",
+                storage="int32", valdim=c(3L,0L))
+            put.attr.gdsn(node, "R.colnames",
+                c("sample.index", "variant.index", "length"))
+            .AddVar(storage.option, varPhase, "extra", storage="bit1")
+        }
     }
 
 

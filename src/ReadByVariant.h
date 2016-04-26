@@ -53,8 +53,6 @@ protected:
 	CIndex<C_UInt8> *GenoIndex;  ///< indexing genotypes
 	ssize_t SiteCount;  ///< the total number of entries at a site
 	ssize_t CellCount;  ///< the selected number of entries at a site
-	ssize_t _SampNum;   ///< the number of selected samples
-	int _Ploidy;  ///< ploidy
 	bool UseRaw;  ///< whether use RAW type
 	vector<C_BOOL> Selection;  ///< the buffer of selection
 	AUTO_PTR ExtPtr;           ///< a pointer to the additional buffer
@@ -64,6 +62,9 @@ protected:
 	inline C_UInt8 _ReadGenoData(C_UInt8 *Base);
 
 public:
+	ssize_t SampNum;  ///< the number of selected samples
+	int Ploidy;       ///< ploidy
+
 	/// constructor
 	CApply_Variant_Geno();
 	CApply_Variant_Geno(CFileInfo &File, bool use_raw);
@@ -77,9 +78,6 @@ public:
 	void ReadGenoData(int *Base);
 	/// read genotypes in unsigned 8-bit intetger
 	void ReadGenoData(C_UInt8 *Base);
-
-	inline int SampNum() const { return _SampNum; }
-	inline int Ploidy() const { return _Ploidy; }
 };
 
 
@@ -110,13 +108,14 @@ class COREARRAY_DLL_LOCAL CApply_Variant_Phase: public CVarApply
 protected:
 	ssize_t SiteCount;  ///< the total number of entries at a site
 	ssize_t CellCount;  ///< the selected number of entries at a site
-	ssize_t _SampNum;   ///< the number of selected samples
-	int _Ploidy;  ///< ploidy
 	bool UseRaw;  ///< whether use RAW type
 	vector<C_BOOL> Selection;  ///< the buffer of selection
 	SEXP VarPhase;  ///< genotype R object
 
 public:
+	ssize_t SampNum;  ///< the number of selected samples
+	int Ploidy;       ///< ploidy
+
 	/// constructor
 	CApply_Variant_Phase();
 	CApply_Variant_Phase(CFileInfo &File, bool use_raw);
@@ -125,9 +124,6 @@ public:
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
-
-	inline int SampNum() const { return _SampNum; }
-	inline int Ploidy() const { return _Ploidy; }
 };
 
 
@@ -158,7 +154,6 @@ class COREARRAY_DLL_LOCAL CApply_Variant_Format: public CVarApply
 {
 protected:
 	CIndex<int> *VarIndex;  ///< indexing the format variable
-	ssize_t _SampNum;   ///< the number of selected samples
 	ssize_t _TotalSampNum;  ///< the total number of samples
 
 	C_SVType SVType;        ///< data type for GDS reading
@@ -166,6 +161,8 @@ protected:
 	map<int, SEXP> VarList;  ///< a list of SEXP variables
 
 public:
+	ssize_t SampNum;  ///< the number of selected samples
+
 	/// constructor
 	CApply_Variant_Format();
 	CApply_Variant_Format(CFileInfo &File, const char *var_name);
@@ -174,8 +171,6 @@ public:
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
-
-	inline int SampNum() const { return _SampNum; }
 };
 
 }
