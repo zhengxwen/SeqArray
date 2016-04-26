@@ -211,3 +211,76 @@ test_random_phase <- function()
 
 	invisible()
 }
+
+
+test_random_info <- function()
+{
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
+
+	set.seed(200)
+	num <- seqSummary(f, "genotype", check="none", verbose=FALSE)$dim[3L]
+
+	for (nm in ls.gdsn(index.gdsn(f, "annotation/info")))
+	{
+		seqResetFilter(f, verbose=FALSE)
+		dat <- seqGetData(f, paste0("annotation/info/", nm))
+		if (is.list(dat)) dat <- dat$data
+		dimnames(dat) <- NULL
+
+		for (i in 1:5)
+		{
+			idx <- sample.int(num, num)
+			rv <- vector("list", length(idx))
+			for (k in idx)
+			{
+				seqSetFilter(f, variant.sel=k, verbose=FALSE)
+				d <- unlist(seqApply(f, paste0("annotation/info/", nm),
+					function(x) x, as.is="list"), recursive=FALSE)
+				rv[[k]] <- d
+			}
+
+			m <- unlist(rv)
+			checkEquals(dat, m, sprintf("INFO (%s): random access", nm))
+		}
+	}
+
+	# close the GDS file
+	seqClose(f)
+	invisible()
+}
+
+
+test_random_format <- function()
+{
+	# open the GDS file
+	gds.fn <- seqExampleFileName("gds")
+	f <- seqOpen(gds.fn)
+
+	seqResetFilter(f)
+	dat <- seqGetData(f, "annotation/format/DP")
+	y <- dat$data
+	dimnames(y) <- NULL
+
+	set.seed(200)
+	for (i in 1:5)
+	{
+		idx <- sample.int(length(dat$length), length(dat$length))
+		rv <- vector("list", length(idx))
+		for (k in idx)
+		{
+			seqSetFilter(f, variant.sel=k, verbose=FALSE)
+			d <- unlist(seqApply(f, "annotation/format/DP", function(x) x,
+				as.is="list"), recursive=FALSE)
+			rv[[k]] <- d
+		}
+
+		m <- matrix(unlist(rv), nrow=length(d))
+		checkEquals(y, m, "FORMAT: random access")
+	}
+
+	# close the GDS file
+	seqClose(f)
+	invisible()
+}

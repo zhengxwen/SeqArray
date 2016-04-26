@@ -303,15 +303,19 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 		string VarName  = CHAR(STRING_ELT(varname, 0));
 		string VarName2 = GDS_PATH_PREFIX(VarName, '@');
 
-		vector<CApplyByVariant> Files(FileCnt);
+		CVarApplyList NodeList;
 		for (int i=0; i < FileCnt; i++)
 		{
-			SEXP file = VECTOR_ELT(files, i);
-			Files[i].InitObject(
-				(VarName=="annotation/id" || VarName=="annotation/qual" ||
-					VarName=="annotation/filter") ?
-					CVariable::ctBasic : CVariable::ctInfo,
-				VarName.c_str(), GetFileInfo(file), false);
+			CFileInfo &File = GetFileInfo(VECTOR_ELT(files, i));
+			if (VarName=="annotation/id" || VarName=="annotation/qual" ||
+					VarName=="annotation/filter")
+			{
+				NodeList.push_back(
+					new CApply_Variant_Basic(File, VarName.c_str()));
+			} else {
+				NodeList.push_back(
+					new CApply_Variant_Info(File, VarName.c_str()));
+			}
 		}
 
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(export_file);
@@ -324,7 +328,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 			bool has = false;
 			for (int j=0; j < FileCnt; j++)
 			{
-				CApplyByVariant &FILE = Files[j];
+				CVarApply &FILE = *NodeList[j];
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
 					++ pIdx[j];
@@ -370,14 +374,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 		string VarName  = CHAR(STRING_ELT(varname, 0));
 		string VarName2 = GDS_PATH_PREFIX(VarName, '@');
 
-		vector<CApplyByVariant> Files(FileCnt);
+		vector<CApply_Variant_Format> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
 		{
 			SEXP file = VECTOR_ELT(files, i);
-			Files[i].InitObject(CVariable::ctFormat, VarName.c_str(),
-				GetFileInfo(file), false);
-			if (Files[i].DimCnt != 2)
-				throw ErrSeqArray("SEQ_MergeFormat: unsupported FORMAT dimension.");
+			Files[i].Init(GetFileInfo(file), VarName.c_str());
 		}
 
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(export_file);
@@ -399,7 +400,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 				if (*pIdx[j] == i)  // deal with this variant?
 				{
 					++ pIdx[j];
-					CApplyByVariant &FILE = Files[j];
+					CApply_Variant_Format &FILE = Files[j];
 					RD = FILE.NeedRData(nProtected);
 					FILE.ReadData(RD);
 					FILE.Next();
@@ -407,14 +408,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 				RDList[j] = RD;
 			}
 
-			// TODO: check 2-dim or 3-dim, assuming 2-dim here
+			// 2-dim FORMAT variables
 			int step = 0;
 			for (int j=0; j < FileCnt; j++)
 			{
 				if (!Rf_isNull(RDList[j]))
 				{
 					size_t len = XLENGTH(RDList[j]);
-					int m = len / Files[j]._SampNum;
+					int m = len / Files[j].SampNum();
 					if (m > step) step = m;
 				}
 			}
@@ -424,19 +425,19 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 			{
 				for (int j=0; j < FileCnt; j++)
 				{
-					CApplyByVariant &FILE = Files[j];
+					CApply_Variant_Format &FILE = Files[j];
 					if (!Rf_isNull(RDList[j]))
 					{
 						size_t len = XLENGTH(RDList[j]);
-						int m = len / FILE._SampNum;
+						int m = len / FILE.SampNum();
 						if (k < m)
 						{
 							GDS_R_AppendEx(fmt_var, RDList[j],
-								k * FILE._SampNum, FILE._SampNum);
+								k * FILE.SampNum(), FILE.SampNum());
 						} else
-							GDS_R_AppendEx(fmt_var, NAs, 0, FILE._SampNum);
+							GDS_R_AppendEx(fmt_var, NAs, 0, FILE.SampNum());
 					} else
-						GDS_R_AppendEx(fmt_var, NAs, 0, FILE._SampNum);
+						GDS_R_AppendEx(fmt_var, NAs, 0, FILE.SampNum());
 				}
 			}
 
