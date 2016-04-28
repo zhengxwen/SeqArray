@@ -428,7 +428,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (verbose) cat(date(), "\n", sep="")
 
     genotype.storage <- "bit2"
-    vcf.fn <- normalizePath(vcf.fn, mustWork=TRUE)
+    vcf.fn <- normalizePath(vcf.fn, mustWork=FALSE)
 
     # check sample id
     samp.id <- NULL

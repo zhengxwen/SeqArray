@@ -72,6 +72,32 @@ SEXP CApply_Variant_Basic::NeedRData(int &nProtected)
 }
 
 
+CApply_Variant_Pos::CApply_Variant_Pos(CFileInfo &File): CVarApply()
+{
+	fVarType = ctBasic;
+	MarginalSize = File.VariantNum();
+	MarginalSelect = File.Selection().pVariant();
+	Node = File.GetObj("position", TRUE);
+	PtrPos = &File.Position()[0];
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_Pos::ReadData(SEXP val)
+{
+	INTEGER(val)[0] = PtrPos[Position];
+}
+
+SEXP CApply_Variant_Pos::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(NEW_INTEGER(1));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
 
 // =====================================================================
 // Object for reading genotypes variant by variant
@@ -702,12 +728,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			// the path of GDS variable
 			string s = CHAR(STRING_ELT(var_name, i));
 
-			if ( s=="variant.id" || s=="position" || s=="chromosome" ||
+			if (s=="variant.id" || s=="chromosome" ||
 				s=="allele" || s=="annotation/id" || s=="annotation/qual" ||
-				s=="annotation/filter" )
+				s=="annotation/filter")
 			{
 				NodeList.push_back(
 					new CApply_Variant_Basic(File, s.c_str()));
+			} else if (s == "position")
+			{
+				NodeList.push_back(new CApply_Variant_Pos(File));
 			} else if (s == "genotype")
 			{
 				NodeList.push_back(

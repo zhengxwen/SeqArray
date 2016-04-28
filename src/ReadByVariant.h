@@ -44,6 +44,20 @@ public:
 };
 
 
+/// Object for reading basic variabls variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Pos: public CVarApply
+{
+protected:
+	int *PtrPos;
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_Pos(CFileInfo &File);
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
+
 // =====================================================================
 
 /// Object for reading genotypes variant by variant

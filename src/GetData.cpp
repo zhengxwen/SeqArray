@@ -170,8 +170,24 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 			C_BOOL *ss = Sel.pSample();
 			rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 
+		} else if (strcmp(name, "position") == 0)
+		{
+			int n = File.VariantSelNum();
+			if (n > 0)
+			{
+				const int *base = &File.Position()[0];
+				rv_ans = NEW_INTEGER(n);
+				int *p = INTEGER(rv_ans);
+				C_BOOL *s = Sel.pVariant();
+				for (size_t m=File.VariantNum(); m > 0; m--)
+				{
+					if (*s++) *p++ = *base;
+					base ++;
+				}
+			} else
+				rv_ans = NEW_INTEGER(0);
+		
 		} else if ( (strcmp(name, "variant.id")==0) ||
-			(strcmp(name, "position")==0) ||
 			(strcmp(name, "chromosome")==0) ||
 			(strcmp(name, "allele")==0) ||
 			(strcmp(name, "annotation/id")==0) ||

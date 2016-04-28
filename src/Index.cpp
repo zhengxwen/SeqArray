@@ -252,7 +252,7 @@ vector<C_Int32> &CFileInfo::Position()
 				(GDS_Array_GetTotalCount(N) != _VariantNum))
 			throw ErrSeqArray(ERR_DIM, "position");
 		// read
-		_Position.resize(_VariantNum, 0);
+		_Position.resize(_VariantNum);
 		GDS_Array_ReadData(N, NULL, NULL, &_Position[0], svInt32);
 	}
 	return _Position;

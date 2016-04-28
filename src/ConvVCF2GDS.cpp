@@ -86,7 +86,8 @@ inline static void Done_VCF_Buffer()
 {
 	VCF_File = NULL;
 	VCF_Buffer.clear();
-	VCF_Buffer_Ptr = VCF_Buffer_EndPtr;
+	vector<char>().swap(VCF_Buffer);
+	VCF_Buffer_Ptr = VCF_Buffer_EndPtr = NULL;
 }
 
 
@@ -146,6 +147,7 @@ inline static void InitText()
 inline static void DoneText()
 {
 	Text_Buffer.clear();
+	vector<char>().swap(Text_Buffer);
 	Text_pBegin = Text_pEnd;
 	save_pBegin = save_pEnd = Text_pBegin;
 }

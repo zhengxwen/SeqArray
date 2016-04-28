@@ -93,8 +93,14 @@ inline static void LineBuf_Init()
 inline static void LineBuf_Done()
 {
 	LineBuffer.clear();
+	vector<char>().swap(LineBuffer);
 	LineBegin = LinePtr = LineEnd = NULL;
+	VCF_INFO_Number.clear();
+	vector<int>().swap(VCF_INFO_Number);
+	VCF_FORMAT_Number.clear();
+	vector<int>().swap(VCF_FORMAT_Number);
 	VCF_FORMAT_List.clear();
+	vector<SEXP>().swap(VCF_FORMAT_List);
 }
 
 inline static void LineBuf_InitPtr()
@@ -419,11 +425,11 @@ inline static void ExportInfoFormat(SEXP X)
 	for (size_t i=0; i < cnt_fmt; i++)
 	{
 		// name, "fmt.*"
-		const char *nm = CHAR(STRING_ELT(VarNames, i + cnt_info + 8));
 		SEXP D = VECTOR_ELT(X, i + cnt_info + 8);
 		if (!isNull(D))
 		{
 			*LinePtr++ = ':';
+			const char *nm = CHAR(STRING_ELT(VarNames, i + cnt_info + 8));
 			LineBuf_Append(nm + 4);
 			VCF_FORMAT_List.push_back(D);
 		}
