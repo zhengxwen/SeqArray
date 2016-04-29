@@ -30,8 +30,8 @@ using namespace Vectorization;
 
 // =====================================================================
 
-/// Object for reading basic variabls variant by variant
-class COREARRAY_DLL_LOCAL CApply_Variant_Basic: public CVarApply
+/// Object for reading basic variables variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Basic: public CApply_Variant
 {
 protected:
 	C_SVType SVType;
@@ -44,8 +44,8 @@ public:
 };
 
 
-/// Object for reading basic variabls variant by variant
-class COREARRAY_DLL_LOCAL CApply_Variant_Pos: public CVarApply
+/// Object for reading positions variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Pos: public CApply_Variant
 {
 protected:
 	int *PtrPos;
@@ -58,10 +58,24 @@ public:
 };
 
 
+/// Object for reading chromosomes variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_Chrom: public CApply_Variant
+{
+protected:
+	CChromIndex *ChromIndex;
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_Chrom(CFileInfo &File);
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
+
 // =====================================================================
 
 /// Object for reading genotypes variant by variant
-class COREARRAY_DLL_LOCAL CApply_Variant_Geno: public CVarApply
+class COREARRAY_DLL_LOCAL CApply_Variant_Geno: public CApply_Variant
 {
 protected:
 	CIndex<C_UInt8> *GenoIndex;  ///< indexing genotypes
@@ -117,7 +131,7 @@ public:
 // =====================================================================
 
 /// Object for reading phasing information variant by variant
-class COREARRAY_DLL_LOCAL CApply_Variant_Phase: public CVarApply
+class COREARRAY_DLL_LOCAL CApply_Variant_Phase: public CApply_Variant
 {
 protected:
 	ssize_t SiteCount;  ///< the total number of entries at a site
@@ -144,7 +158,7 @@ public:
 // =====================================================================
 
 /// Object for reading info variables variant by variant
-class COREARRAY_DLL_LOCAL CApply_Variant_Info: public CVarApply
+class COREARRAY_DLL_LOCAL CApply_Variant_Info: public CApply_Variant
 {
 protected:
 	CIndex<int> *VarIndex;  ///< indexing the format variable
@@ -164,7 +178,7 @@ public:
 // =====================================================================
 
 /// Object for reading format variables variant by variant
-class COREARRAY_DLL_LOCAL CApply_Variant_Format: public CVarApply
+class COREARRAY_DLL_LOCAL CApply_Variant_Format: public CApply_Variant
 {
 protected:
 	CIndex<int> *VarIndex;  ///< indexing the format variable

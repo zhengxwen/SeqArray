@@ -186,9 +186,33 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 				}
 			} else
 				rv_ans = NEW_INTEGER(0);
+
+		} else if (strcmp(name, "chromosome") == 0)
+		{
+			int n = File.VariantSelNum();
+			if (n > 0)
+			{
+				CChromIndex &Chrom = File.Chromosome();
+				rv_ans = PROTECT(NEW_CHARACTER(n));
+				C_BOOL *s = Sel.pVariant();
+				size_t m = File.VariantNum();
+				size_t p = 0;
+				SEXP last = mkChar("");
+				for (size_t i=0; i < m; i++)
+				{
+					if (*s++)
+					{
+						const string &ss = Chrom[i];
+						if (ss != CHAR(last))
+							last = mkChar(ss.c_str());
+						SET_STRING_ELT(rv_ans, p++, last);
+					}
+				}
+				UNPROTECT(1);
+			} else
+				rv_ans = NEW_CHARACTER(0);
 		
 		} else if ( (strcmp(name, "variant.id")==0) ||
-			(strcmp(name, "chromosome")==0) ||
 			(strcmp(name, "allele")==0) ||
 			(strcmp(name, "annotation/id")==0) ||
 			(strcmp(name, "annotation/qual")==0) ||

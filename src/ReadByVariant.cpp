@@ -32,14 +32,12 @@ static const char *ERR_DIM_EX = "Invalid dimension of '%s': %s.";
 
 
 // =====================================================================
-// Object for reading basic variabls variant by variant
+// Object for reading basic variables variant by variant
 
 CApply_Variant_Basic::CApply_Variant_Basic(CFileInfo &File,
-	const char *var_name): CVarApply()
+	const char *var_name): CApply_Variant(File)
 {
 	fVarType = ctBasic;
-	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant();
 	Node = File.GetObj(var_name, TRUE);
 	SVType = GDS_Array_GetSVType(Node);
 	VarNode = NULL;
@@ -71,12 +69,12 @@ SEXP CApply_Variant_Basic::NeedRData(int &nProtected)
 	return VarNode;
 }
 
+// ====
 
-CApply_Variant_Pos::CApply_Variant_Pos(CFileInfo &File): CVarApply()
+CApply_Variant_Pos::CApply_Variant_Pos(CFileInfo &File):
+	CApply_Variant(File)
 {
 	fVarType = ctBasic;
-	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant();
 	Node = File.GetObj("position", TRUE);
 	PtrPos = &File.Position()[0];
 	VarNode = NULL;
@@ -98,12 +96,42 @@ SEXP CApply_Variant_Pos::NeedRData(int &nProtected)
 	return VarNode;
 }
 
+// ====
+
+CApply_Variant_Chrom::CApply_Variant_Chrom(CFileInfo &File):
+	CApply_Variant(File)
+{
+	fVarType = ctBasic;
+	Node = File.GetObj("chromosome", TRUE);
+	ChromIndex = &File.Chromosome();
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_Chrom::ReadData(SEXP val)
+{
+	const string &s1 = (*ChromIndex)[Position];
+	const char *s2 = CHAR(STRING_ELT(val, 0));
+	if (s1 != s2)
+		SET_STRING_ELT(val, 0, mkChar(s1.c_str()));
+}
+
+SEXP CApply_Variant_Chrom::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(mkString(""));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
+
 
 // =====================================================================
 // Object for reading genotypes variant by variant
 
-CApply_Variant_Geno::CApply_Variant_Geno():
-	CVarApply()
+CApply_Variant_Geno::CApply_Variant_Geno(): CApply_Variant()
 {
 	fVarType = ctGenotype;
 	SiteCount = CellCount = 0;
@@ -113,7 +141,7 @@ CApply_Variant_Geno::CApply_Variant_Geno():
 }
 
 CApply_Variant_Geno::CApply_Variant_Geno(CFileInfo &File, bool use_raw):
-	CVarApply()
+	CApply_Variant()
 {
 	fVarType = ctGenotype;
 	Init(File, use_raw);
@@ -375,7 +403,7 @@ void CApply_Variant_Dosage::ReadDosage(C_UInt8 *Base)
 // Object for reading phasing information variant by variant
 
 CApply_Variant_Phase::CApply_Variant_Phase():
-	CVarApply()
+	CApply_Variant()
 {
 	fVarType = ctPhase;
 	SiteCount = CellCount = 0;
@@ -385,7 +413,7 @@ CApply_Variant_Phase::CApply_Variant_Phase():
 }
 
 CApply_Variant_Phase::CApply_Variant_Phase(CFileInfo &File, bool use_raw):
-	CVarApply()
+	CApply_Variant()
 {
 	fVarType = ctPhase;
 	Init(File, use_raw);
@@ -469,7 +497,7 @@ SEXP CApply_Variant_Phase::NeedRData(int &nProtected)
 // Object for reading info variables variant by variant
 
 CApply_Variant_Info::CApply_Variant_Info(CFileInfo &File,
-	const char *var_name): CVarApply()
+	const char *var_name): CApply_Variant(File)
 {
 	// initialize
 	fVarType = ctInfo;
@@ -484,8 +512,6 @@ CApply_Variant_Info::CApply_Variant_Info(CFileInfo &File,
 	C_Int32 DLen[2];
 	GDS_Array_GetDim(Node, DLen, 2);
 	BaseNum = (DimCnt == 2) ? DLen[1] : 1;
-	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant();
 	VarIndex = &File.VarIndex(GDS_PATH_PREFIX(var_name, '@'));
 	SVType = GDS_Array_GetSVType(Node);
 
@@ -549,13 +575,13 @@ SEXP CApply_Variant_Info::NeedRData(int &nProtected)
 // =====================================================================
 // Object for reading format variables variant by variant
 
-CApply_Variant_Format::CApply_Variant_Format(): CVarApply()
+CApply_Variant_Format::CApply_Variant_Format(): CApply_Variant()
 {
 	fVarType = ctFormat;
 }
 
 CApply_Variant_Format::CApply_Variant_Format(CFileInfo &File,
-	const char *var_name): CVarApply()
+	const char *var_name): CApply_Variant()
 {
 	fVarType = ctFormat;
 	Init(File, var_name);
@@ -728,15 +754,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			// the path of GDS variable
 			string s = CHAR(STRING_ELT(var_name, i));
 
-			if (s=="variant.id" || s=="chromosome" ||
-				s=="allele" || s=="annotation/id" || s=="annotation/qual" ||
-				s=="annotation/filter")
+			if (s=="variant.id" || s=="allele" || s=="annotation/id" ||
+				s=="annotation/qual" || s=="annotation/filter")
 			{
 				NodeList.push_back(
 					new CApply_Variant_Basic(File, s.c_str()));
 			} else if (s == "position")
 			{
 				NodeList.push_back(new CApply_Variant_Pos(File));
+			} else if (s == "chromosome")
+			{
+				NodeList.push_back(new CApply_Variant_Chrom(File));
 			} else if (s == "genotype")
 			{
 				NodeList.push_back(

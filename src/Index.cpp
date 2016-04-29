@@ -66,12 +66,15 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 	rng.Length = 1;
 
 	Map.clear();
-	string txt[1024];
+	PosToChr.Clear();
+
+	const C_Int32 NMAX = 4096;
+	string txt[NMAX];
 
 	while (idx < NumChrom)
 	{
 		len = NumChrom - idx;
-		if (len > 1024) len = 1024;
+		if (len > NMAX) len = NMAX;
 		GDS_Array_ReadData(varChrom, &idx, &len, &txt, svStrUTF8);
 		for (int i=0; i < len; i++)
 		{
@@ -80,6 +83,7 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 				rng.Length ++;
 			} else {
 				Map[last].push_back(rng);
+				PosToChr.Add(last, rng.Length);
 				last = string(txt[i].begin(), txt[i].end());
 				rng.Start = idx + i;
 				rng.Length = 1;
@@ -89,6 +93,8 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 	}
 
 	Map[last].push_back(rng);
+	PosToChr.Add(last, rng.Length);
+	PosToChr.Init();
 }
 
 void CChromIndex::Clear()
@@ -235,7 +241,7 @@ CChromIndex &CFileInfo::Chromosome()
 {
 	if (!_Root)
 		throw ErrSeqArray(ERR_FILE_ROOT);
-	if (_Chrom.Map.empty())
+	if (_Chrom.Empty())
 		_Chrom.AddChrom(_Root);
 	return _Chrom;
 }
@@ -383,6 +389,16 @@ C_BOOL *CVarApply::NeedTRUEs(size_t size)
 		_TRUE.resize(size, TRUE);
 	}
 	return &_TRUE[0];
+}
+
+
+CApply_Variant::CApply_Variant(): CVarApply()
+{ }
+
+CApply_Variant::CApply_Variant(CFileInfo &File): CVarApply()
+{
+	MarginalSize = File.VariantNum();
+	MarginalSelect = File.Selection().pVariant();
 }
 
 

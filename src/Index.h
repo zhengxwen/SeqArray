@@ -69,6 +69,83 @@ using namespace CoreArray;
 
 class ErrSeqArray;
 
+
+// ===========================================================
+// Run-length encoding (RLE) object
+// ===========================================================
+
+/// object with run-length encoding
+template<typename TYPE> class COREARRAY_DLL_LOCAL C_RLE
+{
+public:
+	/// constructor
+	C_RLE()
+	{
+		TotalLength = 0;
+		Position = AccIndex = AccOffset = 0;
+	}
+
+	void Init()
+	{
+		TotalLength = 0;
+		vector<C_UInt32>::iterator p;
+		for (p=Lengths.begin(); p != Lengths.end(); p++)
+			TotalLength += *p;
+		Position = AccIndex = AccOffset = 0;
+	}
+
+	void Add(TYPE &val, C_UInt32 len)
+	{
+		Values.push_back(val);
+		Lengths.push_back(len);
+	}
+
+	void Clear()
+	{
+		Values.clear(); Lengths.clear();
+		TotalLength = 0;
+		Position = AccIndex = AccOffset = 0;
+	}
+
+	const TYPE &operator [](size_t pos)
+	{
+		if (pos >= TotalLength)
+			throw "Invalid position in C_RLE.";
+		if (pos < Position)
+			Position = AccIndex = AccOffset = 0;
+		for (; Position < pos; )
+		{
+			size_t L = Lengths[AccIndex];
+			size_t n = L - AccOffset;
+			if ((Position + n) <= pos)
+			{
+				AccIndex ++; AccOffset = 0;
+			} else {
+				n = pos - Position; AccOffset += n;
+			}
+			Position += n;
+		}
+		return Values[AccIndex];
+	}
+
+	inline bool Empty() const { return (TotalLength <= 0); }
+
+protected:
+	/// values according to Lengths, used in run-length encoding
+	vector<TYPE> Values;
+	/// lengths according to Values, used in run-length encoding
+	vector<C_UInt32> Lengths;
+	/// total number, = sum(Lengths)
+	size_t TotalLength;
+	/// the position relative to the total length
+	size_t Position;
+	/// the index in Lengths according to Position
+	size_t AccIndex;
+	/// the offset according the value of Lengths[AccIndex]
+	size_t AccOffset;
+};
+
+
 // ===========================================================
 // Indexing object
 // ===========================================================
@@ -184,10 +261,7 @@ public:
 		Value = Values[AccIndex];
 	}
 
-	bool Empty()
-	{
-		return (TotalLength <= 0);
-	}
+	inline bool Empty() const { return (TotalLength <= 0); }
 
 protected:
 	/// total number, = sum(Lengths)
@@ -233,8 +307,17 @@ public:
 	/// the total length of a TRangeList object
 	size_t RangeTotalLength(const TRangeList &RngList);
 
+	/// whether it is empty
+	inline bool Empty() const { return Map.empty(); }
+
+	inline const string &operator [](size_t pos) { return PosToChr[pos]; }
+
 	/// map to TRangeList from chromosome coding
 	map<string, TRangeList> Map;
+
+protected:
+	/// position to chromosome
+	C_RLE<string> PosToChr;
 };
 
 
@@ -283,8 +366,10 @@ struct COREARRAY_DLL_LOCAL TSelection
 	vector<C_BOOL> Sample;   ///< sample selection
 	vector<C_BOOL> Variant;  ///< variant selection
 
-	inline C_BOOL *pSample() { return &Sample[0]; }
-	inline C_BOOL *pVariant() { return &Variant[0]; }
+	inline C_BOOL *pSample()
+		{ return Sample.empty() ? NULL : &Sample[0]; }
+	inline C_BOOL *pVariant()
+		{ return Variant.empty() ? NULL : &Variant[0]; }
 };
 
 
@@ -332,9 +417,9 @@ public:
 
 protected:
 	PdGDSFolder _Root;  ///< the root of GDS file
-	int _SampleNum;   ///< the total number of samples
-	int _VariantNum;  ///< the total number of variants
-	int _Ploidy;      ///< ploidy
+	int _SampleNum;     ///< the total number of samples
+	int _VariantNum;    ///< the total number of variants
+	int _Ploidy;        ///< ploidy
 
 	CChromIndex _Chrom;  ///< chromosome indexing
 	vector<C_Int32> _Position;  ///< position
@@ -407,6 +492,17 @@ public:
 
 private:
 	vector<C_BOOL> _TRUE;
+};
+
+
+/// The abstract class for applying functions by variant
+class COREARRAY_DLL_LOCAL CApply_Variant: public CVarApply
+{
+public:
+	/// constructor
+	CApply_Variant();
+	/// constructor with file information
+	CApply_Variant(CFileInfo &File);
 };
 
 
