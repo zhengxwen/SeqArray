@@ -168,7 +168,7 @@ inline static void _Line_Append_Geno(int val)
 inline static void _Line_Append(double val)
 {
 	if (R_FINITE(val))
-		LinePtr += sprintf(LinePtr, "%0.6g", val);
+		LinePtr += sprintf(LinePtr, "%g", val);
 	else
 		*LinePtr++ = '.';
 }
