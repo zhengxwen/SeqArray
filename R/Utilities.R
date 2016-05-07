@@ -167,7 +167,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     if (compression %in% c("ZIP_RA.max", "LZ4_RA.max", "LZMA_RA.max"))
         suffix <- ":8M"
     else
-        suffix <- ":2M"
+        suffix <- ":1M"
 
     rv <- list(compression = compression,
         mode = mode, float.mode = float.mode,
