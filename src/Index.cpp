@@ -473,6 +473,9 @@ CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 	ShowProgress();
 }
 
+CProgress::~CProgress()
+{ }
+
 void CProgress::Forward()
 {
 	Counter ++;

@@ -525,6 +525,7 @@ class COREARRAY_DLL_LOCAL CProgress
 {
 public:
 	CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline);
+	virtual ~CProgress();
 
 	void Forward();
 	virtual void ShowProgress();

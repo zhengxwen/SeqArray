@@ -82,12 +82,22 @@ static char *LineBegin = NULL;
 static char *LinePtr   = NULL;
 static char *LineEnd   = NULL;
 
+static CProgressStdOut *Progress = NULL;  ///< progress information
 
-inline static void LineBuf_Init()
+
+inline static void LineBuf_Init(int num_variant, bool verbose)
 {
 	LineBuffer.resize(LINE_BUFFER_SIZE);
 	LinePtr = LineBegin = &LineBuffer[0];
 	LineEnd = LinePtr + LINE_BUFFER_SIZE;
+
+	if (Progress)
+	{
+		delete Progress;
+		Progress = NULL;
+	}
+	if (verbose)
+		Progress = new CProgressStdOut(num_variant, true);
 }
 
 inline static void LineBuf_Done()
@@ -101,6 +111,12 @@ inline static void LineBuf_Done()
 	vector<int>().swap(VCF_FORMAT_Number);
 	VCF_FORMAT_List.clear();
 	vector<SEXP>().swap(VCF_FORMAT_List);
+
+	if (Progress)
+	{
+		delete Progress;
+		Progress = NULL;
+	}
 }
 
 inline static void LineBuf_InitPtr()
@@ -481,7 +497,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 
 /// initialize
 COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP Sel, SEXP Info, SEXP Format,
-	SEXP File)
+	SEXP File, SEXP Verbose)
 {
 	VCF_NumAllele = INTEGER(Sel)[0];
 	VCF_NumSample = INTEGER(Sel)[1];
@@ -494,7 +510,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP Sel, SEXP Info, SEXP Format,
 	VCF_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
 
 	VCF_FORMAT_List.reserve(256);
-	LineBuf_Init();
+	LineBuf_Init(INTEGER(Sel)[2], Rf_asLogical(Verbose)==TRUE);
 
 	return R_NilValue;
 }
@@ -573,6 +589,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 		if (size != n)
 			throw ErrSeqArray("writing error.");
 	}
+
+	if (Progress) Progress->Forward();
 
 	return R_NilValue;
 }
@@ -726,6 +744,8 @@ tail:
 		if (size != n)
 			throw ErrSeqArray("writing error.");
 	}
+
+	if (Progress) Progress->Forward();
 
 	return R_NilValue;
 }
