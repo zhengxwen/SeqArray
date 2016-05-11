@@ -354,15 +354,18 @@ inline static void ExportHead(SEXP X)
 	*LinePtr++ = '\t';
 
 	// ID
-	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 2), 0)));
+	char *s = (char*)CHAR(STRING_ELT(VECTOR_ELT(X, 2), 0));
+	if (*s != 0)
+		LineBuf_Append(s);
+	else
+		*LinePtr++ = '.';
 	*LinePtr++ = '\t';
 
 	// allele -- REF/ALT
 	size_t n = LinePtr - LineBegin;
 	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 3), 0)));
 
-	char *s = LineBegin + n;
-	for (; s < LinePtr; s++)
+	for (s = LineBegin+n; s < LinePtr; s++)
 	{
 		if (*s == ',')
 			{ *s = '\t'; break; }

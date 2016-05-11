@@ -91,12 +91,14 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     if (verbose)
     {
         cat(date(), "\n", sep="")
-        cat("Output: ", vcf.fn, "\n", sep="")
+        cat("VCF Export: ", basename(vcf.fn), "\n", sep="")
         s <- .seldim(gdsfile)
-        cat("    ", s[2L], " sample", .plural(s[2L]), ", ",
-            s[3L], " variant", .plural(s[3L]), "\n", sep="")
-        cat("    INFO Field: ", paste(z$info$ID, collapse=", "), "\n", sep="")
-        cat("    FORMAT Field: ", paste(z$format$ID, collapse=", "), "\n", sep="")
+        cat("    ", .pretty(s[2L]), " sample", .plural(s[2L]), ", ",
+            .pretty(s[3L]), " variant", .plural(s[3L]), "\n", sep="")
+        s <- paste(z$info$ID, collapse=", ")
+        cat("    INFO Field: ", ifelse(s!="", s, "<none>"), "\n", sep="")
+        s <- paste(z$format$ID, collapse=", ")
+        cat("    FORMAT Field: ", ifelse(s!="", s, "<none>"), "\n", sep="")
     }
 
 
