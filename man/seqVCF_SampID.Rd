@@ -8,7 +8,8 @@
 seqVCF_SampID(vcf.fn)
 }
 \arguments{
-    \item{vcf.fn}{the file name of VCF}
+    \item{vcf.fn}{the file name, output a file of VCF format; or a
+        \code{\link{connection}} object}
 }
 
 \references{

@@ -17,7 +17,6 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
-# seqVCF_Header <- function(vcf.fn, getnum=FALSE, use.index=TRUE)
 seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 {
     # check
@@ -352,13 +351,17 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 
 seqVCF_SampID <- function(vcf.fn)
 {
-    # check
-    stopifnot(is.character(vcf.fn))
-    stopifnot(length(vcf.fn) == 1L)
+    if (!inherits(vcf.fn, "connection"))
+    {
+        # check
+        stopifnot(is.character(vcf.fn), length(vcf.fn)==1L)
 
-    # open the vcf file
-    infile <- file(vcf.fn[1L], open="rt")
-    on.exit(close(infile))
+        # open the vcf file
+        infile <- file(vcf.fn[1L], open="rt")
+        on.exit(close(infile))
+    } else {
+        infile <- vcf.fn
+    }
 
     # read header
     samp.id <- NULL
