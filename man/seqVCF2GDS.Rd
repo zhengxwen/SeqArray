@@ -84,11 +84,9 @@ compression ratio by \code{storage.option="ZIP_RA.max"} or
 higher compression ratio than zlib.
 }
 \references{
-    The variant call format and VCFtools.
-    Danecek P, Auton A, Abecasis G, Albers CA, Banks E, DePristo MA,
-    Handsaker RE, Lunter G, Marth GT, Sherry ST, McVean G, Durbin R;
-    1000 Genomes Project Analysis Group.
-    Bioinformatics. 2011 Aug 1;27(15):2156-8. Epub 2011 Jun 7.
+    Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,
+M.A., Handsaker, R.E., Lunter, G., Marth, G.T., Sherry, S.T., et al. (2011).
+The variant call format and VCFtools. Bioinformatics 27, 2156-2158.
 }
 
 \author{Xiuwen Zheng}

@@ -24,16 +24,14 @@
 using namespace std;
 
 
+#ifdef NO_R_v3_3
 extern "C"
 {
 extern Rconnection getConnection(int n);
-
 COREARRAY_DLL_LOCAL Rconnection My_R_GetConnection(SEXP x)
-{
-	return getConnection(Rf_asInteger(x));
+	{ return getConnection(Rf_asInteger(x)); }
 }
-
-}
+#endif
 
 
 namespace SeqArray
@@ -639,7 +637,7 @@ CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 	Counter = (start >= 0) ? start : 0;
 	double percent;
 	if (conn)
-		File = My_R_GetConnection(conn);
+		File = R_GetConnection(conn);
 	else
 		File = NULL;
 	NewLine = newline;
