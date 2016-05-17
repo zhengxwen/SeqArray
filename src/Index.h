@@ -151,116 +151,57 @@ protected:
 // ===========================================================
 
 /// Indexing object with run-length encoding
-template<typename TYPE> class COREARRAY_DLL_LOCAL CIndex
+class COREARRAY_DLL_LOCAL CIndex
 {
 public:
 	/// values according to Lengths, used in run-length encoding
-	vector<TYPE> Values;
+	vector<int> Values;
 	/// lengths according to Values, used in run-length encoding
 	vector<C_UInt32> Lengths;
 
 	/// constructor
-	CIndex()
-	{
-		TotalLength = 0;
-		Position = 0;
-		AccSum = 0;
-		AccIndex = AccOffset = 0;
-	}
+	CIndex();
 
 	/// load data and represent as run-length encoding
-	void Init(PdContainer Obj)
-	{
-		Values.clear();
-		Lengths.clear();
-		TYPE Buffer[65536];
-		C_Int64 n = GDS_Array_GetTotalCount(Obj);
-		if (n > INT_MAX)
-			throw "Invalid dimension in CIndex.";
-
-		CdIterator it;
-		GDS_Iter_GetStart(Obj, &it);
-		TotalLength = n;
-		TYPE last = (TYPE)(-1);
-		C_UInt32 repeat = 0;
-
-		while (n > 0)
-		{
-			ssize_t m = (n <= 65536) ? n : 65536;
-			GDS_Iter_RData(&it, Buffer, m, TdTraits<TYPE>::SVType);
-			n -= m;
-			for (TYPE *p = Buffer; m > 0; m--)
-			{
-				TYPE v = *p++;
-				if (v < 0) v = 0;
-				if (v == last)
-				{
-					repeat ++;
-				} else {
-					if (repeat > 0)
-					{
-						Values.push_back(last);
-						Lengths.push_back(repeat);					
-					}
-					last = v; repeat = 1;
-				}
-			}
-		}
-
-		if (repeat > 0)
-		{
-			Values.push_back(last);
-			Lengths.push_back(repeat);					
-		}
-
-		Position = 0;
-		AccSum = 0;
-		AccIndex = AccOffset = 0;
-	}
-
+	void Init(PdContainer Obj);
 	/// load data and represent as run-length encoding
-	void InitOne(int num)
-	{
-		Values.clear();
-		Values.push_back(1);
-		Lengths.clear();
-		Lengths.push_back(num);
-		TotalLength = num;
-		Position = 0;
-		AccSum = 0;
-		AccIndex = AccOffset = 0;
-	}
-
+	void InitOne(int num);
 	/// return the accumulated sum of values and current value in Lengths and Values given by a position
-	void GetInfo(size_t pos, C_Int64 &Sum, TYPE &Value)
-	{
-		if (pos >= TotalLength)
-			throw "Invalid position in CIndex.";
-		if (pos < Position)
-		{
-			Position = 0;
-			AccSum = 0;
-			AccIndex = AccOffset = 0;
-		}
-		for (; Position < pos; )
-		{
-			size_t L = Lengths[AccIndex];
-			size_t n = L - AccOffset;
-			if ((Position + n) <= pos)
-			{
-				AccSum += (Values[AccIndex] * n);
-				AccIndex ++; AccOffset = 0;
-			} else {
-				n = pos - Position;
-				AccSum += (Values[AccIndex] * n);
-				AccOffset += n;
-			}
-			Position += n;
-		}
-		Sum = AccSum;
-		Value = Values[AccIndex];
-	}
+	void GetInfo(size_t pos, C_Int64 &Sum, int &Value);
+	/// return true if empty
+	inline bool Empty() const { return (TotalLength <= 0); }
 
+protected:
+	/// total number, = sum(Lengths)
+	size_t TotalLength;
+	/// the position relative to the total length
+	size_t Position;
+	/// the accumulated sum of values in Lengths and Values according to Position
+	C_Int64 AccSum;
+	/// the index in Lengths according to Position
+	size_t AccIndex;
+	/// the offset according the value of Lengths[AccIndex]
+	size_t AccOffset;
+};
+
+
+/// Indexing object with run-length encoding for genotype indexing
+class COREARRAY_DLL_LOCAL CGenoIndex
+{
+public:
+	/// values according to Lengths, used in run-length encoding
+	vector<C_UInt16> Values;
+	/// lengths according to Values, used in run-length encoding
+	vector<C_UInt32> Lengths;
+
+	/// constructor
+	CGenoIndex();
+
+	/// load data and represent as run-length encoding
+	void Init(PdContainer Obj);
+	/// return the accumulated sum of values and current value in Lengths and Values given by a position
+	void GetInfo(size_t pos, C_Int64 &Sum, C_UInt8 &Value);
+	/// return true if empty
 	inline bool Empty() const { return (TotalLength <= 0); }
 
 protected:
@@ -395,10 +336,10 @@ public:
 	vector<C_Int32> &Position();
 
 	/// return _GenoIndex which has been initialized
-	CIndex<C_UInt8> &GenoIndex();
+	CGenoIndex &GenoIndex();
 
 	/// return the indexing object according to variable name
-	CIndex<int> &VarIndex(const string &varname);
+	CIndex &VarIndex(const string &varname);
 
 	/// get gds object
 	PdAbstractArray GetObj(const char *name, C_BOOL MustExist);
@@ -423,8 +364,8 @@ protected:
 
 	CChromIndex _Chrom;  ///< chromosome indexing
 	vector<C_Int32> _Position;  ///< position
-	CIndex<C_UInt8> _GenoIndex;  ///< the indexing object for genotypes
-	map< string, CIndex<int> > _VarIndex;  ///< the indexing objects for INFO/FORMAT variables
+	CGenoIndex _GenoIndex;  ///< the indexing object for genotypes
+	map<string, CIndex> _VarIndex;  ///< the indexing objects for INFO/FORMAT variables
 };
 
 

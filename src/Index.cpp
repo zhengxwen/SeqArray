@@ -39,6 +39,199 @@ COREARRAY_DLL_LOCAL Rconnection My_R_GetConnection(SEXP x)
 namespace SeqArray
 {
 // ===========================================================
+// Indexing object
+// ===========================================================
+
+CIndex::CIndex()
+{
+	TotalLength = 0;
+	Position = 0;
+	AccSum = 0;
+	AccIndex = AccOffset = 0;
+}
+
+void CIndex::Init(PdContainer Obj)
+{
+	Values.clear();
+	Lengths.clear();
+	int Buffer[65536];
+	C_Int64 n = GDS_Array_GetTotalCount(Obj);
+	if (n > INT_MAX)
+		throw ErrSeqArray("Invalid dimension in CIndex.");
+
+	CdIterator it;
+	GDS_Iter_GetStart(Obj, &it);
+	TotalLength = n;
+	int last = -1;
+	C_UInt32 repeat = 0;
+
+	while (n > 0)
+	{
+		ssize_t m = (n <= 65536) ? n : 65536;
+		GDS_Iter_RData(&it, Buffer, m, svInt32);
+		n -= m;
+		for (int *p = Buffer; m > 0; m--)
+		{
+			int v = *p++;
+			if (v < 0) v = 0;
+			if (v == last)
+			{
+				repeat ++;
+			} else {
+				if (repeat > 0)
+				{
+					Values.push_back(last);
+					Lengths.push_back(repeat);					
+				}
+				last = v; repeat = 1;
+			}
+		}
+	}
+
+	if (repeat > 0)
+	{
+		Values.push_back(last);
+		Lengths.push_back(repeat);					
+	}
+
+	Position = 0;
+	AccSum = 0;
+	AccIndex = AccOffset = 0;
+}
+
+void CIndex::InitOne(int num)
+{
+	Values.clear();
+	Values.push_back(1);
+	Lengths.clear();
+	Lengths.push_back(num);
+	TotalLength = num;
+	Position = 0;
+	AccSum = 0;
+	AccIndex = AccOffset = 0;
+}
+
+void CIndex::GetInfo(size_t pos, C_Int64 &Sum, int &Value)
+{
+	if (pos >= TotalLength)
+		throw ErrSeqArray("Invalid position in CIndex.");
+	if (pos < Position)
+	{
+		Position = 0;
+		AccSum = 0;
+		AccIndex = AccOffset = 0;
+	}
+	for (; Position < pos; )
+	{
+		size_t L = Lengths[AccIndex];
+		size_t n = L - AccOffset;
+		if ((Position + n) <= pos)
+		{
+			AccSum += (Values[AccIndex] * n);
+			AccIndex ++; AccOffset = 0;
+		} else {
+			n = pos - Position;
+			AccSum += (Values[AccIndex] * n);
+			AccOffset += n;
+		}
+		Position += n;
+	}
+	Sum = AccSum;
+	Value = Values[AccIndex];
+}
+
+
+// ===========================================================
+
+CGenoIndex::CGenoIndex()
+{
+	TotalLength = 0;
+	Position = 0;
+	AccSum = 0;
+	AccIndex = AccOffset = 0;
+}
+
+void CGenoIndex::Init(PdContainer Obj)
+{
+	Values.clear();
+	Lengths.clear();
+	C_UInt16 Buffer[65536];
+	C_Int64 n = GDS_Array_GetTotalCount(Obj);
+	if (n > INT_MAX)
+		throw ErrSeqArray("Invalid dimension in CIndex.");
+
+	CdIterator it;
+	GDS_Iter_GetStart(Obj, &it);
+	TotalLength = n;
+	C_UInt16 last = 0xFFFF;
+	C_UInt32 repeat = 0;
+
+	while (n > 0)
+	{
+		ssize_t m = (n <= 65536) ? n : 65536;
+		GDS_Iter_RData(&it, Buffer, m, svUInt16);
+		n -= m;
+		for (C_UInt16 *p = Buffer; m > 0; m--)
+		{
+			C_UInt16 v = *p++;
+			if (v < 0) v = 0;
+			if (v == last)
+			{
+				repeat ++;
+			} else {
+				if (repeat > 0)
+				{
+					Values.push_back(last);
+					Lengths.push_back(repeat);					
+				}
+				last = v; repeat = 1;
+			}
+		}
+	}
+
+	if (repeat > 0)
+	{
+		Values.push_back(last);
+		Lengths.push_back(repeat);					
+	}
+
+	Position = 0;
+	AccSum = 0;
+	AccIndex = AccOffset = 0;
+}
+
+void CGenoIndex::GetInfo(size_t pos, C_Int64 &Sum, C_UInt8 &Value)
+{
+	if (pos >= TotalLength)
+		throw ErrSeqArray("Invalid position in CIndex.");
+	if (pos < Position)
+	{
+		Position = 0;
+		AccSum = 0;
+		AccIndex = AccOffset = 0;
+	}
+	for (; Position < pos; )
+	{
+		size_t L = Lengths[AccIndex];
+		size_t n = L - AccOffset;
+		if ((Position + n) <= pos)
+		{
+			AccSum += (Values[AccIndex] * n);
+			AccIndex ++; AccOffset = 0;
+		} else {
+			n = pos - Position;
+			AccSum += (Values[AccIndex] * n);
+			AccOffset += n;
+		}
+		Position += n;
+	}
+	Sum = AccSum;
+	Value = Values[AccIndex] & 0x0F;
+}
+
+
+
+// ===========================================================
 // Chromosome Indexing
 // ===========================================================
 
@@ -264,7 +457,7 @@ vector<C_Int32> &CFileInfo::Position()
 	return _Position;
 }
 
-CIndex<C_UInt8> &CFileInfo::GenoIndex()
+CGenoIndex &CFileInfo::GenoIndex()
 {
 	if (_GenoIndex.Empty())
 	{
@@ -274,9 +467,9 @@ CIndex<C_UInt8> &CFileInfo::GenoIndex()
 	return _GenoIndex;
 }
 
-CIndex<int> &CFileInfo::VarIndex(const string &varname)
+CIndex &CFileInfo::VarIndex(const string &varname)
 {
-	CIndex<int> &I = _VarIndex[varname];
+	CIndex &I = _VarIndex[varname];
 	if (I.Empty())
 	{
 		PdAbstractArray N = GDS_Node_Path(_Root, varname.c_str(), FALSE);

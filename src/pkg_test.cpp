@@ -129,7 +129,7 @@ SEXP test_position_index(SEXP node, SEXP position)
 {
 	COREARRAY_TRY
 
-		SeqArray::CIndex<int> Idx;
+		SeqArray::CIndex Idx;
 		Idx.Init(GDS_R_SEXP2Obj(node, TRUE));
 
 		rv_ans = PROTECT(NEW_LIST(2));

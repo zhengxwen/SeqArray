@@ -78,7 +78,7 @@ public:
 class COREARRAY_DLL_LOCAL CApply_Variant_Geno: public CApply_Variant
 {
 protected:
-	CIndex<C_UInt8> *GenoIndex;  ///< indexing genotypes
+	CGenoIndex *GenoIndex;  ///< indexing genotypes
 	ssize_t SiteCount;  ///< the total number of entries at a site
 	ssize_t CellCount;  ///< the selected number of entries at a site
 	bool UseRaw;  ///< whether use RAW type
@@ -161,7 +161,7 @@ public:
 class COREARRAY_DLL_LOCAL CApply_Variant_Info: public CApply_Variant
 {
 protected:
-	CIndex<int> *VarIndex;  ///< indexing the format variable
+	CIndex *VarIndex;  ///< indexing the format variable
 	C_SVType SVType;        ///< data type for GDS reading
 	C_Int32 BaseNum;        ///< if 2-dim, the size of the first dimension
 	map<int, SEXP> VarList;  ///< a list of SEXP variables
@@ -181,7 +181,7 @@ public:
 class COREARRAY_DLL_LOCAL CApply_Variant_Format: public CApply_Variant
 {
 protected:
-	CIndex<int> *VarIndex;  ///< indexing the format variable
+	CIndex *VarIndex;  ///< indexing the format variable
 	ssize_t _TotalSampNum;  ///< the total number of samples
 
 	C_SVType SVType;        ///< data type for GDS reading
