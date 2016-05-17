@@ -1073,6 +1073,30 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         s <- levels(s)
         filterlevels <- c(s, setdiff(header$filter$ID, s))
 
+        # merge genotype/extra.index, phase/extra.index
+        for (nm in c("genotype/extra.index", "phase/extra.index"))
+        {
+            s <- NULL
+            for (f in gdslist)
+            {
+                v <- read.gdsn(index.gdsn(f, nm))
+                if (length(v) > 0L)
+                    s <- cbind(s, v)
+            }
+            v <- index.gdsn(gfile, nm)
+            if (!is.null(s)) append.gdsn(v, s)
+            readmode.gdsn(v)
+        }
+
+        # merge genotype/extra, phase/extra
+        for (nm in c("genotype/extra", "phase/extra"))
+        {
+            v <- index.gdsn(gfile, nm)
+            for (f in gdslist) append.gdsn(v, index.gdsn(f, nm))
+            readmode.gdsn(v)
+        }
+
+
         # close files
         for (i in seq_along(ptmpfn))
             seqClose(gdslist[[i]])
