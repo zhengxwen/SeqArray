@@ -1,6 +1,0 @@
-##################################################################
-###                     SeqArray Codes                         ###
-###                                                            ###
-
-# additional preprocessor options, requiring >=R_v3.3
-PKG_CPPFLAGS = -I. -DUSING_R

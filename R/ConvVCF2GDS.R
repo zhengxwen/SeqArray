@@ -20,7 +20,13 @@
 seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 {
     # check
-    stopifnot(is.character(vcf.fn))
+    if (!inherits(vcf.fn, "connection"))
+    {
+        stopifnot(is.character(vcf.fn))
+        ilist <- seq_along(vcf.fn)
+    } else {
+        ilist <- 1L
+    }
     stopifnot(is.logical(getnum), length(getnum)==1L)
 
     #########################################################
@@ -32,10 +38,15 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     nVariant <- 0L
 
     n <- 0L
-    for (i in seq_along(vcf.fn))
+    for (i in ilist)
     {
-        infile <- file(vcf.fn[i], open="rt")
-        on.exit(close(infile))
+        if (!inherits(vcf.fn, "connection"))
+        {
+            infile <- file(vcf.fn[i], open="rt")
+            on.exit(close(infile))
+        } else {
+            infile <- vcf.fn
+        }
 
         # read header
         ans <- NULL
@@ -76,8 +87,11 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
             }
         }
 
-        close(infile)
-        on.exit()
+        if (!inherits(vcf.fn, "connection"))
+        {
+            close(infile)
+            on.exit()
+        }
     }
 
     ans <- unique(ans)

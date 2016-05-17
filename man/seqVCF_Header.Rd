@@ -8,7 +8,7 @@
 seqVCF_Header(vcf.fn, getnum=FALSE)
 }
 \arguments{
-    \item{vcf.fn}{the file name of VCF}
+    \item{vcf.fn}{the file name; or a \code{\link{connection}} object}
     \item{getnum}{if \code{TRUE}, return the number of samples and variants}
 }
 \value{
@@ -54,6 +54,11 @@ Description -- a variable description.
 
 # get sample id
 seqVCF_Header(vcf.fn, getnum=TRUE)
+
+# use a connection object
+f <- file(vcf.fn, "r")
+seqVCF_Header(f, getnum=TRUE)
+close(f)
 }
 
 \keyword{gds}
