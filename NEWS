@@ -3,8 +3,8 @@ CHANGES IN VERSION 1.12.0-1.12.3
 
     o the version number was bumped for the Bioconductor release version 3.3
 
-    o `seqVCF_SampID()` and `seqVCF_Header()` allow a connection object
-      instead of a file name
+    o `seqVCF_SampID()`, `seqVCF_Header()` and `seqVCF2GDS()` allow a
+      connection object instead of a file name
 
 
 CHANGES IN VERSION 1.11.19-1.11.22

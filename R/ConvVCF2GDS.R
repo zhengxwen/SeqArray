@@ -36,6 +36,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     geno.text <- NULL
     nSample <- 0L
     nVariant <- 0L
+    samp.id <- NULL
 
     n <- 0L
     for (i in ilist)
@@ -58,22 +59,29 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                 s <- substring(s, 3L)
                 ans <- c(ans, s)
             } else {
-                if (getnum)
+                if (inherits(vcf.fn, "connection"))
                 {
-                    s <- scan(text=s, what=character(0), sep="\t",
+                    samp.id <- scan(text=s, what=character(0), sep="\t",
                         quiet=TRUE)[-seq_len(9)]
-                    if (length(s) > nSample) nSample <- length(s)
-                }
-                s <- readLines(infile, n=1L)
-                if (length(s) > 0L)
-                {
-                    ss <- scan(text=s, what=character(), sep="\t", quiet=TRUE)
-                    geno.text <- c(geno.text, ss[-seq_len(9L)])
-                }
-                if (getnum)
-                {
-                    nVariant <- nVariant + length(s) +
-                        .Call(SEQ_VCF_NumLines, infile, FALSE)
+                    nSample <- length(samp.id)
+                } else {
+                    if (getnum)
+                    {
+                        s <- scan(text=s, what=character(0), sep="\t",
+                            quiet=TRUE)[-seq_len(9)]
+                        if (length(s) > nSample) nSample <- length(s)
+                    }
+                    s <- readLines(infile, n=1L)
+                    if (length(s) > 0L)
+                    {
+                        ss <- scan(text=s, what=character(), sep="\t", quiet=TRUE)
+                        geno.text <- c(geno.text, ss[-seq_len(9L)])
+                    }
+                    if (getnum)
+                    {
+                        nVariant <- nVariant + length(s) +
+                            .Call(SEQ_VCF_NumLines, infile, FALSE)
+                    }
                 }
                 break
             }
@@ -194,7 +202,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         tab <- table(num)
         ploidy <- as.integer(names(which.max(tab)))
     } else
-        ploidy <- as.integer(NA)
+        ploidy <- NA_integer_
 
     if (is.null(ans))
     {
@@ -353,6 +361,8 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         rv$num.sample <- nSample
         rv$num.variant <- nVariant
     }
+    if (!is.null(samp.id))
+        rv$sample.id <- samp.id
     class(rv) <- "SeqVCFHeaderClass"
     rv
 }
@@ -407,7 +417,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     digest=TRUE, parallel=FALSE, verbose=TRUE)
 {
     # check
-    stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
+    if (!inherits(vcf.fn, "connection"))
+        stopifnot(is.character(vcf.fn), length(vcf.fn)>0L)
     stopifnot(is.character(out.fn), length(out.fn)==1L)
     stopifnot(is.null(header) | inherits(header, "SeqVCFHeaderClass"))
 
@@ -431,9 +442,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(raise.error), length(raise.error)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    pnum <- .NumParallel(parallel)
 
-    variant_count <- attr(vcf.fn, "variant_count")
+    pnum <- .NumParallel(parallel)
+    if (inherits(vcf.fn, "connection"))
+    {
+        if (pnum > 1L)
+            stop("No parallel support when the input is a connection object.")
+    }
+
+    if (is.character(vcf.fn))
+        variant_count <- attr(vcf.fn, "variant_count")
+    else
+        variant_count <- NULL
     if (!is.null(variant_count))
     {
         if (!is.numeric(variant_count))
@@ -445,28 +465,31 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (verbose) cat(date(), "\n", sep="")
 
     genotype.storage <- "bit2"
-    vcf.fn <- normalizePath(vcf.fn, mustWork=FALSE)
 
     # check sample id
-    samp.id <- NULL
-    for (i in seq_along(vcf.fn))
+    if (!inherits(vcf.fn, "connection"))
     {
-        if (is.null(samp.id))
+        vcf.fn <- normalizePath(vcf.fn, mustWork=FALSE)
+        samp.id <- NULL
+        for (i in seq_along(vcf.fn))
         {
-            samp.id <- seqVCF_SampID(vcf.fn[i])
-            if (length(samp.id) <= 0L)
-                stop("There is no sample in the VCF file.")
-        } else {
-            tmp <- seqVCF_SampID(vcf.fn[i])
-            if (length(samp.id) != length(tmp))
+            if (is.null(samp.id))
             {
-                stop(sprintf("The file '%s' has different sample id.",
-                    vcf.fn[i]))
-            }
-            if (!all(samp.id == tmp))
-            {
-                stop(sprintf("The file '%s' has different sample id.",
-                    vcf.fn[i]))
+                samp.id <- seqVCF_SampID(vcf.fn[i])
+                if (length(samp.id) <= 0L)
+                    stop("There is no sample in the VCF file.")
+            } else {
+                tmp <- seqVCF_SampID(vcf.fn[i])
+                if (length(samp.id) != length(tmp))
+                {
+                    stop(sprintf("The file '%s' has different sample id.",
+                        vcf.fn[i]))
+                }
+                if (!all(samp.id == tmp))
+                {
+                    stop(sprintf("The file '%s' has different sample id.",
+                        vcf.fn[i]))
+                }
             }
         }
     }
@@ -475,8 +498,19 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     ##################################################
     # parse the header of VCF
 
-    if (is.null(header))
-        header <- seqVCF_Header(vcf.fn)
+    if (!inherits(vcf.fn, "connection"))
+    {
+        if (is.null(header))
+            header <- seqVCF_Header(vcf.fn)
+    } else {
+        if (is.null(header))
+        {
+            header <- seqVCF_Header(vcf.fn)
+            samp.id <- header$sample.id
+        } else
+            samp.id <- seqVCF_SampID(vcf.fn)
+    }
+
     if (!inherits(header, "SeqVCFHeaderClass"))
         stop("'header' should be NULL or returned from 'seqVCF_Header()'.")
     # 'seqVCF_Header'
@@ -487,9 +521,14 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (verbose)
     {
         cat("Variant Call Format (VCF) Import:\n")
-        cat("    file(s):\n")
-        cat(sprintf("        %s (%s)\n", basename(vcf.fn),
-            .pretty_size(file.size(vcf.fn))), sep="")
+        if (!inherits(vcf.fn, "connection"))
+        {
+            cat("    file(s):\n")
+            cat(sprintf("        %s (%s)\n", basename(vcf.fn),
+                .pretty_size(file.size(vcf.fn))), sep="")
+        } else {
+            cat("    connection object:\n")
+        }
         cat("    file format: ", header$fileformat, "\n", sep="")
         cat("    the number of sets of chromosomes (ploidy): ",
             header$ploidy, "\n", sep="")
@@ -731,6 +770,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     put.attr.gdsn(varGeno, "Description", geno_format$Description[1L])
 
     # add data to the folder of genotype
+    if (is.na(header$ploidy)) header$ploidy <- 2L
     if (header$ploidy > 0L)
     {
         geno.node <- .AddVar(storage.option, varGeno, "data",
@@ -985,52 +1025,77 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         filterlevels <- header$filter$ID
         linecnt <- double(1L)
 
-        progfile <- file(paste0(out.fn, ".progress"), "wt")
-        cat(out.fn, "\n", file=progfile, sep="")
-
-        infile <- NULL
-        on.exit({
-            close(progfile)
-            unlink(paste0(out.fn, ".progress"), force=TRUE)
-            if (!is.null(infile)) close(infile)
-        }, add=TRUE)
-
-        for (i in seq_along(vcf.fn))
+        if (!inherits(vcf.fn, "connection"))
         {
-            if (!is.null(variant_count))
+            progfile <- file(paste0(out.fn, ".progress"), "wt")
+            cat(out.fn, "\n", file=progfile, sep="")
+
+            infile <- NULL
+            on.exit({
+                close(progfile)
+                unlink(paste0(out.fn, ".progress"), force=TRUE)
+                if (!is.null(infile)) close(infile)
+            }, add=TRUE)
+
+            for (i in seq_along(vcf.fn))
             {
-                cnt <- cumsum(variant_count)[i]
-                if (is.finite(cnt) & (start > cnt))
+                if (!is.null(variant_count))
                 {
-                    linecnt <- as.double(cnt)
-                    next
+                    cnt <- cumsum(variant_count)[i]
+                    if (is.finite(cnt) & (start > cnt))
+                    {
+                        linecnt <- as.double(cnt)
+                        next
+                    }
                 }
+
+                infile <- file(vcf.fn[i], open="rt")
+                if (verbose)
+                {
+                    cat(sprintf("Parsing '%s':\n", basename(vcf.fn[i])))
+                    flush.console()
+                }
+
+                # call C function
+                v <- .Call(SEQ_VCF_Parse, vcf.fn[i], header, gfile$root,
+                    list(sample.num = length(samp.id),
+                        genotype.var.name = genotype.var.name,
+                        infile = infile,
+                        raise.error = raise.error, filter.levels = filterlevels,
+                        start = start, count = count,
+                        chr.prefix = ignore.chr.prefix,
+                        progfile = progfile,
+                        verbose = verbose),
+                    linecnt, new.env())
+
+                filterlevels <- unique(c(filterlevels, v))
+                if (verbose) print(geno.node)
+
+                close(infile)
+                infile <- NULL
             }
 
-            infile <- file(vcf.fn[i], open="rt")
+        } else {
             if (verbose)
             {
-                cat(sprintf("Parsing '%s'\n", basename(vcf.fn[i])))
+                cat("Parsing 'connection object':\n")
                 flush.console()
             }
 
             # call C function
-            v <- .Call(SEQ_VCF_Parse, vcf.fn[i], header, gfile$root,
+            v <- .Call(SEQ_VCF_Parse, "connection object", header, gfile$root,
                 list(sample.num = length(samp.id),
                     genotype.var.name = genotype.var.name,
-                    infile = infile,
+                    infile = vcf.fn,
                     raise.error = raise.error, filter.levels = filterlevels,
                     start = start, count = count,
                     chr.prefix = ignore.chr.prefix,
-                    progfile = progfile,
+                    progfile = NULL,
                     verbose = verbose),
                 linecnt, new.env())
 
             filterlevels <- unique(c(filterlevels, v))
             if (verbose) print(geno.node)
-
-            close(infile)
-            infile <- NULL
         }
 
     } else {

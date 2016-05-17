@@ -1291,13 +1291,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		InitText();
 
-		while (!VCF_EOF())
+		if (!Rf_isNull(progfile))
 		{
-			GetText(NA_INTEGER);
-			if (strncmp(Text_pBegin, "#CHROM", 6) == 0)
+			while (!VCF_EOF())
 			{
-				SkipLine();
-				break;
+				GetText(NA_INTEGER);
+				if (strncmp(Text_pBegin, "#CHROM", 6) == 0)
+				{
+					SkipLine();
+					break;
+				}
 			}
 		}
 
