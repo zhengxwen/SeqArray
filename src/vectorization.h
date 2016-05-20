@@ -135,19 +135,19 @@ namespace Vectorization
 
 #if defined(COREARRAY_SIMD_AVX)
 
-	typedef ALIGN_PTR_AVX AUTO_PTR;
+	typedef ALIGN_PTR_AVX VEC_AUTO_PTR;
 
 #elif defined(COREARRAY_SIMD_SSE)
 
-	typedef ALIGN_PTR_SSE AUTO_PTR;
+	typedef ALIGN_PTR_SSE VEC_AUTO_PTR;
 
 #else
-	struct COREARRAY_DLL_DEFAULT AUTO_PTR: public ALIGN_PTR
+	struct COREARRAY_DLL_DEFAULT VEC_AUTO_PTR: public ALIGN_PTR
 	{
 	public:
-		AUTO_PTR(): ALIGN_PTR()
+		VEC_AUTO_PTR(): ALIGN_PTR()
 			{ }
-		AUTO_PTR(size_t n): ALIGN_PTR(n, 1u)
+		VEC_AUTO_PTR(size_t n): ALIGN_PTR(n, 1u)
 			{ }
 		void reset(size_t n)
 			{ ALIGN_PTR::reset(n, 1u); }

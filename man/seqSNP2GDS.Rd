@@ -5,17 +5,16 @@
     Converts a SNP GDS file to a SeqArray GDS file.
 }
 \usage{
-seqSNP2GDS(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
-    compress.annotation="ZIP_RA", optimize=TRUE, digest=TRUE, verbose=TRUE)
+seqSNP2GDS(gds.fn, out.fn, storage.option="ZIP_RA", optimize=TRUE,
+    digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file name of SNP format}
-    \item{out.gdsfn}{the file name, output a file of SeqArray format}
-    \item{compress.geno}{the compression method for "genotype"; optional
-        values are defined in the function \code{add.gdsn}}
-    \item{compress.annotation}{the compression method for the GDS variables,
-        except "genotype"; optional values are defined in the function
-        \code{add.gdsn}}
+    \item{out.fn}{the file name, output a file of SeqArray format}
+    \item{storage.option}{specify the storage and compression options,
+        by default \code{\link{seqStorageOption}("ZIP_RA")}; or
+        \code{"LZMA_RA"} to use LZMZ compression algorithm with higher
+        compression ratio}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",

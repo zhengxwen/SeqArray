@@ -83,7 +83,7 @@ protected:
 	ssize_t CellCount;  ///< the selected number of entries at a site
 	bool UseRaw;  ///< whether use RAW type
 	vector<C_BOOL> Selection;  ///< the buffer of selection
-	AUTO_PTR ExtPtr;           ///< a pointer to the additional buffer
+	VEC_AUTO_PTR ExtPtr;       ///< a pointer to the additional buffer
 	SEXP VarGeno;    ///< genotype R object
 
 	inline int _ReadGenoData(int *Base);

@@ -12,7 +12,8 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA",
     verbose=TRUE)
 }
 \arguments{
-    \item{vcf.fn}{the file name(s) of VCF format}
+    \item{vcf.fn}{the file name(s) of VCF format; or a \code{\link{connection}}
+        object}
     \item{out.fn}{the file name of output GDS file}
     \item{header}{if NULL, \code{header} is set to be
         \code{\link{seqVCF_Header}(vcf.fn)}}

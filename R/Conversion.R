@@ -405,17 +405,19 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 # Convert a SNP GDS file to a SeqArray GDS file
 #
 
-seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
-    compress.annotation="ZIP_RA", optimize=TRUE, digest=TRUE, verbose=TRUE)
+seqSNP2GDS <- function(gds.fn, out.fn, storage.option="ZIP_RA",
+    optimize=TRUE, digest=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
-    stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
-    stopifnot(is.character(compress.geno), length(compress.geno)==1L)
-    stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
+    stopifnot(is.character(out.fn), length(out.fn)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (is.character(storage.option))
+        storage.option <- seqStorageOption(storage.option)
+    stopifnot(inherits(storage.option, "SeqGDSStorageClass"))
 
     if (verbose)
     {
@@ -423,7 +425,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
         cat("SNP GDS to SeqArray GDS Format:\n")
     }
 
-    # open the existing SNP GDS
+    # open the SNP GDS
     srcfile <- openfn.gds(gds.fn)
     on.exit({ closefn.gds(srcfile) })
 
@@ -449,7 +451,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
 
 
     # create GDS file
-    dstfile <- createfn.gds(out.gdsfn)
+    dstfile <- createfn.gds(out.fn)
     # close the file at the end
     on.exit({ closefn.gds(dstfile) }, add=TRUE)
 
@@ -461,116 +463,110 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
 
     # add sample.id
     if (verbose) cat("    sample.id")
-    copyto.gdsn(dstfile, index.gdsn(srcfile, "sample.id"))
-    n <- index.gdsn(dstfile, "sample.id")
-    compression.gdsn(n, compress.annotation)
+    s <- read.gdsn(index.gdsn(srcfile, "sample.id"))
+    n <- .AddVar(storage.option, dstfile, "sample.id", s, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
     # add variant.id
     if (verbose) cat("    variant.id")
-    copyto.gdsn(dstfile, index.gdsn(srcfile, "snp.id"), "variant.id")
-    n <- index.gdsn(dstfile, "variant.id")
-    compression.gdsn(n, compress.annotation)
+    s <- read.gdsn(index.gdsn(srcfile, "snp.id"))
+    n <- .AddVar(storage.option, dstfile, "variant.id", s, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
     # add position
     if (verbose) cat("    position")
-    copyto.gdsn(dstfile, index.gdsn(srcfile, "snp.position"), "position")
-    n <- index.gdsn(dstfile, "position")
-    compression.gdsn(n, compress.annotation)
+    s <- read.gdsn(index.gdsn(srcfile, "snp.position"))
+    n <- .AddVar(storage.option, dstfile, "position", s, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
     # add chromosome
     if (verbose) cat("    chromosome")
-    n <- add.gdsn(dstfile, "chromosome", storage="string",
-        compress=compress.annotation)
-    append.gdsn(n, index.gdsn(srcfile, "snp.chromosome"))
-    readmode.gdsn(n)
+    s <- read.gdsn(index.gdsn(srcfile, "snp.chromosome"))
+    n <- .AddVar(storage.option, dstfile, "chromosome", s, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
     # add allele
     if (verbose) cat("    allele")
-    n <- add.gdsn(dstfile, "allele", val = .cfunction("FC_AlleleStr2")(
-        read.gdsn(index.gdsn(srcfile, "snp.allele"))),
-        compress=compress.annotation, closezip=TRUE)
+    n <- .AddVar(storage.option, dstfile, "allele",
+        .cfunction("FC_AlleleStr2")(read.gdsn(index.gdsn(srcfile, "snp.allele"))),
+        closezip=TRUE)
     .DigestCode(n, digest, verbose)
+
 
     # add a folder for genotypes
     if (verbose) cat("    genotype")
-    n <- addfolder.gdsn(dstfile, "genotype")
-    put.attr.gdsn(n, "VariableName", "GT")
-    put.attr.gdsn(n, "Description", "Genotype")
-
+    varGeno <- addfolder.gdsn(dstfile, "genotype")
+    put.attr.gdsn(varGeno, "VariableName", "GT")
+    put.attr.gdsn(varGeno, "Description", "Genotype")
 
     # add genotypes to genotype/data
-    n1 <- add.gdsn(n, "data", storage="bit2", valdim=c(2L, nSamp, 0L),
-        compress=compress.geno)
+    n <- .AddVar(storage.option, varGeno, "data", storage="bit2",
+        valdim=c(2L, nSamp, 0L))
     apply.gdsn(index.gdsn(srcfile, "genotype"), ifelse(snpfirstdim, 1L, 2L),
-        FUN = .cfunction("FC_SNP2GDS"), as.is="gdsnode", target.node=n1)
-    readmode.gdsn(n1)
-    .DigestCode(n1, digest, verbose)
+        FUN=.cfunction("FC_SNP2GDS"), as.is="gdsnode", target.node=n)
+    readmode.gdsn(n)
+    .DigestCode(n, digest, verbose)
 
-    n1 <- add.gdsn(n, "@data", storage="uint8", compress=compress.annotation,
+    n <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
         visible=FALSE)
-    .repeat_gds(n1, 1L, nSNP)
-    readmode.gdsn(n1)
-    .DigestCode(n1, digest, FALSE)
+    .repeat_gds(n, 1L, nSNP)
+    readmode.gdsn(n)
+    .DigestCode(n, digest, FALSE)
 
-    n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
-        compress=compress.geno, closezip=TRUE)
-    put.attr.gdsn(n1, "R.colnames",
+    n <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
+        valdim=c(3L,0L), closezip=TRUE)
+    put.attr.gdsn(n, "R.colnames",
         c("sample.index", "variant.index", "length"))
-    add.gdsn(n, "extra", storage="int16", compress=compress.geno, closezip=TRUE)
+    .AddVar(storage.option, varGeno, "extra", storage="int16", closezip=TRUE)
 
 
     # add a folder for phase information
     if (verbose) cat("    phase")
-    n <- addfolder.gdsn(dstfile, "phase")
+    varPhase <- addfolder.gdsn(dstfile, "phase")
 
-    n1 <- add.gdsn(n, "data", storage="bit1", valdim=c(nSamp, 0L),
-        compress=compress.annotation)
-    .repeat_gds(n1, 0L, as.double(nSNP)*nSamp)
-    readmode.gdsn(n1)
-    .DigestCode(n1, digest, verbose)
+    n <- .AddVar(storage.option, varPhase, "data", storage="bit1",
+        valdim=c(nSamp, 0L))
+    .repeat_gds(n, 0L, as.double(nSNP)*nSamp)
+    readmode.gdsn(n)
+    .DigestCode(n, digest, verbose)
 
-    n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
-        compress=compress.annotation, closezip=TRUE)
-    put.attr.gdsn(n1, "R.colnames",
+    n <- .AddVar(storage.option, varPhase, "extra.index", storage="int32",
+        valdim=c(3L,0L), closezip=TRUE)
+    put.attr.gdsn(n, "R.colnames",
         c("sample.index", "variant.index", "length"))
-    add.gdsn(n, "extra", storage="bit1", compress=compress.annotation,
-        closezip=TRUE)
+    .AddVar(storage.option, varPhase, "extra", storage="bit1", closezip=TRUE)
 
 
     # add annotation folder
-    n <- addfolder.gdsn(dstfile, "annotation")
+    varAnnot <- addfolder.gdsn(dstfile, "annotation")
 
     # add annotation/id
     if (verbose) cat("    annotation/id")
-    n1 <- add.gdsn(n, "id", storage="string", compress=compress.annotation)
+    n <- .AddVar(storage.option, varAnnot, "id", storage="string")
     if (is.null(index.gdsn(srcfile, "snp.rs.id", silent=TRUE)))
-        assign.gdsn(n1, index.gdsn(srcfile, "snp.id"))
+        assign.gdsn(n, index.gdsn(srcfile, "snp.id"))
     else
-        assign.gdsn(n1, index.gdsn(srcfile, "snp.rs.id"))
-    readmode.gdsn(n1)
-    .DigestCode(n1, digest, verbose)
+        assign.gdsn(n, index.gdsn(srcfile, "snp.rs.id"))
+    readmode.gdsn(n)
+    .DigestCode(n, digest, verbose)
 
     # add annotation/qual
-    n1 <- add.gdsn(n, "qual", storage="float", compress=compress.annotation)
-    .repeat_gds(n1, 100.0, nSNP)
-    readmode.gdsn(n1)
-    .DigestCode(n1, digest, FALSE)
+    n <- .AddVar(storage.option, varAnnot, "qual", storage="float")
+    .repeat_gds(n, 100.0, nSNP)
+    readmode.gdsn(n)
+    .DigestCode(n, digest, FALSE)
 
     # add filter
-    n1 <- add.gdsn(n, "filter", storage="int32", compress=compress.annotation)
-    .repeat_gds(n1, 1L, nSNP)
-    readmode.gdsn(n1)
-    put.attr.gdsn(n1, "R.class", "factor")
-    put.attr.gdsn(n1, "R.levels", c("PASS"))
-    put.attr.gdsn(n1, "Description", c("All filters passed"))
-    .DigestCode(n1, digest, FALSE)
+    n <- .AddVar(storage.option, varAnnot, "filter", storage="int32")
+    .repeat_gds(n, 1L, nSNP)
+    readmode.gdsn(n)
+    put.attr.gdsn(n, "R.class", "factor")
+    put.attr.gdsn(n, "R.levels", c("PASS"))
+    put.attr.gdsn(n, "Description", c("All filters passed"))
+    .DigestCode(n, digest, FALSE)
 
     # add the INFO field
-    n1 <- addfolder.gdsn(n, "info")
+    n1 <- addfolder.gdsn(varAnnot, "info")
     n2 <- index.gdsn(srcfile, "snp.annot", silent=TRUE)
     if (!is.null(n2))
     {
@@ -578,14 +574,12 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
         {
             if (verbose) cat("    annotation/info/", i, sep="")
             copyto.gdsn(n1, index.gdsn(n2, i))
-            n3 <- index.gdsn(n1, i)
-            compression.gdsn(n3, compress.annotation)
-           .DigestCode(n3, digest, verbose)
+           .DigestCode(index.gdsn(n1, i), digest, verbose)
         }
     }
 
     # add the FORMAT field
-    addfolder.gdsn(n, "format")
+    addfolder.gdsn(varAnnot, "format")
 
     # add sample annotation
     if (verbose) cat("    sample.annotation\n")
@@ -597,9 +591,7 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
         {
             if (verbose) cat("    sample.annotation/", i, sep="")
             copyto.gdsn(n, index.gdsn(n1, i))
-            n3 <- index.gdsn(n, i)
-            compression.gdsn(n3, compress.annotation)
-           .DigestCode(n3, digest, verbose)
+           .DigestCode(index.gdsn(n, i), digest, verbose)
         }
     }
 
@@ -619,12 +611,12 @@ seqSNP2GDS <- function(gds.fn, out.gdsfn, compress.geno="ZIP_RA",
     {
         if (verbose)
             cat("Optimize the access efficiency ...\n")
-        cleanup.gds(out.gdsfn, verbose=verbose)
+        cleanup.gds(out.fn, verbose=verbose)
         if (verbose) cat(date(), "\n", sep="")
     }
 
     # output
-    invisible(normalizePath(out.gdsfn))
+    invisible(normalizePath(out.fn))
 }
 
 
