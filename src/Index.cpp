@@ -617,7 +617,7 @@ bool CVarApplyList::CallNext()
 
 
 // ===========================================================
-// GDS Variable Type
+// Progress object
 // ===========================================================
 
 static int Progress_ShowNum = 50;
@@ -702,41 +702,41 @@ void CProgress::ShowProgress()
 			time_t now; time(&now);
 			_timer.push_back(pair<double, time_t>(percent, now));
 
-			double seconds = difftime(now, _timer[n].second);
+			double sec = difftime(now, _timer[n].second);
 			double diff = percent - _timer[n].first;
 			if (diff > 0)
-				seconds = seconds / diff * (1 - percent);
+				sec = sec / diff * (1 - percent);
 			else
-				seconds = 999.9 * 60 * 60;
+				sec = 999.9 * 60 * 60;
 			percent *= 100;
 
 			// show
 			if (NewLine)
 			{
-				if (seconds < 60)
+				if (sec < 60)
 				{
 					put_text(File, "[%s] %2.0f%%, ETC: %.0fs\n", ss,
-						percent, seconds);
-				} else if (seconds < 3600)
+						percent, sec);
+				} else if (sec < 3600)
 				{
 					put_text(File, "[%s] %2.0f%%, ETC: %.1fm\n", ss,
-						percent, seconds/60);
+						percent, sec/60);
 				} else {
 					put_text(File, "[%s] %2.0f%%, ETC: %.1fh\n", ss,
-						percent, seconds/(60*60));
+						percent, sec/(60*60));
 				}
 			} else {
-				if (seconds < 60)
+				if (sec < 60)
 				{
 					put_text(File, "\r[%s] %2.0f%%, ETC: %.0fs  ", ss,
-						percent, seconds);
-				} else if (seconds < 3600)
+						percent, sec);
+				} else if (sec < 3600)
 				{
 					put_text(File, "\r[%s] %2.0f%%, ETC: %.1fm  ", ss,
-						percent, seconds/60);
+						percent, sec/60);
 				} else {
 					put_text(File, "\r[%s] %2.0f%%, ETC: %.1fh  ", ss,
-						percent, seconds/(60*60));
+						percent, sec/(60*60));
 				}
 				if (Counter >= TotalCount)
 					put_text(File, "\n");
@@ -789,26 +789,31 @@ void CProgressStdOut::ShowProgress()
 		time_t now; time(&now);
 		_timer.push_back(pair<double, time_t>(percent, now));
 
-		double seconds = difftime(now, _timer[n].second);
+		double sec = difftime(now, _timer[n].second);
 		double diff = percent - _timer[n].first;
 		if (diff > 0)
-			seconds = seconds / diff * (1 - percent);
+			sec = sec / diff * (1 - percent);
 		else
-			seconds = 999.9 * 60 * 60;
+			sec = 999.9 * 60 * 60;
 		percent *= 100;
 
 		// show
-		if (seconds < 60)
+		if (sec < 60)
 		{
-			Rprintf("\r[%s] %2.0f%%, ETC: %.0fs  ", ss, percent, seconds);
-		} else if (seconds < 3600)
+			if (Counter >= TotalCount)
+				Rprintf("\r[%s] %2.0f%%, ETC: completed", ss, percent);
+			else
+				Rprintf("\r[%s] %2.0f%%, ETC: %.0fs  ", ss, percent, sec);
+		} else if (sec < 3600)
 		{
-			Rprintf("\r[%s] %2.0f%%, ETC: %.1fm  ", ss, percent, seconds/60);
+			Rprintf("\r[%s] %2.0f%%, ETC: %.1fm  ", ss, percent, sec/60);
 		} else {
-			Rprintf("\r[%s] %2.0f%%, ETC: %.1fh  ", ss, percent, seconds/(60*60));
+			if (sec >= 999.9 * 60 * 60)
+				Rprintf("\r[%s] %2.0f%%, ETC: NA    ", ss, percent);
+			else
+				Rprintf("\r[%s] %2.0f%%, ETC: %.1fh  ", ss, percent, sec/(60*60));
 		}
-		if (Counter >= TotalCount)
-			Rprintf("\n");
+		if (Counter >= TotalCount) Rprintf("\n");
 	}
 }
 

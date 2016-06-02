@@ -40,6 +40,9 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
 
 \code{"$dosage"} is also allowed for the dosages of reference allele.
 
+\code{"$num_allele"} returns an integer vector with the numbers of distinct
+alleles.
+
     The algorithm is highly optimized by blocking the computations to exploit
 the high-speed memory instead of disk.
 }

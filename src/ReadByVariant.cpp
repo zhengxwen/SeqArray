@@ -46,8 +46,7 @@ CApply_Variant_Basic::CApply_Variant_Basic(CFileInfo &File,
 
 void CApply_Variant_Basic::ReadData(SEXP val)
 {
-	C_Int32 st = Position;
-	C_Int32 one = 1;
+	C_Int32 st = Position, one = 1;
 	if (COREARRAY_SV_INTEGER(SVType))
 	{
 		GDS_Array_ReadData(Node, &st, &one, INTEGER(val), svInt32);
@@ -137,17 +136,17 @@ CApply_Variant_Geno::CApply_Variant_Geno(): CApply_Variant()
 	SiteCount = CellCount = 0;
 	SampNum = 0; Ploidy = 0;
 	UseRaw = FALSE;
-	VarGeno = NULL;
+	VarIntGeno = VarRawGeno = NULL;
 }
 
-CApply_Variant_Geno::CApply_Variant_Geno(CFileInfo &File, bool use_raw):
+CApply_Variant_Geno::CApply_Variant_Geno(CFileInfo &File, int use_raw):
 	CApply_Variant()
 {
 	fVarType = ctGenotype;
 	Init(File, use_raw);
 }
 
-void CApply_Variant_Geno::Init(CFileInfo &File, bool use_raw)
+void CApply_Variant_Geno::Init(CFileInfo &File, int use_raw)
 {
 	static const char *VAR_NAME = "genotype/data";
 
@@ -188,7 +187,7 @@ void CApply_Variant_Geno::Init(CFileInfo &File, bool use_raw)
 	}
 
 	ExtPtr.reset(SiteCount);
-	VarGeno = NULL;
+	VarIntGeno = VarRawGeno = NULL;
 	Reset();
 }
 
@@ -268,34 +267,56 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 
 void CApply_Variant_Geno::ReadData(SEXP val)
 {
-	if (UseRaw)
-		ReadGenoData(RAW(val));
-	else
+	if (TYPEOF(val) != RAWSXP)
 		ReadGenoData(INTEGER(val));
+	else
+		ReadGenoData(RAW(val));
 }
 
 SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
 {
-	if (VarGeno == NULL)
+	bool int_type;
+	if (UseRaw == NA_INTEGER)
 	{
-		VarGeno = UseRaw ? NEW_RAW(CellCount) : NEW_INTEGER(CellCount);
-		PROTECT(VarGeno);
-		nProtected ++;
+		C_UInt8 NumIndexRaw;
+		C_Int64 Index;
+		GenoIndex->GetInfo(Position, Index, NumIndexRaw);
+		int_type = (NumIndexRaw > 4);
+	} else if (UseRaw == FALSE)
+		int_type = true;
+	else
+		int_type = false;
 
-		SEXP dim = NEW_INTEGER(2);
-		int *p = INTEGER(dim);
-		p[0] = Ploidy; p[1] = SampNum;
-		SET_DIM(VarGeno, dim);
-
-		SEXP name_list = PROTECT(NEW_LIST(2));
-		SEXP tmp = PROTECT(NEW_CHARACTER(2));
-		SET_STRING_ELT(tmp, 0, mkChar("allele"));
-		SET_STRING_ELT(tmp, 1, mkChar("sample"));
-		SET_NAMES(name_list, tmp);
-		SET_DIMNAMES(VarGeno, name_list);
-		UNPROTECT(2);
+	if (int_type)
+	{
+		if (VarIntGeno == NULL)
+		{
+			VarIntGeno = PROTECT(allocMatrix(INTSXP, Ploidy, SampNum));
+			nProtected ++;
+			SEXP name_list = PROTECT(NEW_LIST(2));
+			SEXP tmp = PROTECT(NEW_CHARACTER(2));
+			SET_STRING_ELT(tmp, 0, mkChar("allele"));
+			SET_STRING_ELT(tmp, 1, mkChar("sample"));
+			SET_NAMES(name_list, tmp);
+			SET_DIMNAMES(VarIntGeno, name_list);
+			UNPROTECT(2);
+		}
+		return VarIntGeno;
+	} else {
+		if (VarRawGeno == NULL)
+		{
+			VarRawGeno = PROTECT(allocMatrix(RAWSXP, Ploidy, SampNum));
+			nProtected ++;
+			SEXP name_list = PROTECT(NEW_LIST(2));
+			SEXP tmp = PROTECT(NEW_CHARACTER(2));
+			SET_STRING_ELT(tmp, 0, mkChar("allele"));
+			SET_STRING_ELT(tmp, 1, mkChar("sample"));
+			SET_NAMES(name_list, tmp);
+			SET_DIMNAMES(VarRawGeno, name_list);
+			UNPROTECT(2);
+		}
+		return VarRawGeno;
 	}
-	return VarGeno;
 }
 
 void CApply_Variant_Geno::ReadGenoData(int *Base)
@@ -315,30 +336,31 @@ void CApply_Variant_Geno::ReadGenoData(C_UInt8 *Base)
 // =====================================================================
 // Object for reading genotypes variant by variant
 
-CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, bool use_raw):
+CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw):
 	CApply_Variant_Geno(File, use_raw)
 {
 	fVarType = ctDosage;
 	ExtPtr.reset(sizeof(int)*CellCount);
+	VarDosage = NULL;
 }
 
 void CApply_Variant_Dosage::ReadData(SEXP val)
 {
-	if (UseRaw)
-		ReadDosage(RAW(val));
-	else
+	if (TYPEOF(val) != RAWSXP)
 		ReadDosage(INTEGER(val));
+	else
+		ReadDosage(RAW(val));
 }
 
 SEXP CApply_Variant_Dosage::NeedRData(int &nProtected)
 {
-	if (VarGeno == NULL)
+	if (VarDosage == NULL)
 	{
-		VarGeno = UseRaw ? NEW_RAW(SampNum) : NEW_INTEGER(SampNum);
-		PROTECT(VarGeno);
+		VarDosage = UseRaw ? NEW_RAW(SampNum) : NEW_INTEGER(SampNum);
+		PROTECT(VarDosage);
 		nProtected ++;
 	}
-	return VarGeno;
+	return VarDosage;
 }
 
 void CApply_Variant_Dosage::ReadDosage(int *Base)
@@ -526,7 +548,7 @@ void CApply_Variant_Info::ReadData(SEXP val)
 
 	if (NumIndexRaw > 0)
 	{
-		C_Int32 st[2]  = { IndexRaw, 0 };
+		C_Int32 st[2]  = { (C_Int32)IndexRaw, 0 };
 		C_Int32 cnt[2] = { NumIndexRaw, BaseNum };
 
 		if (COREARRAY_SV_INTEGER(SVType))
@@ -630,8 +652,8 @@ void CApply_Variant_Format::ReadData(SEXP val)
 
 	if (NumIndexRaw > 0)
 	{
-		C_Int32 st[2]  = { IndexRaw, 0 };
-		C_Int32 cnt[2] = { NumIndexRaw, _TotalSampNum };
+		C_Int32 st[2]  = { (C_Int32)IndexRaw, 0 };
+		C_Int32 cnt[2] = { NumIndexRaw, (C_Int32)_TotalSampNum };
 		SelPtr[0] = NeedTRUEs(NumIndexRaw);
 
 		if (COREARRAY_SV_INTEGER(SVType))
@@ -680,6 +702,43 @@ SEXP CApply_Variant_Format::NeedRData(int &nProtected)
 		return it->second;
 }
 
+
+
+// =====================================================================
+// Object for reading format variables variant by variant
+
+CApply_Variant_NumAllele::CApply_Variant_NumAllele(CFileInfo &File):
+	CApply_Variant(File)
+{
+	strbuf.reserve(128);
+	fVarType = ctBasic;
+	Node = File.GetObj("allele", TRUE);
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_NumAllele::ReadData(SEXP val)
+{
+	INTEGER(val)[0] = GetNumAllele();
+}
+
+SEXP CApply_Variant_NumAllele::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(NEW_INTEGER(1));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
+int CApply_Variant_NumAllele::GetNumAllele()
+{
+	C_Int32 st = Position, one = 1;
+	GDS_Array_ReadData(Node, &st, &one, &strbuf, svStrUTF8);
+	return GetNumOfAllele(strbuf.c_str());
+}
+
 }
 
 
@@ -717,9 +776,10 @@ inline static void put_text(Rconnection file, const char *fmt, ...)
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho)
 {
-	int use_raw_flag = Rf_asLogical(RGetListElement(param, "useraw"));
-	if (use_raw_flag == NA_LOGICAL)
-		error("'.useraw' must be TRUE or FALSE.");
+	SEXP pam_use_raw = RGetListElement(param, "useraw");
+	if (!Rf_isLogical(pam_use_raw))
+		error("'.useraw' must be TRUE, FALSE or NA.");
+	int use_raw_flag = Rf_asLogical(pam_use_raw);
 
 	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
 	if (prog_flag == NA_LOGICAL)
@@ -768,7 +828,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			} else if (s == "genotype")
 			{
 				NodeList.push_back(
-					new CApply_Variant_Geno(File, use_raw_flag!=FALSE));
+					new CApply_Variant_Geno(File, use_raw_flag));
 			} else if (s == "phase")
 			{
 				NodeList.push_back(
@@ -785,7 +845,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			} else if (s == "$dosage")
 			{
 				NodeList.push_back(
-					new CApply_Variant_Dosage(File, use_raw_flag!=FALSE));
+					new CApply_Variant_Dosage(File, use_raw_flag));
+			} else if (s == "$num_allele")
+			{
+				NodeList.push_back(new CApply_Variant_NumAllele(File));
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"

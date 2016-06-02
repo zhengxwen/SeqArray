@@ -547,16 +547,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 
 				if (use_raw)
 				{
-					rv_ans = allocMatrix(RAWSXP, nSample, nVariant);
-					PROTECT(rv_ans);
+					rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
 					C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
 					do {
 						NodeVar.ReadDosage(base);
 						base += nSample;
 					} while (NodeVar.Next());
 				} else {
-					rv_ans = allocMatrix(INTSXP, nSample, nVariant);
-					PROTECT(rv_ans);
+					rv_ans = PROTECT(allocMatrix(INTSXP, nSample, nVariant));
 					int *base = INTEGER(rv_ans);
 					do {
 						NodeVar.ReadDosage(base);
@@ -570,10 +568,26 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 					SET_STRING_ELT(tmp, 1, mkChar("variant"));
 					SET_NAMES(name_list, tmp);
 				SET_DIMNAMES(rv_ans, name_list);
-
 				// finally
 				UNPROTECT(3);
 			}
+
+		} else if (strcmp(name, "$num_allele") == 0)
+		{
+			// ===========================================================
+			// the number of distinct alleles
+
+			ssize_t nVariant = File.VariantSelNum();
+			rv_ans = PROTECT(NEW_INTEGER(nVariant));
+			int *p = INTEGER(rv_ans);
+
+			CApply_Variant_NumAllele NodeVar(File);
+			for (ssize_t i=0; i < nVariant; i++)
+			{
+				p[i] = NodeVar.GetNumAllele();
+				NodeVar.Next();
+			}
+			UNPROTECT(1);
 
 		} else {
 			throw ErrSeqArray(

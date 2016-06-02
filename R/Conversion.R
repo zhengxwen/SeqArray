@@ -482,6 +482,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="ZIP_RA",
     # add chromosome
     if (verbose) cat("    chromosome")
     s <- read.gdsn(index.gdsn(srcfile, "snp.chromosome"))
+    s <- as.character(s)
     n <- .AddVar(storage.option, dstfile, "chromosome", s, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
@@ -491,6 +492,8 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="ZIP_RA",
         .cfunction("FC_AlleleStr2")(read.gdsn(index.gdsn(srcfile, "snp.allele"))),
         closezip=TRUE)
     .DigestCode(n, digest, verbose)
+
+    sync.gds(dstfile)
 
 
     # add a folder for genotypes
@@ -519,6 +522,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="ZIP_RA",
         c("sample.index", "variant.index", "length"))
     .AddVar(storage.option, varGeno, "extra", storage="int16", closezip=TRUE)
 
+    sync.gds(dstfile)
 
     # add a folder for phase information
     if (verbose) cat("    phase")
@@ -536,6 +540,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="ZIP_RA",
         c("sample.index", "variant.index", "length"))
     .AddVar(storage.option, varPhase, "extra", storage="bit1", closezip=TRUE)
 
+    sync.gds(dstfile)
 
     # add annotation folder
     varAnnot <- addfolder.gdsn(dstfile, "annotation")

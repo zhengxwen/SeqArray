@@ -31,6 +31,9 @@ position, e.g., "1_1272721".
 
 \code{"$dosage"} returns a RAW/INTEGER matrix for the dosages of reference
 allele.
+
+\code{"$num_allele"} returns an integer vector with the numbers of distinct
+alleles.
 }
 
 \author{Xiuwen Zheng}
@@ -65,6 +68,8 @@ head(seqGetData(f, "$chrom_pos"))
 # get '$dosage'
 seqGetData(f, "$dosage")[1:6, 1:10]
 
+# get '$num_allele'
+head(seqGetData(f, "$num_allele"))
 
 
 # set sample and variant filters

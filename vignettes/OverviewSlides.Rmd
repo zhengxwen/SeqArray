@@ -206,15 +206,15 @@ system.time(
 
 ## Resource
 
-1000 Genomes Project:
+1000 Genomes Project: [http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes)
 
 1. Phase 1:
-	- [1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes/1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds)
-	- 1,092 individuals and 38,219,238 variants [1.5G]
+	- [1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes/1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds) [1.5G]
+	- 1,092 individuals and 38,219,238 variants
 
 2. Phase 3:
-	- [1KG_autosomes_phase3_shapeit2_mvncall_integrated_v5_20130502.seq.gds](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes/1KG_autosomes_phase3_shapeit2_mvncall_integrated_v5_20130502.seq.gds)
-	- 2,504 individuals and 81,271,745 variants [5.2G]
+	- [1KG_autosomes_phase3_shapeit2_mvncall_integrated_v5_20130502_lzma.seq.gds](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes/1KG_autosomes_phase3_shapeit2_mvncall_integrated_v5_20130502_lzma.seq.gds) [2.4G]
+	- 2,504 individuals and 81,271,745 variants
 
 
 ## Acknowledgements

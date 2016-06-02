@@ -110,6 +110,24 @@ SEXP test_int32_count2(SEXP val, SEXP start, SEXP find1, SEXP find2)
 }
 
 
+SEXP test_int8_count2(SEXP val, SEXP start, SEXP find1, SEXP find2)
+{
+	int st = Rf_asInteger(start) - 1;
+	int fd1 = RAW(find1)[0];
+	int fd2 = RAW(find2)[0];
+	char *p = (char*)RAW(val);
+	int n = XLENGTH(val);
+
+	size_t n1, n2;
+	vec_i8_count2(p + st, n - st, fd1, fd2, &n1, &n2);
+	SEXP rv_ans = NEW_INTEGER(2);
+	INTEGER(rv_ans)[0] = n1;
+	INTEGER(rv_ans)[1] = n2;
+
+	return rv_ans;
+}
+
+
 SEXP test_int32_replace(SEXP val, SEXP start, SEXP find, SEXP substitute)
 {
 	int st = Rf_asInteger(start) - 1;

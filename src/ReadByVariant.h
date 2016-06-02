@@ -81,10 +81,11 @@ protected:
 	CGenoIndex *GenoIndex;  ///< indexing genotypes
 	ssize_t SiteCount;  ///< the total number of entries at a site
 	ssize_t CellCount;  ///< the selected number of entries at a site
-	bool UseRaw;  ///< whether use RAW type
+	int UseRaw;  ///< whether use RAW type: FALSE, int; TRUE, raw; NA: auto
 	vector<C_BOOL> Selection;  ///< the buffer of selection
 	VEC_AUTO_PTR ExtPtr;       ///< a pointer to the additional buffer
-	SEXP VarGeno;    ///< genotype R object
+	SEXP VarIntGeno;    ///< genotype R integer object
+	SEXP VarRawGeno;    ///< genotype R RAW object
 
 	inline int _ReadGenoData(int *Base);
 	inline C_UInt8 _ReadGenoData(C_UInt8 *Base);
@@ -95,9 +96,9 @@ public:
 
 	/// constructor
 	CApply_Variant_Geno();
-	CApply_Variant_Geno(CFileInfo &File, bool use_raw);
+	CApply_Variant_Geno(CFileInfo &File, int use_raw);
 
-	void Init(CFileInfo &File, bool use_raw);
+	void Init(CFileInfo &File, int use_raw);
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
@@ -114,9 +115,11 @@ public:
 /// Object for reading genotypes (dosages) variant by variant
 class COREARRAY_DLL_LOCAL CApply_Variant_Dosage: public CApply_Variant_Geno
 {
+protected:
+	SEXP VarDosage;    ///< dosage R object
 public:
 	/// constructor
-	CApply_Variant_Dosage(CFileInfo &File, bool use_raw);
+	CApply_Variant_Dosage(CFileInfo &File, int use_raw);
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
@@ -199,6 +202,25 @@ public:
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
+};
+
+
+// =====================================================================
+
+/// Object for calculating the number of distinct alleles variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_NumAllele: public CApply_Variant
+{
+private:
+	string strbuf;
+protected:
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_NumAllele(CFileInfo &File);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+	int GetNumAllele();
 };
 
 }

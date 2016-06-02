@@ -412,7 +412,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
         seqParallel(parallel, gdsfile, split="by.variant",
             FUN = function(f)
             {
-                seqApply(f, c("genotype", "allele"), margin="by.variant",
+                seqApply(f, c("genotype", "$num_allele"), margin="by.variant",
                     as.is="list", FUN = .cfunction("FC_AF_List"),
                     .list_dup=FALSE)
             })
@@ -428,8 +428,9 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
                 FUN = function(f, ref)
                 {
                     .cfunction("FC_AF_SetIndex")(ref)
-                    seqApply(f, c("genotype", "allele"), margin="by.variant",
-                        as.is="double", FUN = .cfunction("FC_AF_Index"))
+                    seqApply(f, c("genotype", "$num_allele"),
+                        margin="by.variant", as.is="double",
+                        FUN = .cfunction("FC_AF_Index"), .useraw=NA)
                 }, ref=ref.allele)
         } else {
             ref.allele <- as.integer(ref.allele)
@@ -439,8 +440,9 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
                 {
                     s <- ref[selflag]
                     .cfunction("FC_AF_SetIndex")(s)
-                    seqApply(f, c("genotype", "allele"), margin="by.variant",
-                        as.is="double", FUN = .cfunction("FC_AF_Index"))
+                    seqApply(f, c("genotype", "$num_allele"),
+                        margin="by.variant", as.is="double",
+                        FUN = .cfunction("FC_AF_Index"), .useraw=NA)
                 }, ref=ref.allele)
         }
     } else if (is.character(ref.allele))

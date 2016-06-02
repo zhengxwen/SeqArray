@@ -226,7 +226,64 @@ inline static int POPCNT_U64(uint64_t x)
 
 
 
-/// get the number of non-zero
+// ===========================================================
+// Sum all elements in a SIMD register
+// ===========================================================
+
+#ifdef COREARRAY_SIMD_SSE2
+	inline static double vec_sum_f64(__m128d s)
+	{
+		return _mm_cvtsd_f64(_mm_add_pd(s, _mm_shuffle_pd(s, s, 1)));
+	}
+	inline static int vec_sum_i32(__m128i s)
+	{
+		s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(1,0,3,2)));
+		s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(0,0,0,1)));
+		return _mm_cvtsi128_si32(s);
+	}
+	inline static int vec_sum_u8(__m128i s)
+	{
+		const __m128i zeros = _mm_setzero_si128();
+		__m128i u16 = _mm_add_epi16(_mm_unpacklo_epi8(s, zeros),
+				_mm_unpackhi_epi8(s, zeros));
+		__m128i u32 = _mm_add_epi32(_mm_unpacklo_epi16(u16, zeros),
+				_mm_unpackhi_epi16(u16, zeros));
+		return vec_sum_i32(u32);
+	}
+#endif
+
+#ifdef COREARRAY_SIMD_AVX
+	inline static double vec_avx_sum_f64(__m256d s)
+	{
+		s = _mm256_add_pd(_mm256_permute_pd(s, 5), s);
+		s = _mm256_add_pd(s, _mm256_permute2f128_pd(s, s, 1));
+		return _mm_cvtsd_f64(_mm256_castpd256_pd128(s));
+	}
+#endif
+
+#ifdef COREARRAY_SIMD_AVX2
+	inline static int vec_avx_sum_i32(__m256i s)
+	{
+		s = _mm256_hadd_epi32(s, s);
+		s = _mm256_add_epi32(s, _mm256_permute4x64_epi64(s, _MM_SHUFFLE(1,0,3,2)));
+		__m128i a = _mm256_castsi256_si128(s);
+		a = _mm_add_epi32(a, _mm_shuffle_epi32(a, _MM_SHUFFLE(0,0,0,1)));
+		return _mm_cvtsi128_si32(a);
+	}
+	inline static int vec_avx_sum_u8(__m256i s)
+	{
+		const __m256i zeros = _mm256_setzero_si256();
+		__m256i u16 = _mm256_add_epi16(_mm256_unpacklo_epi8(s, zeros),
+				_mm256_unpackhi_epi8(s, zeros));
+		__m256i u32 = _mm256_add_epi32(_mm256_unpacklo_epi16(u16, zeros),
+				_mm256_unpackhi_epi16(u16, zeros));
+		return vec_avx_sum_i32(u32);
+	}
+#endif
+
+
+
+/// get the number of non-zeros
 COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
 
 
@@ -234,13 +291,15 @@ COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
 // functions for int8
 // ===========================================================
 
-/// return the pointer to the non-zero character starting from p
+/// return the pointer to the non-zeros character starting from p
 COREARRAY_DLL_DEFAULT const char *vec_i8_ptr_nonzero(const char *p, size_t n);
-
 
 /// count how many 'val' in 'p'
 // COREARRAY_DLL_DEFAULT size_t vec_i8_count(int8_t *p, size_t n, int8_t val);
 
+/// count how many val1 and val2 in p
+COREARRAY_DLL_DEFAULT void vec_i8_count2(const char *p, size_t n,
+	char val1, char val2, size_t *out_n1, size_t *out_n2);
 
 /// replace 'val' in the array of 'p' by 'substitute'
 COREARRAY_DLL_DEFAULT void vec_i8_replace(int8_t *p, size_t n, int8_t val,

@@ -197,6 +197,117 @@ const char *vec_i8_ptr_nonzero(const char *p, size_t n)
 	return p;
 }
 
+
+void vec_i8_count2(const char *p, size_t n, char val1, char val2,
+	size_t *out_n1, size_t *out_n2)
+{
+	size_t n1 = 0, n2 = 0;
+
+#ifdef __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
+	for (; (n > 0) && (h > 0); n--, h--)
+	{
+		char v = *p++;
+		if (v == val1) n1++;
+		if (v == val2) n2++;
+	}
+
+#   ifdef __AVX2__
+	// body, AVX2
+	const __m128i zeros = _mm_setzero_si128();
+	const __m256i mask1 = _mm256_set1_epi8(val1);
+	const __m256i mask2 = _mm256_set1_epi8(val2);
+	__m256i sum1, sum2;
+	sum1 = sum2 = _mm256_setzero_si256();
+	size_t offset = 0;
+
+	// header 2, 32-byte aligned
+	if ((n >= 16) && ((size_t)p & 0x10))
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask1));
+		sum1 = _mm256_set_m128i(_mm_sub_epi8(zeros, c1), zeros);
+		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
+		sum2 = _mm256_set_m128i(_mm_sub_epi8(zeros, c2), zeros);
+		n -= 16; p += 16;
+	}
+
+	for (; n >= 32; n-=32, p+=32)
+	{
+		__m256i v = _mm256_load_si256((__m256i const*)p);
+		sum1 = _mm256_sub_epi8(sum1, _mm256_cmpeq_epi8(v, mask1));
+		sum2 = _mm256_sub_epi8(sum2, _mm256_cmpeq_epi8(v, mask2));
+		if ((++offset) >= 252)
+		{
+			n1 += vec_avx_sum_u8(sum1);
+			n2 += vec_avx_sum_u8(sum2);
+			sum1 = sum2 = _mm256_setzero_si256();
+			offset = 0;
+		}
+	}
+
+	if (n >= 16)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask1));
+		sum1 = _mm256_sub_epi8(sum1, _mm256_set_m128i(c1, zeros));
+		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
+		sum2 = _mm256_sub_epi8(sum2, _mm256_set_m128i(c2, zeros));
+		n -= 16; p += 16;
+	}
+
+	if (offset > 0)
+	{
+		n1 += vec_avx_sum_u8(sum1);
+		n2 += vec_avx_sum_u8(sum2);
+	}
+
+#   else
+	// body, SSE2
+	const __m128i mask1 = _mm_set1_epi8(val1);
+	const __m128i mask2 = _mm_set1_epi8(val2);
+	__m128i sum1, sum2;
+	sum1 = sum2 = _mm_setzero_si128();
+	size_t offset = 0;
+
+	for (; n >= 16; n-=16, p+=16)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		sum1 = _mm_sub_epi8(sum1, _mm_cmpeq_epi8(v, mask1));
+		sum2 = _mm_sub_epi8(sum2, _mm_cmpeq_epi8(v, mask2));
+		if ((++offset) >= 252)
+		{
+			n1 += vec_sum_u8(sum1);
+			n2 += vec_sum_u8(sum2);
+			sum1 = sum2 = _mm_setzero_si128();
+			offset = 0;
+		}
+	}
+
+	if (offset > 0)
+	{
+		n1 += vec_sum_u8(sum1);
+		n2 += vec_sum_u8(sum2);
+	}
+#endif
+
+#endif
+
+	// tail
+	for (; n > 0; n--)
+	{
+		char v = *p++;
+		if (v == val1) n1++;
+		if (v == val2) n2++;
+	}
+
+	if (out_n1) *out_n1 = n1;
+	if (out_n2) *out_n2 = n2;
+}
+
+
 void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 {
 #ifdef __SSE2__
@@ -393,8 +504,7 @@ void vec_i16_shr_b2(int16_t *p, size_t n)
 #endif
 
 	// tail
-	for (; n > 0; n--)
-		*p++ >>= 2;
+	for (; n > 0; n--) *p++ >>= 2;
 }
 
 
@@ -409,11 +519,11 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 	size_t ans = 0;
 
 #ifdef __LP64__
-	if (n > 2147483648U) // 2^31
+	if (n > 2147483632) // 2^31 - 16
 	{
 		while (n > 0)
 		{
-			size_t nn = (n <= 2147483648U) ? n : 2147483648U;
+			size_t nn = (n <= 2147483632) ? n : 2147483632;
 			ans += vec_i32_count(p, nn, val);
 			p += nn; n -= nn;
 		}
@@ -464,9 +574,7 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 
 #   endif
 
-	uint32_t array[4] __attribute__((aligned(16)));
-	*((__m128i*)array) = sum;
-	ans += array[0] + array[1] + array[2] + array[3];
+	ans += vec_sum_i32(sum);
 
 #endif
 
@@ -484,12 +592,12 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	size_t n1 = 0, n2 = 0;
 
 #ifdef __LP64__
-	if (n > 2147483648U) // 2^31
+	if (n > 2147483632) // 2^31 - 16
 	{
 		size_t m1 = 0, m2 = 0;
 		while (n > 0)
 		{
-			size_t nn = (n <= 2147483648U) ? n : 2147483648U;
+			size_t nn = (n <= 2147483632) ? n : 2147483632;
 			vec_i32_count2(p, nn, val1, val2, &m1, &m2);
 			n1 += m1; n2 += m2;
 			p += nn; n -= nn;
@@ -562,11 +670,8 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 
 #   endif
 
-	uint32_t a[4] __attribute__((aligned(16)));
-	*((__m128i*)a) = sum1;
-	n1 += a[0] + a[1] + a[2] + a[3];
-	*((__m128i*)a) = sum2;
-	n2 += a[0] + a[1] + a[2] + a[3];
+	n1 += vec_sum_i32(sum1);
+	n2 += vec_sum_i32(sum2);
 
 #endif
 
