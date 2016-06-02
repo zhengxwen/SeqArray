@@ -377,7 +377,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE,
             FUN = function(f)
             {
                seqApply(f, "genotype", margin="by.variant",
-                   as.is="double", FUN=.cfunction("FC_Missing_PerVariant"))
+                   as.is="double", FUN=.cfunction("FC_Missing_PerVariant"),
+                   .useraw=NA)
             })
     } else {
         dm <- .seldim(gdsfile)
@@ -458,7 +459,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
                 s <- ref[selflag]
                 .cfunction("FC_AF_SetAllele")(s)
                 seqApply(f, c("genotype", "allele"), margin="by.variant",
-                    as.is="double", FUN = .cfunction("FC_AF_Allele"))
+                    as.is="double", FUN = .cfunction("FC_AF_Allele"),
+                    .useraw=NA)
             }, ref=ref.allele)
     }
 }

@@ -99,6 +99,24 @@ test_int_count <- function()
 }
 
 
+test_i8_count <- function()
+{
+	set.seed(5000)
+	for (st in sample.int(1000L, 25L))
+	{
+		n <- 50000L + sample.int(64L, 1L) - 1L
+		v <- as.raw(sample.int(256L, n, replace=TRUE))
+		fd <- sample(v, 1L)
+
+		n1 <- SeqArray:::.cfunction3("test_i8_count")(v, st, fd)
+		n2 <- sum(v[st:length(v)] == fd)
+		checkEquals(n1, n2, paste0("i8_count (start=", st, ")"))
+	}
+
+	invisible()
+}
+
+
 test_int_count2 <- function()
 {
 	set.seed(5000)

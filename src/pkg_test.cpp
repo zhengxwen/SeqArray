@@ -92,6 +92,16 @@ SEXP test_int32_count(SEXP val, SEXP start, SEXP find)
 }
 
 
+SEXP test_i8_count(SEXP val, SEXP start, SEXP find)
+{
+	int st = Rf_asInteger(start) - 1;
+	char fd = RAW(find)[0];
+	char *p = (char*)RAW(val);
+	int n = XLENGTH(val);
+	return ScalarInteger(vec_i8_count(p + st, n - st, fd));
+}
+
+
 SEXP test_int32_count2(SEXP val, SEXP start, SEXP find1, SEXP find2)
 {
 	int st = Rf_asInteger(start) - 1;

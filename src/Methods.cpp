@@ -64,16 +64,20 @@ COREARRAY_DLL_EXPORT SEXP FC_NumAllele(SEXP AlleleStr)
 /// Calculate the missing rate per variant
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 {
-	size_t n = XLENGTH(Geno);
-	size_t m = vec_i32_count(INTEGER(Geno), n, NA_INTEGER);
+	size_t n = XLENGTH(Geno), m;
+	if (TYPEOF(Geno) == RAWSXP)
+		m = vec_i8_count((char*)RAW(Geno), n, NA_RAW);
+	else
+		m = vec_i32_count(INTEGER(Geno), n, NA_INTEGER);
 	return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
 }
 
 /// Calculate the missing rate per sample
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
 {
-	int *pdim = INTEGER(getAttrib(Geno, R_DimSymbol));
+	int *pdim = INTEGER(GET_DIM(Geno));
 	int num_ploidy=pdim[0], num_sample=pdim[1];
+
 	int *pG = INTEGER(Geno);
 	int *pS = INTEGER(sum);
 
@@ -193,7 +197,14 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 	if (A >= 0)
 	{
 		const size_t N = XLENGTH(Geno);
-		vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
+		if (TYPEOF(Geno) == RAWSXP)
+		{
+			if (A < 255)
+				vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
+			else
+				n = N;
+		} else
+			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
 		n = N - n;
 	}
 

@@ -295,7 +295,7 @@ COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
 COREARRAY_DLL_DEFAULT const char *vec_i8_ptr_nonzero(const char *p, size_t n);
 
 /// count how many 'val' in 'p'
-// COREARRAY_DLL_DEFAULT size_t vec_i8_count(int8_t *p, size_t n, int8_t val);
+COREARRAY_DLL_DEFAULT size_t vec_i8_count(const char *p, size_t n, char val);
 
 /// count how many val1 and val2 in p
 COREARRAY_DLL_DEFAULT void vec_i8_count2(const char *p, size_t n,
