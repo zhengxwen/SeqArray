@@ -301,6 +301,11 @@ COREARRAY_DLL_DEFAULT size_t vec_i8_count(const char *p, size_t n, char val);
 COREARRAY_DLL_DEFAULT void vec_i8_count2(const char *p, size_t n,
 	char val1, char val2, size_t *out_n1, size_t *out_n2);
 
+/// count how many val1, val2 and val3 in p
+COREARRAY_DLL_DEFAULT void vec_i8_count3(const char *p, size_t n,
+	char val1, char val2, char val3, size_t *out_n1, size_t *out_n2,
+	size_t *out_n3);
+
 /// replace 'val' in the array of 'p' by 'substitute'
 COREARRAY_DLL_DEFAULT void vec_i8_replace(int8_t *p, size_t n, int8_t val,
 	int8_t substitute);
@@ -332,7 +337,12 @@ COREARRAY_DLL_DEFAULT size_t vec_i32_count(const int32_t *p, size_t n, int32_t v
 COREARRAY_DLL_DEFAULT void vec_i32_count2(const int32_t *p, size_t n,
 	int32_t val1, int32_t val2, size_t *out_n1, size_t *out_n2);
 
+/// count how many val1, val2 and val3 in p, assuming p is 4-byte aligned
+COREARRAY_DLL_DEFAULT void vec_i32_count3(const int32_t *p, size_t n,
+	int32_t val1, int32_t val2, int32_t val3, size_t *out_n1, size_t *out_n2,
+	size_t *out_n3);
 
+///
 COREARRAY_DLL_DEFAULT void vec_int32_set(int32_t *p, size_t n, int32_t val);
 
 /// replace 'val' in the array of 'p' by 'substitute', assuming 'p' is 4-byte aligned

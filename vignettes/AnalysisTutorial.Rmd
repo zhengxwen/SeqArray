@@ -55,10 +55,10 @@ seqSummary(genofile)
 ```
 
 ```{r}
-# use 2 cores for the demonstration
+# use 2 cores for demonstration
 seqParallelSetup(2)
 
-# numbers of alleles per site
+# numbers of distinct alleles per site
 table(seqNumAllele(genofile))
 
 # reference allele frequencies

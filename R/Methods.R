@@ -346,17 +346,9 @@ seqApply <- function(gdsfile, var.name, FUN,
 #######################################################################
 # The number of alleles per site
 #
-seqNumAllele <- function(gdsfile, parallel=getOption("seqarray.parallel", FALSE))
+seqNumAllele <- function(gdsfile)
 {
-    # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-
-    seqParallel(parallel, gdsfile, split="by.variant",
-        FUN = function(f)
-        {
-            seqApply(f, "allele", margin="by.variant", as.is="integer",
-                FUN = .cfunction("FC_NumAllele"))
-        })
+    seqGetData(gdsfile, "$num_allele")
 }
 
 
@@ -415,7 +407,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
             {
                 seqApply(f, c("genotype", "$num_allele"), margin="by.variant",
                     as.is="list", FUN = .cfunction("FC_AF_List"),
-                    .list_dup=FALSE)
+                    .list_dup=FALSE, .useraw=NA)
             })
     } else if (is.numeric(ref.allele))
     {
@@ -479,7 +471,7 @@ seqAlleleCount <- function(gdsfile,
     seqParallel(parallel, gdsfile, split="by.variant",
         FUN = function(f)
         {
-            seqApply(f, c("genotype", "allele"), margin="by.variant",
-                as.is="list", FUN = .cfunction("FC_AlleleCount"))
+            seqApply(f, c("genotype", "$num_allele"), margin="by.variant",
+                as.is="list", FUN = .cfunction("FC_AlleleCount"), .useraw=NA)
         })
 }
