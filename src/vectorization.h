@@ -243,12 +243,9 @@ inline static int POPCNT_U64(uint64_t x)
 	}
 	inline static int vec_sum_u8(__m128i s)
 	{
-		const __m128i zeros = _mm_setzero_si128();
-		__m128i u16 = _mm_add_epi16(_mm_unpacklo_epi8(s, zeros),
-				_mm_unpackhi_epi8(s, zeros));
-		__m128i u32 = _mm_add_epi32(_mm_unpacklo_epi16(u16, zeros),
-				_mm_unpackhi_epi16(u16, zeros));
-		return vec_sum_i32(u32);
+		s = _mm_sad_epu8(s, _mm_setzero_si128());
+		s = _mm_add_epi32(s, _mm_shuffle_epi32(s, 2));
+		return _mm_cvtsi128_si32(s);
 	}
 #endif
 
@@ -272,12 +269,9 @@ inline static int POPCNT_U64(uint64_t x)
 	}
 	inline static int vec_avx_sum_u8(__m256i s)
 	{
-		const __m256i zeros = _mm256_setzero_si256();
-		__m256i u16 = _mm256_add_epi16(_mm256_unpacklo_epi8(s, zeros),
-				_mm256_unpackhi_epi8(s, zeros));
-		__m256i u32 = _mm256_add_epi32(_mm256_unpacklo_epi16(u16, zeros),
-				_mm256_unpackhi_epi16(u16, zeros));
-		return vec_avx_sum_i32(u32);
+		s = _mm256_sad_epu8(s, _mm256_setzero_si256());
+		s = _mm256_add_epi64(s, _mm256_permute4x64_epi64(s, _MM_SHUFFLE(1,0,3,2)));
+		return _mm256_extract_epi32(s,0) + _mm256_extract_epi32(s,2);
 	}
 #endif
 
