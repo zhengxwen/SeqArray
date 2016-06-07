@@ -7,6 +7,12 @@
 #
 
 
+## Package-wide variables
+process_index <- 1L
+process_count <- 1L
+
+
+
 #######################################################################
 .Last.lib <- function(libpath)
 {
@@ -219,6 +225,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
     if (pnum <= 1L)
     {
         ## a single process
+        .Call(SEQ_IntAssign, process_index, 1L)
+        .Call(SEQ_IntAssign, process_count, 1L)
 
         if (.selection.flag)
         {
@@ -229,8 +237,12 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                 ans <- FUN(gdsfile, rep(TRUE, dm[2L]), ...)
             else
                 ans <- FUN(gdsfile, NULL, ...)
-        } else
-            ans <- FUN(gdsfile, ...)
+        } else {
+            if (is.null(gdsfile))
+                ans <- FUN(...)
+            else
+                ans <- FUN(gdsfile, ...)
+        }
 
     } else if (inherits(cl, "cluster"))
     {
@@ -258,14 +270,17 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                 FUN, .split, .selection.flag, ...)
         {
             # export to global variables
-            assign(".seq_process_index", .proc_idx, envir = .GlobalEnv)
-            assign(".seq_process_count", .proc_cnt, envir = .GlobalEnv)
+            .Call(SEQ_IntAssign, process_index, .proc_idx)
+            .Call(SEQ_IntAssign, process_count, .proc_cnt)
 
             # load the package
             library("SeqArray")
 
-            if (!is.null(.gds.fn))
+            if (is.null(.gds.fn))
             {
+                # call the user-defined function
+                FUN(...)
+            } else {
                 # open the file
                 .file <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
                 on.exit({ seqClose(.file) })
@@ -282,8 +297,6 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                     FUN(.file, .ss, ...)
                 else
                     FUN(.file, ...)
-            } else {
-                FUN(...)
             }
 
         }, .combinefun = .combine, .stopcluster=FALSE,
@@ -331,11 +344,14 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             FUN = function(i, .fun)
             {
                 # export to global variables
-                assign(".seq_process_index", i, envir = .GlobalEnv)
-                assign(".seq_process_count", cl, envir = .GlobalEnv)
+                .Call(SEQ_IntAssign, process_index, i)
+                .Call(SEQ_IntAssign, process_count, cl)
 
-                if (!is.null(gdsfile))
+                if (is.null(gdsfile))
                 {
+                    # call the user-defined function
+                    FUN(...)
+                } else {
                     sel <- .Call(SEQ_SplitSelection, gdsfile, split, i, cl,
                         .selection.flag)
 
@@ -344,9 +360,6 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                         FUN(gdsfile, sel, ...)
                     else
                         FUN(gdsfile, ...)
-                } else {
-                    # call the user-defined function
-                    FUN(...)
                 }
             }, .fun = FUN)
 

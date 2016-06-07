@@ -5,13 +5,14 @@
     Calculates the allele frequencies.
 }
 \usage{
-seqAlleleFreq(gdsfile, ref.allele=0L,
+seqAlleleFreq(gdsfile, ref.allele=0L, .progress=FALSE,
     parallel=getOption("seqarray.parallel", FALSE))
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{ref.allele}{\code{NULL}, a single numeric value, a numeric vector
         or a character vector; see Value}
+    \item{.progress}{if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
         processing) or other value; \code{parallel} is passed to the argument
         \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
@@ -42,10 +43,10 @@ ancestral allele for the derived allele frequency).
 f <- seqOpen(gds.fn)
 
 # return a list
-head(seqAlleleFreq(f, NULL))
+head(seqAlleleFreq(f, NULL, .progress=TRUE))
 
 # return a numeric vector
-summary(seqAlleleFreq(f, 0L))
+summary(seqAlleleFreq(f, 0L, .progress=TRUE))
 
 # return a numeric vector, AA is ancestral allele
 AA <- toupper(seqGetData(f, "annotation/info/AA")$data)

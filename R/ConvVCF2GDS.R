@@ -665,7 +665,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 attr(vcf.fn, "variant_count") <- num_array
 
                 # the process id, starting from one
-                i <- get(".seq_process_index", envir=.GlobalEnv)
+                i <- process_index
 
                 seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
                     storage.option=storage.option, info.import=info.import,

@@ -5,13 +5,14 @@
     Calculates the missing rates per variant or per sample.
 }
 \usage{
-seqMissing(gdsfile, per.variant=TRUE,
+seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE,
     parallel=getOption("seqarray.parallel", FALSE))
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{per.variant}{missing rate per variant if \code{TRUE}, or
         missing rate per sample if \code{FALSE}}
+    \item{.progress}{if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
         processing) or other value; \code{parallel} is passed to the argument
         \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
@@ -34,9 +35,9 @@ seqMissing(gdsfile, per.variant=TRUE,
 # display
 (f <- seqOpen(gds.fn))
 
-summary(seqMissing(f, TRUE))
+summary(seqMissing(f, TRUE, .progress=TRUE))
 
-summary(seqMissing(f, FALSE))
+summary(seqMissing(f, FALSE, .progress=TRUE))
 
 # close the GDS file
 seqClose(f)

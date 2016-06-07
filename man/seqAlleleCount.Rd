@@ -5,10 +5,12 @@
     Calculates the allele counts.
 }
 \usage{
-seqAlleleCount(gdsfile, parallel=getOption("seqarray.parallel", FALSE))
+seqAlleleCount(gdsfile, .progress=FALSE,
+    parallel=getOption("seqarray.parallel", FALSE))
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{.progress}{if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
         processing) or other value; \code{parallel} is passed to the argument
         \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
@@ -30,7 +32,7 @@ seqAlleleCount(gdsfile, parallel=getOption("seqarray.parallel", FALSE))
 # display
 f <- seqOpen(gds.fn)
 
-head(seqAlleleCount(f))
+head(seqAlleleCount(f, .progress=TRUE))
 
 
 # close the GDS file

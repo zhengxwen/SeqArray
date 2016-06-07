@@ -356,33 +356,34 @@ seqNumAllele <- function(gdsfile)
 #######################################################################
 # Missing rate
 #
-seqMissing <- function(gdsfile, per.variant=TRUE,
+seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
     parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(per.variant))
+    stopifnot(is.logical(.progress), length(.progress)==1L)
 
     if (per.variant)
     {
         seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(f)
+            FUN = function(f, pg)
             {
                seqApply(f, "genotype", margin="by.variant",
                    as.is="double", FUN=.cfunction("FC_Missing_PerVariant"),
-                   .useraw=NA)
-            })
+                   .useraw=NA, .progress=pg & (process_index==1L))
+            }, pg=.progress)
     } else {
         dm <- .seldim(gdsfile)
         sum <- seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(f, num)
+            FUN = function(f, num, pg)
             {
                 tmpsum <- integer(num)
                 seqApply(f, "genotype", margin="by.variant",
                     as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
-                    y=tmpsum)
+                    y=tmpsum, .progress=pg & (process_index==1L))
                 tmpsum
-            }, .combine="+", num=dm[2L])
+            }, .combine="+", num=dm[2L], pg=.progress)
         sum / (dm[1L] * dm[3L])
     }
 }
@@ -392,23 +393,24 @@ seqMissing <- function(gdsfile, per.variant=TRUE,
 #######################################################################
 # Allele frequency
 #
-seqAlleleFreq <- function(gdsfile, ref.allele=0L,
+seqAlleleFreq <- function(gdsfile, ref.allele=0L, .progress=FALSE,
     parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.null(ref.allele) | is.numeric(ref.allele) |
         is.character(ref.allele))
+    stopifnot(is.logical(.progress), length(.progress)==1L)
 
     if (is.null(ref.allele))
     {
         seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(f)
+            FUN = function(f, pg)
             {
-                seqApply(f, c("genotype", "$num_allele"), margin="by.variant",
-                    as.is="list", FUN = .cfunction("FC_AF_List"),
-                    .list_dup=FALSE, .useraw=NA)
-            })
+                seqApply(f, c("genotype", "$num_allele"), as.is="list",
+                    FUN = .cfunction("FC_AF_List"), .list_dup=FALSE,
+                    .useraw=NA, .progress=pg & (process_index==1L))
+            }, pg=.progress)
     } else if (is.numeric(ref.allele))
     {
         dm <- .seldim(gdsfile)
@@ -418,25 +420,25 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
         if (length(ref.allele) == 1L)
         {
             seqParallel(parallel, gdsfile, split="by.variant",
-                FUN = function(f, ref)
+                FUN = function(f, ref, pg)
                 {
                     .cfunction("FC_AF_SetIndex")(ref)
                     seqApply(f, c("genotype", "$num_allele"),
-                        margin="by.variant", as.is="double",
-                        FUN = .cfunction("FC_AF_Index"), .useraw=NA)
-                }, ref=ref.allele)
+                        as.is="double", FUN = .cfunction("FC_AF_Index"),
+                        .useraw=NA, .progress=pg & (process_index==1L))
+                }, ref=ref.allele, pg=.progress)
         } else {
             ref.allele <- as.integer(ref.allele)
             seqParallel(parallel, gdsfile, split="by.variant",
                 .selection.flag=TRUE,
-                FUN = function(f, selflag, ref)
+                FUN = function(f, selflag, ref, pg)
                 {
                     s <- ref[selflag]
                     .cfunction("FC_AF_SetIndex")(s)
                     seqApply(f, c("genotype", "$num_allele"),
-                        margin="by.variant", as.is="double",
-                        FUN = .cfunction("FC_AF_Index"), .useraw=NA)
-                }, ref=ref.allele)
+                        as.is="double", FUN = .cfunction("FC_AF_Index"),
+                        .useraw=NA, .progress=pg & (process_index==1L))
+                }, ref=ref.allele, pg=.progress)
         }
     } else if (is.character(ref.allele))
     {
@@ -446,14 +448,14 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
 
         seqParallel(parallel, gdsfile, split="by.variant",
             .selection.flag=TRUE,
-            FUN = function(f, selflag, ref)
+            FUN = function(f, selflag, ref, pg)
             {
                 s <- ref[selflag]
                 .cfunction("FC_AF_SetAllele")(s)
                 seqApply(f, c("genotype", "allele"), margin="by.variant",
                     as.is="double", FUN = .cfunction("FC_AF_Allele"),
-                    .useraw=NA)
-            }, ref=ref.allele)
+                    .useraw=NA, .progress=pg & (process_index==1L))
+            }, ref=ref.allele, pg=.progress)
     }
 }
 
@@ -462,16 +464,18 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L,
 #######################################################################
 # Allele Counts
 #
-seqAlleleCount <- function(gdsfile,
+seqAlleleCount <- function(gdsfile, .progress=FALSE,
     parallel=getOption("seqarray.parallel", FALSE))
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.logical(.progress), length(.progress)==1L)
 
     seqParallel(parallel, gdsfile, split="by.variant",
-        FUN = function(f)
+        FUN = function(f, pg)
         {
             seqApply(f, c("genotype", "$num_allele"), margin="by.variant",
-                as.is="list", FUN = .cfunction("FC_AlleleCount"), .useraw=NA)
-        })
+                as.is="list", FUN = .cfunction("FC_AlleleCount"),
+                .useraw=NA, .progress=pg & (process_index==1L))
+        }, pg=.progress)
 }

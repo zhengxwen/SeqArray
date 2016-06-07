@@ -62,7 +62,7 @@ seqParallelSetup(2)
 table(seqNumAllele(genofile))
 
 # reference allele frequencies
-summary(seqAlleleFreq(genofile, ref.allele=0))
+summary(seqAlleleFreq(genofile, ref.allele=0L))
 
 # close the cluster environment
 seqParallelSetup(FALSE)

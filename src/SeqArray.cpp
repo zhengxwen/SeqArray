@@ -954,6 +954,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SelectFlag(SEXP select, SEXP len)
 }
 
 
+// ===========================================================
+// get system configuration
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP SEQ_IntAssign(SEXP Dst, SEXP Src)
+{
+	INTEGER(Dst)[0] = Rf_asInteger(Src);
+	return R_NilValue;
+}
+
 
 // ===========================================================
 // get system configuration
@@ -1093,6 +1103,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),
 		CALL(SEQ_SelectFlag, 2),
+
+		CALL(SEQ_IntAssign, 2),
 
 		{ NULL, NULL, 0 }
 	};

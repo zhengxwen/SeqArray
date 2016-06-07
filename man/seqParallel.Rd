@@ -48,8 +48,8 @@ deallocated after calling \code{FUN}.
 of forking on Windows, without allocating clusters frequently.
 
     The user-defined function could use two predefined variables
-\code{.seq_process_count} and \code{.seq_process_index} to tell the total
-number of cluster nodes and which cluster node being used.
+\code{SeqArray:::process_count} and \code{SeqArray:::process_index} to
+tell the total number of cluster nodes and which cluster node being used.
 
     \code{seqParallel(, gdsfile=NULL, FUN=..., split="none")} might be used to
 setup multiple streams of pseudo-random numbers, and see
@@ -116,7 +116,7 @@ seqParallel(, gdsfile, FUN = function(f) {
 ################################################################
 
 seqParallel(, NULL, FUN = function() {
-        paste(.seq_process_index, .seq_process_count, sep="/")
+        paste(SeqArray:::process_index, SeqArray:::process_count, sep=" / ")
     }, split = "none")
 
 
