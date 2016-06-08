@@ -722,6 +722,37 @@ void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 
 
 // ===========================================================
+// functions for uint8
+// ===========================================================
+
+/// shifting *p right by 2 bits, assuming p is 2-byte aligned
+void vec_u8_shr_b2(uint8_t *p, size_t n)
+{
+#ifdef __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F);
+	for (; (n > 0) && (h > 0); n--, h--)
+		*p++ >>= 2;
+
+	// body, SSE2
+	const __m128i mask = _mm_set1_epi8(0x3F);
+	for (; n >= 16; n-=16, p+=16)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		v = _mm_srli_epi16(v, 2);
+		_mm_store_si128((__m128i *)p, v & mask);
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--) *p++ >>= 2;
+}
+
+
+
+// ===========================================================
 // functions for int16
 // ===========================================================
 
@@ -1250,6 +1281,30 @@ void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
 			missing_substitute :
 			(p[0]==val ? 1 : 0) + (p[1]==val ? 1 : 0);
 	}
+}
+
+
+/// shifting *p right by 2 bits, assuming p is 2-byte aligned
+void vec_i32_shr_b2(int32_t *p, size_t n)
+{
+#ifdef __SSE2__
+
+	// header 1, 16-byte aligned
+	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
+	for (; (n > 0) && (h > 0); n--, h--)
+		*p++ >>= 2;
+
+	// body, SSE2
+	for (; n >= 4; n-=4, p+=4)
+	{
+		__m128i v = _mm_load_si128((__m128i const*)p);
+		_mm_store_si128((__m128i *)p, _mm_srli_epi32(v, 2));
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--) *p++ >>= 2;
 }
 
 

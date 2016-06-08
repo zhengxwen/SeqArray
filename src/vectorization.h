@@ -312,6 +312,15 @@ COREARRAY_DLL_DEFAULT void vec_i8_cnt_dosage2(const int8_t *p,
 
 
 // ===========================================================
+// functions for uint8
+// ===========================================================
+
+/// shifting *p right by 2 bits, assuming p is 2-byte aligned
+COREARRAY_DLL_DEFAULT void vec_u8_shr_b2(uint8_t *p, size_t n);
+
+
+
+// ===========================================================
 // functions for int16
 // ===========================================================
 
@@ -348,6 +357,8 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage2(const int32_t *p,
 	int32_t *out, size_t n, int32_t val, int32_t missing,
 	int32_t missing_substitute);
 
+/// shifting *p right by 2 bits, assuming p is 4-byte aligned
+COREARRAY_DLL_DEFAULT void vec_i32_shr_b2(int32_t *p, size_t n);
 
 
 
