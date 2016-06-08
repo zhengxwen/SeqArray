@@ -240,11 +240,11 @@ seqResetFilter <- function(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 #######################################################################
 # Set a filter according to specified chromosomes
 #
-seqSetFilterChrom <- function(gdsfile, include=NULL, is.num=NA,
+seqSetFilterChrom <- function(object, include=NULL, is.num=NA,
     from.bp=NULL, to.bp=NULL, verbose=TRUE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(inherits(object, "SeqVarGDSClass"))
     stopifnot(is.null(include) | is.numeric(include) | is.character(include))
     stopifnot(is.logical(is.num))
 
@@ -253,7 +253,7 @@ seqSetFilterChrom <- function(gdsfile, include=NULL, is.num=NA,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # call C function
-    .Call(SEQ_SetChrom, gdsfile, include, is.num, from.bp, to.bp, verbose)
+    .Call(SEQ_SetChrom, object, include, is.num, from.bp, to.bp, verbose)
 
     invisible()
 }

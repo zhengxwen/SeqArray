@@ -1,11 +1,14 @@
 \name{seqAlleleFreq}
 \alias{seqAlleleFreq}
-\title{Get Allele Frequencies}
+\alias{seqAlleleCount}
+\title{Get Allele Frequencies or Counts}
 \description{
-    Calculates the allele frequencies.
+    Calculates the allele frequencies or counts.
 }
 \usage{
 seqAlleleFreq(gdsfile, ref.allele=0L, .progress=FALSE,
+    parallel=getOption("seqarray.parallel", FALSE))
+seqAlleleCount(gdsfile, .progress=FALSE,
     parallel=getOption("seqarray.parallel", FALSE))
 }
 \arguments{
@@ -52,6 +55,8 @@ summary(seqAlleleFreq(f, 0L, .progress=TRUE))
 AA <- toupper(seqGetData(f, "annotation/info/AA")$data)
 summary(seqAlleleFreq(f, AA))
 
+# allele counts
+head(seqAlleleCount(f, .progress=TRUE))
 
 # close the GDS file
 seqClose(f)
