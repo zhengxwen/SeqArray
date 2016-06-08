@@ -1267,11 +1267,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		vector<string> S8s;
 		S8s.reserve(SampleNum);
 
-		// genotypes (int16 and UInt8)
-		vector<C_Int16> GenoArray16;
-		GenoArray16.resize(num_samp_ploidy);
-		vector<C_UInt8> GenoArray8;
-		GenoArray8.resize(num_samp_ploidy);
+		// genotypes
+		vector<C_Int16> Genotypes;
+		Genotypes.resize(num_samp_ploidy);
 
 		// phase
 		vector<C_Int8> Phases;
@@ -1633,9 +1631,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			// -----------------------------------------------------
 			// Columns for samples
 
-			// index of genotype buffer
-			size_t iGeno = 0;
-			bool use_geno_u8 = true;
+			// pointer to genotype buffer
+			C_Int16 *pGeno = &Genotypes[0];
 			// pointer to phase buffer
 			C_Int8 *pPhase = &Phases[0];
 
@@ -1673,22 +1670,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 					tmp_num_ploidy ++;
 					if (tmp_num_ploidy <= num_ploidy)
-					{
-						if (use_geno_u8)
-						{
-							if (g < 255)
-							{
-								GenoArray8[iGeno++] = g;
-							} else {
-								for (size_t i=0; i < iGeno; i++)
-									GenoArray16[i] = GenoArray8[i];
-								GenoArray16[iGeno++] = g;
-								use_geno_u8 = false;
-							}
-						} else {
-							GenoArray16[iGeno++] = g;
-						}
-					} else
+						*pGeno ++ = g;
+					else
 						I32s.push_back(g);
 
 					if (p < end)
@@ -1709,11 +1692,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 				}
 
 				for (size_t m=tmp_num_ploidy; m < num_ploidy; m++)
-				{
-					GenoArray8[iGeno] = 0xFF;
-					GenoArray16[iGeno] = -1;
-					iGeno ++;
-				}
+					*pGeno ++ = -1;
 				for (size_t m=tmp_num_ploidy; m < num_ploidy_less; m++)
 					*pPhase ++ = 0;
 
@@ -1793,23 +1772,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			I32 = num_bits >> 1;
 			GDS_Array_AppendData(varGenoLen, 1, &I32, svInt32);
 
-			if (use_geno_u8)
+			for (int bits=0; bits < num_bits; )
 			{
-				for (int bits=0; bits < num_bits; )
-				{
-					GDS_Array_AppendData(varGeno, num_samp_ploidy, &GenoArray8[0], svUInt8);
-					bits += 2;
-					if (bits < num_bits)
-						vec_u8_shr_b2(&GenoArray8[0], num_samp_ploidy);
-				}
-			} else {
-				for (int bits=0; bits < num_bits; )
-				{
-					GDS_Array_AppendData(varGeno, num_samp_ploidy, &GenoArray16[0], svInt16);
-					bits += 2;
-					if (bits < num_bits)
-						vec_i16_shr_b2(&GenoArray16[0], num_samp_ploidy);
-				}
+				GDS_Array_AppendData(varGeno, num_samp_ploidy, &Genotypes[0],
+					svInt16);
+				bits += 2;
+				if (bits < num_bits)
+					vec_i16_shr_b2(&Genotypes[0], num_samp_ploidy);
 			}
 
 			// -------------------------------------------------
