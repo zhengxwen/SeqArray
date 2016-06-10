@@ -31,28 +31,6 @@ extern "C"
 // ======================================================================
 
 /// Calculate the missing rate per variant
-COREARRAY_DLL_EXPORT SEXP FC_SNP2GDS(SEXP Geno)
-{
-	size_t n = Rf_length(Geno);
-	SEXP Dest = NEW_INTEGER(2*n);
-	int *s = INTEGER(Geno), *p = INTEGER(Dest);
-	for (; (n--) > 0; p+=2)
-	{
-		switch (*s++)
-		{
-			case  0: p[0] = p[1] = 0; break;
-			case  1: p[0] = 1; p[1] = 0; break;
-			case  2: p[0] = p[1] = 1; break;
-			default: p[0] = p[1] = -1;
-		}
-	}
-	return Dest;
-}
-
-
-// ======================================================================
-
-/// Calculate the missing rate per variant
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 {
 	size_t n = XLENGTH(Geno), m;

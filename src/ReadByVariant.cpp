@@ -864,15 +864,20 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// as.is
 
 		Rconnection OutputConn = NULL;
+		PdGDSObj OutputGDS = NULL;
 		int DatType;
-		if (!Rf_inherits(as_is, "connection"))
+		if (Rf_inherits(as_is, "connection"))
 		{
+			OutputConn = R_GetConnection(as_is);
+			DatType = 7;
+		} else if (Rf_inherits(as_is, "gdsn.class"))
+		{
+			OutputGDS = GDS_R_SEXP2Obj(as_is, FALSE);
+			DatType = 8;
+		} else {
 			DatType = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
 			if (DatType < 0)
 				throw ErrSeqArray("'as.is' is not valid!");
-		} else {
-			OutputConn = R_GetConnection(as_is);
-			DatType = 7;
 		}
 
 		C_Int8 *R_rv_ptr = NULL;
@@ -1045,6 +1050,36 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 						throw ErrSeqArray("error in writing to a connection.");
 				}
 				break;
+			case 8:  // gdsn.class
+				switch (TYPEOF(val))
+				{
+				case LGLSXP:  // logical
+					GDS_Array_AppendData(OutputGDS, XLENGTH(val), LOGICAL(val), svInt32);
+					break;
+				case INTSXP:  // integer
+					GDS_Array_AppendData(OutputGDS, XLENGTH(val), INTEGER(val), svInt32);
+					break;
+				case REALSXP:  // numeric
+					GDS_Array_AppendData(OutputGDS, XLENGTH(val), REAL(val), svFloat64);
+					break;
+				case RAWSXP:  // RAW
+					GDS_Array_AppendData(OutputGDS, XLENGTH(val), RAW(val), svInt8);
+					break;
+				case STRSXP:  // character
+					{
+						R_xlen_t n = XLENGTH(val);
+						vector<string> buf(n);
+						for (R_xlen_t i=0; i < n; i++)
+						{
+							SEXP s = STRING_ELT(val, i);
+							if (s != NA_STRING) buf[i] = translateCharUTF8(s);
+						}
+						GDS_Array_AppendData(OutputGDS, n, &buf[0], svStrUTF8);
+					}
+					break;
+				default:
+					throw ErrSeqArray("the user-defined function should return a vector.");
+				}
 			}
 			ans_index ++;
 

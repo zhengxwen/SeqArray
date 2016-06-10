@@ -18,7 +18,8 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     \item{margin}{giving the dimension which the function will be applied
         over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
     \item{as.is}{returned value: a list, an integer vector, etc;
-        \code{as.is} can be a \code{\link{connection}} object}
+        \code{as.is} can be a \code{\link{connection}} object, or a GDS node
+        \code{\link{gdsn.class}} object}
     \item{var.index}{if \code{"none"}, call \code{FUN(x, ...)} without variable
         index; if \code{"relative"} or \code{"absolute"}, add an argument to
         the user-defined function \code{FUN} like \code{FUN(index, x, ...)}

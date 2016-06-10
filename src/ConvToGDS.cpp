@@ -116,4 +116,43 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 	COREARRAY_CATCH
 }
 
+
+// ======================================================================
+// SNP GDS --> SeqArray GDS
+// ======================================================================
+
+COREARRAY_DLL_EXPORT SEXP FC_SNP2GDS(SEXP Geno)
+{
+	size_t n = Rf_length(Geno);
+	SEXP Dest = NEW_INTEGER(2*n);
+	int *s = INTEGER(Geno), *p = INTEGER(Dest);
+	for (; (n--) > 0; p+=2)
+	{
+		switch (*s++)
+		{
+			case  0: p[0] = p[1] = 0; break;
+			case  1: p[0] = 1; p[1] = 0; break;
+			case  2: p[0] = p[1] = 1; break;
+			default: p[0] = p[1] = -1;
+		}
+	}
+	return Dest;
+}
+
+
+// ======================================================================
+// SeqArray GDS --> SNP GDS
+// ======================================================================
+
+COREARRAY_DLL_EXPORT SEXP FC_GDS2SNP(SEXP geno)
+{
+	C_UInt8 *p = (C_UInt8*)RAW(geno);
+	for (size_t n = XLENGTH(geno); n > 0; n--)
+	{
+		if (*p > 3) *p = 3;
+		p ++;
+	}
+	return geno;
+}
+
 } // extern "C"

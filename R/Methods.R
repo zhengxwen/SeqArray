@@ -318,7 +318,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     var.index <- match.arg(var.index)
     param <- list(useraw=.useraw, progress=.progress, list_dup=.list_dup)
 
-    if (!inherits(as.is, "connection"))
+    if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
         as.is <- match.arg(as.is)
 
     if (margin == "by.variant")

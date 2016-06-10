@@ -331,7 +331,17 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
     # create GDS file
     gfile <- createfn.gds(out.gdsfn)
     # close the file at the end
-    on.exit({ closefn.gds(gfile) }, add=TRUE)
+    on.exit({
+        closefn.gds(gfile)
+        if (verbose)
+            cat("Done.\n", date(), "\n", sep="")
+        if (optimize)
+        {
+            if (verbose) cat("Optimize the access efficiency ...\n")
+            cleanup.gds(out.gdsfn, verbose=verbose)
+            if (verbose) cat(date(), "\n", sep="")
+        }
+    }, add=TRUE)
 
     # add a flag
     put.attr.gdsn(gfile$root, "FileFormat", "SNP_ARRAY")
@@ -370,30 +380,9 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
         valdim=c(length(sampid), 0L), compress=compress.geno)
     put.attr.gdsn(gGeno, "sample.order")
 
-    seqApply(gdsfile, "genotype", margin="by.variant", as.is="none",
-        FUN = function(x) {
-            g <- colSums(x==0L)
-            g[is.na(g)] <- 3L
-            append.gdsn(gGeno, g)
-    })
+    seqApply(gdsfile, "$dosage", as.is=gGeno, .useraw=TRUE, .progress=verbose,
+        FUN = .cfunction("FC_GDS2SNP"))
     readmode.gdsn(gGeno)
-
-    on.exit()
-    seqClose(gdsfile)
-    closefn.gds(gfile)
-
-    if (verbose)
-    {
-        cat("Done.\n")
-        cat(date(), "\n", sep="")
-    }
-    if (optimize)
-    {
-        if (verbose)
-            cat("Optimize the access efficiency ...\n")
-        cleanup.gds(out.gdsfn, verbose=verbose)
-        if (verbose) cat(date(), "\n", sep="")
-    }
 
     # output
     invisible(normalizePath(out.gdsfn))
