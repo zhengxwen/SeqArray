@@ -221,7 +221,7 @@ size_t vec_i8_count(const char *p, size_t n, char val)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask));
-		sum = _mm256_set_m128i(_mm_sub_epi8(zeros, c1), zeros);
+		sum = MM_SET_M128(_mm_sub_epi8(zeros, c1), zeros);
 		n -= 16; p += 16;
 	}
 
@@ -258,7 +258,7 @@ size_t vec_i8_count(const char *p, size_t n, char val)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask));
-		sum = _mm256_sub_epi8(sum, _mm256_set_m128i(zeros, c1));
+		sum = _mm256_sub_epi8(sum, MM_SET_M128(zeros, c1));
 		n -= 16; p += 16;
 	}
 
@@ -344,9 +344,9 @@ void vec_i8_count2(const char *p, size_t n, char val1, char val2,
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_set_m128i(_mm_sub_epi8(zeros, c1), zeros);
+		sum1 = MM_SET_M128(_mm_sub_epi8(zeros, c1), zeros);
 		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_set_m128i(_mm_sub_epi8(zeros, c2), zeros);
+		sum2 = MM_SET_M128(_mm_sub_epi8(zeros, c2), zeros);
 		n -= 16; p += 16;
 	}
 
@@ -368,9 +368,9 @@ void vec_i8_count2(const char *p, size_t n, char val1, char val2,
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_sub_epi8(sum1, _mm256_set_m128i(c1, zeros));
+		sum1 = _mm256_sub_epi8(sum1, MM_SET_M128(c1, zeros));
 		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_sub_epi8(sum2, _mm256_set_m128i(c2, zeros));
+		sum2 = _mm256_sub_epi8(sum2, MM_SET_M128(c2, zeros));
 		n -= 16; p += 16;
 	}
 
@@ -456,11 +456,11 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_set_m128i(_mm_sub_epi8(zeros, c1), zeros);
+		sum1 = MM_SET_M128(_mm_sub_epi8(zeros, c1), zeros);
 		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_set_m128i(_mm_sub_epi8(zeros, c2), zeros);
+		sum2 = MM_SET_M128(_mm_sub_epi8(zeros, c2), zeros);
 		__m128i c3 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask3));
-		sum3 = _mm256_set_m128i(_mm_sub_epi8(zeros, c3), zeros);
+		sum3 = MM_SET_M128(_mm_sub_epi8(zeros, c3), zeros);
 		n -= 16; p += 16;
 	}
 
@@ -484,11 +484,11 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_sub_epi8(sum1, _mm256_set_m128i(c1, zeros));
+		sum1 = _mm256_sub_epi8(sum1, MM_SET_M128(c1, zeros));
 		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_sub_epi8(sum2, _mm256_set_m128i(c2, zeros));
+		sum2 = _mm256_sub_epi8(sum2, MM_SET_M128(c2, zeros));
 		__m128i c3 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask3));
-		sum3 = _mm256_sub_epi8(sum3, _mm256_set_m128i(c3, zeros));
+		sum3 = _mm256_sub_epi8(sum3, MM_SET_M128(c3, zeros));
 		n -= 16; p += 16;
 	}
 
@@ -822,7 +822,7 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask));
-		sum = _mm256_sub_epi32(sum, _mm256_set_m128i(zero, c));
+		sum = _mm256_sub_epi32(sum, MM_SET_M128(zero, c));
 		n -= 4; p += 4;
 	}
 	for (; n >= 8; n-=8, p+=8)
@@ -834,7 +834,7 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		__m128i c = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask));
-		sum = _mm256_sub_epi32(sum, _mm256_set_m128i(zero, c));
+		sum = _mm256_sub_epi32(sum, MM_SET_M128(zero, c));
 		n -= 4; p += 4;
 	}
 	ans += vec_avx_sum_i32(sum);
@@ -910,9 +910,9 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	{
 		__m128i v = _mm_load_si128((__m128i*)p);
 		__m128i c1 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_sub_epi32(sum1, _mm256_set_m128i(zero, c1));
+		sum1 = _mm256_sub_epi32(sum1, MM_SET_M128(zero, c1));
 		__m128i c2 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_sub_epi32(sum2, _mm256_set_m128i(zero, c2));
+		sum2 = _mm256_sub_epi32(sum2, MM_SET_M128(zero, c2));
 		n -= 4; p += 4;
 	}
 	for (; n >= 8; n-=8, p+=8)
@@ -925,9 +925,9 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	{
 		__m128i v = _mm_load_si128((__m128i*)p);
 		__m128i c1 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_sub_epi32(sum1, _mm256_set_m128i(zero, c1));
+		sum1 = _mm256_sub_epi32(sum1, MM_SET_M128(zero, c1));
 		__m128i c2 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_sub_epi32(sum2, _mm256_set_m128i(zero, c2));
+		sum2 = _mm256_sub_epi32(sum2, MM_SET_M128(zero, c2));
 		n -= 4; p += 4;
 	}
 
@@ -1022,11 +1022,11 @@ void vec_i32_count3(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	{
 		__m128i v = _mm_load_si128((__m128i*)p);
 		__m128i c1 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_sub_epi32(sum1, _mm256_set_m128i(zero, c1));
+		sum1 = _mm256_sub_epi32(sum1, MM_SET_M128(zero, c1));
 		__m128i c2 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_sub_epi32(sum2, _mm256_set_m128i(zero, c2));
+		sum2 = _mm256_sub_epi32(sum2, MM_SET_M128(zero, c2));
 		__m128i c3 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask3));
-		sum3 = _mm256_sub_epi32(sum3, _mm256_set_m128i(zero, c3));
+		sum3 = _mm256_sub_epi32(sum3, MM_SET_M128(zero, c3));
 		n -= 4; p += 4;
 	}
 	for (; n >= 8; n-=8, p+=8)
@@ -1040,11 +1040,11 @@ void vec_i32_count3(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	{
 		__m128i v = _mm_load_si128((__m128i*)p);
 		__m128i c1 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask1));
-		sum1 = _mm256_sub_epi32(sum1, _mm256_set_m128i(zero, c1));
+		sum1 = _mm256_sub_epi32(sum1, MM_SET_M128(zero, c1));
 		__m128i c2 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask2));
-		sum2 = _mm256_sub_epi32(sum2, _mm256_set_m128i(zero, c2));
+		sum2 = _mm256_sub_epi32(sum2, MM_SET_M128(zero, c2));
 		__m128i c3 = _mm_cmpeq_epi32(v, _mm256_castsi256_si128(mask3));
-		sum3 = _mm256_sub_epi32(sum3, _mm256_set_m128i(zero, c3));
+		sum3 = _mm256_sub_epi32(sum3, MM_SET_M128(zero, c3));
 		n -= 4; p += 4;
 	}
 

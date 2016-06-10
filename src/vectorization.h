@@ -216,6 +216,8 @@ inline static int POPCNT_U64(uint64_t x)
 #ifdef __AVX__
 
 #   define MM_LOADU_256(p)    _mm256_loadu_si256((__m256i const *)(p))
+#   define MM_SET_M128(v1, v0)    \
+        _mm256_insertf128_si256(_mm256_castsi128_si256(v0), (v1), 1)
 
 #   ifdef __AVX2__
 #       define MM_BLEND_256(a, b, mask)  \
