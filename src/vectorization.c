@@ -36,7 +36,7 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 {
 	size_t ans = 0;
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	const __m128i ZERO = { 0LL, 0LL };
 	const __m128i ONES = { 0x0101010101010101LL, 0x0101010101010101LL };
@@ -47,7 +47,7 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 	for (; (n > 0) && (h > 0); n--, h--)
 		ans += (*p++) ? 1 : 0;
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// header 2, 32-byte aligned
 	if ((n >= 16) && ((size_t)p & 0x10))
@@ -202,14 +202,14 @@ size_t vec_i8_count(const char *p, size_t n, char val)
 {
 	size_t num = 0;
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
 	for (; (n > 0) && (h > 0); n--, h--)
 		if (*p++ == val) num++;
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 	// body, AVX2
 	const __m128i zeros = _mm_setzero_si128();
 	const __m256i mask = _mm256_set1_epi8(val);
@@ -319,7 +319,7 @@ void vec_i8_count2(const char *p, size_t n, char val1, char val2,
 {
 	size_t n1 = 0, n2 = 0;
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
@@ -330,7 +330,7 @@ void vec_i8_count2(const char *p, size_t n, char val1, char val2,
 		if (v == val2) n2++;
 	}
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 	// body, AVX2
 	const __m128i zeros = _mm_setzero_si128();
 	const __m256i mask1 = _mm256_set1_epi8(val1);
@@ -429,7 +429,7 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 {
 	size_t n1 = 0, n2 = 0, n3 = 0;
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
@@ -441,7 +441,7 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 		if (v == val3) n3++;
 	}
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 	// body, AVX2
 	const __m128i zeros = _mm_setzero_si128();
 	const __m256i mask1 = _mm256_set1_epi8(val1);
@@ -551,7 +551,7 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 
 void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
@@ -562,7 +562,7 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 	const __m128i mask = _mm_set1_epi8(val);
 	const __m128i sub  = _mm_set1_epi8(substitute);
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// header 2, 32-byte aligned
 	if ((n >= 16) && ((size_t)p & 0x10))
@@ -616,7 +616,7 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 	int8_t missing, int8_t missing_substitute)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = (16 - ((size_t)out & 0x0F)) & 0x0F;
@@ -633,7 +633,7 @@ void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 	const __m128i sub16  = _mm_set1_epi8(missing_substitute);
 	const __m128i mask   = _mm_set1_epi16(0x00FF);
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// header 2, 32-byte aligned
 	if ((n >= 16) && ((size_t)out & 0x10))
@@ -728,7 +728,7 @@ void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 /// shifting *p right by 2 bits, assuming p is 2-byte aligned
 void vec_u8_shr_b2(uint8_t *p, size_t n)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F);
@@ -759,7 +759,7 @@ void vec_u8_shr_b2(uint8_t *p, size_t n)
 /// shifting *p right by 2 bits, assuming p is 2-byte aligned
 void vec_i16_shr_b2(int16_t *p, size_t n)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 1;
@@ -803,14 +803,14 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 	}
 #endif
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
 	for (; (n > 0) && (h > 0); n--, h--)
 		if (*p++ == val) ans++;
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// body, AVX2
 	const __m128i zero = _mm_setzero_si128();
@@ -885,7 +885,7 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	}
 #endif
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
@@ -896,7 +896,7 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 		if (v == val2) n2++;
 	}
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// body, AVX2
 	const __m128i zero  = _mm_setzero_si128();
@@ -995,7 +995,7 @@ void vec_i32_count3(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	}
 #endif
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
@@ -1007,7 +1007,7 @@ void vec_i32_count3(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 		if (v == val3) n3++;
 	}
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// body, AVX2
 	const __m128i zero  = _mm_setzero_si128();
@@ -1104,7 +1104,7 @@ void vec_int32_set(int32_t *p, size_t n, int32_t val)
 /// replace 'val' in the array of 'p' by 'substitute', assuming 'p' is 4-byte aligned
 void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
@@ -1115,7 +1115,7 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 	const __m128i mask = _mm_set1_epi32(val);
 	const __m128i sub4 = _mm_set1_epi32(substitute);
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// header 2, 32-byte aligned
 	if ((n >= 4) && ((size_t)p & 0x10))
@@ -1160,7 +1160,7 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
 	int32_t missing, int32_t missing_substitute)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)out & 0x0F)) & 0x0F) >> 2;
@@ -1176,7 +1176,7 @@ void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
 	const __m128i miss4 = _mm_set1_epi32(missing);
 	const __m128i sub4  = _mm_set1_epi32(missing_substitute);
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// header 2, 32-byte aligned
 	if ((n >= 4) && ((size_t)out & 0x10))
@@ -1287,7 +1287,7 @@ void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
 /// shifting *p right by 2 bits, assuming p is 2-byte aligned
 void vec_i32_shr_b2(int32_t *p, size_t n)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = ((16 - ((size_t)p & 0x0F)) & 0x0F) >> 2;
@@ -1315,7 +1315,7 @@ void vec_i32_shr_b2(int32_t *p, size_t n)
 
 const char *vec_char_find_CRLF(const char *p, size_t n)
 {
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
 	size_t h = (16 - ((size_t)p & 0x0F)) & 0x0F;
@@ -1326,7 +1326,7 @@ const char *vec_char_find_CRLF(const char *p, size_t n)
 	const __m128i mask1 = _mm_set1_epi8('\n');
 	const __m128i mask2 = _mm_set1_epi8('\r');
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 
 	// header 2, 32-byte aligned
 	if ((n >= 16) && ((size_t)p & 0x10))
@@ -1363,7 +1363,7 @@ const char *vec_char_find_CRLF(const char *p, size_t n)
 			break;
 	}
 
-#ifdef __AVX2__
+#ifdef COREARRAY_SIMD_AVX2
 tail:
 #endif
 

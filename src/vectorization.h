@@ -37,25 +37,25 @@
 #include <stdint.h>
 #include <string.h>
 
-#if (defined(__SSE__) && defined(__SSE2__))
+#if defined(COREARRAY_SIMD_SSE) && defined(COREARRAY_SIMD_SSE2)
 
 #   include <xmmintrin.h>  // SSE
 #   include <emmintrin.h>  // SSE2
 
-#   if defined(__SSE3__)  // SSE3
+#   if defined(COREARRAY_SIMD_SSE3)  // SSE3
 #       include <pmmintrin.h>
 #   endif
 
-#   if defined(__SSSE3__)  // SSSE3
+#   if defined(COREARRAY_SIMD_SSSE3)  // SSSE3
 #       include <tmmintrin.h>
 #   endif
 
-#   if defined(__SSE4_2__) || defined(__POPCNT__)
+#   if defined(COREARRAY_SIMD_SSE4_2) || defined(__POPCNT__)
 #       define COREARRAY_HARDWARE_POPCNT
-#       include <nmmintrin.h>  // SSE4_2, for POPCNT
+#       include <nmmintrin.h>  // COREARRAY_SIMD_SSE4_2, for POPCNT
 #   endif
 
-#   if defined(__AVX__) || defined(__AVX2__)
+#   if defined(COREARRAY_SIMD_AVX) || defined(COREARRAY_SIMD_AVX2)
 #       include <immintrin.h>  // AVX, AVX2
 #   endif
 
@@ -197,15 +197,15 @@ inline static int POPCNT_U64(uint64_t x)
 
 // ===========================================================
 
-#ifdef __SSE__
+#ifdef COREARRAY_SIMD_SSE
 
-#   ifdef __SSE3__
+#   ifdef COREARRAY_SIMD_SSE3
 #       define MM_LOADU_128(p)    _mm_lddqu_si128((__m128i const*)(p))
 #   else
 #       define MM_LOADU_128(p)    _mm_loadu_si128((__m128i const*)(p))
 #   endif
 
-#   ifdef __SSE2__
+#   ifdef COREARRAY_SIMD_SSE2
 #       define MM_BLEND_128(a, b, mask)  \
 		    _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b))
 #   endif
@@ -213,13 +213,13 @@ inline static int POPCNT_U64(uint64_t x)
 #endif
 
 
-#ifdef __AVX__
+#ifdef COREARRAY_SIMD_AVX
 
 #   define MM_LOADU_256(p)    _mm256_loadu_si256((__m256i const *)(p))
 #   define MM_SET_M128(v1, v0)    \
         _mm256_insertf128_si256(_mm256_castsi128_si256(v0), (v1), 1)
 
-#   ifdef __AVX2__
+#   ifdef COREARRAY_SIMD_AVX2
 #       define MM_BLEND_256(a, b, mask)  \
 		    _mm256_or_si256(_mm256_and_si256(mask, a), _mm256_andnot_si256(mask, b))
 #   endif

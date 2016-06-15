@@ -602,7 +602,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 
 // --------------------------------------------------------------
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 static const __m128i char_unphased = _mm_set_epi8(
 	'\t', '.', '/', '.',   '\t', '.', '/', '.',
@@ -616,7 +616,7 @@ static const __m128i char_mask = _mm_set1_epi16(0xFF00);
 
 #endif
 
-#ifdef __AVX2__
+#ifdef COREARRAY_SIMD_AVX2
 
 static const __m256i char_unphased_256 = _mm256_set_epi8(
 	'\t', '.', '/', '.',   '\t', '.', '/', '.',
@@ -659,7 +659,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 	size_t n = VCF_NumSample;
 	size_t offset = 0;
 
-#ifdef __SSE2__
+#ifdef COREARRAY_SIMD_SSE2
 
 	LineBuf_NeedSize(n*4 + 64);
 
@@ -672,7 +672,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 		LinePtr += offset;
 	}
 
-#ifdef __AVX2__
+#ifdef COREARRAY_SIMD_AVX2
 	for (; n >= 8; n -= 8)
 	{
 		__m256i v1 = MM_LOADU_256(pSamp);
@@ -719,7 +719,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 		LinePtr += 16;
 	}
 
-#ifdef __AVX2__
+#ifdef COREARRAY_SIMD_AVX2
 tail:
 #endif
 

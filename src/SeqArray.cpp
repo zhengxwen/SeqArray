@@ -987,34 +987,34 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 		// compiler flags
 		vector<string> ss;
 
-	#ifdef __SSE__
+	#ifdef COREARRAY_SIMD_SSE
 		ss.push_back("SSE");
 	#endif
-	#ifdef __SSE2__
+	#ifdef COREARRAY_SIMD_SSE2
 		ss.push_back("SSE2");
 	#endif
-	#ifdef __SSE3__
+	#ifdef COREARRAY_SIMD_SSE3
 		ss.push_back("SSE3");
 	#endif
-	#ifdef __SSSE3__
+	#ifdef COREARRAY_SIMD_SSSE3
 		ss.push_back("SSSE3");
 	#endif
-	#ifdef __SSE4_1__
+	#ifdef COREARRAY_SIMD_SSE4_1
 		ss.push_back("SSE4.1");
 	#endif
-	#ifdef __SSE4_2__
+	#ifdef COREARRAY_SIMD_SSE4_2
 		ss.push_back("SSE4.2");
 	#endif
-	#ifdef __AVX__
+	#ifdef COREARRAY_SIMD_AVX
 		ss.push_back("AVX");
 	#endif
-	#ifdef __AVX2__
+	#ifdef COREARRAY_SIMD_AVX2
 		ss.push_back("AVX2");
 	#endif
-	#ifdef __FMA__
+	#ifdef COREARRAY_SIMD_FMA
 		ss.push_back("FMA");
 	#endif
-	#ifdef __FMA4__
+	#ifdef COREARRAY_SIMD_FMA4
 		ss.push_back("FMA4");
 	#endif
 		SEXP SIMD = PROTECT(NEW_CHARACTER(ss.size()));
