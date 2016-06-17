@@ -261,7 +261,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     len.fmt <- suppressWarnings(as.integer(len.fmt))
 
     # initialize
-    .Call(SEQ_ToVCF_Init, .seldim(gdsfile), len.info, len.fmt, ofile, verbose)
+    dm <- .seldim(gdsfile)
+    .Call(SEQ_ToVCF_Init, dm, len.info, len.fmt, ofile, verbose)
     on.exit({ .Call(SEQ_ToVCF_Done) }, add=TRUE)
 
     # variable names
@@ -281,13 +282,15 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     # output lines by variant
     seqApply(gdsfile, nm, margin="by.variant", as.is="none",
-        FUN=.cfunction(ifelse(
-        	length(nm.format)>0L, "SEQ_ToVCF", "SEQ_ToVCF_Di_WrtFmt")))
+        .useraw=NA, .progress=verbose,
+        FUN = .cfunction(ifelse(length(nm.format)>0L | dm[1L]!=2L,
+            "SEQ_ToVCF", "SEQ_ToVCF_Di_WrtFmt")))
 
     # finalize
+    .Call(SEQ_ToVCF_Done)
     on.exit({
         if (verbose)
-            cat("Done.\n", date(), "\n", sep="")
+            cat(date(), "    Done.\n", sep="")
     }, add=TRUE)
 
     # output

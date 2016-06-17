@@ -17,9 +17,9 @@ seqAlleleCount(gdsfile, .progress=FALSE,
         or a character vector; see Value}
     \item{.progress}{if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
-        processing) or other value; \code{parallel} is passed to the argument
-        \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
-        for more details.}
+        processing), numeric value or other value; \code{parallel} is passed
+        to the argument \code{cl} in \code{\link{seqParallel}}, see
+        \code{\link{seqParallel}} for more details.}
 }
 \value{
     If \code{ref.allele=NULL}, the function returns a list of allele

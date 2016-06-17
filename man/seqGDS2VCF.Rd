@@ -60,10 +60,11 @@ seqSetFilter(f, sample.id=samp.id[1:5])
 seqGDS2VCF(f, "tmp.vcf.gz")
 
 # no INFO and FORMAT
-seqGDS2VCF(f, "tmp1.vcf.gz", info.var=character(0), fmt.var=character(0))
+seqGDS2VCF(f, "tmp1.vcf.gz", info.var=character(), fmt.var=character())
 
 # output BN,GP,AA,DP,HM2 in INFO (the variables are in this order), no FORMAT
-seqGDS2VCF(f, "tmp2.vcf.gz", info.var=c("BN","GP","AA","DP","HM2"), fmt.var=character(0))
+seqGDS2VCF(f, "tmp2.vcf.gz", info.var=c("BN","GP","AA","DP","HM2"),
+    fmt.var=character())
 
 
 # read

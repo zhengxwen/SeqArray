@@ -14,9 +14,9 @@ seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE,
         missing rate per sample if \code{FALSE}}
     \item{.progress}{if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
-        processing) or other value; \code{parallel} is passed to the argument
-        \code{cl} in \code{\link{seqParallel}}, see \code{\link{seqParallel}}
-        for more details.}
+        processing), numeric value or other value; \code{parallel} is passed
+        to the argument \code{cl} in \code{\link{seqParallel}}, see
+        \code{\link{seqParallel}} for more details.}
 }
 \value{
     A vector of missing rates.

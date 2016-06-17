@@ -79,61 +79,45 @@ static Rconnection VCF_File = NULL;  ///< R connection object
 static const size_t LINE_BUFFER_SIZE = 4096;
 static vector<char> LineBuffer;
 static char *LineBegin = NULL;
-static char *LinePtr   = NULL;
 static char *LineEnd   = NULL;
+static char *pLine     = NULL;
 
-static CProgressStdOut *Progress = NULL;  ///< progress information
 
-
-inline static void LineBuf_Init(int num_variant, bool verbose)
+inline static void LineBuf_Init(int num_variant)
 {
 	LineBuffer.resize(LINE_BUFFER_SIZE);
-	LinePtr = LineBegin = &LineBuffer[0];
-	LineEnd = LinePtr + LINE_BUFFER_SIZE;
-
-	if (Progress)
-	{
-		delete Progress;
-		Progress = NULL;
-	}
-	if (verbose)
-		Progress = new CProgressStdOut(num_variant, true);
+	pLine = LineBegin = &LineBuffer[0];
+	LineEnd = pLine + LINE_BUFFER_SIZE;
 }
 
 inline static void LineBuf_Done()
 {
 	LineBuffer.clear();
 	vector<char>().swap(LineBuffer);
-	LineBegin = LinePtr = LineEnd = NULL;
+	LineBegin = pLine = LineEnd = NULL;
 	VCF_INFO_Number.clear();
 	vector<int>().swap(VCF_INFO_Number);
 	VCF_FORMAT_Number.clear();
 	vector<int>().swap(VCF_FORMAT_Number);
 	VCF_FORMAT_List.clear();
 	vector<SEXP>().swap(VCF_FORMAT_List);
-
-	if (Progress)
-	{
-		delete Progress;
-		Progress = NULL;
-	}
 }
 
 inline static void LineBuf_InitPtr()
 {
-	LinePtr = LineBegin = &LineBuffer[0];
+	pLine = LineBegin = &LineBuffer[0];
 }
 
 inline static void LineBuf_NeedSize(size_t st)
 {
-	if (LinePtr + st > LineEnd)
+	if (pLine + st > LineEnd)
 	{
-		size_t p = LinePtr - LineBegin;
+		size_t p = pLine - LineBegin;
 		size_t n = p + st;
 		n = (n / LINE_BUFFER_SIZE + 1) * LINE_BUFFER_SIZE;
 		LineBuffer.resize(n);
 		LineBegin = &LineBuffer[0];
-		LinePtr = LineBegin + p;
+		pLine = LineBegin + p;
 		LineEnd = LineBegin + n;
 	}
 }
@@ -164,9 +148,9 @@ inline static char *fast_itoa(char *p, int32_t val)
 inline static void _Line_Append(int val)
 {
 	if (val != NA_INTEGER)
-		LinePtr = fast_itoa(LinePtr, val);
+		pLine = fast_itoa(pLine, val);
 	else
-		*LinePtr++ = '.';
+		*pLine++ = '.';
 }
 
 inline static void _Line_Append_Geno(int val)
@@ -174,19 +158,29 @@ inline static void _Line_Append_Geno(int val)
 	if (val >= 0)
 	{
 		if (val < 10)
-			*LinePtr++ = val + '0';
+			*pLine++ = val + '0';
 		else
-			LinePtr = fast_itoa(LinePtr, val);
+			pLine = fast_itoa(pLine, val);
 	} else 
-		*LinePtr++ = '.';
+		*pLine++ = '.';
+}
+
+inline static void _Line_Append_Geno_Raw(C_UInt8 val)
+{
+	if (val < 10)
+		*pLine++ = val + '0';
+	else if (val == NA_RAW)
+		*pLine++ = '.';
+	else
+		pLine = fast_itoa(pLine, val);
 }
 
 inline static void _Line_Append(double val)
 {
 	if (R_FINITE(val))
-		LinePtr += sprintf(LinePtr, "%g", val);
+		pLine += sprintf(pLine, "%g", val);
 	else
-		*LinePtr++ = '.';
+		*pLine++ = '.';
 }
 
 
@@ -206,8 +200,8 @@ inline static void LineBuf_Append(const char *txt)
 {
 	const size_t n = strlen(txt);
 	LineBuf_NeedSize(n + 16);
-	memcpy(LinePtr, txt, n);
-	LinePtr += n;
+	memcpy(pLine, txt, n);
+	pLine += n;
 }
 
 
@@ -260,7 +254,7 @@ inline static void INFO_Write(SEXP X, size_t n)
 		LineBuf_NeedSize(12*n + 32);
 		for (int *p = INTEGER(X); i < n; i++)
 		{
-			if (i > 0) *LinePtr++ = ',';
+			if (i > 0) *pLine++ = ',';
 			_Line_Append(*p++);
 		}
 	} else if (IS_NUMERIC(X))
@@ -268,14 +262,14 @@ inline static void INFO_Write(SEXP X, size_t n)
 		LineBuf_NeedSize(12*n + 32);
 		for (double *p = REAL(X); i < n; i++)
 		{
-			if (i > 0) *LinePtr++ = ',';
+			if (i > 0) *pLine++ = ',';
 			_Line_Append(*p++);
 		}
 	} else if (IS_CHARACTER(X))
 	{
 		for (; i < n; i++)
 		{
-			if (i > 0) *LinePtr++ = ',';
+			if (i > 0) *pLine++ = ',';
 			LineBuf_Append(CHAR(STRING_ELT(X, i)));
 		}
 	}
@@ -295,7 +289,7 @@ inline static void FORMAT_Write(SEXP X, size_t n, size_t Start, size_t Step)
 		p = base;
 		for (size_t i=0; i < n; i++)
 		{
-			if (i > 0) *LinePtr++ = ',';
+			if (i > 0) *pLine++ = ',';
 			_Line_Append(*p);
 			p += Step;
 		}
@@ -309,7 +303,7 @@ inline static void FORMAT_Write(SEXP X, size_t n, size_t Start, size_t Step)
 		p = base;
 		for (size_t i=0; i < n; i++)
 		{
-			if (i > 0) *LinePtr++ = ',';
+			if (i > 0) *pLine++ = ',';
 			_Line_Append(*p);
 			p += Step;
 		}
@@ -324,16 +318,16 @@ inline static void FORMAT_Write(SEXP X, size_t n, size_t Start, size_t Step)
 		}
 		for (size_t i=0; i < n; i++, Start += Step)
 		{
-			if (i > 0) *LinePtr++ = ',';
+			if (i > 0) *pLine++ = ',';
 			SEXP s = STRING_ELT(X, Start);
 			if (s != NA_STRING)
 				LineBuf_Append(CHAR(s));
 			else
-				*LinePtr++ = '.';
+				*pLine++ = '.';
 		}
 	}
 
-	if (n <= 0) *LinePtr++ = '.';
+	if (n <= 0) *pLine++ = '.';
 }
 
 
@@ -347,39 +341,39 @@ inline static void ExportHead(SEXP X)
 {
 	// CHROM
 	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 0), 0)));
-	*LinePtr++ = '\t';
+	*pLine++ = '\t';
 
 	// POS
 	LineBuf_Append(Rf_asInteger(VECTOR_ELT(X, 1)));
-	*LinePtr++ = '\t';
+	*pLine++ = '\t';
 
 	// ID
 	char *s = (char*)CHAR(STRING_ELT(VECTOR_ELT(X, 2), 0));
 	if (*s != 0)
 		LineBuf_Append(s);
 	else
-		*LinePtr++ = '.';
-	*LinePtr++ = '\t';
+		*pLine++ = '.';
+	*pLine++ = '\t';
 
 	// allele -- REF/ALT
-	size_t n = LinePtr - LineBegin;
+	size_t n = pLine - LineBegin;
 	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 3), 0)));
 
-	for (s = LineBegin+n; s < LinePtr; s++)
+	for (s = LineBegin+n; s < pLine; s++)
 	{
 		if (*s == ',')
 			{ *s = '\t'; break; }
 	}
-	if (s == LinePtr)
+	if (s == pLine)
 	{
-		*LinePtr++ = '\t';
-		*LinePtr++ = '.';
+		*pLine++ = '\t';
+		*pLine++ = '.';
 	}
-	*LinePtr++ = '\t';
+	*pLine++ = '\t';
 
 	// QUAL
 	LineBuf_Append(Rf_asReal(VECTOR_ELT(X, 4)));
-	*LinePtr++ = '\t';
+	*pLine++ = '\t';
 
 	// FILTER
 	SEXP tmp = VECTOR_ELT(X, 5);
@@ -388,7 +382,7 @@ inline static void ExportHead(SEXP X)
 	else
 		tmp = AS_CHARACTER(tmp);
 	LineBuf_Append(CHAR(STRING_ELT(tmp, 0)));
-	*LinePtr++ = '\t';
+	*pLine++ = '\t';
 }
 
 
@@ -414,7 +408,7 @@ inline static void ExportInfoFormat(SEXP X)
 		{
 			if (Rf_asLogical(D) == TRUE)
 			{
-				if (n > 0) *LinePtr++ = ';';
+				if (n > 0) *pLine++ = ';';
 				LineBuf_Append(nm);
 				n ++;
 			}
@@ -422,23 +416,23 @@ inline static void ExportInfoFormat(SEXP X)
 			int m = INFO_GetNum(D, VCF_INFO_Number[i]);
 			if (m > 0)
 			{
-				if (n > 0) *LinePtr++ = ';';
+				if (n > 0) *pLine++ = ';';
 				LineBuf_Append(nm);
-				*LinePtr++ = '=';
+				*pLine++ = '=';
 				INFO_Write(D, m);
 				n ++;
 			}
 		}
 	}
 
-	if (n <= 0) *LinePtr++ = '.';
-	*LinePtr++ = '\t';
+	if (n <= 0) *pLine++ = '.';
+	*pLine++ = '\t';
 
 	//====  FORMAT  ====//
 
 	VCF_FORMAT_List.clear();
 	LineBuf_NeedSize(32);
-	LinePtr[0] = 'G', LinePtr[1] = 'T'; LinePtr += 2;
+	pLine[0] = 'G', pLine[1] = 'T'; pLine += 2;
 
 	size_t cnt_fmt = VCF_FORMAT_Number.size();
 	for (size_t i=0; i < cnt_fmt; i++)
@@ -447,13 +441,13 @@ inline static void ExportInfoFormat(SEXP X)
 		SEXP D = VECTOR_ELT(X, i + cnt_info + 8);
 		if (!isNull(D))
 		{
-			*LinePtr++ = ':';
+			*pLine++ = ':';
 			const char *nm = CHAR(STRING_ELT(VarNames, i + cnt_info + 8));
 			LineBuf_Append(nm + 4);
 			VCF_FORMAT_List.push_back(D);
 		}
 	}
-	*LinePtr++ = '\t';
+	*pLine++ = '\t';
 }
 
 }
@@ -513,7 +507,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP Sel, SEXP Info, SEXP Format,
 	VCF_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
 
 	VCF_FORMAT_List.reserve(256);
-	LineBuf_Init(INTEGER(Sel)[2], Rf_asLogical(Verbose)==TRUE);
+	LineBuf_Init(INTEGER(Sel)[2]);
 
 	return R_NilValue;
 }
@@ -532,68 +526,95 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 {
 	// initialize line pointer
 	LineBuf_InitPtr();
-
 	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
 	ExportHead(X);
-
 	// INFO, FORMAT
 	ExportInfoFormat(X);
+	// phase information
+	SEXP phase = VECTOR_ELT(X, 7);
+	C_UInt8 *pAllele = (C_UInt8*)RAW(phase);
 
 	// genotype
 	SEXP geno = VECTOR_ELT(X, 6);
-	int *pSamp = INTEGER(geno);
 
-	// phase information
-	SEXP phase = VECTOR_ELT(X, 7);
-	int *pAllele = INTEGER(phase);
-
-	// for-loop of samples
-	for (size_t i=0; i < VCF_NumSample; i ++)
+	if (TYPEOF(geno) == RAWSXP)
 	{
-		// add '\t'
-		if (i > 0) *LinePtr++ = '\t';
-
-		// genotypes
-		LineBuf_NeedSize(VCF_NumAllele << 4); // NumAllele*16
-		if (VCF_NumAllele == 2)
+		C_UInt8 *pSamp = (C_UInt8*)RAW(geno);
+		// for-loop of samples
+		for (size_t i=0; i < VCF_NumSample; i ++)
 		{
-			_Line_Append_Geno(*pSamp++);
-			*LinePtr++ = (*pAllele++) ? '|' : '/';
-			_Line_Append_Geno(*pSamp++);
-		} else {
-			for (size_t j=0; j < VCF_NumAllele; j++)
+			// add '\t'
+			if (i > 0) *pLine++ = '\t';
+			// genotypes
+			LineBuf_NeedSize(VCF_NumAllele << 4); // NumAllele*16
+			if (VCF_NumAllele == 2)
 			{
-				if (j > 0)
-					*LinePtr++ = (*pAllele++) ? '|' : '/';
-				_Line_Append_Geno(*pSamp++);
+				_Line_Append_Geno_Raw(*pSamp++);
+				*pLine++ = (*pAllele++) ? '|' : '/';
+				_Line_Append_Geno_Raw(*pSamp++);
+			} else {
+				for (size_t j=0; j < VCF_NumAllele; j++)
+				{
+					if (j > 0)
+						*pLine++ = (*pAllele++) ? '|' : '/';
+					_Line_Append_Geno_Raw(*pSamp++);
+				}
+			}
+			// annotation
+			vector<SEXP>::iterator p;
+			for (p=VCF_FORMAT_List.begin(); p != VCF_FORMAT_List.end(); p++)
+			{
+				*pLine++ = ':';
+				size_t n = Rf_length(*p) / VCF_NumSample;
+				FORMAT_Write(*p, n, i, VCF_NumSample);
 			}
 		}
-
-		// annotation
-		vector<SEXP>::iterator p;
-		for (p=VCF_FORMAT_List.begin(); p != VCF_FORMAT_List.end(); p++)
+	} else {
+		int *pSamp = INTEGER(geno);
+		// for-loop of samples
+		for (size_t i=0; i < VCF_NumSample; i ++)
 		{
-			*LinePtr++ = ':';
-			size_t n = Rf_length(*p) / VCF_NumSample;
-			FORMAT_Write(*p, n, i, VCF_NumSample);
+			// add '\t'
+			if (i > 0) *pLine++ = '\t';
+			// genotypes
+			LineBuf_NeedSize(VCF_NumAllele << 4); // NumAllele*16
+			if (VCF_NumAllele == 2)
+			{
+				_Line_Append_Geno(*pSamp++);
+				*pLine++ = (*pAllele++) ? '|' : '/';
+				_Line_Append_Geno(*pSamp++);
+			} else {
+				for (size_t j=0; j < VCF_NumAllele; j++)
+				{
+					if (j > 0)
+						*pLine++ = (*pAllele++) ? '|' : '/';
+					_Line_Append_Geno(*pSamp++);
+				}
+			}
+			// annotation
+			vector<SEXP>::iterator p;
+			for (p=VCF_FORMAT_List.begin(); p != VCF_FORMAT_List.end(); p++)
+			{
+				*pLine++ = ':';
+				size_t n = Rf_length(*p) / VCF_NumSample;
+				FORMAT_Write(*p, n, i, VCF_NumSample);
+			}
 		}
 	}
 
-	*LinePtr++ = '\n';
+	*pLine++ = '\n';
 
 	// output
 	if (VCF_File->text)
 	{
-		*LinePtr = 0;
+		*pLine = 0;
 		put_text("%s", LineBegin);
 	} else {
-		size_t size = LinePtr - LineBegin;
+		size_t size = pLine - LineBegin;
 		size_t n = R_WriteConnection(VCF_File, LineBegin, size);
 		if (size != n)
 			throw ErrSeqArray("writing error.");
 	}
-
-	if (Progress) Progress->Forward();
 
 	return R_NilValue;
 }
@@ -602,153 +623,121 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 
 // --------------------------------------------------------------
 
-#ifdef COREARRAY_SIMD_SSE2
-
-static const __m128i char_unphased = _mm_set_epi8(
-	'\t', '.', '/', '.',   '\t', '.', '/', '.',
-	'\t', '.', '/', '.',   '\t', '.', '/', '.');
-static const __m128i char_phased = _mm_set_epi8(
-	'\t', '.', '|', '.',   '\t', '.', '|', '.',
-	'\t', '.', '|', '.',   '\t', '.', '|', '.');
-static const __m128i nines = _mm_set1_epi32(9);
-static const __m128i char_zero = _mm_set1_epi16('0');
-static const __m128i char_mask = _mm_set1_epi16(0xFF00);
-
-#endif
-
-#ifdef COREARRAY_SIMD_AVX2
-
-static const __m256i char_unphased_256 = _mm256_set_epi8(
-	'\t', '.', '/', '.',   '\t', '.', '/', '.',
-	'\t', '.', '/', '.',   '\t', '.', '/', '.',
-	'\t', '.', '/', '.',   '\t', '.', '/', '.',
-	'\t', '.', '/', '.',   '\t', '.', '/', '.');
-static const __m256i char_phased_256 = _mm256_set_epi8(
-	'\t', '.', '|', '.',   '\t', '.', '|', '.',
-	'\t', '.', '|', '.',   '\t', '.', '|', '.',
-	'\t', '.', '|', '.',   '\t', '.', '|', '.',
-	'\t', '.', '|', '.',   '\t', '.', '|', '.');
-static const __m256i nines_256 = _mm256_set1_epi32(9);
-static const __m256i char_zero_256 = _mm256_set1_epi16('0');
-static const __m256i char_mask_256 = _mm256_set1_epi16(0xFF00);
-
-#endif
-
-
 /// convert to VCF4, diploid without FORMAT variables
 COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 {
 	// initialize line pointer
 	LineBuf_InitPtr();
-
 	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
 	ExportHead(X);
-
 	// INFO, FORMAT
 	ExportInfoFormat(X);
-
-	// genotype
-	SEXP geno = VECTOR_ELT(X, 6);
-	int *pSamp = INTEGER(geno);
-
 	// phase information
 	SEXP phase = VECTOR_ELT(X, 7);
-	int *pAllele = INTEGER(phase);
+	C_UInt8 *pAllele = (C_UInt8*)RAW(phase);
 
 	// for-loop, genotypes
 	size_t n = VCF_NumSample;
 	size_t offset = 0;
 
-#ifdef COREARRAY_SIMD_SSE2
+	// genotype
+	SEXP geno = VECTOR_ELT(X, 6);
 
-	LineBuf_NeedSize(n*4 + 64);
-
-	// 32-byte alignment
-	offset = (size_t)LinePtr & 0x1F;
-	if (offset > 0)
+	if (TYPEOF(geno) == RAWSXP)
 	{
-		offset = 32 - offset;
-		memmove(LineBegin+offset, LineBegin, LinePtr-LineBegin);
-		LinePtr += offset;
+		C_UInt8 *pSamp = (C_UInt8*)RAW(geno);
+
+	#ifdef COREARRAY_SIMD_SSE2
+
+		// need buffer
+		LineBuf_NeedSize(n*4 + 64);
+		// 32-byte alignment
+		offset = (size_t)pLine & 0x1F;
+		if (offset > 0)
+		{
+			offset = 32 - offset;
+			memmove(LineBegin+offset, LineBegin, pLine-LineBegin);
+			pLine += offset;
+		}
+
+		static const __m128i ten = _mm_set1_epi8(10);
+		static const __m128i na  = _mm_set1_epi8(0xFF);
+		static const __m128i char_unphased = _mm_set1_epi8('/');
+		static const __m128i char_phased = _mm_set1_epi8('|');
+		static const __m128i char_zero = _mm_set1_epi8('0');
+		static const __m128i char_na = _mm_set1_epi8('.');
+		static const __m128i char_tab = _mm_set1_epi8('\t');
+
+		for (; n >= 16; n-=16)
+		{
+			__m128i v1 = MM_LOADU_128(pSamp);
+			__m128i m1 = _mm_cmpeq_epi8(v1, na);
+			if (_mm_movemask_epi8(_mm_cmpeq_epi8(ten, _mm_min_epu8(
+				_mm_andnot_si128(m1, v1), ten)))) break;
+
+			__m128i v2 = MM_LOADU_128((pSamp+16));
+			__m128i m2 = _mm_cmpeq_epi8(v2, na);
+			if (_mm_movemask_epi8(_mm_cmpeq_epi8(ten, _mm_min_epu8(
+				_mm_andnot_si128(m2, v2), ten)))) break;
+			pSamp += 32;
+
+			v1 = _mm_add_epi8(v1, char_zero);
+			v1 = MM_BLEND_128(char_na, v1, m1);
+			v2 = _mm_add_epi8(v2, char_zero);
+			v2 = MM_BLEND_128(char_na, v2, m2);
+
+			__m128i v3 = MM_LOADU_128(pAllele);
+			pAllele += 16;
+			__m128i m = _mm_cmpeq_epi8(v3, _mm_setzero_si128());
+			v3 = MM_BLEND_128(char_unphased, char_phased, m);
+
+			__m128i p1 = _mm_unpacklo_epi8(v3, char_tab);
+			__m128i p2 = _mm_unpackhi_epi8(v3, char_tab);
+
+			_mm_store_si128((__m128i *)pLine, _mm_unpacklo_epi8(v1, p1));
+			_mm_store_si128((__m128i *)(pLine+16), _mm_unpackhi_epi8(v1, p1));
+			_mm_store_si128((__m128i *)(pLine+32), _mm_unpacklo_epi8(v2, p2));
+			_mm_store_si128((__m128i *)(pLine+48), _mm_unpackhi_epi8(v2, p2));
+			pLine += 64;
+		}
+
+	#endif
+
+		// tail
+		for (; n > 0; n--)
+		{
+			LineBuf_NeedSize(32);
+			_Line_Append_Geno_Raw(*pSamp++);
+			*pLine++ = (*pAllele++) ? '|' : '/';
+			_Line_Append_Geno_Raw(*pSamp++);
+			*pLine++ = '\t';
+		}
+	} else {
+		// integer vector for genotypes
+		int *pSamp = INTEGER(geno);
+		for (; n > 0; n--)
+		{
+			LineBuf_NeedSize(32);
+			_Line_Append_Geno(*pSamp++);
+			*pLine++ = (*pAllele++) ? '|' : '/';
+			_Line_Append_Geno(*pSamp++);
+			*pLine++ = '\t';
+		}
 	}
 
-#ifdef COREARRAY_SIMD_AVX2
-	for (; n >= 8; n -= 8)
-	{
-		__m256i v1 = MM_LOADU_256(pSamp);
-		if (_mm256_movemask_epi8(_mm256_cmpgt_epi32(v1, nines_256))) goto tail;
-
-		__m256i v2 = MM_LOADU_256(pSamp+8);
-		if (_mm256_movemask_epi8(_mm256_cmpgt_epi32(v2, nines_256))) goto tail;
-		pSamp += 16;
-
-		__m256i phase = MM_LOADU_256(pAllele);
-		pAllele += 8;
-		__m256i m = _mm256_cmpeq_epi32(phase, _mm256_setzero_si256());
-		__m256i bkg = MM_BLEND_256(char_unphased_256, char_phased_256, m);
-
-		__m256i v = _mm256_add_epi16(_mm256_packs_epi32(v1, v2), char_zero_256);
-		v = _mm256_permute4x64_epi64(v, _MM_SHUFFLE(3,1,2,0));
-		m = _mm256_cmpgt_epi32(_mm256_setzero_si256(), v);
-		m = _mm256_or_si256(m, char_mask_256);
-		v = MM_BLEND_256(bkg, v, m);
-		_mm256_store_si256((__m256i *)LinePtr, v);
-		LinePtr += 32;
-	}
-#endif
-
-	for (; n >= 4; n -= 4)
-	{
-		__m128i v1 = MM_LOADU_128(pSamp);
-		if (_mm_movemask_epi8(_mm_cmpgt_epi32(v1, nines))) break;
-
-		__m128i v2 = MM_LOADU_128(pSamp+4);
-		if (_mm_movemask_epi8(_mm_cmpgt_epi32(v2, nines))) break;
-		pSamp += 8;
-
-		__m128i phase = MM_LOADU_128(pAllele);
-		pAllele += 4;
-		__m128i m = _mm_cmpeq_epi32(phase, _mm_setzero_si128());
-		__m128i bkg = MM_BLEND_128(char_unphased, char_phased, m);
-
-		__m128i v = _mm_add_epi16(_mm_packs_epi32(v1, v2), char_zero);
-		m = _mm_cmplt_epi16(v, _mm_setzero_si128());
-		m = _mm_or_si128(m, char_mask);
-		v = MM_BLEND_128(bkg, v, m);
-		_mm_store_si128((__m128i *)LinePtr, v);
-		LinePtr += 16;
-	}
-
-#ifdef COREARRAY_SIMD_AVX2
-tail:
-#endif
-
-#endif
-	// tail
-	for (; n > 0; n--)
-	{
-		LineBuf_NeedSize(32);
-		_Line_Append_Geno(*pSamp++);
-		*LinePtr++ = (*pAllele++) ? '|' : '/';
-		_Line_Append_Geno(*pSamp++);
-		*LinePtr++ = '\t';
-	}
-	LinePtr --;
-	*LinePtr++ = '\n';
+	pLine--; *pLine++ = '\n';
 
 	// output
 	if (VCF_File->text)
 	{
-		*LinePtr = 0;
+		*pLine = 0;
 		put_text("%s", LineBegin+offset);
 	} else {
-		size_t size = LinePtr - LineBegin - offset;
+		size_t size = pLine - LineBegin - offset;
 		size_t n = R_WriteConnection(VCF_File, LineBegin + offset, size);
 		if (size != n)
 			throw ErrSeqArray("writing error.");
 	}
-
-	if (Progress) Progress->Forward();
 
 	return R_NilValue;
 }
