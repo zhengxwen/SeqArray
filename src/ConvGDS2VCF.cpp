@@ -660,13 +660,47 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 			pLine += offset;
 		}
 
-		static const __m128i ten = _mm_set1_epi8(10);
-		static const __m128i na  = _mm_set1_epi8(0xFF);
 		static const __m128i char_unphased = _mm_set1_epi8('/');
 		static const __m128i char_phased = _mm_set1_epi8('|');
+		static const __m128i char_tab = _mm_set1_epi8('\t');
+
+	#ifdef COREARRAY_SIMD_AVX2
+		static const __m256i ten = _mm256_set1_epi8(10);
+		static const __m256i na  = _mm256_set1_epi8(0xFF);
+		static const __m256i char_zero = _mm256_set1_epi8('0');
+		static const __m256i char_na = _mm256_set1_epi8('.');
+
+		for (; n >= 16; n-=16)
+		{
+			__m256i v1 = MM_LOADU_256(pSamp);
+			__m256i m1 = _mm256_cmpeq_epi8(v1, na);
+			if (_mm256_movemask_epi8(_mm256_cmpeq_epi8(ten, _mm256_min_epu8(
+				_mm256_andnot_si256(m1, v1), ten)))) break;
+			pSamp += 32;
+
+			v1 = _mm256_add_epi8(v1, char_zero);
+			v1 = MM_BLEND_256(char_na, v1, m1);
+
+			__m128i v3 = MM_LOADU_128(pAllele);
+			pAllele += 16;
+			__m128i m = _mm_cmpeq_epi8(v3, _mm_setzero_si128());
+			v3 = MM_BLEND_128(char_unphased, char_phased, m);
+			__m256i phase = MM_SET_M128(_mm_unpackhi_epi8(v3, char_tab),
+				_mm_unpacklo_epi8(v3, char_tab));
+
+			__m256i w1 = _mm256_unpacklo_epi8(v1, phase);
+			__m256i w2 = _mm256_unpackhi_epi8(v1, phase);
+			_mm256_store_si256((__m256i *)pLine,
+				_mm256_permute2x128_si256(w1, w2, 0x20));
+			_mm256_store_si256((__m256i *)(pLine+32),
+				_mm256_permute2x128_si256(w1, w2, 0x31));
+			pLine += 64;
+		}
+	#else
+		static const __m128i ten = _mm_set1_epi8(10);
+		static const __m128i na  = _mm_set1_epi8(0xFF);
 		static const __m128i char_zero = _mm_set1_epi8('0');
 		static const __m128i char_na = _mm_set1_epi8('.');
-		static const __m128i char_tab = _mm_set1_epi8('\t');
 
 		for (; n >= 16; n-=16)
 		{
@@ -700,6 +734,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 			_mm_store_si128((__m128i *)(pLine+48), _mm_unpackhi_epi8(v2, p2));
 			pLine += 64;
 		}
+	#endif
 
 	#endif
 
