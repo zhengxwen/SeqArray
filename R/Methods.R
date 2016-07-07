@@ -87,23 +87,14 @@ setMethod("seqClose", signature(object="SeqVarGDSClass"),
 #
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
     function(object, variant.sel, sample.sel=NULL, variant.id=NULL,
-        sample.id=NULL, samp.sel=NULL,
-        action=c("set", "intersect", "push", "push+set", "push+intersect",
-        "pop"), verbose=TRUE)
+        sample.id=NULL, action=c("set", "intersect", "push", "push+set",
+        "push+intersect", "pop"), verbose=TRUE)
     {
         if (missing(variant.sel)) variant.sel <- NULL
 
         # check
         action <- match.arg(action)
         stopifnot(is.logical(verbose))
-
-        if (!is.null(samp.sel))
-        {
-            warning(
-                "'samp.sel' in seqSetFilter() is deprecated, please use 'sample.sel' instead.",
-                call.=FALSE, immediate.=TRUE)
-            sample.sel <- samp.sel
-        }
 
         setflag <- FALSE
         switch(action,

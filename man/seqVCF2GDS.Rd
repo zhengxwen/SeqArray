@@ -17,10 +17,10 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA",
     \item{out.fn}{the file name of output GDS file}
     \item{header}{if NULL, \code{header} is set to be
         \code{\link{seqVCF_Header}(vcf.fn)}}
-    \item{storage.option}{specify the storage and compression options,
-        by default \code{\link{seqStorageOption}("ZIP_RA")}; or
-        \code{"LZMA_RA"} to use LZMZ compression algorithm with higher
-        compression ratio}
+    \item{storage.option}{specify the storage and compression option,
+        "ZIP_RA" (\code{\link{seqStorageOption}("ZIP_RA")}) by default; or
+        "LZMA_RA" to use LZMA compression algorithm with higher compression
+        ratio}
     \item{info.import}{characters, the variable name(s) in the INFO field
         for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
@@ -41,8 +41,8 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA",
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
         \code{FALSE}: get missing value if numeric conversion fails}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
-        "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
-        or a digest algorithm is specified}
+        "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
+        if TRUE or a digest algorithm is specified}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
         processing), a numeric value indicating the number of cores, or a
         cluster object for parallel processing; \code{parallel} is passed to

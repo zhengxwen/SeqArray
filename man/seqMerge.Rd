@@ -11,10 +11,10 @@ seqMerge(gds.fn, out.fn, storage.option="ZIP_RA", info.var=NULL, fmt.var=NULL,
 \arguments{
     \item{gds.fn}{the file names of multiple GDS files}
     \item{out.fn}{the output file name}
-    \item{storage.option}{specify the storage and compression options,
-        by default \code{\link{seqStorageOption}("ZIP_RA")}; or
-        \code{"LZMA_RA"} to use LZMZ compression algorithm with higher
-        compression ratio}
+    \item{storage.option}{specify the storage and compression option,
+        "ZIP_RA" (\code{\link{seqStorageOption}("ZIP_RA")}) by default; or
+        "LZMA_RA" to use LZMA compression algorithm with higher compression
+        ratio}
     \item{info.var}{characters, the variable name(s) in the INFO field;
         \code{NULL} for all variables, or \code{character()} excludes all
         INFO variables}
@@ -26,8 +26,8 @@ seqMerge(gds.fn, out.fn, storage.option="ZIP_RA", info.var=NULL, fmt.var=NULL,
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
-        "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
-        or a digest algorithm is specified}
+        "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
+        if TRUE or a digest algorithm is specified}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

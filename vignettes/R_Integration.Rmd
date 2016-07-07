@@ -1,0 +1,201 @@
+---
+title: "Integration with R"
+author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
+date: "Jul 7, 2016"
+output:
+  html_document:
+    theme: spacelab
+    toc: yes
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+bibliography: seqarray_bib.bib
+csl: biomed-central.csl
+vignette: >
+  %\VignetteIndexEntry{R Integration}
+  %\VignetteDepends{gdsfmt}
+  %\VignetteKeywords{whole-genome, sequencing, WGS, SNV}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+
+The SeqArray package is designed for R programming environment, and enables high-performance computing in the multi-core symmetric multiprocessing and/or loosely coupled computer cluster framework. The features of SeqArray are extended with existing R packages for WGS data analyses, and the R codes for demonstration are available in the package vignette `Integration with R`.
+
+
+# Application Program Interface
+
+We illustrate the SeqArray API by implementing an example to calculate the frequency of reference allele across chromosomes. If a genomic region is specified via `seqSetFilter()`, the calculation is performed over the region instead of all variants. `seqApply()` enables applying a user-defined function to the margin of genotypes, and the R code is shown as follows:
+```{r}
+library(SeqArray)
+
+# open the SeqArray file in the package
+file <- seqOpen(seqExampleFileName("KG_Phase1"))
+
+af <- seqApply(file, "genotype", as.is="double", margin="by.variant",
+    FUN=function(x) { mean(x==0L, na.rm=TRUE) })
+head(af)
+```
+where `file` is a SeqArray file, `as.is` indicates returning a numeric vector, `margin` is specified for applying the function by variant. The variable `x` in the user-defined function is an allele-by-sample integer matrix at a site and `0L` denotes the reference allele where the suffix `L` indicates the number is an integer.
+
+The Rcpp package simplifies integration of compiled C++ code with R, and the function can be dynamically defined with inlined C/C++ codes:
+```{r}
+library(Rcpp)
+
+cppFunction("double CalcAlleleFreq(IntegerVector x)
+    {
+        int n_x=x.size(), n=0, n0=0;
+        for (int i=0; i < n_x; i++)
+        {
+            int g = x[i];
+            if (g != NA_INTEGER)
+            {
+                n++;
+                if (g == 0) n0++;
+            }
+        }
+        return double(n0) / n;
+    }")
+```
+where *IntegerVector* indicates the variable `x` is an integer vector and the function counts the numbers of zeros and non-missing values. The name *CalcAlleleFreq* can be passed to `seqApply()` directly.
+```{r}
+af <- seqApply(file, "genotype", as.is="double", margin="by.variant", FUN=CalcAlleleFreq)
+head(af)
+```
+The C++ integration is several times faster than the R implementation, suggesting an efficient approach with C/C++ when real-time performance is required.
+
+`seqParallel()` utilizes the facilities offered by the parallel package to perform calculations in parallel. The genotypes on a SeqArray file are automatically split into non-overlapping parts according to different variants or samples, and the results from client R processes are collected internally.
+```{r}
+af <- seqParallel(cl=4, file, FUN = function(f) {
+    seqApply(f, "genotype", as.is="double", FUN=function(x) { mean(x==0L, na.rm=TRUE) })
+}, split="by.variant")
+head(af)
+```
+where the argument `cl=4` specifies the number of cores, the user-defined function `function(f) {...}` is distributed to 4 different computing nodes, and `split` indicates dividing genotypes according to different variants.
+
+
+
+# Bioconductor Genomic Ranges
+
+In this section, we illustrate how to work with Bioconductor core packages for performing common queries to retrieve data from a SeqArray file. The `GRanges` and `GRangesList` manipulate genomic range data and can be used in the function `seqSetFilter()` to define a data subset. For example, the annotation information of each exon, the coding range and transcript ID are stored in the `TxDb.Hsapiens.UCSC.hg19.knownGene` object for the UCSC known gene annotations on hg19.
+```{r}
+suppressPackageStartupMessages(library(TxDb.Hsapiens.UCSC.hg19.knownGene))
+
+# get the exons grouped by gene
+txs <- exonsBy(TxDb.Hsapiens.UCSC.hg19.knownGene, "gene")
+```
+where `exonsBy()` returns a `GRangesList` object for all known genes in the database.
+
+```{r}
+seqSetFilter(file, txs)  # define a filter
+
+# VCF export with exon variants
+seqGDS2VCF(file, "exons.vcf.gz")
+```
+If random-access memory is sufficiently large, users can load all exon variants via `seqGetData(file, "genotype")`; otherwise, data have to be loaded by chunk or a user-defined function is applied over variants by `seqApply()`.
+
+
+# Integration with SNPRelate
+
+Parallel implementations of relatedness and principal component analysis with SeqArray format are enabled in the package SNPRelate, to detect and adjust for population structure and cryptic relatedness in association studies. The kernel of SNPRelate was optimized with SIMD instructions and multi-thread algorithms, and it was designed for bi-allelic SNP data originally [@Zheng:2012:Bioinformatics:23060615]. In order to analyze sequence variant calls, and SNPRelate has been rewritten to take the dosages of reference alleles as an input genotype matrix with distinct integers 0, 1, 2 and NA for SeqArray files. Therefore no format conversion is required for WGS analyses.
+
+Principal component analysis is implemented in the SNPRelate function `snpgdsPCA()`, and the exact and new randomized algorithms are both provided [@Patterson:2006:PLoS-Genet:17194218; @Galinsky2016]. The randomized matrix algorithm is designed to reduce the running time for large number of study individuals (e.g., greater than 10,000 samples). Relatedness analyses include PLINK method of moment (MoM), KING robust methods, GCTA genetic relationship matrix (GRM) and individual-perspective beta estimator [@Purcell:2007:Am-J-Hum-Genet:17701901; @Manichaikul2010; @Yang2011; @weir2015snps], and these algorithms are computationally efficient and optimized with SIMD instructions. In addition, fixation index ($F_\text{st}$) has been widely used to measure the genetic difference between populations, and the calculations of moment estimators are available in the SNPRelate package with all variants or a sliding window [@Weir:1984:Evolution; @Weir:2002:Annu-Rev-Genet:12359738; @Weir2005].
+
+
+## LD-based Marker Pruning
+
+It might be suggested to perform marker pruning before running PCA and IBD analyses on WGS variant data, to reduce the influence of linkage disequilibrium and rare variants.
+
+```{r}
+library(SNPRelate)
+
+set.seed(1000)
+
+# may try different LD thresholds for sensitivity analysis
+snpset <- snpgdsLDpruning(file, ld.threshold=0.2, maf=0.01)
+names(snpset)
+head(snpset$chr22)  # snp.id
+
+# get all selected snp id
+snpset.id <- unlist(snpset)
+```
+
+
+## Principal Component Analysis
+
+```{r}
+# Run PCA
+pca <- snpgdsPCA(file, snp.id=snpset.id, num.thread=2)
+
+# variance proportion (%)
+pc.percent <- pca$varprop*100
+head(round(pc.percent, 2))
+```
+
+Population information are available:
+```{r}
+pop.code <- factor(seqGetData(file, "sample.annotation/Population"))
+head(pop.code)
+
+popgroup <- list(
+    EastAsia = c("CHB", "JPT", "CHS", "CDX", "KHV", "CHD"),
+	European = c("CEU", "TSI", "GBR", "FIN", "IBS"),
+	African  = c("ASW", "ACB", "YRI", "LWK", "GWD", "MSL", "ESN"),
+	SouthAmerica = c("MXL", "PUR", "CLM", "PEL"),
+	India = c("GIH", "PJL", "BEB", "STU", "ITU"))
+
+colors <- sapply(levels(pop.code), function(x) {
+	for (i in 1:length(popgroup)) {
+		if (x %in% popgroup[[i]])
+			return(names(popgroup)[i])
+	}
+	NA
+	})
+colors <- as.factor(colors)
+legend.text <- sapply(levels(colors), function(x) paste(levels(pop.code)[colors==x], collapse=","))
+legend.text
+```
+
+```{r fig.width=5, fig.height=5, fig.align='center'}
+# make a data.frame
+tab <- data.frame(sample.id = pca$sample.id,
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    Population = pop.code,
+    stringsAsFactors = FALSE)
+head(tab)
+
+# draw
+plot(tab$EV1, tab$EV2, pch=20, cex=0.75, main="1KG Phase 1, chromosome 22",
+    xlab="eigenvector 1", ylab="eigenvector 2", col=colors[tab$Population])
+legend("topright", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75)
+```
+
+
+
+
+```{r}
+seqClose(file)
+```
+
+
+
+
+# Resources
+
+1. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
+2. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html)
+3. SNPRelate R package: [http://github.com/zhengxwen/SNPRelate](http://github.com/zhengxwen/SNPRelate), [http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html)
+
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
+
+```{r echo=FALSE}
+unlink("exons.vcf.gz", force=TRUE)
+```
+
+
+# References

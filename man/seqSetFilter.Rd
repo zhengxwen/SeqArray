@@ -12,7 +12,7 @@
 }
 \usage{
 \S4method{seqSetFilter}{SeqVarGDSClass,ANY}(object, variant.sel,
-    sample.sel=NULL, variant.id=NULL, sample.id=NULL, samp.sel=NULL,
+    sample.sel=NULL, variant.id=NULL, sample.id=NULL,
     action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
     verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRanges}(object, variant.sel,
@@ -36,8 +36,6 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
         samples}
     \item{variant.id}{ID of selected variants}
     \item{sample.id}{ID of selected samples}
-    \item{samp.sel}{it is deprecated since v1.11.12, please use
-        \code{sample.sel} instead}
     \item{action}{\code{"set"} -- set the current filter via \code{sample.id},
             \code{variant.id}, \code{samp.sel} or \code{variant.sel};
         \code{"intersect"} -- set the current filter to the intersection of

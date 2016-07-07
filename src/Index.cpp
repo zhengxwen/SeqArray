@@ -798,12 +798,13 @@ void CProgressStdOut::ShowProgress()
 		percent *= 100;
 
 		// show
-		if (sec < 60)
+		if (sec < 5)
 		{
 			if (Counter >= TotalCount)
 				Rprintf("\r[%s] %2.0f%%, ETC: completed", ss, percent);
-			else
-				Rprintf("\r[%s] %2.0f%%, ETC: %.0fs  ", ss, percent, sec);
+		} else if (sec < 60)
+		{
+			Rprintf("\r[%s] %2.0f%%, ETC: %.0fs  ", ss, percent, sec);
 		} else if (sec < 3600)
 		{
 			Rprintf("\r[%s] %2.0f%%, ETC: %.1fm  ", ss, percent, sec/60);
