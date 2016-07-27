@@ -18,7 +18,7 @@ useDynLib(SeqArray,
     SEQ_ConvBEDFlag, SEQ_ConvBED2GDS,
     SEQ_SelectFlag,
 
-    SEQ_IntAssign,
+    SEQ_IntAssign, SEQ_DNAStrSet,
 
     SEQ_ExternalName0, SEQ_ExternalName1, SEQ_ExternalName2,
     SEQ_ExternalName3, SEQ_ExternalName4
@@ -39,6 +39,9 @@ importClassesFrom(VariantAnnotation, VCF, CollapsedVCF, VCFHeader)
 importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF,
                   header, fixed, info, geno)
 importMethodsFrom(SummarizedExperiment, colData, rowRanges)
+importFrom(GenomeInfoDb, renameSeqlevels)
+importMethodsFrom(GenomeInfoDb, seqlevels)
+
 
 # Export all names
 exportPattern("^seq*")

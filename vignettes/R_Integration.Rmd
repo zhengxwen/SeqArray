@@ -1,7 +1,7 @@
 ---
 title: "Integration with R"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
-date: "Jul 7, 2016"
+date: "Jul 25, 2016"
 output:
   html_document:
     theme: spacelab
@@ -19,32 +19,38 @@ vignette: >
 ---
 
 
-The SeqArray package is designed for R programming environment, and enables high-performance computing in the multi-core symmetric multiprocessing and/or loosely coupled computer cluster framework. The features of SeqArray are extended with existing R packages for WGS data analyses, and the R codes for demonstration are available in the package vignette `Integration with R`.
+The SeqArray package is designed for R programming environment, and enables high-performance computing in the multi-core symmetric multiprocessing and loosely coupled computer cluster framework. The features of SeqArray are extended with other existing R packages for WGS data analyses, and the R codes for demonstration are available in the package vignette [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html).
 
-
-# Application Program Interface
-
-We illustrate the SeqArray API by implementing an example to calculate the frequency of reference allele across chromosomes. If a genomic region is specified via `seqSetFilter()`, the calculation is performed over the region instead of all variants. `seqApply()` enables applying a user-defined function to the margin of genotypes, and the R code is shown as follows:
 ```{r}
 library(SeqArray)
 
-# open the SeqArray file in the package
+# open a SeqArray file in the package (1000 Genomes Phase1, chromosome 22)
 file <- seqOpen(seqExampleFileName("KG_Phase1"))
 
+seqSummary(file)
+```
+
+# SeqArray Functions
+
+## Application Program Interface
+
+We illustrate the SeqArray functions by implementing an example to calculate the frequency of reference allele across all chromosomes. If a genomic region is specified via `seqSetFilter()`, the calculation is performed within the region instead of using all variants. `seqApply()` enables applying a user-defined function to the margin of genotypes, and the R code is shown as follows:
+```{r}
 af <- seqApply(file, "genotype", as.is="double", margin="by.variant",
     FUN=function(x) { mean(x==0L, na.rm=TRUE) })
 head(af)
 ```
 where `file` is a SeqArray file, `as.is` indicates returning a numeric vector, `margin` is specified for applying the function by variant. The variable `x` in the user-defined function is an allele-by-sample integer matrix at a site and `0L` denotes the reference allele where the suffix `L` indicates the number is an integer.
 
-The Rcpp package simplifies integration of compiled C++ code with R, and the function can be dynamically defined with inlined C/C++ codes:
+The Rcpp package simplifies integration of compiled C++ code with R [@eddelbuettel2011rcpp], and the function can be dynamically defined with inlined C/C++ codes:
 ```{r}
 library(Rcpp)
 
-cppFunction("double CalcAlleleFreq(IntegerVector x)
+cppFunction("
+    double CalcAlleleFreq(IntegerVector x)
     {
-        int n_x=x.size(), n=0, n0=0;
-        for (int i=0; i < n_x; i++)
+        int len=x.size(), n=0, n0=0;
+        for (int i=0; i < len; i++)
         {
             int g = x[i];
             if (g != NA_INTEGER)
@@ -56,42 +62,41 @@ cppFunction("double CalcAlleleFreq(IntegerVector x)
         return double(n0) / n;
     }")
 ```
-where *IntegerVector* indicates the variable `x` is an integer vector and the function counts the numbers of zeros and non-missing values. The name *CalcAlleleFreq* can be passed to `seqApply()` directly.
+where *IntegerVector* indicates the input variable `x` is an integer vector, `NA_INTEGER` is missing value and the function counts how many zeros and non-missing values for calculating frequency. The name *CalcAlleleFreq* can be passed to `seqApply()` directly:
 ```{r}
 af <- seqApply(file, "genotype", as.is="double", margin="by.variant", FUN=CalcAlleleFreq)
 head(af)
 ```
 The C++ integration is several times faster than the R implementation, suggesting an efficient approach with C/C++ when real-time performance is required.
 
-`seqParallel()` utilizes the facilities offered by the parallel package to perform calculations in parallel. The genotypes on a SeqArray file are automatically split into non-overlapping parts according to different variants or samples, and the results from client R processes are collected internally.
+`seqParallel()` utilizes the facilities offered by the parallel package to perform calculations with a cluster environment. The genotypes on a SeqArray file are automatically split into non-overlapping parts according to different variants or samples, and the results from client R processes are collected internally.
 ```{r}
-af <- seqParallel(cl=4, file, FUN = function(f) {
+af <- seqParallel(cl=2, file, FUN = function(f) {
     seqApply(f, "genotype", as.is="double", FUN=function(x) { mean(x==0L, na.rm=TRUE) })
 }, split="by.variant")
 head(af)
 ```
-where the argument `cl=4` specifies the number of cores, the user-defined function `function(f) {...}` is distributed to 4 different computing nodes, and `split` indicates dividing genotypes according to different variants.
+where the argument `cl` specifies the number of cores, the user-defined function `function(f) {...}` is distributed to 2 different computing nodes, and `split` indicates dividing genotypes according to different variants.
 
 
+## Parallel Implementation
 
-# Bioconductor Genomic Ranges
-
-In this section, we illustrate how to work with Bioconductor core packages for performing common queries to retrieve data from a SeqArray file. The `GRanges` and `GRangesList` manipulate genomic range data and can be used in the function `seqSetFilter()` to define a data subset. For example, the annotation information of each exon, the coding range and transcript ID are stored in the `TxDb.Hsapiens.UCSC.hg19.knownGene` object for the UCSC known gene annotations on hg19.
-```{r}
-suppressPackageStartupMessages(library(TxDb.Hsapiens.UCSC.hg19.knownGene))
-
-# get the exons grouped by gene
-txs <- exonsBy(TxDb.Hsapiens.UCSC.hg19.knownGene, "gene")
-```
-where `exonsBy()` returns a `GRangesList` object for all known genes in the database.
+The default setting for the analysis functions in the SeqArray package is serial implementation, but users can setup a cluster computing environment manually via `seqParallelSetup()` and distribute the calculations to multiple cores or even more than 100 cluster nodes.
 
 ```{r}
-seqSetFilter(file, txs)  # define a filter
+# use 2 cores for demonstration
+seqParallelSetup(2)
 
-# VCF export with exon variants
-seqGDS2VCF(file, "exons.vcf.gz")
+# numbers of distinct alleles per site
+table(seqNumAllele(file))
+
+# reference allele frequencies
+summary(seqAlleleFreq(file, ref.allele=0L))
+
+# close the cluster environment
+seqParallelSetup(FALSE)
 ```
-If random-access memory is sufficiently large, users can load all exon variants via `seqGetData(file, "genotype")`; otherwise, data have to be loaded by chunk or a user-defined function is applied over variants by `seqApply()`.
+
 
 
 # Integration with SNPRelate
@@ -113,9 +118,9 @@ set.seed(1000)
 # may try different LD thresholds for sensitivity analysis
 snpset <- snpgdsLDpruning(file, ld.threshold=0.2, maf=0.01)
 names(snpset)
-head(snpset$chr22)  # snp.id
+head(snpset$chr22)  # variant.id
 
-# get all selected snp id
+# get all selected variant id
 snpset.id <- unlist(snpset)
 ```
 
@@ -130,6 +135,8 @@ pca <- snpgdsPCA(file, snp.id=snpset.id, num.thread=2)
 pc.percent <- pca$varprop*100
 head(round(pc.percent, 2))
 ```
+
+
 
 Population information are available:
 ```{r}
@@ -172,9 +179,49 @@ legend("topright", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.
 
 
 
+# Bioconductor Features
+
+In this section, we illustrate how to work with Bioconductor core packages for performing common queries to retrieve data from a SeqArray file. The `GRanges` and `GRangesList` classes manipulate genomic range data and can be used in the function `seqSetFilter()` to define a data subset. For example, the annotation information of each exon, the coding range and transcript ID are stored in the `TxDb.Hsapiens.UCSC.hg19.knownGene` object for the UCSC known gene annotations on hg19.
+```{r message=FALSE}
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+```
+```{r}
+# get the exons grouped by gene
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+txs <- exonsBy(txdb, "gene")
+```
+where `exonsBy()` returns a `GRangesList` object for all known genes in the database.
+
+```{r}
+seqSetFilter(file, txs)  # define an exon filter
+
+# VCF export with exon variants
+seqGDS2VCF(file, "exons.vcf.gz")
+```
+If random-access memory is sufficiently large, users could load all exon variants via `seqGetData(file, "genotype")`; otherwise, data have to be loaded by chunk or a user-defined function is applied over variants by `seqApply()`.
+
+SeqArray can also export data with selected variants and samples as a `VCF` object for use with the VariantAnnotation package [@Obenchain2014]:
+```{r message=FALSE}
+library(VariantAnnotation)
+```
+```{r}
+# select a region [10Mb, 30Mb] on chromosome 22
+seqSetFilterChrom(file, 22, from.bp=10000000, to.bp=30000000)
+
+vcf <- asVCF(file, chr.prefix="chr")
+vcf
+
+locateVariants(vcf, txdb, CodingVariants())
+```
+
 
 ```{r}
 seqClose(file)
+```
+
+
+```{r echo=FALSE}
+unlink("exons.vcf.gz", force=TRUE)
 ```
 
 

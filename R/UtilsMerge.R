@@ -61,7 +61,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA",
 
     if (verbose)
     {
-        cat(sprintf("    %d sample%s in total, %d sample%s in common\n",
+        cat(sprintf("    %d sample%s in total (%d sample%s in common)\n",
             length(samp.id), .plural(length(samp.id)),
             length(samp2.id), .plural(length(samp2.id))))
     }

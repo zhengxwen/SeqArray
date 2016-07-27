@@ -1,7 +1,7 @@
 ---
 title: "SeqArray Overview"
 author: "Dr. Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
-date: "JSM 2013 / Updated on Apr 20, 2016"
+date: "JSM 2013 / Updated on Jun 25, 2016"
 output: slidy_presentation
 vignette: >
   %\VignetteIndexEntry{SeqArray Overview}
@@ -12,10 +12,15 @@ vignette: >
 
 ## Introduction
 
-Thousands of gigabyte genetic data sets provide significant challenges in data management, even on well-equipped hardware
+Whole-genome sequencing (WGS) data is being generated at an unprecedented rate
 
-- The 1000 Genomes Project Phase 1 (1KG): ~39 million variants (SNPs, indels and structural variants) of 1092 individuals (http://www.1000genomes.org)
-- Variant Call Format (VCF) files: genotypes + annotation, totaling ~146.7GB in a compressed manner (gz files)
+- 1000 Genomes Project Phase 3 (1KG)
+    - 81 million variants and 2,504 individuals
+    - http://www.1000genomes.org
+
+- Variant Call Format (VCF)
+    - a generic and flexible text-based format
+    - VCF files are large and data retrieval is relatively slow
 
 
 ## Methods
@@ -31,81 +36,76 @@ Thousands of gigabyte genetic data sets provide significant challenges in data m
 - SeqArray -- specifically designed for data management of genome-wide sequence variants from Variant Call Format (VCF) files
 
 
-## Advantages
+## Methods -- Advantages
 
-1. Direct access of data without parsing VCF text files
+- SeqArray provides the same capabilities as VCF
 
-2. Stored in a binary and array-oriented manner
-    - 2 bits are employed as a primitive type to store alleles (e.g., A, G, C, T)
-    - efficient access of variants using R language
+- Stores data in a binary and array-oriented manner
+    - efficient access using the R language
 
-3. Genotypic data stored in a compressed manner
-    - rare variants: highly compressed without sacrificing access efficiency
-    - e.g., 1KG, 26G raw genotypes: 1.5G by the zlib algorithm (5.8%!)
+- Genotypes are stored in a compressed manner
+    - 2-bit array to store alleles (95% sites are bi-allelic)
+    - rare variants: highly compressed
+    - 1KG, 203.5 billion genotypes, saved in 4.3G (2.26% if a byte stores a genotype)
 
-4. Run in parallel!
+- Parallel access
+    - multiple cluster nodes and/or cores
 
 
-## File Contents
+## Methods -- File Contents
 
 ```
 File: SeqArray/extdata/CEU_Exon.gds (387.3K)
 |--+ description   [  ] *
-|--+ sample.id   { VStr8 90 ZIP_ra(30.8%), 222B }
+|--+ sample.id   { Str8 90 ZIP_ra(30.8%), 222B }
 |--+ variant.id   { Int32 1348 ZIP_ra(35.7%), 1.9K }
 |--+ position   { Int32 1348 ZIP_ra(86.4%), 4.6K }
-|--+ chromosome   { VStr8 1348 ZIP_ra(2.66%), 91B }
-|--+ allele   { VStr8 1348 ZIP_ra(17.2%), 928B }
+|--+ chromosome   { Str8 1348 ZIP_ra(2.66%), 91B }
+|--+ allele   { Str8 1348 ZIP_ra(17.2%), 928B }
 |--+ genotype   [  ] *
 |  \--+ data   { Bit2 2x90x1348 ZIP_ra(28.4%), 16.8K } *
 |--+ phase   [  ]
 |  \--+ data   { Bit1 90x1348 ZIP_ra(0.36%), 55B } *
 |--+ annotation   [  ]
-|  |--+ id   { VStr8 1348 ZIP_ra(41.0%), 5.8K }
+|  |--+ id   { Str8 1348 ZIP_ra(41.0%), 5.8K }
 |  |--+ qual   { Float32 1348 ZIP_ra(0.91%), 49B }
 |  |--+ filter   { Int32,factor 1348 ZIP_ra(0.89%), 48B } *
 |  |--+ info   [  ]
-|  |  |--+ AA   { VStr8 1348 ZIP_ra(24.2%), 653B } *
+|  |  |--+ AA   { Str8 1348 ZIP_ra(24.2%), 653B } *
 |  |  \--+ HM2   { Bit1 1348 ZIP_ra(117.2%), 198B } *
 |  \--+ format   [  ]
 |     \--+ DP   [  ] *
 |        \--+ data   { Int32 90x1348 ZIP_ra(33.8%), 160.3K }
 \--+ sample.annotation   [  ]
-   \--+ family   { VStr8 90 ZIP_ra(34.7%), 135B }
+   \--+ family   { Str8 90 ZIP_ra(34.7%), 135B }
 ```
 
 
-## Key Functions
+## Methods -- Key Functions
 
 **Table 1**: The key functions in the SeqArray package.
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformats VCF files to GDS format |
-| seqSummary   | Gets the summary (# of samples, # of variants, INFO/FORMAT variables, etc) |
-| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data) |
-| seqGetData   | Gets data from a SeqArray file (or a subset of data) |
+| seqVCF2GDS   | Reformats VCF files |
+| seqSetFilter | Defines a data subset of samples or variants |
+| seqGetData   | Gets data from a SeqArray file with a defined filter |
 | seqApply     | Applies a user-defined function over array margins |
-| seqParallel  | Applies functions in parallel |
+| seqParallel  | Applies functions in a computing cluster |
 
 
 ## Benchmark
 
-**Dataset:**
+- Dataset
+    - 1000 Genomes Project Phase 3, chromosome 1
+    - 6,468,094 variants, 2,504 individuals
+    - original VCF.gz file: 1.2G
+    - reformat to a SeqArray file: 458M (zlib compression)
 
-- 1000 Genomes Project Phase 1, chromosome 1
-- 3,007,196 variants, 1092 individuals
-- the original VCF file: 10.7G (compressed)
-    * genotypes (GT) + annotations (DS, genotype dosage; GL, genotype likelihoods)
-- reformat to a single SeqArray file: 10.6G
-    * genotype: bit2, ZIP (5.95%), 97.8 MB
-- R: v3.2.0
-
-**Calculate the frequencies of reference alleles**
-
-1. R code (sequential version)
-2. R code (parallel version)
-3. Seamless R and C++ integration via the Rcpp package (sequential version)
+- Calculate the frequencies of reference alleles
+    1. R code (sequential version)
+    2. R code (parallel version)
+    3. R and C++ integration via the Rcpp package
 
 
 ## Benchmark -- Test 1 (sequentially)
@@ -113,18 +113,19 @@ File: SeqArray/extdata/CEU_Exon.gds (387.3K)
 ```R
 # load the R package
 library(SeqArray)
+
 # open the file
 genofile <- seqOpen("1KG_chr1.gds")
 
-# apply the user-defined function variant by variant
-system.time(
-    afreq <- seqApply(genofile, "genotype", as.is="double", margin="by.variant",
-        FUN = function(x) { mean(x==0L, na.rm=TRUE) }))
+# apply a user-defined function over variants
+system.time(afreq <- seqApply(genofile, "genotype",
+    FUN = function(x) { mean(x==0L, na.rm=TRUE) },
+    as.is="double", margin="by.variant")
+)
 ```
 
-**189.8 seconds** on a Linux system with two quad-core Intel processors (2.27GHz) and 32 GB RAM
-
-`function(x) { mean(x==0L, na.rm=TRUE) }` is the user-defined function, where `x` looks like:
+**10.8 minutes** on Linux with Intel Xeon CPU @2GHz and 128GB RAM
+`function(x) { mean(x==0L, na.rm=TRUE) }` is a user-defined function, where `x` is an integer matrix:
 
 ```R
                            sample
@@ -156,7 +157,7 @@ system.time(afreq <- seqParallel(gdsfile=genofile,
 )
 ```
 
-**50.3 seconds** (vs 189.8s in Test 1)
+**3.1 minutes** (vs. 10.8m in Test 1)
 
 
 ## Benchmark -- Test 3 (C++ Integration)
@@ -169,11 +170,11 @@ cppFunction('double RefAlleleFreq(IntegerMatrix x) {
     int nrow = x.nrow(), ncol = x.ncol();
     int cnt=0, zero_cnt=0, g;
     for (int i = 0; i < nrow; i++) {
-            for (int j = 0; j < ncol; j++) {
-                if ((g = x(i, j)) != NA_INTEGER) {
-                    cnt ++;
-                    if (g == 0) zero_cnt ++;
-                }
+        for (int j = 0; j < ncol; j++) {
+            if ((g = x(i, j)) != NA_INTEGER) {
+                cnt ++;
+                if (g == 0) zero_cnt ++;
+            }
     }}
     return double(zero_cnt) / cnt;
 }')
@@ -184,12 +185,12 @@ system.time(
 )
 ```
 
-**33.9 seconds** (fastest! vs 189.8s in Test 1 and 50.3s in Test 2)
+**1.5 minutes** (significantly faster! vs. 10.8m in Test 1)
 
 
 ## Conclusion
 
-**SeqArray will be of great interest to**
+**SeqArray is of great interest to**
 
 - R users involved in data analyses of large-scale sequence variants
 - particularly those with limited experience of parallel / high-performance computing
@@ -219,7 +220,7 @@ system.time(
 
 ## Acknowledgements
 
-Department of Biostatistics at University of Washington -- Seattle, 
+Department of Biostatistics at University of Washington -- Seattle
 
 Genetic Analysis Center:
 

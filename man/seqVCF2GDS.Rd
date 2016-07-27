@@ -54,16 +54,9 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA",
     Return the file name of GDS format with an absolute path.
 }
 \details{
-    GDS -- Genomic Data Structures used for storing genetic array-oriented
-        data, and the file format defined in the \link{gdsfmt} package.
-
-    VCF -- The Variant Call Format (VCF), which is a generic format for
-        storing DNA polymorphism data such as SNPs, insertions, deletions and
-        structural variants, together with rich annotations.
-
     If there are more than one files in \code{vcf.fn}, \code{seqVCF2GDS} will
 merge all VCF files together if they contain the same samples. It is useful
-to merge multiple VCF files if data are divided by chromosomes.
+to merge multiple VCF files if variant data are split by chromosomes.
 
     The real numbers in the VCF file(s) are stored in 32-bit floating-point
 format by default. Users can set
@@ -83,6 +76,10 @@ compression ratio by \code{storage.option="ZIP_RA.max"} or
 \code{storage.option="LZMA_RA"} or
 \code{storage.option=seqStorageOption("LZMA_RA")}, and it is known to have
 higher compression ratio than zlib.
+
+    If multiple cores/processes are specified in \code{parallel}, all VCF files
+are scanned to calculate the total number of variants before format conversion.
+
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,

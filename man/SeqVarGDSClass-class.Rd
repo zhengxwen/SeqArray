@@ -87,7 +87,7 @@ to create a \code{SeqVarGDSClass} object.
 	In the following code snippets \code{x} is a SeqVarGDSClass object.
 	\describe{
 		\item{}{
-			\code{asVCF(x, info=NULL, geno=NULL)}:
+			\code{asVCF(x, chr.prefix="", info=NULL, geno=NULL)}:
 			Coerces a SeqVarGDSClass object to a
 			\link{VCF-class} object.  Row names correspond
 	to the variant.id.  \code{info}
