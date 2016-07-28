@@ -488,6 +488,7 @@ public:
 	virtual void ShowProgress();
 
 protected:
+	time_t _last_time;
 	bool Verbose;
 };
 

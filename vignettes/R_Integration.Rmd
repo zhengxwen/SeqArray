@@ -30,6 +30,22 @@ file <- seqOpen(seqExampleFileName("KG_Phase1"))
 seqSummary(file)
 ```
 
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+
+
 # SeqArray Functions
 
 ## Application Program Interface
@@ -97,6 +113,82 @@ summary(seqAlleleFreq(file, ref.allele=0L))
 seqParallelSetup(FALSE)
 ```
 
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+
+
+# Integration with SeqVarTools
+
+The [SeqVarTools](http://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html) package is available on Bioconductor, which defines S4 classes and methods for other common operations and analyses on SeqArray datasets. The vignette of SeqVarTools is [http://www.bioconductor.org/packages/release/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf).
+
+The SeqVarTools package extends SeqArray by providing methods for many tasks common to quality control and analysis of sequence data. Methods include: transition/transversion ratio, heterozygosity and homozygosity rates, singleton counts, Hardy-Weinberg equilibrium, Mendelian error checking, and linear and logistic regression. Additionally, SeqVarTools defines a new class to link the information present in the SeqArray file to additional sample and variant annotation provided by the user, such as sex and phenotype. One could select a subset of samples in a file and run a linear regression on all variants:
+```{r message=FALSE}
+library(Biobase)
+```
+```{r eval=FALSE}
+library(SeqVarTools)
+```
+```{r}
+set.seed(1000)
+# create sample data
+sample.id <- seqGetData(file, "sample.id")
+n <- length(sample.id)
+df <- data.frame(sample.id,
+    sex = sample(c("M", "F"), n, replace=TRUE),
+    age = sample(18:70, n, replace=TRUE),
+    phen = rnorm(n),
+    stringsAsFactors=FALSE)
+meta <- data.frame(labelDescription=c("sample identifier", "sex", "age", "phenotype"))
+sample.data <- AnnotatedDataFrame(df, meta)
+sample.data
+```
+```{r eval=FALSE}
+# link sample data to SeqArray file
+seqData <- SeqVarData(file, sample.data)
+
+# set sample and variant filters
+female <- sampleData(seqData)$sex == "F"
+seqSetFilter(seqData, sample.sel=female) 
+
+# run linear regression
+res <- regression(seqData, outcome="phen", covar="age")
+head(res)
+```
+```{r echo=FALSE}
+data.frame(variant.id=1:6, n=rep(559L, 6),
+    freq=c(0.6905188, 0.9418605, 0.9991055, 0.9991055, 0.9373882, 0.9991055),
+    Est=c(0.09989598, 0.14390294, 1.90773195, 0.28690807, 0.12340020, -2.20965585),
+    SE=c(0.06692225, 0.12943936, 0.97923589, 0.98135431, 0.12548274, 0.97798263),
+    Wald.Stat=c(2.22820413, 1.23596634, 3.79542189, 0.08547396, 0.96708299, 5.10489710),
+    Wald.Pval=c(0.13551127, 0.26624986, 0.05139292, 0.77001192, 0.32540875, 0.02385839))
+```
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
 
 
 # Integration with SNPRelate
@@ -108,7 +200,7 @@ Principal component analysis is implemented in the SNPRelate function `snpgdsPCA
 
 ## LD-based Marker Pruning
 
-It might be suggested to perform marker pruning before running PCA and IBD analyses on WGS variant data, to reduce the influence of linkage disequilibrium and rare variants.
+It is suggested to perform marker pruning before running PCA and IBD analyses on WGS variant data, to reduce the influence of linkage disequilibrium and rare variants.
 
 ```{r}
 library(SNPRelate)
@@ -136,7 +228,10 @@ pc.percent <- pca$varprop*100
 head(round(pc.percent, 2))
 ```
 
-
+```{r fig.width=5, fig.height=5, fig.align='center'}
+# plot the first 4 eigenvectors with character=20 and size=0.5
+plot(pca, eig=1:4, pch=20, cex=0.5)
+```
 
 Population information are available:
 ```{r}
@@ -167,19 +262,91 @@ legend.text
 tab <- data.frame(sample.id = pca$sample.id,
     EV1 = pca$eigenvect[,1],    # the first eigenvector
     EV2 = pca$eigenvect[,2],    # the second eigenvector
-    Population = pop.code,
-    stringsAsFactors = FALSE)
+    Population = pop.code, stringsAsFactors = FALSE)
 head(tab)
 
 # draw
-plot(tab$EV1, tab$EV2, pch=20, cex=0.75, main="1KG Phase 1, chromosome 22",
-    xlab="eigenvector 1", ylab="eigenvector 2", col=colors[tab$Population])
+plot(pca, pch=20, cex=0.75, main="1KG Phase 1, chromosome 22", col=colors[tab$Population])
 legend("topright", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75)
 ```
 
 
+## Relatedness Analysis
+
+For relatedness analysis, Identity-By-Descent (IBD) estimation in [SNPRelate](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) can be done by the method of moments (MoM) (Purcell et al., 2007).
+
+```{r}
+# YRI samples
+sample.id <- seqGetData(file, "sample.id")
+CEU.id <- sample.id[pop.code == "CEU"]
+```
+
+```{r fig.width=5, fig.height=5, fig.align='center'}
+# Estimate IBD coefficients
+ibd <- snpgdsIBDMoM(file, sample.id=CEU.id, snp.id=snpset.id, num.thread=2)
+
+# Make a data.frame
+ibd.coeff <- snpgdsIBDSelection(ibd)
+head(ibd.coeff)
+
+plot(ibd.coeff$k0, ibd.coeff$k1, xlim=c(0,1), ylim=c(0,1), xlab="k0", ylab="k1", main="CEU samples (MoM)")
+lines(c(0,1), c(1,0), col="red", lty=2)
+```
+
+
+## Identity-By-State Analysis
+
+For $n$ study individuals, `snpgdsIBS()` can be used to create a $n \times n$ matrix of genome-wide average IBS pairwise identities. To perform cluster analysis on the $n \times n$ matrix of genome-wide IBS pairwise distances, and determine the groups by a permutation score:
+
+```{r}
+set.seed(1000)
+ibs.hc <- snpgdsHCluster(snpgdsIBS(file, snp.id=snpset.id, num.thread=2))
+```
+
+Here is the population information we have known:
+```{r fig.width=10, fig.height=5, fig.align='center'}
+# Determine groups of individuals by population information
+rv <- snpgdsCutTree(ibs.hc, samp.group=as.factor(colors[pop.code]))
+
+plot(rv$dendrogram, leaflab="none", main="1KG Phase 1, chromosome 22",
+    edgePar=list(col=rgb(0.5,0.5,0.5,0.75), t.col="black"))
+legend("bottomleft", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.75, ncol=4)
+```
+
+
+## Fixation Index ($F_\text{st}$)
+
+Fixation index (Fst) has been widely used to measure the genetic difference between populations, and the calculations of moment estimators are available in the SNPRelate package with all variants or a sliding window.
+
+```{r fig.width=10, fig.height=5, fig.align='center'}
+# sliding windows (window size: 500kb)
+sw <- snpgdsSlidingWindow(file, winsize=500000, shift=100000,
+    FUN="snpgdsFst", as.is="numeric", population=pop.code)
+
+plot(sw$chr22.pos/1000, sw$chr22.val, xlab="genome coordinate (kb)", ylab="population-average Fst",
+    main="1KG Phase 1, chromosome 22")
+abline(h=mean(sw$chr22.val), lty=3, col="red", lwd=2)
+```
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+
 
 # Bioconductor Features
+
+## GRanges and GRangesList
 
 In this section, we illustrate how to work with Bioconductor core packages for performing common queries to retrieve data from a SeqArray file. The `GRanges` and `GRangesList` classes manipulate genomic range data and can be used in the function `seqSetFilter()` to define a data subset. For example, the annotation information of each exon, the coding range and transcript ID are stored in the `TxDb.Hsapiens.UCSC.hg19.knownGene` object for the UCSC known gene annotations on hg19.
 ```{r message=FALSE}
@@ -199,6 +366,9 @@ seqSetFilter(file, txs)  # define an exon filter
 seqGDS2VCF(file, "exons.vcf.gz")
 ```
 If random-access memory is sufficiently large, users could load all exon variants via `seqGetData(file, "genotype")`; otherwise, data have to be loaded by chunk or a user-defined function is applied over variants by `seqApply()`.
+
+
+## VariantAnnotation
 
 SeqArray can also export data with selected variants and samples as a `VCF` object for use with the VariantAnnotation package [@Obenchain2014]:
 ```{r message=FALSE}
@@ -224,6 +394,19 @@ seqClose(file)
 unlink("exons.vcf.gz", force=TRUE)
 ```
 
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
 
 
 
@@ -243,6 +426,7 @@ sessionInfo()
 ```{r echo=FALSE}
 unlink("exons.vcf.gz", force=TRUE)
 ```
+
 
 
 # References

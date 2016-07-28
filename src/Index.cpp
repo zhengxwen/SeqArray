@@ -767,6 +767,7 @@ CProgressStdOut::CProgressStdOut(C_Int64 count, bool verbose):
 {
 	if (count < 0)
 		throw ErrSeqArray("%s, 'count' should be greater than zero.", __func__);
+	_last_time = _timer.back().second;
 	Verbose = verbose;
 	ShowProgress();
 }
@@ -789,6 +790,7 @@ void CProgressStdOut::ShowProgress()
 		time_t now; time(&now);
 		_timer.push_back(pair<double, time_t>(percent, now));
 
+		double int_sec = difftime(now, _last_time);
 		double sec = difftime(now, _timer[n].second);
 		double diff = percent - _timer[n].first;
 		if (diff > 0)
@@ -798,23 +800,25 @@ void CProgressStdOut::ShowProgress()
 		percent *= 100;
 
 		// show
-		if (sec < 5)
+		if (Counter >= TotalCount)
 		{
-			if (Counter >= TotalCount)
-				Rprintf("\r[%s] %2.0f%%, ETC: completed", ss, percent);
-		} else if (sec < 60)
+			Rprintf("\r[%s] 100%%, completed  \n", ss);
+		} else if ((int_sec >= 5) || (Counter <= 0))
 		{
-			Rprintf("\r[%s] %2.0f%%, ETC: %.0fs  ", ss, percent, sec);
-		} else if (sec < 3600)
-		{
-			Rprintf("\r[%s] %2.0f%%, ETC: %.1fm  ", ss, percent, sec/60);
-		} else {
-			if (sec >= 999 * 60 * 60)
-				Rprintf("\r[%s] %2.0f%%, ETC: NA    ", ss, percent);
-			else
-				Rprintf("\r[%s] %2.0f%%, ETC: %.1fh  ", ss, percent, sec/(60*60));
+			_last_time = now;
+			if (sec < 60)
+			{
+				Rprintf("\r[%s] %2.0f%%, ETC: %.0fs  ", ss, percent, sec);
+			} else if (sec < 3600)
+			{
+				Rprintf("\r[%s] %2.0f%%, ETC: %.1fm  ", ss, percent, sec/60);
+			} else {
+				if (sec >= 999 * 60 * 60)
+					Rprintf("\r[%s] %2.0f%%, ETC: NA    ", ss, percent);
+				else
+					Rprintf("\r[%s] %2.0f%%, ETC: %.1fh  ", ss, percent, sec/(60*60));
+			}
 		}
-		if (Counter >= TotalCount) Rprintf("\n");
 	}
 }
 

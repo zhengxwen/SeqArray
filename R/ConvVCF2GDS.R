@@ -527,7 +527,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             cat(sprintf("        %s (%s)\n", basename(vcf.fn),
                 .pretty_size(file.size(vcf.fn))), sep="")
         } else {
-            cat("    connection object:\n")
+            cat("    [connection object]\n")
         }
         cat("    file format: ", header$fileformat, "\n", sep="")
         cat("    the number of sets of chromosomes (ploidy): ",
