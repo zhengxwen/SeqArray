@@ -159,7 +159,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                         stop("No '", check.name[i], "'.")
                     a <- NA_character_
                 } else
-                    a <- v[i,2L]
+                    a <- v[j,2L]
 
                 ans[[ check.name[i] ]] <- a
             }
