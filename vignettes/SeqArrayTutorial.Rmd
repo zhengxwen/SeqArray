@@ -1,7 +1,7 @@
 ---
-title: "SeqArray -- Big Data Management of Whole-Genome Sequence Variant Calls"
+title: "SeqArray Data Format and Access"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
-date: "Jan 25, 2016"
+date: "Jul 25, 2016"
 output:
   html_document:
     theme: spacelab
@@ -9,6 +9,8 @@ output:
   pdf_document:
     toc: yes
     toc_depth: 3
+bibliography: seqarray_bib.bib
+csl: biomed-central.csl
 vignette: >
   %\VignetteIndexEntry{SeqArray Data Format and Access}
   %\VignetteDepends{gdsfmt}
@@ -16,45 +18,81 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
+.
+
+.
+
+.
 
 # Overview
 
-In the era of big data, thousands of gigabyte-size data sets are challenging scientists for data management, even on well-equipped hardware. Currently, next-generation sequencing techniques are being adopted to investigate common and rare variants, making the analyses of large-scale genotypic data challenging. For example, the 1000 Genomes Project Phase 1 has identified approximately 38 million single nucleotide polymorphisms (SNPs), 1.4 million short insertions and deletions, and more than 14,000 larger deletions from whole-genome sequencing technologies [1]. In the near future, new technologies, like third-generation whole-genome sequencing, will be enabling data to be generated at an unprecedented scale [2]. The Variant Call Format (VCF) was developed for the 1000 Genomes Project, which is a generic text format for storing DNA polymorphism data such as SNPs, insertions, deletions and structural variants, together with rich annotations [3]. However, this format is less efficient for large-scale analyses since numeric data have to be parsed from a text VCF file before further analyses. The computational burden associated with sequence variants is especially evident with large sample and variant sizes, and it requires efficient numerical implementation and data management.
+The SeqArray file format is built on top of the Genomic Data Structure (GDS) format [@Zheng:2012:Bioinformatics:23060615]. GDS is a flexible and scalable data container with a hierarchical structure that can store multiple array-oriented data sets. It is intended for use with large-scale genomic datasets, especially for those which are much larger than the available main memory. GDS provides memory and performance efficient operations specifically designed for integers of less than 8 bits, since a diploid genotype usually occupies fewer bits than a byte. Data compression and decompression are available with relatively efficient random access. Data compression and decompression are available with relatively efficient random access. GDS is implemented using an optimized C++ library (CoreArray, [http://corearray.sourceforge.net](http://corearray.sourceforge.net)) and a high-level R interface is provided by the platform-independent R package gdsfmt ([http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)). Figure 1 shows the relationship between a SeqArray file and the underlying infrastructure upon which it is built. The minimum data fields required in a SeqArray file are sample and variant identifiers, variant chromosome, position and allele values and the value of the variant itself. SeqArray is a Bioconductor package [@Gentleman:2004aa; @R2016] available at [http://www.bioconductor.org/packages/SeqArray](http://www.bioconductor.org/packages/SeqArray) under the GNU General Public License v3.
 
-Here I introduce a high-performance C++ computing library CoreArray ([http://corearray.sourceforge.net](http://corearray.sourceforge.net)) for big-data management of genome-wide variants [4]. CoreArray was designed for developing portable and scalable storage technologies for bioinformatics data, allowing parallel computing at the multicore and cluster levels. It provides the genomic data structure (GDS) file format for array-oriented data: this is a universal data format to store multiple data variables in a single file. The CoreArray library modules are demonstrated in Figure 1. A hierarchical data structure is used to store multiple extensible data variables in the GDS format, and all datasets are stored in a single file with chunked storage layout. The C++ CoreArray library is implemented in the R/Bioconductor package [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) with a tutorial [http://corearray.sourceforge.net/tutorials/gdsfmt/](http://corearray.sourceforge.net/tutorials/gdsfmt/).
+.
 
-Here, I focus on the application of CoreArray for statisticians working in the R environment, and developed R packages [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) to address or reduce the computational burden associated with data management of sequence variants. The gdsfmt package provides a general R interface for the CoreArray library, and [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) is specifically designed for data management of sequence variants. The kernels of gdsfmt and SeqArray were written in C/C++ and highly optimized. Genotypic data and annotations are stored in a binary and array-oriented manner, offering efficient access of genetic variants using the R language. There are several key functions in SeqArray (Table 1), and most of data analyses could be done using these functions. The 1000 Genomes Project Phase 1 released 39 million genetic variants for 1092 individuals, and a 26G data file was created by SeqArray to store sequence variants with phasing information, where 2 bits were used as a primitive data type. The file size can be further reduced to 1.5G by compression algorithms without sacrificing access efficiency, since it has a large proportion of rare variants.
+![](seqarray_workflow.png)
 
-[SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) will be of great interest to scientists involved in data analyses of large-scale genomic sequence data using R environment, particularly those with limited experience of low-level C programming and parallel computing.
+**Figure 1**: SeqArray framework and flowchart. The SeqArray format is built on top of the Genomic Data Structure (GDS) format, and GDS is a generic data container with hierarchical structure for storing multiple array-oriented data sets. A high-level R interface to GDS files is provided in the gdsfmt package with a C++ library, and the SeqArray package offers functionalities specific to sequencing data. At a minimum a SeqArray file contains sample and variant identifiers, position, chromosome, reference and alternate alleles for each variant. Parallel computing environments, like multi-core computer clusters, are enabled with SeqArray. The functionality of SeqArray is extended by SeqVarTools, SNPRelate and other R/Bioconductor packages for WGS analyses.
+
+.
+
+SeqArray stores genotypes in a 2-bit array with ploidy, sample and variant dimensions. If two bits cannot represent all alleles at a site, a 2-bit matrix is appended to store additional bits according to the variant coordinate, hence any number of alleles can be stored including missing value. An indexing vector, associated with genotypes, is used to indicate how many bits for each variant. The INFO and FORMAT annotations in a SeqArray file can be integers, floating point numbers and characters. For a variant, variable-length vectors in an annotation are padded with missing values, and all vectors are packed together in an array. If each variant has different length, an extra vector is used to store the length information.
+
+Multiple lossless compression methods are available in the SeqArray format, and users can select the Lempel-Ziv Markov chain (LZMA) algorithm to compress data instead of the zlib algorithm. LZMA has a higher compression ratio than zlib and is implemented in a command-line tool `xz` ([http://tukaani.org/xz](http://tukaani.org/xz)) with a C library `liblzma`. Internally, the C++ kernel links to `liblzma` and calls the deflate and inflate functions. A new compression algorithm could be incorporated to the SeqArray format without changing the application program interface.
+
+To enable efficient random access of compressed data, a storage strategy using independent compression data blocks is employed and an indexing strategy is maintained internally. A fast performance for data filtering could be obtained since not all data have to be decompressed.
 
 
-![Flowchart](CoreArray-Module.png)
+## Parallel Computing
 
-**Figure 1**: CoreArray library modules.
+SeqArray utilizes the framework implemented in the R core package `parallel` [@Rossini2007; @R2016] to support multiple forms of parallelism. First, multi-core parallelism on symmetric multiprocessing (SMP) computer architectures is supported via lightweight forking on Unix-like systems. Second, job-level parallelism on loosely coupled computer clusters is supported with communicating over sockets or Message Passing Interface (MPI). Most importantly, all of these forms of parallelism can be combined together allowing high-speed access and operations on hundreds of different parts of the genome simultaneously. 
 
-~
+For data writing with multiple processes, SeqArray stores data in separate local files according to each process and merges all files together when the processes finish. Since data are stored in independent blocks, merging files could be as easy as copying data directly without re-compression.
 
+
+## Application Program Interface (API)
+
+.
 
 **Table 1**: The key functions in the SeqArray package.
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Imports VCF files. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
-| seqSummary   | Gets the summary (Num. of samples, Num. of variants, INFO/FORMAT variables, etc). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSummary.html)  |
-| seqSetFilter | Sets a filter to sample or variant (i.e., define a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
-| seqGetData   | Gets data from a SeqArray GDS file (from a subset of data). [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqVCF2GDS   | Reformats VCF files. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
+| seqSetFilter | Defines a data subset of samples or variants. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
+| seqGetData   | Gets data from a SeqArray file with a defined filter. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
 | seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
 | seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
 
-~
+.
+
+Genotypic data and annotations are stored in an array-oriented manner, providing efficient data access using the R programming language. There are five key functions in SeqArray as shown in Table 1, and many of data analyses can be done using just these functions.
+
+`seqVCF2GDS()` converts VCF format files to SeqArray. Multiple cores within one or more compute nodes in a compute cluster can be used to simultaneously to reformat data. Since `seqVCF2GDS()` utilizes R's connection interface to read VCF files incrementally, it is able to import data from http/ftp texts and any other data source from a pipe with a command-line tool.
+
+`seqSetFilter()` and `seqGetData()` can be used together to retrieve data for a selected set of samples from a defined genomic region. `GRange` and `GRangesList` objects defined in the Bioconductor core packages are supported via `seqSetFilter()` [@Gentleman:2004aa; @Lawrence2013].
+
+`seqApply()` applies a user-defined function to margins of genotypes and annotations. The function that is applied can be defined in R as is typical, or via C/C++ code using the Rcpp package [@eddelbuettel2011rcpp].
+
+`seqParallel()` utilizes the facilities offered by the parallel package [@Rossini2007; @R2016] to perform calculations on a SeqArray file in parallel. The examples using these key functions are shown in the section of R integration.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
 
 
 
 # Preparing Data
-
-## Data formats used in SeqArray
-
-To support efficient memory management for genome-wide numerical data, the [gdsfmt](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html) package provides the genomic data structure (GDS) file format for array-oriented bioinformatic data based on the CoreArray library, which is a container for storing genotypic and annotation data. The GDS format supports data blocking so that only the subset of data that is being processed needs to reside in memory.
 
 ```{r echo=FALSE}
 options(width=110L)
@@ -65,7 +103,9 @@ options(width=110L)
 library(SeqArray)
 ```
 
-Here is a typical GDS file shipped with the SeqArray package:
+## Data Formats used in SeqArray
+
+Let us use the GDS file in the SeqArray package:
 ```{r}
 gds.fn <- seqExampleFileName("gds")
 # or gds.fn <- "C:/YourFolder/Your_GDS_File.gds"
@@ -73,20 +113,20 @@ gds.fn
 
 seqSummary(gds.fn)
 ```
-`seqExampleFileName()` returns the file name of a GDS file used as an example in [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html), and it is a subset of data from the 1000 Genomes Project. `seqSummary()` summarizes the genotypes and annotations stored in the GDS file.
+`seqExampleFileName()` returns the file name of a GDS file of SeqArray format used as an example in [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html), and it is a subset of data from the 1000 Genomes Project. `seqSummary()` summarizes the genotypes and annotations.
 
 ```{r}
 # open a GDS file
 genofile <- seqOpen(gds.fn)
 
-# display the contents of the GDS file in a hierarchical structure
+# display the contents of the SeqArray file in a hierarchical structure
 genofile
 ```
 
-For those who would like to know how variable-length genotypic data and annotations are stored in an array-oriented manner, `print(, all=TRUE)` displays all contents including hidden structures:
+For those who would like to know how variable-length genotypic data and annotations are stored in an array-oriented manner, `print(..., all=TRUE)` displays all contents including hidden structures:
 ```{r}
 # display all contents of the GDS file
-print(genofile, all=TRUE, attribute=TRUE, attribute.trim=FALSE)
+print(genofile, all=TRUE, attribute=TRUE)
 
 # close the GDS file
 seqClose(genofile)
@@ -134,7 +174,7 @@ The optional folders include `phase` (phasing information), `annotation`, and `s
 * The folder `sample.annotation` contains variables of vector or matrix according to `sample.id`.
 
 
-## Format conversion from VCF files
+## Format Conversion from VCF Files
 
 The [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) package provides a function `seqVCF2GDS()` to reformat a VCF file, and it allows merging multiple VCF files during format conversion. The genotypic and annotation data are stored in a compressed manner.
 
@@ -154,11 +194,11 @@ The columns `Number`, `Type` and `Description` are defined by the 1000 Genomes P
 # convert, save in "tmp.gds"
 seqVCF2GDS(vcf.fn, "tmp.gds")
 
-# maximize the compression level
+# maximize the compression level with zlib compression
 seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA.max", verbose=FALSE)
 
-# maximize the access speed with LZ4 compression algorithm
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="LZ4_RA.max", verbose=FALSE)
+# compress data with LZMA compression algorithm
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="LZMA_RA.max", verbose=FALSE)
 
 seqSummary("tmp.gds")
 ```
@@ -168,7 +208,7 @@ unlink("tmp.gds")
 ```
 
 
-## Export to a VCF File
+## Export to VCF Files
 
 The [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) package provides a function `seqGDS2VCF()` to export data to a VCF file. The arguments `info.var` and `fmt.var` in `seqGDS2VCF` allow users to specify the variables listed in the INFO and FORMAT fields of VCF format, or remove the INFO and FORMAT information. `seqSetFilter()` can be used to define a subset of data for the export.
 
@@ -183,15 +223,17 @@ genofile <- seqOpen(gds.fn)
 # convert
 seqGDS2VCF(genofile, "tmp.vcf.gz")
 # read
-z <- readLines("tmp.vcf.gz", n=20)
-for (i in z) cat(substr(i, 1, 76), " ...\n", sep="")
+s <- readLines("tmp.vcf.gz", n=22)
+s[nchar(s) > 80] <- paste(substr(s[nchar(s) > 80], 1, 80), "...")
+cat(s, sep="\n")
 
 # output BN,GP,AA,HM2 in INFO (the variables are in this order), no FORMAT
 seqGDS2VCF(genofile, "tmp2.vcf.gz", info.var=c("BN","GP","AA","HM2"),
     fmt.var=character())
 # read
-z <- readLines("tmp2.vcf.gz", n=15)
-for (i in z) cat(substr(i, 1, 56), " ...\n", sep="")
+s <- readLines("tmp2.vcf.gz", n=16)
+s[nchar(s) > 80] <- paste(substr(s[nchar(s) > 80], 1, 80), "...")
+cat(s, sep="\n")
 
 # close the GDS file
 seqClose(genofile)
@@ -256,6 +298,19 @@ cleanup.gds("tmp.gds")
 unlink("tmp.gds")
 ```
 
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
 
 
 
@@ -344,19 +399,15 @@ seqGetData(genofile, "annotation/format/DP")
 ```{r}
 # set sample and variant filters
 set.seed(100)
-seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)],
-    variant.id=sample(variant.id, 4))
+seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)], variant.id=sample(variant.id, 4))
 
 # read multiple variables variant by variant
-seqApply(genofile, c(geno="genotype", id="annotation/id"),
-    FUN=print, margin="by.variant", as.is="none")
+seqApply(genofile, c(geno="genotype", id="annotation/id"), FUN=print, margin="by.variant", as.is="none")
 
 # read genotypes sample by sample
-seqApply(genofile, "genotype",
-    FUN=print, margin="by.sample", as.is="none")
+seqApply(genofile, "genotype", FUN=print, margin="by.sample", as.is="none")
 
-seqApply(genofile, c(sample.id="sample.id", genotype="genotype"),
-    FUN=print, margin="by.sample", as.is="none")
+seqApply(genofile, c(sample.id="sample.id", genotype="genotype"), FUN=print, margin="by.sample", as.is="none")
 ```
 
 ```{r}
@@ -413,6 +464,20 @@ summary(afreq)
 # Close the GDS file
 seqClose(genofile)
 ```
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
 
 
 
@@ -642,7 +707,7 @@ summary(afreq)
 
 ## Principal Component Analysis
 
-In the principal component analysis, we employ the dosage of reference alleles to avoid confusion of multiple alleles. The genetic covariance matrix is defined as $M = [ m_{j,j'} ]$:
+In the principal component analysis [@Patterson:2006:PLoS-Genet:17194218], we employ the dosage of reference alleles to avoid confusion of multiple alleles. The genetic covariance matrix is defined as $M = [ m_{j,j'} ]$:
 \[
     m_{j,j'} = \frac{1}{L} \sum_{l=1}^L
     	\frac{(g_{j,l} - 2p_l)(g_{j',l} - 2p_l)}{p_l (1 - p_l)}
@@ -681,7 +746,7 @@ eig <- eigen(genmat)
 head(eig$value)
 ```
 
-```{r fig.width=5, fig.height=5, fig.align='center'}
+```{r fig.width=4, fig.height=4, fig.align='center'}
 # eigenvectors
 plot(eig$vectors[,1], eig$vectors[,2], xlab="PC 1", ylab="PC 2")
 ```
@@ -733,7 +798,7 @@ head(eig$value)
 
 ## Individual Inbreeding Coefficient
 
-To calculate an individual inbreeding coefficient using SNP genotype data, I demonstrate how to use `seqApply()` to calculate Visscher's estimator described in Yang *et al.* (2010) [5]. The estimator of individual inbreeding coefficient is defined as
+To calculate an individual inbreeding coefficient using SNP genotype data, I demonstrate how to use `seqApply()` to calculate Visscher's estimator described in [@Yang2010]. The estimator of individual inbreeding coefficient is defined as
 \[
     \hat{\theta} = \frac{1}{L} \sum_{l=1}^L
         \frac{g_l^2 - g_l (1 + 2p_l) + 2p_l^2}{2 p_l (1 - p_l)}
@@ -850,8 +915,7 @@ Now, `RefAlleleFreq` is a function in R.
 ```{r}
 RefAlleleFreq
 
-afreq <- seqApply(genofile, "genotype", RefAlleleFreq,
-    as.is="double", margin="by.variant")
+afreq <- seqApply(genofile, "genotype", RefAlleleFreq, as.is="double", margin="by.variant")
 
 summary(afreq)
 ```
@@ -861,6 +925,20 @@ summary(afreq)
 # close the GDS file
 seqClose(genofile)
 ```
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
 
 
 
@@ -880,9 +958,3 @@ sessionInfo()
 
 
 # References
-
-1. 1000 Genomes Project Consortium, Abecasis, G. R., Auton, A., Brooks, L. D., DePristo, M. A., Durbin, R. M., Handsaker, R. E., Kang, H. M., Marth, G. T., and McVean, G. A. An integrated map of genetic variation from 1,092 human genomes. *Nature* 491, 7422 (Nov 2012), 56--65.
-2. Schadt, E. E., Linderman, M. D., Sorenson, J., Lee, L., and Nolan, G. P. Computational solutions to large-scale data management and analysis. *Nat Rev Genet* 11, 9 (Sep 2010), 647--657.
-3. Danecek, P., Auton, A., Abecasis, G., Albers, C. A., Banks, E., DePristo, M. A., Handsaker, R. E., Lunter, G., Marth, G. T., Sherry, S. T., McVean, G., Durbin, R., and 1000 Genomes Project Analysis Group. The variant call format and vcftools. *Bioinformatics* 27, 15 (Aug 2011), 2156--2158.
-4. Zheng X, Levine D, Shen J, Gogarten SM, Laurie C, Weir BS. A High-performance Computing Toolset for Relatedness and Principal Component Analysis of SNP Data. *Bioinformatics*. 2012 Oct 11.
-5. Yang J, Benyamin B, McEvoy BP, Gordon S, Henders AK, Nyholt DR, Madden PA, Heath AC, Martin NG, Montgomery GW, Goddard ME, Visscher PM. 2010. Common SNPs explain a large proportion of the heritability for human height. *Nat Genet*. 42(7):565-9. Epub 2010 Jun 20.

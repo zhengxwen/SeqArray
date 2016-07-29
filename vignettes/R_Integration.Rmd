@@ -18,8 +18,19 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
+.
+
+.
+
+.
 
 The SeqArray package is designed for R programming environment, and enables high-performance computing in the multi-core symmetric multiprocessing and loosely coupled computer cluster framework. The features of SeqArray are extended with other existing R packages for WGS data analyses, and the R codes for demonstration are available in the package vignette [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html).
+
+![](seqarray_workflow.png)
+
+**Figure 1**: SeqArray framework and flowchart. The SeqArray format is built on top of the Genomic Data Structure (GDS) format, and GDS is a generic data container with hierarchical structure for storing multiple array-oriented data sets. A high-level R interface to GDS files is provided in the gdsfmt package with a C++ library, and the SeqArray package offers functionalities specific to sequencing data. At a minimum a SeqArray file contains sample and variant identifiers, position, chromosome, reference and alternate alleles for each variant. Parallel computing environments, like multi-core computer clusters, are enabled with SeqArray. The functionality of SeqArray is extended by SeqVarTools, SNPRelate and other R/Bioconductor packages for WGS analyses.
+
+.
 
 ```{r}
 library(SeqArray)
@@ -48,7 +59,20 @@ seqSummary(file)
 
 # SeqArray Functions
 
-## Application Program Interface
+**Table 1**: The key functions in the SeqArray package.
+
+| Function     | Description |
+|:-------------|:-------------------------------------------|
+| seqVCF2GDS   | Reformats VCF files. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
+| seqSetFilter | Defines a data subset of samples or variants. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
+| seqGetData   | Gets data from a SeqArray file with a defined filter. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqApply     | Applies a user-defined function over array margins. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
+| seqParallel  | Applies functions in parallel. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
+
+
+## Application Program Interface (API)
+
+Genotypic data and annotations are stored in an array-oriented manner, providing efficient data access using the R programming language. There are five key functions in SeqArray as shown in Table 1, and many of data analyses can be done using just these functions.
 
 We illustrate the SeqArray functions by implementing an example to calculate the frequency of reference allele across all chromosomes. If a genomic region is specified via `seqSetFilter()`, the calculation is performed within the region instead of using all variants. `seqApply()` enables applying a user-defined function to the margin of genotypes, and the R code is shown as follows:
 ```{r}
@@ -94,6 +118,8 @@ head(af)
 ```
 where the argument `cl` specifies the number of cores, the user-defined function `function(f) {...}` is distributed to 2 different computing nodes, and `split` indicates dividing genotypes according to different variants.
 
+More examples can be found: [SeqArray Data Format and Access](./SeqArrayTutorial.html#examples)
+
 
 ## Parallel Implementation
 
@@ -132,6 +158,9 @@ seqParallelSetup(FALSE)
 # Integration with SeqVarTools
 
 The [SeqVarTools](http://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html) package is available on Bioconductor, which defines S4 classes and methods for other common operations and analyses on SeqArray datasets. The vignette of SeqVarTools is [http://www.bioconductor.org/packages/release/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqVarTools/inst/doc/SeqVarTools.pdf).
+
+
+## Linear Regression
 
 The SeqVarTools package extends SeqArray by providing methods for many tasks common to quality control and analysis of sequence data. Methods include: transition/transversion ratio, heterozygosity and homozygosity rates, singleton counts, Hardy-Weinberg equilibrium, Mendelian error checking, and linear and logistic regression. Additionally, SeqVarTools defines a new class to link the information present in the SeqArray file to additional sample and variant annotation provided by the user, such as sex and phenotype. One could select a subset of samples in a file and run a linear regression on all variants:
 ```{r message=FALSE}
