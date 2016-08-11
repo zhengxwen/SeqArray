@@ -13,6 +13,7 @@ Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu"),
         person("Stephanie", "Gogarten", role="aut",
         email="sdmorris@u.washington.edu"),
+        person("David", "Levine", role="ctb"),
         person("Cathy", "Laurie", role="ctb"))
 Description: Big data management of whole-genome sequence variant calls with
         thousands of individuals: genotypic data (e.g., SNVs, indels and

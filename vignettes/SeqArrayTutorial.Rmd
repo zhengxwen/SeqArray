@@ -10,7 +10,6 @@ output:
     toc: yes
     toc_depth: 3
 bibliography: seqarray_bib.bib
-csl: biomed-central.csl
 vignette: >
   %\VignetteIndexEntry{SeqArray Data Format and Access}
   %\VignetteDepends{gdsfmt}
@@ -103,7 +102,7 @@ options(width=110L)
 library(SeqArray)
 ```
 
-## Data Formats used in SeqArray
+## Data Format used in SeqArray
 
 Let us use the GDS file in the SeqArray package:
 ```{r}
@@ -132,7 +131,7 @@ print(genofile, all=TRUE, attribute=TRUE)
 seqClose(genofile)
 ```
 
-The output lists all variables stored in the GDS file. At the first level, it stores variables `sample.id`, `variant.id`, etc. The additional information are displayed in the square brackets indicating data type, size, compressed or not + compression ratio, where `Bit2` indicates that each byte encodes up to four alleles since one byte consists of eight bits, and `VStr8` indicates variable-length character. The annotations are stored in the directory `annotation`, which includes the fields of ID, QUAL, FILTER, INFO and FORMAT corresponding to the original VCF file(s). All of the functions in [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) require a minimum set of variables in the annotation data:
+The output lists all variables stored in the GDS file. At the first level, it stores variables `sample.id`, `variant.id`, etc. The additional information are displayed in the braces indicating data type, size, compressed or not and compression ratio, where `Bit2` indicates that each byte encodes up to four alleles since one byte consists of eight bits, and `Str8` indicates variable-length character. The annotations are stored in the directory `annotation`, which includes the fields of ID, QUAL, FILTER, INFO and FORMAT corresponding to the original VCF file(s). All of the functions in [SeqArray](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html) require a minimum set of variables in the annotation data:
 
 1. `sample.id`, a unique identifier for each sample.
 2. `variant.id`, a unique identifier for each variant.

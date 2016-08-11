@@ -106,7 +106,6 @@ File: SeqArray/extdata/CEU_Exon.gds (387.3K)
     1. R code (sequential version)
     2. R code (parallel version)
     3. R and C++ integration via the Rcpp package
-    4. R and C++ integration with multi-core implementation
 
 
 ## Benchmark -- Test 1 (sequentially)

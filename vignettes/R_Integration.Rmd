@@ -10,7 +10,6 @@ output:
     toc: yes
     toc_depth: 3
 bibliography: seqarray_bib.bib
-csl: biomed-central.csl
 vignette: >
   %\VignetteIndexEntry{R Integration}
   %\VignetteDepends{gdsfmt}
@@ -116,7 +115,7 @@ af <- seqParallel(cl=2, file, FUN = function(f) {
 }, split="by.variant")
 head(af)
 ```
-where the argument `cl` specifies the number of cores, the user-defined function `function(f) {...}` is distributed to 2 different computing nodes, and `split` indicates dividing genotypes according to different variants.
+where the argument `cl` specifies the number of cores, the user-defined function `function(f) {...}` is distributed to 2 different computing cores, and `split` indicates dividing genotypes according to different variants.
 
 More examples can be found: [SeqArray Data Format and Access](./SeqArrayTutorial.html#examples)
 
@@ -163,36 +162,23 @@ The [SeqVarTools](http://www.bioconductor.org/packages/release/bioc/html/SeqVarT
 ## Linear Regression
 
 The SeqVarTools package extends SeqArray by providing methods for many tasks common to quality control and analysis of sequence data. Methods include: transition/transversion ratio, heterozygosity and homozygosity rates, singleton counts, Hardy-Weinberg equilibrium, Mendelian error checking, and linear and logistic regression. Additionally, SeqVarTools defines a new class to link the information present in the SeqArray file to additional sample and variant annotation provided by the user, such as sex and phenotype. One could select a subset of samples in a file and run a linear regression on all variants:
-```{r message=FALSE}
-library(Biobase)
-```
 ```{r eval=FALSE}
 library(SeqVarTools)
 ```
 ```{r}
-set.seed(1000)
-# create sample data
-sample.id <- seqGetData(file, "sample.id")
-n <- length(sample.id)
-df <- data.frame(sample.id,
-    sex = sample(c("M", "F"), n, replace=TRUE),
-    age = sample(18:70, n, replace=TRUE),
-    phen = rnorm(n),
-    stringsAsFactors=FALSE)
-meta <- data.frame(labelDescription=c("sample identifier", "sex", "age", "phenotype"))
-sample.data <- AnnotatedDataFrame(df, meta)
-sample.data
+data(KG_P1_SampData)
+KG_P1_SampData
 ```
 ```{r eval=FALSE}
 # link sample data to SeqArray file
 seqData <- SeqVarData(file, sample.data)
 
 # set sample and variant filters
-female <- sampleData(seqData)$sex == "F"
+female <- sampleData(seqData)$sex == "female"
 seqSetFilter(seqData, sample.sel=female) 
 
 # run linear regression
-res <- regression(seqData, outcome="phen", covar="age")
+res <- regression(seqData, outcome="pheno", covar="age")
 head(res)
 ```
 ```{r echo=FALSE}
