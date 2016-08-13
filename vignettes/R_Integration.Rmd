@@ -178,7 +178,7 @@ female <- sampleData(seqData)$sex == "female"
 seqSetFilter(seqData, sample.sel=female) 
 
 # run linear regression
-res <- regression(seqData, outcome="pheno", covar="age")
+res <- regression(seqData, outcome="phenotype", covar="age")
 head(res)
 ```
 ```{r echo=FALSE}

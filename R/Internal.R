@@ -76,7 +76,7 @@
 .cfunction5 <- function(name)
 {
     fn <- function(v, w, x, y, z) NULL
-    f <- quote(.Call(SEQ_ExternalName4, v, w, x, y, z))
+    f <- quote(.Call(SEQ_ExternalName5, v, w, x, y, z))
     f[[1L]] <- .Call
     f[[2L]] <- getNativeSymbolInfo(name, "SeqArray")$address
     body(fn) <- f
