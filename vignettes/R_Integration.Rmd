@@ -162,12 +162,17 @@ The [SeqVarTools](http://www.bioconductor.org/packages/release/bioc/html/SeqVarT
 ## Linear Regression
 
 The SeqVarTools package extends SeqArray by providing methods for many tasks common to quality control and analysis of sequence data. Methods include: transition/transversion ratio, heterozygosity and homozygosity rates, singleton counts, Hardy-Weinberg equilibrium, Mendelian error checking, and linear and logistic regression. Additionally, SeqVarTools defines a new class to link the information present in the SeqArray file to additional sample and variant annotation provided by the user, such as sex and phenotype. One could select a subset of samples in a file and run a linear regression on all variants:
+```{r message=FALSE}
+library(Biobase)
+```
 ```{r eval=FALSE}
 library(SeqVarTools)
 ```
 ```{r}
 data(KG_P1_SampData)
 KG_P1_SampData
+
+head(pData(KG_P1_SampData))  # show KG_P1_SampData
 ```
 ```{r eval=FALSE}
 # link sample data to SeqArray file
@@ -181,13 +186,14 @@ seqSetFilter(seqData, sample.sel=female)
 res <- regression(seqData, outcome="phenotype", covar="age")
 head(res)
 ```
-```{r echo=FALSE}
-data.frame(variant.id=1:6, n=rep(559L, 6),
-    freq=c(0.6905188, 0.9418605, 0.9991055, 0.9991055, 0.9373882, 0.9991055),
-    Est=c(0.09989598, 0.14390294, 1.90773195, 0.28690807, 0.12340020, -2.20965585),
-    SE=c(0.06692225, 0.12943936, 0.97923589, 0.98135431, 0.12548274, 0.97798263),
-    Wald.Stat=c(2.22820413, 1.23596634, 3.79542189, 0.08547396, 0.96708299, 5.10489710),
-    Wald.Pval=c(0.13551127, 0.26624986, 0.05139292, 0.77001192, 0.32540875, 0.02385839))
+```
+##   variant.id   n      freq          Est        SE   Wald.Stat  Wald.Pval
+## 1          1 567 0.6887125 -0.090555715 0.0699074 1.677974724 0.19519378
+## 2          2 567 0.9400353  0.009685877 0.1321824 0.005369459 0.94158602
+## 3          3 567 0.9991182 -0.378945215 1.0238102 0.136997920 0.71128392
+## 4          4 567 1.0000000           NA        NA          NA         NA
+## 5          5 567 0.9356261 -0.009732930 0.1281883 0.005764880 0.93947733
+## 6          6 567 0.9982363 -1.379486822 0.7233651 3.636804912 0.05651529
 ```
 
 .
@@ -288,7 +294,7 @@ legend("topright", legend=legend.text, col=1:length(legend.text), pch=19, cex=0.
 
 ## Relatedness Analysis
 
-For relatedness analysis, Identity-By-Descent (IBD) estimation in [SNPRelate](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) can be done by the method of moments (MoM) (Purcell et al., 2007).
+For relatedness analysis, Identity-By-Descent (IBD) estimation in [SNPRelate](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) can be done by the method of moments (MoM) [@Purcell:2007:Am-J-Hum-Genet:17701901].
 
 ```{r}
 # YRI samples
@@ -423,6 +429,23 @@ unlink("exons.vcf.gz", force=TRUE)
 
 .
 
+# GENESIS
+
+The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers methodology for estimating, inferring and accounting for population and pedigree structure in genetic analyses. The current implementation provides functions to perform PC-AiR and PC-Relate [@Conomos2015;  @Conomos2016]. PC-AiR performs PCA on whole-genome genotypes taking into account known or cryptic relatedness in the study sample. PC-Relate uses ancestry representative principal components to accurately estimate measures of recent genetic relatedness. In addition, the development version of GENESIS supports for SeqArray files in mixed model association testing and introduce aggregate tests of rare variants including burden and sequence kernel association tests [@Wu2011].
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
 
 
 # Resources
