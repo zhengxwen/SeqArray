@@ -60,10 +60,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
     {
         opt <- getOption("seqarray.parallel", NULL)
         if (inherits(opt, "cluster"))
-        {
-            .LoadParallelPackage()
-            parallel::stopCluster(opt)
-        }
+            stopCluster(opt)
         if (verbose)
             cat("Stop the computing cluster.\n")
         options(seqarray.parallel=cluster)
@@ -75,8 +72,8 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
     {
         setup <- function(num.cores)
         {
-            cl <- parallel::makeCluster(num.cores)
-            parallel::clusterCall(cl, function() { library(SeqArray); NULL })
+            cl <- makeCluster(num.cores)
+            clusterCall(cl, function() { library(SeqArray); NULL })
             cl
         }
 
@@ -85,15 +82,11 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             stopifnot(length(cluster) == 1L)
             if (cluster)
             {
-                .LoadParallelPackage()
-                cl <- parallel::detectCores() - 1L
+                cl <- detectCores() - 1L
                 if (cl <= 1L) cl <- 2L
                 cluster <- setup(cl)
                 if (verbose)
-                {
-                    cat("Enable the computing cluster with", cl,
-                        "R processes.\n")
-                }
+                    cat("Enable the computing cluster with", cl, "R processes.\n")
             } else {
                 if (verbose) cat("No computing cluster.\n")
             }
@@ -102,39 +95,27 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             stopifnot(length(cluster) == 1L)
             if (cluster > 1L)
             {
-                .LoadParallelPackage()
                 cl <- cluster
                 cluster <- setup(cluster)
                 if (verbose)
-                {
-                    cat("Enable the computing cluster with", cl,
-                        "R processes.\n")
-                }
+                    cat("Enable the computing cluster with", cl, "R processes.\n")
             }
         }
     } else {
         # unix forking technique
         if (identical(cluster, TRUE))
         {
-            .LoadParallelPackage()
-            n <- parallel::detectCores() - 1L
+            n <- detectCores() - 1L
             if (n <= 1L) n <- 2L
             if (verbose)
-            {
-                cat("Enable the computing cluster with", n,
-                    "forked R processes.\n")
-            }
+                cat("Enable the computing cluster with", n, "forked R processes.\n")
         } else if (is.numeric(cluster))
         {
             stopifnot(length(cluster) == 1L)
             if (cluster > 1L)
             {
-                .LoadParallelPackage()
                 if (verbose)
-                {
-                    cat("Enable the computing cluster with", cluster,
-                        "forked R processes.\n")
-                }
+                    cat("Enable the computing cluster with", cluster, "forked R processes.\n")
             }
         }
     }
@@ -221,8 +202,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             stop("'split' should be 'none' if 'gdsfile=NULL'.")
     }
 
-    pnum <- .NumParallel(cl)
-    if (pnum <= 1L)
+    njobs <- .NumParallel(cl)
+    if (njobs <= 1L)
     {
         ## a single process
         .Call(SEQ_IntAssign, process_index, 1L)
@@ -310,6 +291,43 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         if (is.list(ans) & identical(.combine, "unlist"))
             ans <- unlist(ans, recursive=FALSE)
 
+    } else if (inherits(cl, "BiocParallelParam"))
+    {
+        ## multiple processes with a predefined cluster from BiocParallel
+
+        if (split %in% c("by.variant", "by.sample"))
+        {
+            dm <- .seldim(gdsfile)
+            if (split == "by.variant")
+            {
+                if (dm[3L] <= 0) stop("No variants selected.")
+            } else {
+                if (dm[2L] <= 0) stop("No samples selected.")
+            }
+
+            sel <- seqGetFilter(gdsfile, .useraw=TRUE)
+        } else {
+            sel <- list(sample.sel=raw(), variant.sel=raw())
+        }
+
+####
+
+
+
+        if (is.list(ans))
+        {
+            if (identical(.combine, "unlist"))
+            {
+                ans <- unlist(ans, recursive=FALSE)
+            } else if (is.function(.combine))
+            {
+                rv <- ans[[1L]]
+                for (i in seq_len(length(ans)-1L) + 1L)
+                    rv <- .combine(rv, ans[[i]])
+                ans <- rv
+            }
+        }
+
     } else {
 
         ## multiple processes with a predefined number of cores
@@ -317,8 +335,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
         if (.Platform$OS.type == "windows")
         {
             # no forking on windows
-            cl <- parallel::makeCluster(pnum)
-            on.exit({ parallel::stopCluster(cl) })
+            cl <- makeCluster(njobs)
+            on.exit({ stopCluster(cl) })
 
             return(seqParallel(cl, gdsfile, FUN, split, .combine,
                 .selection.flag, ...))
@@ -339,8 +357,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             sel <- list(sample.sel=raw(), variant.sel=raw())
         }
 
-        ans <- parallel::mclapply(seq_len(pnum),
-            mc.preschedule=FALSE, mc.cores=pnum, mc.cleanup=TRUE,
+        ans <- mclapply(seq_len(njobs),
+            mc.preschedule=FALSE, mc.cores=njobs, mc.cleanup=TRUE,
             FUN = function(i, .fun)
             {
                 # export to global variables
@@ -389,31 +407,34 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
 seqParApply <- function(cl=getOption("seqarray.parallel", FALSE), x, FUN,
     load.balancing=TRUE, ...)
 {
-    pnum <- .NumParallel(cl)
+    njobs <- .NumParallel(cl, "cl")
     stopifnot(is.logical(load.balancing))
 
-    if (pnum <= 1L)
+    if (njobs <= 1L)
     {
         ## a single process
-        rv <- lapply(x, FUN, ...)
+        ans <- lapply(x, FUN, ...)
+    } else if (inherits(cl, "BiocParallelParam"))
+    {
+        ans <- BiocParallel::bplapply(x, FUN, ..., BPPARAM=cl)
     } else {
         if (!inherits(cl, "cluster"))
         {
             if (.Platform$OS.type == "windows")
-                cl <- parallel::makeCluster(pnum)
+                cl <- makeCluster(njobs)
             else
-                cl <- parallel::makeForkCluster(pnum)
-            on.exit({ parallel::stopCluster(cl) })
+                cl <- makeForkCluster(njobs)
+            on.exit({ stopCluster(cl) })
         }
 
         # a load balancing version
         if (isTRUE(load.balancing))
-            rv <- parallel::clusterApplyLB(cl, x, FUN, ...)
+            ans <- clusterApplyLB(cl, x, FUN, ...)
         else
-            rv <- parallel::clusterApply(cl, x, FUN, ...)
+            ans <- clusterApply(cl, x, FUN, ...)
     }
 
-    rv
+    ans
 }
 
 

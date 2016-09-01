@@ -288,20 +288,9 @@
 
 
 #######################################################################
-# Load Parallel package
-#
-.LoadParallelPackage <- function()
-{
-    if (!requireNamespace("parallel"))
-        stop("The 'parallel' package should be installed.")
-    invisible()
-}
-
-
-#######################################################################
 # need parallel? how many? return 1 if no parallel
 #
-.NumParallel <- function(cl)
+.NumParallel <- function(cl, nm="parallel")
 {
     if (is.null(cl) | identical(cl, FALSE))
     {
@@ -310,24 +299,29 @@
     {
         if (length(cl) != 1L)
             stop("'parallel' should be length-one.")
-        .LoadParallelPackage()
-        if (cl <= 1) cl <- 1L
+        if (is.na(cl)) cl <- 1L
+        if (cl < 1L) cl <- 1L
         ans <- as.integer(cl)
     } else if (isTRUE(cl))
     {
-        .LoadParallelPackage()
-        ans <- parallel::detectCores() - 1L
+        ans <- detectCores() - 1L
+        if (is.na(ans)) ans <- 2L
         if (ans <= 1L) ans <- 2L
     } else if (inherits(cl, "cluster"))
     {
-        .LoadParallelPackage()
         ans <- length(cl)
+        if (ans < 1L) ans <- 1L
+    } else if (inherits(cl, "BiocParallelParam"))
+    {
+        ans <- BiocParallel::bpnworkers(cl)
+        if (ans < 1L) ans <- 1L
     } else
-        stop("Invalid 'parallel'.")
-    if (ans > 128L)
+        stop("Invalid '", nm, "'.")
+    if (ans > 128L)  # limited by R itself
         stop("It is unable to allocate resources for more than 128 nodes.")
     ans
 }
+
 
 
 #######################################################################

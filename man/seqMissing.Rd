@@ -13,7 +13,7 @@ seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE,
     \item{per.variant}{missing rate per variant if \code{TRUE}, or
         missing rate per sample if \code{FALSE}}
     \item{.progress}{if TRUE, show progress information}
-    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}

@@ -25,8 +25,10 @@ useDynLib(SeqArray,
 )
 
 # Import all packages listed as Imports or Depends
-import(methods)
 import(gdsfmt)
+import(methods)
+importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
+    makeCluster, makeForkCluster, mclapply, stopCluster)
 import(Biostrings)
 import(S4Vectors)
 import(IRanges)

@@ -8,7 +8,7 @@ margins of genotypes and annotations.
 \usage{
 seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
-    var.index=c("none", "relative", "absolute"),
+    var.index=c("none", "relative", "absolute"), parallel=FALSE,
     .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
 }
 \arguments{
@@ -27,6 +27,10 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         \code{margin = "by.variant"}: \code{"relative"} for indexing in the
         selection defined by \code{\link{seqSetFilter}}, \code{"absolute"}
         for indexing with respect to all data}
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
+        processing), numeric value or other value; \code{parallel} is passed
+        to the argument \code{cl} in \code{\link{seqParallel}}, see
+        \code{\link{seqParallel}} for more details.}
     \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible}

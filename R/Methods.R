@@ -297,7 +297,7 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE)
 seqApply <- function(gdsfile, var.name, FUN,
     margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
-    var.index=c("none", "relative", "absolute"),
+    var.index=c("none", "relative", "absolute"), parallel=FALSE,
     .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
 {
     # check
@@ -307,20 +307,51 @@ seqApply <- function(gdsfile, var.name, FUN,
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
     var.index <- match.arg(var.index)
+    njobs <- .NumParallel(parallel)
     param <- list(useraw=.useraw, progress=.progress, list_dup=.list_dup)
 
-    if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
+    if (inherits(as.is, "connection") | inherits(as.is, "gdsn.class"))
+    {
+        if (njobs > 1L)
+        {
+            stop("the parallel function is not available ",
+                "when 'as.is' is 'connection' or 'gdsn.class'.")
+        }
+    } else {
         as.is <- match.arg(as.is)
+    }
 
     if (margin == "by.variant")
     {
-        # C call, by.variant
-        rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
-            var.index, param, new.env())
+        if (njobs <= 1L)
+        {
+            # C call, by.variant
+            rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
+                var.index, param, new.env())
+        } else {
+            rv <- seqParallel(parallel, gdsfile,
+                FUN=function(gdsfile, .var.name, .FUN, .as.is, .var.index, .param, ...)
+                {
+                    .Call(SEQ_Apply_Variant, gdsfile, .var.name, .FUN, .as.is,
+                        .var.index, .param, new.env())
+                }, split=margin, .var.name=var.name, .FUN=FUN, .as.is=as.is,
+                .var.index=var.index, .param=param, ...)
+        }
     } else {
-        # C call, by.sample
-        rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
-            var.index, .useraw, new.env())
+        if (njobs <= 1L)
+        {
+            # C call, by.sample
+            rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
+                var.index, .useraw, new.env())
+        } else {
+            rv <- seqParallel(parallel, gdsfile,
+                FUN=function(gdsfile, .var.name, .FUN, .as.is, .var.index, .param, ...)
+                {
+                    .Call(SEQ_Apply_Sample, gdsfile, .var.name, .FUN, .as.is,
+                        .var.index, .param, new.env())
+                }, split=margin, .var.name=var.name, .FUN=FUN, .as.is=as.is,
+                .var.index=var.index, .param=param, ...)
+        }
     }
 
     if (!is.character(as.is) | identical(as.is, "none"))

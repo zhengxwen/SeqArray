@@ -14,10 +14,11 @@ seqParApply(cl=getOption("seqarray.parallel", FALSE), x, FUN,
 }
 \arguments{
     \item{cl}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
-        parallel processing with the maximum number of cores minor one;
-        a numeric value: the number of cores to be used;
-        a cluster object for parallel processing, created by the functions
-        in the package \code{\link{parallel}}, like \code{\link{makeCluster}}.
+        multicore processing (the maximum number of cores minor one);
+        a numeric value: the number of cores to be used; a \code{cluster}
+        object for parallel processing, created by the functions in the package
+        \code{\link{parallel}}, like \code{\link{makeCluster}};
+        a \code{BiocParallelParam} object from the BiocParallel package.
         See details}
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object, or \code{NULL}}
     \item{FUN}{the function to be applied, should be like
