@@ -139,7 +139,7 @@ s <- 0
 seqApply(f, "$dosage", function(x)
     {
         p <- 0.5 * mean(x, na.rm=TRUE)      # allele frequency
-        g <- (x - 2*p) / sqrt(p*(1-p))      # adjusted by allele frequency
+        g <- (x - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
         g[is.na(g)] <- 0                    # correct missing values
         s <<- s + (g %o% g)                 # update the cov matrix s in the parent environment
     }, margin="by.variant", .progress=TRUE)
@@ -168,7 +168,7 @@ genmat <- seqParallel(4, file, FUN = function(f)
         seqApply(f, "$dosage", function(x)
             {
                 p <- 0.5 * mean(x, na.rm=TRUE)      # allele frequency
-                g <- (x - 2*p) / sqrt(p*(1-p))      # adjusted by allele frequency
+                g <- (x - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
                 g[is.na(g)] <- 0                    # correct missing values
                 s <<- s + (g %o% g)                 # update the cov matrix s in the parent environment
             }, margin="by.variant")

@@ -182,7 +182,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
     .combine="unlist", .selection.flag=FALSE, ...)
 {
     # check
-    stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) | inherits(cl, "cluster"))
+    stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) |
+        inherits(cl, "cluster") | inherits(cl, "BiocParallelParam"))
     stopifnot(is.null(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.function(FUN))
     split <- match.arg(split)
@@ -269,7 +270,8 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
                 # set filter
                 seqSetFilter(.file,
                     sample.sel = memDecompress(.sel_sample, type="gzip"),
-                    variant.sel = memDecompress(.sel_variant, type="gzip"))
+                    variant.sel = memDecompress(.sel_variant, type="gzip"),
+                    verbose=FALSE)
                 .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
                     .proc_cnt, .selection.flag)
 
@@ -281,7 +283,7 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             }
 
         }, .combinefun = .combine, .stopcluster=FALSE,
-            .proc_cnt = length(cl), .gds.fn = gdsfile$filename,
+            .proc_cnt = njobs, .gds.fn = gdsfile$filename,
             .sel_sample = memCompress(sel$sample.sel, type="gzip"),
             .sel_variant = memCompress(sel$variant.sel, type="gzip"),
             FUN = FUN, .split = split, .selection.flag=.selection.flag,
@@ -310,9 +312,46 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
             sel <- list(sample.sel=raw(), variant.sel=raw())
         }
 
-####
+        ans <- BiocParallel::bplapply(seq_len(njobs), FUN =
+            function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample, .sel_variant,
+                .FUN, .split, .selection.flag, ...)
+        {
+            # export to global variables
+            .Call(SEQ_IntAssign, process_index, .proc_idx)
+            .Call(SEQ_IntAssign, process_count, .proc_cnt)
 
+            # load the package
+            library("SeqArray")
 
+            if (is.null(.gds.fn))
+            {
+                # call the user-defined function
+                .FUN(...)
+            } else {
+                # open the file
+                .file <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
+                on.exit({ seqClose(.file) })
+
+                # set filter
+                seqSetFilter(.file,
+                    sample.sel = memDecompress(.sel_sample, type="gzip"),
+                    variant.sel = memDecompress(.sel_variant, type="gzip"),
+                    verbose=FALSE)
+                .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
+                    .proc_cnt, .selection.flag)
+
+                # call the user-defined function
+                if (.selection.flag)
+                    .FUN(.file, .ss, ...)
+                else
+                    .FUN(.file, ...)
+            }
+
+        },  .proc_cnt = njobs, .gds.fn = gdsfile$filename,
+            .sel_sample = memCompress(sel$sample.sel, type="gzip"),
+            .sel_variant = memCompress(sel$variant.sel, type="gzip"),
+            .FUN = FUN, .split = split, .selection.flag=.selection.flag,
+            ..., BPPARAM=cl)
 
         if (is.list(ans))
         {
