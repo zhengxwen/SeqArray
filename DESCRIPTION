@@ -2,7 +2,7 @@ Package: SeqArray
 Type: Package
 Title: Big Data Management of Whole-genome Sequence Variant Calls
 Version: 1.12.7
-Date: 2016-09-01
+Date: 2016-09-02
 Depends: R (>= 3.3.0), gdsfmt (>= 1.8.0)
 Imports: methods, parallel, S4Vectors, IRanges, GenomicRanges,
         GenomeInfoDb, SummarizedExperiment, Biostrings, VariantAnnotation
@@ -25,4 +25,4 @@ VignetteBuilder: knitr
 ByteCompile: TRUE
 URL: http://github.com/zhengxwen/SeqArray
 BugReports: http://github.com/zhengxwen/SeqArray/issues
-biocViews: Infrastructure, Sequencing, Genetics
+biocViews: Infrastructure, DataRepresentation, Sequencing, Genetics

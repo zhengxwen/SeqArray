@@ -14,6 +14,7 @@ useDynLib(SeqArray,
     SEQ_ToVCF_Init, SEQ_ToVCF_Done, SEQ_ToVCF, SEQ_ToVCF_Di_WrtFmt,
 
     SEQ_Quote, SEQ_GetData, SEQ_Apply_Variant, SEQ_Apply_Sample,
+    SEQ_BApply_Variant,
 
     SEQ_ConvBEDFlag, SEQ_ConvBED2GDS,
     SEQ_SelectFlag,
@@ -21,7 +22,7 @@ useDynLib(SeqArray,
     SEQ_IntAssign, SEQ_DNAStrSet,
 
     SEQ_ExternalName0, SEQ_ExternalName1, SEQ_ExternalName2,
-    SEQ_ExternalName3, SEQ_ExternalName4
+    SEQ_ExternalName3, SEQ_ExternalName4, SEQ_ExternalName5
 )
 
 # Import all packages listed as Imports or Depends

@@ -762,50 +762,6 @@ COREARRAY_DLL_LOCAL const char *Txt_Apply_VarIdx[] =
 };
 
 
-/// output to a connection
-inline static void PutText(Rconnection file, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	(*file->vfprintf)(file, fmt, args);
-	va_end(args);
-}
-
-
-///
-inline static void AppendGDS(PdGDSObj Obj, SEXP Val)
-{
-	switch (TYPEOF(Val))
-	{
-	case LGLSXP:  // logical
-		GDS_Array_AppendData(Obj, XLENGTH(Val), LOGICAL(Val), svInt32);
-		break;
-	case INTSXP:  // integer
-		GDS_Array_AppendData(Obj, XLENGTH(Val), INTEGER(Val), svInt32);
-		break;
-	case REALSXP:  // numeric
-		GDS_Array_AppendData(Obj, XLENGTH(Val), REAL(Val), svFloat64);
-		break;
-	case RAWSXP:  // RAW
-		GDS_Array_AppendData(Obj, XLENGTH(Val), RAW(Val), svInt8);
-		break;
-	case STRSXP:  // character
-		{
-			R_xlen_t n = XLENGTH(Val);
-			vector<string> buf(n);
-			for (R_xlen_t i=0; i < n; i++)
-			{
-				SEXP s = STRING_ELT(Val, i);
-				if (s != NA_STRING) buf[i] = translateCharUTF8(s);
-			}
-			GDS_Array_AppendData(Obj, n, &buf[0], svStrUTF8);
-		}
-		break;
-	default:
-		throw ErrSeqArray("the user-defined function should return a vector.");
-	}
-}
-
 
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
@@ -1074,7 +1030,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 					size_t n = XLENGTH(val);
 					for (size_t i=0; i < n; i++)
 					{
-						PutText(OutputConn, "%s\n", CHAR(STRING_ELT(val, i)));
+						ConnPutText(OutputConn, "%s\n", CHAR(STRING_ELT(val, i)));
 					}
 				} else {
 					if (TYPEOF(val) != RAWSXP)
@@ -1086,7 +1042,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				}
 				break;
 			case 8:  // gdsn.class
-				AppendGDS(OutputGDS, val);
+				RAppendGDS(OutputGDS, val);
 				break;
 			}
 			ans_index ++;

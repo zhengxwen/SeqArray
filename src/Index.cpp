@@ -836,6 +836,7 @@ COREARRAY_DLL_LOCAL size_t RLength(SEXP val)
 	return (!Rf_isNull(val)) ? XLENGTH(val) : 0;
 }
 
+
 COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name)
 {
 	SEXP elmt = R_NilValue;
@@ -851,6 +852,7 @@ COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name)
 	}
 	return elmt;
 }
+
 
 /// Allocate R object given by SVType
 COREARRAY_DLL_LOCAL SEXP RObject_GDS(PdAbstractArray Node, size_t n,
@@ -890,6 +892,42 @@ COREARRAY_DLL_LOCAL SEXP RObject_GDS(PdAbstractArray Node, size_t n,
 	return ans;
 }
 
+
+/// Append data to a GDS node
+COREARRAY_DLL_LOCAL void RAppendGDS(PdAbstractArray Node, SEXP Val)
+{
+	switch (TYPEOF(Val))
+	{
+	case LGLSXP:  // logical
+		GDS_Array_AppendData(Node, XLENGTH(Val), LOGICAL(Val), svInt32);
+		break;
+	case INTSXP:  // integer
+		GDS_Array_AppendData(Node, XLENGTH(Val), INTEGER(Val), svInt32);
+		break;
+	case REALSXP:  // numeric
+		GDS_Array_AppendData(Node, XLENGTH(Val), REAL(Val), svFloat64);
+		break;
+	case RAWSXP:  // RAW
+		GDS_Array_AppendData(Node, XLENGTH(Val), RAW(Val), svInt8);
+		break;
+	case STRSXP:  // character
+		{
+			R_xlen_t n = XLENGTH(Val);
+			vector<string> buf(n);
+			for (R_xlen_t i=0; i < n; i++)
+			{
+				SEXP s = STRING_ELT(Val, i);
+				if (s != NA_STRING) buf[i] = translateCharUTF8(s);
+			}
+			GDS_Array_AppendData(Node, n, &buf[0], svStrUTF8);
+		}
+		break;
+	default:
+		throw ErrSeqArray("the user-defined function should return a vector.");
+	}
+}
+
+
 COREARRAY_DLL_LOCAL C_BOOL *NeedArrayTRUEs(size_t len)
 {
 	if (len <= sizeof(ArrayTRUEs))
@@ -926,6 +964,7 @@ COREARRAY_DLL_LOCAL const char *PrettyInt(int val)
 	return p;
 }
 
+
 /// Text matching, return -1 when no maching
 COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[])
 {
@@ -936,6 +975,7 @@ COREARRAY_DLL_LOCAL int MatchText(const char *txt, const char *list[])
 	}
 	return -1;
 }
+
 
 /// Get the number of alleles
 COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list)
@@ -962,6 +1002,7 @@ COREARRAY_DLL_LOCAL int GetNumOfAllele(const char *allele_list)
 	return n;
 }
 
+
 /// Get the index in an allele list
 COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_list)
 {
@@ -984,6 +1025,7 @@ COREARRAY_DLL_LOCAL int GetIndexOfAllele(const char *allele, const char *allele_
 	}
 	return -1;
 }
+
 
 /// Get strings split by comma
 COREARRAY_DLL_LOCAL void GetAlleles(const char *alleles, vector<string> &out)
@@ -1018,6 +1060,7 @@ COREARRAY_DLL_LOCAL void GDS_PATH_PREFIX_CHECK(const char *path)
 	}
 }
 
+
 COREARRAY_DLL_LOCAL void GDS_VARIABLE_NAME_CHECK(const char *p)
 {
 	for (; *p != 0; p++)
@@ -1029,6 +1072,7 @@ COREARRAY_DLL_LOCAL void GDS_VARIABLE_NAME_CHECK(const char *p)
 		}
 	}
 }
+
 
 /// get PdGDSObj from a SEXP object
 COREARRAY_DLL_LOCAL string GDS_PATH_PREFIX(const string &path, char prefix)
@@ -1052,6 +1096,16 @@ COREARRAY_DLL_LOCAL string GDS_PATH_PREFIX(const string &path, char prefix)
 		s.insert(s.begin(), prefix);
 
 	return s;
+}
+
+
+/// output to a connection
+COREARRAY_DLL_LOCAL void ConnPutText(Rconnection file, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	(*file->vfprintf)(file, fmt, args);
+	va_end(args);
 }
 
 }

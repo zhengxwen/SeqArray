@@ -1,5 +1,6 @@
 \name{seqApply}
 \alias{seqApply}
+\alias{seqBlockApply}
 \title{Apply Functions Over Array Margins}
 \description{
     Returns a vector or list of values obtained by applying a function to
@@ -10,6 +11,9 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
     var.index=c("none", "relative", "absolute"), parallel=FALSE,
     .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
+    as.is=c("none", "list"), var.index=c("none", "relative", "absolute"),
+    bsize=1024L, .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -31,6 +35,7 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}
+    \item{bsize}{block size}
     \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible}
@@ -54,7 +59,7 @@ alleles.
 the high-speed memory instead of disk.
 }
 \value{
-    A vector or list of values.
+    A vector, a list of values or none.
 }
 
 \author{Xiuwen Zheng}
@@ -89,6 +94,11 @@ seqApply(f, "genotype", FUN=print, margin="by.variant", .useraw=TRUE)
 
 seqApply(f, "genotype", FUN=print, margin="by.sample")
 seqApply(f, "genotype", FUN=print, margin="by.sample", .useraw=TRUE)
+
+# read in block
+seqGetData(f, "$dosage")
+seqBlockApply(f, "$dosage", print, bsize=3)
+seqBlockApply(f, c(dos="$dosage", pos="position"), print, bsize=3)
 
 
 # read multiple variables variant by variant

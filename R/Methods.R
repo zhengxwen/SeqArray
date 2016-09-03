@@ -362,6 +362,44 @@ seqApply <- function(gdsfile, var.name, FUN,
 
 
 #######################################################################
+# Apply functions over margins with chunks
+#
+seqBlockApply <- function(gdsfile, var.name, FUN,
+    margin=c("by.variant"), as.is=c("none", "list"),
+    var.index=c("none", "relative", "absolute"), bsize=1024L,
+    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.character(var.name), length(var.name)>0L)
+
+    FUN <- match.fun(FUN)
+    margin <- match.arg(margin)
+    var.index <- match.arg(var.index)
+    stopifnot(is.numeric(bsize), length(bsize)==1L)
+    param <- list(bsize=bsize, useraw=.useraw, progress=.progress,
+        list_dup=.list_dup)
+
+    if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
+    {
+        as.is <- match.arg(as.is)
+    }
+
+    if (margin == "by.variant")
+    {
+        # C call, by.variant
+        rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,
+            var.index, param, new.env())
+    }
+
+    if (!is.character(as.is) | identical(as.is, "none"))
+        return(invisible())
+    rv
+}
+
+
+
+#######################################################################
 # Data Analysis
 #######################################################################
 

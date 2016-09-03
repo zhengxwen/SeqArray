@@ -1103,6 +1103,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName4(SEXP w, SEXP x, SEXP y, SEXP z)
 	return R_NilValue;
 }
 
+COREARRAY_DLL_EXPORT SEXP SEQ_ExternalName5(SEXP v, SEXP w, SEXP x, SEXP y, SEXP z)
+{
+	return R_NilValue;
+}
+
 
 /// initialize the package
 COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
@@ -1121,11 +1126,13 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_MergeInfo(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergeFormat(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
+	extern SEXP SEQ_BApply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+
 	static R_CallMethodDef callMethods[] =
 	{
 		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
 		CALL(SEQ_ExternalName2, 2),         CALL(SEQ_ExternalName3, 3),
-		CALL(SEQ_ExternalName4, 4),
+		CALL(SEQ_ExternalName4, 4),         CALL(SEQ_ExternalName5, 5),
 
 		CALL(SEQ_File_Init, 1),             CALL(SEQ_File_Done, 1),
 		CALL(SEQ_FilterPushEmpty, 1),       CALL(SEQ_FilterPushLast, 1),
@@ -1144,6 +1151,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_GetData, 3),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
+		CALL(SEQ_BApply_Variant, 7),
 
 		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),
 		CALL(SEQ_SelectFlag, 2),

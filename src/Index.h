@@ -507,9 +507,13 @@ COREARRAY_DLL_LOCAL size_t RLength(SEXP val);
 /// get the list element named str, or return R_NilValue
 COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name);
 
-/// Allocate R object given by SVType
+/// allocate R object given by SVType
 COREARRAY_DLL_LOCAL SEXP RObject_GDS(PdAbstractArray Node, size_t n,
 	int &nProtected, bool bit1_is_logical);
+
+/// append data to a GDS node
+COREARRAY_DLL_LOCAL void RAppendGDS(PdAbstractArray Node, SEXP Val);
+
 
 /// requires a vector of TRUEs
 COREARRAY_DLL_LOCAL C_BOOL *NeedArrayTRUEs(size_t len);
@@ -538,6 +542,10 @@ COREARRAY_DLL_LOCAL void GDS_VARIABLE_NAME_CHECK(const char *p);
 
 /// get PdGDSObj from a SEXP object
 COREARRAY_DLL_LOCAL string GDS_PATH_PREFIX(const string &path, char prefix);
+
+
+/// output to a connection
+COREARRAY_DLL_LOCAL void ConnPutText(Rconnection file, const char *fmt, ...);
 
 
 
