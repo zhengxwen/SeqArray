@@ -330,12 +330,12 @@ seqApply <- function(gdsfile, var.name, FUN,
                 var.index, param, new.env())
         } else {
             rv <- seqParallel(parallel, gdsfile,
-                FUN=function(gdsfile, .var.name, .FUN, .as.is, .var.index, .param, ...)
+                FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
-                    .Call(SEQ_Apply_Variant, gdsfile, .var.name, .FUN, .as.is,
-                        .var.index, .param, new.env())
-                }, split=margin, .var.name=var.name, .FUN=FUN, .as.is=as.is,
-                .var.index=var.index, .param=param, ...)
+                    .Call(SEQ_Apply_Variant, gdsfile, .vn, .FUN, .as.is,
+                        .varidx, .param, new.env())
+                }, split=margin, .vn=var.name, .FUN=FUN, .as.is=as.is,
+                .varidx=var.index, .param=param, ...)
         }
     } else {
         if (njobs <= 1L)
@@ -345,12 +345,12 @@ seqApply <- function(gdsfile, var.name, FUN,
                 var.index, .useraw, new.env())
         } else {
             rv <- seqParallel(parallel, gdsfile,
-                FUN=function(gdsfile, .var.name, .FUN, .as.is, .var.index, .param, ...)
+                FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
-                    .Call(SEQ_Apply_Sample, gdsfile, .var.name, .FUN, .as.is,
-                        .var.index, .param, new.env())
-                }, split=margin, .var.name=var.name, .FUN=FUN, .as.is=as.is,
-                .var.index=var.index, .param=param, ...)
+                    .Call(SEQ_Apply_Sample, gdsfile, .vn, .FUN, .as.is,
+                        .varidx, .param, new.env())
+                }, split=margin, .vn=var.name, .FUN=FUN, .as.is=as.is,
+                .varidx=var.index, .param=param, ...)
         }
     }
 
@@ -364,10 +364,10 @@ seqApply <- function(gdsfile, var.name, FUN,
 #######################################################################
 # Apply functions over margins with chunks
 #
-seqBlockApply <- function(gdsfile, var.name, FUN,
-    margin=c("by.variant"), as.is=c("none", "list"),
-    var.index=c("none", "relative", "absolute"), bsize=1024L,
-    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
+    as.is=c("none", "list"), var.index=c("none", "relative", "absolute"),
+    bsize=1024L, parallel=FALSE, .useraw=FALSE, .progress=FALSE,
+    .list_dup=TRUE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -377,6 +377,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN,
     margin <- match.arg(margin)
     var.index <- match.arg(var.index)
     stopifnot(is.numeric(bsize), length(bsize)==1L)
+    njobs <- .NumParallel(parallel)
     param <- list(bsize=bsize, useraw=.useraw, progress=.progress,
         list_dup=.list_dup)
 
@@ -387,9 +388,20 @@ seqBlockApply <- function(gdsfile, var.name, FUN,
 
     if (margin == "by.variant")
     {
-        # C call, by.variant
-        rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,
-            var.index, param, new.env())
+        if (njobs <= 1L)
+        {
+            # C call, by.variant
+            rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,
+                var.index, param, new.env())
+        } else {
+            rv <- seqParallel(parallel, gdsfile,
+                FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
+                {
+                    .Call(SEQ_BApply_Variant, gdsfile, .vn, .FUN, .as.is,
+                        .varidx, .param, new.env())
+                }, split=margin, .vn=var.name, .FUN=FUN, .as.is=as.is,
+                .varidx=var.index, .param=param, ...)
+        }
     }
 
     if (!is.character(as.is) | identical(as.is, "none"))

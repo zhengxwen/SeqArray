@@ -13,7 +13,8 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
 seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
     as.is=c("none", "list"), var.index=c("none", "relative", "absolute"),
-    bsize=1024L, .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+    bsize=1024L, parallel=FALSE, .useraw=FALSE, .progress=FALSE,
+    .list_dup=TRUE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}

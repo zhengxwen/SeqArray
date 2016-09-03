@@ -129,7 +129,7 @@ head(af)
 Here `parallel` specifies the number of cores.
 
 
-## Principal Component Analysis Implementation
+## PCA R Implementation
 
 Principal Component Analysis (PCA) is a common tool used in exploratory data analysis for high-dimensional data. PCA is often involved with the calculation of covariance matrix, and the following R code implements the calculation proposed in [@Patterson:2006:PLoS-Genet:17194218]. The user-defined function computes the covariance matrix for each variant and adds up to a total matrix `s`. The argument `.progress=TRUE` enables the display of progress information during the calculation.
 ```R
@@ -153,27 +153,51 @@ eig <- eigen(s)
 
 ```
 [>.................................................]  0%, ETC: NA 
-[=>................................................]  2%, ETC: 16.4m
+[=>................................................]  2%, ETC: 5.4m
 ...
+[==================================================] 100%, ETC: 0s
+```
+
+```R
+# covariance variable with an initial value
+s <- 0
+
+seqBlockApply(file, "$dosage", function(x)
+    {
+        p <- 0.5 * colMeans(x, na.rm=TRUE)     # allele frequencies (a vector)
+        g <- (t(x) - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
+        g[is.na(g)] <- 0                       # correct missing values
+        s <<- s + crossprod(g)                 # update the cov matrix s in the parent environment
+    }, margin="by.variant", .progress=TRUE)
+
+# scaled by the trace over the number of samples
+s <- s / (sum(diag(s)) / nrow(s))
+# eigen-decomposition
+eig <- eigen(s)
+```
+```
+[>.................................................]  0%, ETC: NA
+[==================>...............................] 35%, ETC: 9s
+[======================================>...........] 75%, ETC: 3s
 [==================================================] 100%, ETC: 0s
 ```
 
 `seqParallel()` utilizes the facilities offered by the R parallel package to perform calculations within a cluster or SMP environment, and the genotypes are automatically split into non-overlapping parts. The parallel implementation with R is shown as follows, and the C optimized function is also available in the SNPRelate package.
 
-```R
+```{r}
 # the datasets are automatically split into four non-overlapping parts
-genmat <- seqParallel(4, file, FUN = function(f)
+genmat <- seqParallel(2, file, FUN = function(f)
     {
         s <- 0  # covariance variable with an initial value
-        seqApply(f, "$dosage", function(x)
+        seqBlockApply(file, "$dosage", function(x)
             {
-                p <- 0.5 * mean(x, na.rm=TRUE)      # allele frequency
-                g <- (x - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
-                g[is.na(g)] <- 0                    # correct missing values
-                s <<- s + (g %o% g)                 # update the cov matrix s in the parent environment
+                p <- 0.5 * colMeans(x, na.rm=TRUE)     # allele frequencies (a vector)
+                g <- (t(x) - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
+                g[is.na(g)] <- 0                       # correct missing values
+                s <<- s + crossprod(g)                 # update the cov matrix s in the parent environment
             }, margin="by.variant")
         s  # output
-    }, .combine = "+",     # sum "s" of different processes together
+    }, .combine = "+",    # sum "s" of different processes together
     split = "by.variant")
 
 # scaled by the trace over the number of samples
@@ -181,7 +205,9 @@ genmat <- genmat / (sum(diag(genmat)) / nrow(genmat))
 
 # eigen-decomposition
 eig <- eigen(genmat)
+```
 
+```{r fig.width=5, fig.height=5, fig.align='center'}
 # figure
 plot(eig$vectors[,1], eig$vectors[,2], xlab="PC 1", ylab="PC 2")
 ```
