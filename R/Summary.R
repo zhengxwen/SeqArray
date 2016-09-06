@@ -782,7 +782,7 @@ seqSystem <- function()
 {
     rv <- .Call(SEQ_System)
     rv$options <- list(
-        seqarray.parallel = getOption("seqarray.parallel", FALSE)
+        seqarray.parallel = seqGetParallel()
     )
     rv
 }

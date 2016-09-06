@@ -127,6 +127,16 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 
 
 #######################################################################
+# Get the parallel parameters in SeqArray
+#
+seqGetParallel <- function()
+{
+    getOption("seqarray.parallel", FALSE)
+}
+
+
+
+#######################################################################
 # Storage options for the SeqArray GDS file
 #
 seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
@@ -177,9 +187,9 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 #######################################################################
 # Apply functions in parallel
 #
-seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
-    gdsfile, FUN, split=c("by.variant", "by.sample", "none"),
-    .combine="unlist", .selection.flag=FALSE, ...)
+seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
+    split=c("by.variant", "by.sample", "none"), .combine="unlist",
+    .selection.flag=FALSE, ...)
 {
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) |
@@ -443,8 +453,7 @@ seqParallel <- function(cl=getOption("seqarray.parallel", FALSE),
 }
 
 
-seqParApply <- function(cl=getOption("seqarray.parallel", FALSE), x, FUN,
-    load.balancing=TRUE, ...)
+seqParApply <- function(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 {
     njobs <- .NumParallel(cl, "cl")
     stopifnot(is.logical(load.balancing))

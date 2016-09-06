@@ -6,10 +6,8 @@
     Calculates the allele frequencies or counts.
 }
 \usage{
-seqAlleleFreq(gdsfile, ref.allele=0L, .progress=FALSE,
-    parallel=getOption("seqarray.parallel", FALSE))
-seqAlleleCount(gdsfile, .progress=FALSE,
-    parallel=getOption("seqarray.parallel", FALSE))
+seqAlleleFreq(gdsfile, ref.allele=0L, .progress=FALSE, parallel=seqGetParallel())
+seqAlleleCount(gdsfile, .progress=FALSE, parallel=seqGetParallel())
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -35,7 +33,7 @@ ancestral allele for the derived allele frequency).
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqNumAllele}}, \code{\link{seqMissing}},
-    \code{\link{seqParallel}}
+    \code{\link{seqParallel}}, \code{\link{seqGetParallel}}
 }
 
 \examples{

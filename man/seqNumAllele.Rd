@@ -16,8 +16,7 @@ seqNumAllele(gdsfile)
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqAlleleFreq}}, \code{\link{seqMissing}},
-    \code{\link{seqParallel}}
+    \code{\link{seqAlleleFreq}}, \code{\link{seqMissing}}
 }
 
 \examples{

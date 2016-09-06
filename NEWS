@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.12.0-1.12.7
+CHANGES IN VERSION 1.12.0-1.12.8
 -------------------------
 
     o the version number was bumped for the Bioconductor release version 3.3
@@ -14,11 +14,10 @@ CHANGES IN VERSION 1.12.0-1.12.7
 
     o 'as.is' can be a `gdsn.class` object in `seqApply()`
 
-    o v1.12.7: a new argument 'parallel' in `seqApply()`
+    o v1.12.7: a new argument 'parallel' in `seqApply()`, BiocParallel
+      integration in `seqParallel()` and a new function `seqBlockApply()`
 
-    o v1.12.7: BiocParallel integration in `seqParallel()`
-
-    o v1.12.7: a new function `seqBlockApply()`
+    o v1.12.8: a new function `seqGetParallel()`
 
 
 CHANGES IN VERSION 1.11.19-1.11.22

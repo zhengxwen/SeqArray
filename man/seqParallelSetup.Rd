@@ -1,11 +1,13 @@
 \name{seqParallelSetup}
 \alias{seqParallelSetup}
-\title{Setup a Parallel Environment}
+\alias{seqGetParallel}
+\title{Setup/Get a Parallel Environment}
 \description{
     Setups a parallel environment in R for the current session.
 }
 \usage{
 seqParallelSetup(cluster=TRUE, verbose=TRUE)
+seqGetParallel()
 }
 \arguments{
     \item{cluster}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
@@ -27,7 +29,8 @@ to the value of \code{cluster}.
 does stopping the registered cluster.
 }
 \value{
-    None.
+    \code{seqParallelSetup()} has no return, and \code{seqGetParallel()} returns
+\code{getOption("seqarray.parallel", FALSE)}.
 }
 
 \author{Xiuwen Zheng}

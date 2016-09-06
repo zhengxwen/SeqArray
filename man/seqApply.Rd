@@ -66,7 +66,7 @@ the high-speed memory instead of disk.
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqSetFilter}}, \code{\link{seqGetData}},
-    \code{\link{seqParallel}}
+    \code{\link{seqParallel}}, \code{\link{seqGetParallel}}
 }
 
 \examples{

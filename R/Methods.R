@@ -429,7 +429,7 @@ seqNumAllele <- function(gdsfile)
 # Missing rate
 #
 seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
-    parallel=getOption("seqarray.parallel", FALSE))
+    parallel=seqGetParallel())
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -466,7 +466,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
 # Allele frequency
 #
 seqAlleleFreq <- function(gdsfile, ref.allele=0L, .progress=FALSE,
-    parallel=getOption("seqarray.parallel", FALSE))
+    parallel=seqGetParallel())
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -536,8 +536,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, .progress=FALSE,
 #######################################################################
 # Allele Counts
 #
-seqAlleleCount <- function(gdsfile, .progress=FALSE,
-    parallel=getOption("seqarray.parallel", FALSE))
+seqAlleleCount <- function(gdsfile, .progress=FALSE, parallel=seqGetParallel())
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))

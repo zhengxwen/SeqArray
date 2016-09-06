@@ -6,11 +6,10 @@
     Applies a user-defined function in parallel.
 }
 \usage{
-seqParallel(cl=getOption("seqarray.parallel", FALSE), gdsfile, FUN,
+seqParallel(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, ...)
-seqParApply(cl=getOption("seqarray.parallel", FALSE), x, FUN,
-    load.balancing=TRUE, ...)
+seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 }
 \arguments{
     \item{cl}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
@@ -64,7 +63,8 @@ setup multiple streams of pseudo-random numbers, and see
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqSetFilter}}, \code{\link{seqGetData}},
-    \code{\link{seqApply}}, \code{\link{seqParallelSetup}}
+    \code{\link{seqApply}}, \code{\link{seqParallelSetup}},
+    \code{\link{seqGetParallel}}
 }
 
 \examples{

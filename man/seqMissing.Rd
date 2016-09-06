@@ -5,8 +5,7 @@
     Calculates the missing rates per variant or per sample.
 }
 \usage{
-seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE,
-    parallel=getOption("seqarray.parallel", FALSE))
+seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE, parallel=seqGetParallel())
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -25,7 +24,7 @@ seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE,
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqAlleleFreq}}, \code{\link{seqNumAllele}},
-    \code{\link{seqParallel}}
+    \code{\link{seqParallel}}, \code{\link{seqGetParallel}}
 }
 
 \examples{
