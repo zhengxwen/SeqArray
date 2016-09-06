@@ -650,6 +650,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		if (nVariant <= 0)
 			throw ErrSeqArray("There is no selected variant.");
 
+		// the number of data blocks
 		int NumBlock = nVariant / bsize;
 		if (nVariant % bsize) NumBlock ++;
 
@@ -671,7 +672,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		} else if (strcmp(CHAR(STRING_ELT(as_is, 0)), "list") == 0)
 		{
 			DatType = 1;
-			rv_ans = PROTECT(NEW_LIST(nVariant)); nProtected ++;
+			rv_ans = PROTECT(NEW_LIST(NumBlock)); nProtected ++;
 		} else {
 			DatType = 0;
 		}

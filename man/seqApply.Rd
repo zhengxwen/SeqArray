@@ -99,6 +99,7 @@ seqApply(f, "genotype", FUN=print, margin="by.sample", .useraw=TRUE)
 # read in block
 seqGetData(f, "$dosage")
 seqBlockApply(f, "$dosage", print, bsize=3)
+seqBlockApply(f, "$dosage", function(x) x, as.is="list", bsize=3)
 seqBlockApply(f, c(dos="$dosage", pos="position"), print, bsize=3)
 
 
