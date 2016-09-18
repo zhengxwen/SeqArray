@@ -26,8 +26,9 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         processes, or "none" for no split}
     \item{.combine}{define a fucntion for combining results from different
         processes; by default, \code{"unlist"} is used, to produce a vector
-        which contains all the atomic components; \code{"list"}, return a list
-        of results created by processes; \code{"none"}, no return; or a
+        which contains all the atomic components, via
+        \code{unlist(..., recursive=FALSE)}; \code{"list"}, return a list
+        of results created by child processes; \code{"none"}, no return; or a
         function, like "+".}
     \item{.selection.flag}{\code{TRUE} -- passes a logical vector of selection
         to the second argument of \code{FUN(gdsfile, selection, ...)}}

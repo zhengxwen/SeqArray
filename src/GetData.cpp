@@ -669,12 +669,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		{
 			OutputGDS = GDS_R_SEXP2Obj(as_is, FALSE);
 			DatType = 3;
-		} else if (strcmp(CHAR(STRING_ELT(as_is, 0)), "list") == 0)
-		{
-			DatType = 1;
-			rv_ans = PROTECT(NEW_LIST(NumBlock)); nProtected ++;
 		} else {
-			DatType = 0;
+			const char *s = CHAR(STRING_ELT(as_is, 0));
+			if (strcmp(s, "list")==0 || strcmp(s, "unlist")==0)
+			{
+				DatType = 1;
+				rv_ans = PROTECT(NEW_LIST(NumBlock)); nProtected ++;
+			} else {
+				DatType = 0;
+			}
 		}
 
 		// rho environment

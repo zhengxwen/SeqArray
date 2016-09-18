@@ -144,15 +144,15 @@ seqApply(f, "$dosage", function(x)
         s <<- s + (g %o% g)                 # update the cov matrix s in the parent environment
     }, margin="by.variant", .progress=TRUE)
 
-# scaled by the trace over the number of samples
-s <- s / (sum(diag(s)) / nrow(s))
+# scaled by the number of samples over the trace
+s <- s * (nrow(s) / sum(diag(s)))
 
 # eigen-decomposition
 eig <- eigen(s)
 ```
 
 ```
-[>.................................................]  0%, ETC: NA 
+[..................................................]  0%, ETC: --- 
 [=>................................................]  2%, ETC: 5.4m
 ...
 [==================================================] 100%, ETC: 0s
@@ -170,13 +170,14 @@ seqBlockApply(file, "$dosage", function(x)
         s <<- s + crossprod(g)                 # update the cov matrix s in the parent environment
     }, margin="by.variant", .progress=TRUE)
 
-# scaled by the trace over the number of samples
-s <- s / (sum(diag(s)) / nrow(s))
+# scaled by the number of samples over the trace
+s <- s * (nrow(s) / sum(diag(s)))
+
 # eigen-decomposition
 eig <- eigen(s)
 ```
 ```
-[>.................................................]  0%, ETC: NA
+[..................................................]  0%, ETC: ---
 [==================>...............................] 35%, ETC: 9s
 [======================================>...........] 75%, ETC: 3s
 [==================================================] 100%, ETC: 0s
@@ -189,7 +190,7 @@ eig <- eigen(s)
 genmat <- seqParallel(2, file, FUN = function(f)
     {
         s <- 0  # covariance variable with an initial value
-        seqBlockApply(file, "$dosage", function(x)
+        seqBlockApply(f, "$dosage", function(x)
             {
                 p <- 0.5 * colMeans(x, na.rm=TRUE)     # allele frequencies (a vector)
                 g <- (t(x) - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
@@ -200,8 +201,8 @@ genmat <- seqParallel(2, file, FUN = function(f)
     }, .combine = "+",    # sum "s" of different processes together
     split = "by.variant")
 
-# scaled by the trace over the number of samples
-genmat <- genmat / (sum(diag(genmat)) / nrow(genmat))
+# scaled by the number of samples over the trace
+genmat <- genmat * (nrow(genmat) / sum(diag(genmat)))
 
 # eigen-decomposition
 eig <- eigen(genmat)
@@ -517,7 +518,7 @@ abline(h=mean(sw$chr22.val), lty=3, col="red", lwd=2)
 
 # GENESIS
 
-The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers methodology for estimating, inferring and accounting for population and pedigree structure in genetic analyses. The current implementation provides functions to perform PC-AiR and PC-Relate [@Conomos2015;  @Conomos2016]. PC-AiR performs PCA on whole-genome genotypes taking into account known or cryptic relatedness in the study sample. PC-Relate uses ancestry representative principal components to accurately estimate measures of recent genetic relatedness. In addition, the development version of GENESIS supports for SeqArray files in mixed model association testing and introduce aggregate tests of rare variants including burden and sequence kernel association tests [@Wu2011].
+The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers methodology for estimating and accounting for population and pedigree structure in genetic analyses. The current implementation provides functions to perform PC-AiR and PC-Relate [@Conomos2015;  @Conomos2016]. PC-AiR performs PCA on whole-genome genotypes taking into account known or cryptic relatedness in the study sample. PC-Relate uses ancestry representative principal components to accurately estimate measures of recent genetic relatedness. In addition, the development version of GENESIS includes support for SeqArray files in mixed model association testing and introduces aggregate tests of rare variants including burden and sequence kernel association tests [@Wu2011].
 
 .
 

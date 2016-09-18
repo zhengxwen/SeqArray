@@ -365,9 +365,9 @@ seqApply <- function(gdsfile, var.name, FUN,
 # Apply functions over margins with chunks
 #
 seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
-    as.is=c("none", "list"), var.index=c("none", "relative", "absolute"),
-    bsize=1024L, parallel=FALSE, .useraw=FALSE, .progress=FALSE,
-    .list_dup=TRUE, ...)
+    as.is=c("none", "list", "unlist"),
+    var.index=c("none", "relative", "absolute"), bsize=1024L, parallel=FALSE,
+    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -406,6 +406,8 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
 
     if (!is.character(as.is) | identical(as.is, "none"))
         return(invisible())
+    else if (identical(as.is, "unlist"))
+        rv <- unlist(rv, recursive = FALSE)
     rv
 }
 

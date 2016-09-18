@@ -50,6 +50,10 @@
 #       include <tmmintrin.h>
 #   endif
 
+#   if defined(COREARRAY_SIMD_SSE4_1)  // SSE_4_1
+#       include <smmintrin.h>
+#   endif
+
 #   if defined(COREARRAY_SIMD_SSE4_2) || defined(__POPCNT__)
 #       define COREARRAY_HARDWARE_POPCNT
 #       include <nmmintrin.h>  // COREARRAY_SIMD_SSE4_2, for POPCNT

@@ -1,7 +1,7 @@
 ---
 title: "SeqArray Data Format and Access"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
-date: "Sep 03, 2016"
+date: "Sep 15, 2016"
 output:
   html_document:
     theme: spacelab
@@ -25,7 +25,7 @@ vignette: >
 
 # Overview
 
-The SeqArray file format is built on top of the Genomic Data Structure (GDS) format [@Zheng:2012:Bioinformatics:23060615]. GDS is a flexible and scalable data container with a hierarchical structure that can store multiple array-oriented data sets. It is intended for use with large-scale genomic datasets, especially for those which are much larger than the available main memory. GDS provides memory and performance efficient operations specifically designed for integers of less than 8 bits, since a diploid genotype usually occupies fewer bits than a byte. Data compression and decompression are available with relatively efficient random access. Data compression and decompression are available with relatively efficient random access. GDS is implemented using an optimized C++ library (CoreArray, [http://corearray.sourceforge.net](http://corearray.sourceforge.net)) and a high-level R interface is provided by the platform-independent R package gdsfmt ([http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)). Figure 1 shows the relationship between a SeqArray file and the underlying infrastructure upon which it is built. The minimum data fields required in a SeqArray file are sample and variant identifiers, variant chromosome, position and allele values and the value of the variant itself. SeqArray is a Bioconductor package [@Gentleman:2004aa; @R2016] available at [http://www.bioconductor.org/packages/SeqArray](http://www.bioconductor.org/packages/SeqArray) under the GNU General Public License v3.
+The SeqArray file format is built on top of the Genomic Data Structure (GDS) format [@Zheng2012]. GDS is a flexible and scalable data container with a hierarchical structure that can store multiple array-oriented data sets. It is intended for use with large-scale genomic datasets, especially for those which are much larger than the available main memory. GDS provides memory and performance efficient operations specifically designed for integers of less than 8 bits, since a diploid genotype usually occupies fewer bits than a byte. Data compression and decompression are available with relatively efficient random access. Data compression and decompression are available with relatively efficient random access. GDS is implemented using an optimized C++ library (CoreArray, [http://corearray.sourceforge.net](http://corearray.sourceforge.net)) and a high-level R interface is provided by the platform-independent R package gdsfmt ([http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)). Figure 1 shows the relationship between a SeqArray file and the underlying infrastructure upon which it is built. The minimum data fields required in a SeqArray file are sample and variant identifiers, variant chromosome, position and allele values and the value of the variant itself. SeqArray is a Bioconductor package [@Gentleman:2004aa; @R2016] available at [http://www.bioconductor.org/packages/SeqArray](http://www.bioconductor.org/packages/SeqArray) under the GNU General Public License v3.
 
 .
 
@@ -100,6 +100,8 @@ options(width=110L)
 ```{r}
 # load the R package SeqArray
 library(SeqArray)
+
+library(Rcpp)
 ```
 
 ## Data Format used in SeqArray
@@ -329,7 +331,7 @@ unlink("tmp.gds")
 | seqAlleleCount | Allele counts. [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleCount.html)  |
 | ...            | [![](link.png)](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)  |
 
-~
+.
 
 ## Get Data
 
@@ -550,159 +552,224 @@ system.time({
   0.157   0.002   0.168       <- the function takes 0.17 seconds
 ```
 
+.
 
-## Missing Rates
+.
 
-1. Calculate the missing rate per variant:
+## Missing Rates for Variants
+
+### seqApply
 
 ```{r}
-m.variant <- local({
-    # get ploidy, the number of samples and variants
-    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+# apply the function marginally
+m.variant <- seqApply(genofile, "genotype", function(x) mean(is.na(x)),
+    margin="by.variant", as.is="double", .progress=TRUE)
+# output
+length(m.variant); summary(m.variant)
+```
 
-    # apply the function marginally
-    m <- seqApply(genofile, "genotype", function(x) { sum(is.na(x)) },
-        margin="by.variant", as.is="integer")
+### C++ Integration
 
-    # output
-    m / (dm[1L] * dm[2L])
-})
+```{r}
+cppFunction("
+    double mean_na(IntegerVector x)
+    {
+        int len=x.size(), n=0;
+        for (int i=0; i < len; i++)
+        {
+            if (x[i] == NA_INTEGER) n++;
+        }
+        return double(n) / len;
+    }")
 
-length(m.variant)
+summary(seqApply(genofile, "genotype", mean_na, margin="by.variant", as.is="double"))
+```
+
+### seqBlockApply
+
+```{r}
+# apply the function marginally
+m.variant <- seqBlockApply(genofile, "genotype", function(x) {
+        colMeans(is.na(x), dims=2L)
+    }, margin="by.variant", as.is="unlist")
+# output
 summary(m.variant)
+```
 
+### seqBlockApply + Parallel
+
+```{r}
+# apply the function marginally with two cores
+m.variant <- seqBlockApply(genofile, "genotype", function(x) colMeans(is.na(x), dims=2L),
+    margin="by.variant", as.is="unlist", parallel=2)
+# output
+summary(m.variant)
+```
+
+### seqMissing
+
+```{r}
 # Or call the function in SeqArray
 summary(seqMissing(genofile, per.variant=TRUE))
 ```
 
-2. Calculate the missing rate per sample:
+.
+
+.
+
+## Missing Rates for Samples
+
+### seqApply
 
 ```{r}
-m.sample <- local({
-    # get ploidy, the number of samples and variants
-    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+# get ploidy, the number of samples and variants
+# dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
+dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
 
-    # need a global variable (only available in the bracket of "local")
-    n <- integer(dm[2L])
+# an initial value
+n <- 0L
 
-    # apply the function marginally
-    # use "<<-" operator to find "n" in the parent environment
-    seqApply(genofile, "genotype", function(x) { n <<- n + colSums(is.na(x)) },
-        margin="by.variant", as.is="none")
+# apply the function marginally
+seqApply(genofile, "genotype", function(x) {
+        n <<- n + is.na(x)    # use "<<-" operator to update 'n' in the parent environment
+    }, margin="by.variant", .progress=TRUE)
 
-    # output
-    n / (dm[1L] * dm[3L])
-})
-
-length(m.sample)
-summary(m.sample)
-
-# Or call the function in SeqArray
-summary(seqMissing(genofile, per.variant=FALSE))
+# output
+m.samp <- colMeans(n) / dm[3L]
+length(m.samp); summary(m.samp)
 ```
 
-
-### Multi-process Implementation
-
-```{r eval=FALSE}
-# choose an appropriate cluster size (or # of cores)
-seqParallelSetup(2)
-```
-
-1. Calculate the missing rate per variant:
+### C++ Integration
 
 ```{r}
-# run in parallel
-m.variant <- local({
-    # get ploidy, the number of samples and variants
-    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
-
-    # run in parallel
-    m <- seqParallel(, genofile, FUN = function(f) {
-        # apply the function marginally
-        seqApply(f, "genotype", function(x) { sum(is.na(x)) },
-            margin="by.variant", as.is="integer")
-    }, split = "by.variant")
-
-    # output
-    m / (dm[1L] * dm[2L])
-})
-
-summary(m.variant)
-```
-
-2. Calculate the missing rate per sample:
-
-```{r}
-m.sample <- local({
-    # run in parallel
-    m <- seqParallel(, genofile, FUN = function(f)
+cppFunction("
+    void add_na_num(IntegerVector x, IntegerVector num)
+    {
+        int len=x.size();
+        for (int i=0; i < len; i++)
         {
-            # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-            dm <- seqSummary(f, "genotype", verbose=FALSE)$seldim
+            if (x[i] == NA_INTEGER) num[i]++;
+        }
+    }")
 
-            # need a global variable (only available in the bracket of "local")
-            n <- integer(dm[2L])
+n <- matrix(0L, nrow=dm[1L], ncol=dm[2L])
+seqApply(genofile, "genotype", add_na_num, margin="by.variant", num=n)
 
-            # apply the function marginally
-            # use "<<-" operator to find "n" in the parent environment
-            seqApply(f, "genotype", function(x) { n <<- n + colSums(is.na(x)) },
-                margin="by.variant", as.is="none")
-
-            # output
-            n
-        }, .combine = "+",     # sum all variables "n" of different processes
-        split = "by.variant")
-
-    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
-
-    # output
-    m / (dm[1L] * dm[3L])
-})
-
-summary(m.sample)
+summary(colMeans(n) / dm[3L])
 ```
 
+### seqBlockApply
 
+```{r}
+# an initial value
+n <- 0L
+
+# apply the function marginally
+seqBlockApply(genofile, "genotype", function(x) {
+        n <<- n + rowSums(is.na(x), dims=2L)    # use "<<-" operator to update 'n' in the parent environment
+    }, margin="by.variant")
+
+# output
+m.samp <- colMeans(n) / dm[3L]
+summary(m.samp)
+```
+
+### seqBlockApply + Parallel
+
+```{r}
+# the datasets are automatically split into two non-overlapping parts
+n <- seqParallel(2, genofile, FUN = function(f)
+    {
+        n <- 0L    # an initial value
+        seqBlockApply(genofile, "genotype", function(x) {
+            n <<- n + rowSums(is.na(x), dims=2L)    # use "<<-" operator to update 'n' in the parent environment
+        }, margin="by.variant")
+        n    #output
+    }, .combine = "+",     # sum "n" of different processes together
+    split = "by.variant")
+
+# output
+m.samp <- colMeans(n) / dm[3L]
+summary(m.samp)
+```
+
+### seqMissing
+
+```{r}
+# Call the function in SeqArray
+summary(seqMissing(genofile))
+```
+
+.
+
+.
 
 ## Allele Frequency
 
-**Calculate the frequency of reference allele:**
+### seqApply
 
 ```{r}
 # apply the function variant by variant
-afreq <- seqApply(genofile, "genotype",
-    FUN=function(x) { mean(x==0L, na.rm=TRUE) },
-    as.is="double", margin="by.variant")
+afreq <- seqApply(genofile, "genotype", FUN=function(x) mean(x==0L, na.rm=TRUE),
+    as.is="double", margin="by.variant", .progress=TRUE)
 
-length(afreq)
-summary(afreq)
-
-# Or call the function in SeqArray
-summary(seqAlleleFreq(genofile, 0L))
+length(afreq); summary(afreq)
 ```
 
-### Multi-process Implementation
-
-```{r eval=FALSE}
-# choose an appropriate cluster size (or # of cores)
-seqParallelSetup(2)
-```
+### C++ Integration
 
 ```{r}
-# run in parallel
-afreq <- seqParallel(, genofile, FUN = function(f) {
-        seqApply(f, "genotype", as.is="double", FUN=function(x) mean(x==0L, na.rm=TRUE))
-    }, split = "by.variant")
+cppFunction("
+    double calc_freq(IntegerVector x)
+    {
+        int len=x.size(), n=0, n0=0;
+        for (int i=0; i < len; i++)
+        {
+            int g = x[i];
+            if (g != NA_INTEGER)
+            {
+                n++;
+                if (g == 0) n0++;
+            }
+        }
+        return double(n0) / n;
+    }")
 
-length(afreq)
+summary(seqApply(genofile, "genotype", FUN=calc_freq, as.is="double", margin="by.variant"))
+```
+
+### seqBlockApply
+
+```{r}
+# apply the function variant by variant
+afreq <- seqBlockApply(genofile, "genotype", FUN=function(x) {
+        colMeans(x==0L, na.rm=TRUE, dims=2L)
+    }, as.is="unlist", margin="by.variant")
+
 summary(afreq)
 ```
 
+### seqBlockApply + Parallel
+
+```{r}
+# apply the function over variants with two cores
+afreq <- seqBlockApply(genofile, "genotype", FUN=function(x) {
+        colMeans(x==0L, na.rm=TRUE, dims=2L)
+    }, as.is="unlist", margin="by.variant", parallel=2)
+
+summary(afreq)
+```
+
+### seqAlleleFreq
+
+```{r}
+# Call the function in SeqArray
+summary(seqAlleleFreq(genofile))
+```
+
+.
+
+.
 
 ## Principal Component Analysis
 
@@ -713,33 +780,25 @@ In the principal component analysis [@Patterson:2006:PLoS-Genet:17194218], we em
 \]
 where $g_{j,l}$ is a genotype of individual $j$ at locus $l$ ($\in \{0,1,2\}$, Num. of reference allele), $p_l$ is the frequency of reference allele and there are $L$ loci in total.
 
+
+### seqApply
+
 ```{r}
-# genetic covariance matrix
-genmat <- local({
-    # get the number of samples and variants
-    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+# covariance variable with an initial value
+s <- 0
 
-    # need a global variable (only available in the bracket of "local")
-    s <- matrix(0.0, nrow=dm[2L], ncol=dm[2L])
+seqApply(genofile, "$dosage", function(x)
+    {
+        p <- 0.5 * mean(x, na.rm=TRUE)    # allele frequency
+        g <- (x - 2*p) / sqrt(p*(1-p))    # normalization
+        g[is.na(g)] <- 0                  # missing values
+        s <<- s + (g %o% g)               # update the cov matrix 's' in the parent environment
+    }, margin="by.variant", .progress=TRUE)
 
-    # apply the function variant by variant
-    # use "<<-" operator to find "s" in the parent environment
-    seqApply(genofile, "genotype", function(x) {
-        g <- (x==0L)                  # indicator of reference allele
-        p <- mean(g, na.rm=TRUE)      # allele frequency
-        g2 <- colSums(g) - 2*p        # genotypes adjusted by allele frequency
-        m <- (g2 %o% g2) / (p*(1-p))  # genetic covariance matrix
-        m[!is.finite(m)] <- 0         # correct missing values
-        s <<- s + m                   # output to the global variable "s"
-    }, margin="by.variant", as.is="none")
-
-    # output, scaled by the trace of matrix "s" over the number of samples
-    s / (sum(diag(s)) / dm[2L])
-})
-
+# scaled by the number of samples over the trace
+s <- s * (nrow(s) / sum(diag(s)))
 # eigen-decomposition
-eig <- eigen(genmat)
+eig <- eigen(s)
 
 # eigenvalues
 head(eig$value)
@@ -751,49 +810,60 @@ plot(eig$vectors[,1], eig$vectors[,2], xlab="PC 1", ylab="PC 2")
 ```
 
 
-### Multi-process Implementation
-
-```{r eval=FALSE}
-# choose an appropriate cluster size (or # of cores)
-seqParallelSetup(2)
-```
+### seqBlockApply
 
 ```{r}
-genmat <- seqParallel(, genofile, FUN = function(f)
+# covariance variable with an initial value
+s <- 0
+
+seqBlockApply(genofile, "$dosage", function(x)
     {
-        # get the number of samples and variants
-        # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-        dm <- seqSummary(f, "genotype", verbose=FALSE)$seldim
+        p <- 0.5 * colMeans(x, na.rm=TRUE)     # allele frequencies (a vector)
+        g <- (t(x) - 2*p) / sqrt(p*(1-p))      # normalized by allele frequencies
+        g[is.na(g)] <- 0                       # correct missing values
+        s <<- s + crossprod(g)                 # update the cov matrix 's' in the parent environment
+    }, margin="by.variant", .progress=TRUE)
 
-        # need a global variable (only available in the bracket of "local")
-        s <- matrix(0.0, nrow=dm[2L], ncol=dm[2L])
-
-        # apply the function variant by variant
-        # use "<<-" operator to find "s" in the parent environment
-        seqApply(f, "genotype", function(x) {
-            g <- (x==0L)                  # indicator of reference allele
-            p <- mean(g, na.rm=TRUE)      # allele frequency
-            g2 <- colSums(g) - 2*p        # genotypes adjusted by allele frequency
-            m <- (g2 %o% g2) / (p*(1-p))  # genetic covariance matrix
-            m[!is.finite(m)] <- 0         # correct missing values
-            s <<- s + m                   # output to the global variable "s"
-        }, margin="by.variant", as.is="none")
-
-        # output
-        s
-    }, .combine = "+",     # sum all variables "s" of different processes
-    split = "by.variant")
-
-# finally, scaled by the trace of matrix "s" over the number of samples
-dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
-genmat <- genmat / (sum(diag(genmat)) / dm[2L])
-
+# scaled by the number of samples over the trace
+s <- s * (nrow(s) / sum(diag(s)))
 # eigen-decomposition
-eig <- eigen(genmat)
+eig <- eigen(s)
+
 # eigenvalues
 head(eig$value)
 ```
 
+
+### Multi-process Implementation
+
+```{r}
+# the datasets are automatically split into two non-overlapping parts
+genmat <- seqParallel(2, genofile, FUN = function(f)
+    {
+        s <- 0  # covariance variable with an initial value
+        seqBlockApply(f, "$dosage", function(x)
+            {
+                p <- 0.5 * colMeans(x, na.rm=TRUE)     # allele frequencies (a vector)
+                g <- (t(x) - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
+                g[is.na(g)] <- 0                       # correct missing values
+                s <<- s + crossprod(g)                 # update the cov matrix 's' in the parent environment
+            }, margin="by.variant")
+        s  # output
+    }, .combine = "+",     # sum "s" of different processes together
+    split = "by.variant")
+
+# scaled by the number of samples over the trace
+genmat <- genmat * (nrow(genmat) / sum(diag(genmat)))
+# eigen-decomposition
+eig <- eigen(genmat)
+
+# eigenvalues
+head(eig$value)
+```
+
+.
+
+.
 
 ## Individual Inbreeding Coefficient
 
@@ -802,71 +872,67 @@ To calculate an individual inbreeding coefficient using SNP genotype data, I dem
     \hat{\theta} = \frac{1}{L} \sum_{l=1}^L
         \frac{g_l^2 - g_l (1 + 2p_l) + 2p_l^2}{2 p_l (1 - p_l)}
 \]
-where $g_l$ is a SNP genotype at locus $l$ $\in \{0,1,2\}$ (Num. of reference allele), $p_l$ is the frequency of reference allele and there are $L$ loci in total.
+where $g_l$ is a SNP genotype at locus $l$ $\in \{0,1,2\}$ (# of reference alleles), $p_l$ is the frequency of reference allele and there are $L$ loci in total.
+
+### seqApply
 
 ```{r}
-coeff <- local({
-    # get the number of samples and variants
-    # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-    dm <- seqSummary(genofile, "genotype", verbose=FALSE)$seldim
+# initial values
+n <- 0; s <- 0
 
-    # need global variables (only available in the bracket of "local")
-    n <- integer(dm[2L])
-    s <- double(dm[2L])
-
-    # apply the function variant by variant
-    # use "<<-" operator to find "n" and "s" in the parent environment
-    seqApply(genofile, "genotype", function(x) {
-        p <- mean(x==0L, na.rm=TRUE)     # allele frequency
-        g <- colSums(x==0L)              # genotypes: # of reference allele
+seqApply(genofile, "$dosage", function(g)
+    {
+        p <- 0.5 * mean(g, na.rm=TRUE)    # allele frequency
         d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
-        n <<- n + is.finite(d)           # output to the global variable "n"
+        n <<- n + is.finite(d)            # output to the global variable 'n'
         d[!is.finite(d)] <- 0
-        s <<- s + d                      # output to the global variable "s"
-    }, margin="by.variant", as.is="none")
+        s <<- s + d                       # output to the global variable 's'
+    }, margin="by.variant", as.is="none", .progress=TRUE)
 
-    # output
-    s / n
-})
-
-length(coeff)
+# output
+coeff <- s / n
 summary(coeff)
 ```
 
+### seqBlockApply
+
+```{r}
+# initial values
+n <- 0; s <- 0
+
+seqBlockApply(genofile, "$dosage", function(g)
+    {
+        p <- 0.5 * colMeans(g, na.rm=TRUE)     # allele frequencies (a vector)
+        g <- t(g)
+        d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
+        n <<- n + colSums(is.finite(d))        # output to the global variable 'n'
+        s <<- s + colSums(d, na.rm=TRUE)       # output to the global variable 's'
+    }, margin="by.variant", as.is="none")
+
+# output
+summary(coeff <- s / n)
+```
 
 ### Multi-process Implementation
 
-```{r eval=FALSE}
-# choose an appropriate cluster size (or # of cores)
-seqParallelSetup(2)
-```
-
 ```{r}
-coeff <- seqParallel(, genofile, FUN = function(f)
+# the datasets are automatically split into two non-overlapping parts
+coeff <- seqParallel(2, genofile, FUN = function(f)
     {
-        # get the number of samples and variants
-        # dm[1] -- ploidy, dm[2] -- # of selected samples, dm[3] -- # of selected variants
-        dm <- seqSummary(f, "genotype", verbose=FALSE)$seldim
-
-        # need global variables (only available in the bracket)
-        n <- integer(dm[2L])
-        s <- double(dm[2L])
-
-        # apply the function variant by variant
-        # use "<<-" operator to find "n" and "s" in the parent environment
-        seqApply(f, "genotype", function(x) {
-            p <- mean(x==0L, na.rm=TRUE)     # allele frequency
-            g <- colSums(x==0L)              # genotypes: # of reference allele
-            d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
-            n <<- n + is.finite(d)           # output to the global variable "n"
-            d[!is.finite(d)] <- 0
-            s <<- s + d                      # output to the global variable "s"
-        }, margin="by.variant", as.is="none")
-
+        # initial values
+        n <- 0; s <- 0
+        seqApply(f, "$dosage", function(g)
+            {
+                p <- 0.5 * mean(g, na.rm=TRUE)    # allele frequency
+                d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
+                n <<- n + is.finite(d)            # output to the global variable 'n'
+                d[!is.finite(d)] <- 0
+                s <<- s + d                       # output to the global variable 's'
+            }, margin="by.variant")
         # output
         list(s=s, n=n)
-    }, # sum all variables "s" and "n" of different processes
-    .combine = function(x1,x2) { list(s = x1$s + x2$s, n = x1$n + x2$n) },
+    }, # sum all variables 's' and 'n' of different processes
+    .combine = function(x1, x2) { list(s = x1$s + x2$s, n = x1$n + x2$n) },
     split = "by.variant")
 
 # finally, average!
@@ -875,49 +941,6 @@ coeff <- coeff$s / coeff$n
 summary(coeff)
 ```
 
-```{r}
-# stop the cluster environment
-seqParallelSetup(FALSE)
-```
-
-
-## Seamless R and C++ Integration
-
-The Rcpp package provides R functions as well as a C++ library which facilitate the integration of R and C++.
-
-```{r}
-library(Rcpp)
-```
-
-The user can dynamically define an inline C/C++ function in R.
-```{r}
-cppFunction('double RefAlleleFreq(IntegerMatrix x)
-{
-    int nrow = x.nrow(), ncol = x.ncol();
-    int cnt=0, zero_cnt=0, g;
-    for (int i = 0; i < nrow; i++)
-    {
-        for (int j = 0; j < ncol; j++)
-        {
-            if ((g = x(i, j)) != NA_INTEGER)
-            {
-                cnt ++;
-                if (g == 0) zero_cnt ++;
-            }
-        }
-    }
-    return double(zero_cnt) / cnt;
-}')
-```
-
-Now, `RefAlleleFreq` is a function in R.
-```{r}
-RefAlleleFreq
-
-afreq <- seqApply(genofile, "genotype", RefAlleleFreq, as.is="double", margin="by.variant")
-
-summary(afreq)
-```
 
 
 ```{r}
@@ -943,9 +966,8 @@ seqClose(genofile)
 
 # Resources
 
-1. CoreArray C++ project: [http://corearray.sourceforge.net/](http://corearray.sourceforge.net/)
-2. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html)
-3. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
+1. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html)
+2. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 
 
 # Session Information

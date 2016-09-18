@@ -2,68 +2,31 @@
 \alias{SeqArray-package}
 \alias{SeqArray}
 \docType{package}
-\title{Big Data Management of Genome-wide Sequence Variants}
+\title{Big Data Management of Whole-Genome Sequence Variant Calls}
 \description{
-    Big-data management of genome-wide sequence variants.
+    Big-data management of whole-genome sequencing variants.
 }
 \details{
-    In the era of big data, thousands of gigabyte-size data sets are
-challenging scientists for data management, even on well-equipped hardware.
-Currently, next-generation sequencing techniques are being adopted to
-investigate common and rare variants, making the analyses of large-scale
-genotypic data challenging. For example, the 1000 Genomes Project has
-identified approximately 38 million single nucleotide polymorphisms (SNPs),
-1.4 million short insertions and deletions, and more than 14,000 larger
-deletions from whole-genome sequencing technologies. In the near future, new
-technologies, like third-generation whole-genome sequencing, will be enabling
-data to be generated at an unprecedented scale. The Variant Call Format (VCF)
-was developed for the 1000 Genomes Project, which is a generic text format for
-storing DNA polymorphism data such as SNPs, insertions, deletions and
-structural variants, together with rich annotations. However, this format is
-less efficient for large-scale analyses since numeric data have to be parsed
-from a text VCF file before further analyses. The computational burden
-associated with sequence variants is especially evident with large sample
-and variant sizes, and it requires efficient numerical implementation and
-data management.
+    As the cost of DNA sequencing rapidly decreases, whole-genome sequencing
+(WGS) is generating data at an unprecedented rate. Scientists are being
+challenged to manage data sets that are terabyte-sized, contain diverse types
+of data and complex data relationships. Data analyses of WGS requires a general
+file format for storing genetic variants including single nucleotide variations
+(SNVs), insertions and deletions (indels) and structural variants. The variant
+call format (VCF) is a generic and flexible format for storing DNA polymorphisms
+developed for the 1000 Genomes Project that is the standard WGS format in use
+today. VCF is a textual format usually stored in compressed files that supports
+rich annotations and relatively efficient data retrieval. However, VCF files
+are large and the computational burden associated with all data retrieval from
+text files can be significant for a large WGS study with thousands of samples.
 
-    Here I introduce a high-performance C++ computing library CoreArray
-(\url{http://corearray.sourceforge.net}) for big-data management of genome-wide
-variants. CoreArray was designed for developing portable and scalable storage
-technologies for bioinformatics data, allowing parallel computing at the
-multicore and cluster levels. It provides the genomic data structure (GDS) file
-format for array-oriented data: this is a universal data format to store
-multiple data variables in a single file. A hierarchical data structure is used
-to store multiple extensible data variables in the GDS format, and all datasets
-are stored in a single file with chunked storage layout. Here, I focus on the
-application of CoreArray for statisticians working in the R environment, and
-developed an R/Bioconductor package SeqArray to address or reduce the
-computational burden associated with data management of sequence variants.
-The kernels of SeqArray are written in C++ and highly optimized. Genotypic
-data and annotations are stored in an array-oriented manner, offering efficient
-data access using the R language. There are five key functions
-in SeqArray, and most of data analyses could be done using these 6 functions:
-\tabular{ll}{
-    \bold{Function} \tab \bold{Description} \cr
-    seqVCF2GDS \tab Imports VCF files \cr
-    seqSummary \tab Gets the summary (# of samples, # of variants,
-        INFO/FORMAT variables, etc) \cr
-    seqSetFilter \tab Sets a filter to sample or variant (define a subset
-        of data) \cr
-    seqGetData \tab Gets data from a GDS file (from a subset of data) \cr
-    seqApply \tab Applies a user-defined function over array margins \cr
-    seqParallel \tab Applies functions in parallel \cr
-}
-
-The 1000 Genomes Project released 39 million genetic variants for 1092
-individuals, and a 26G data file was created by SeqArray to store sequencing
-variants with phasing information, where 2 bits were used as an atomic data
-type. The file size can be further reduced to 1.3G by compression algorithms
-without sacrificing access efficiency, since it has a large proportion of
-rare variants.
-
-SeqArray will be of great interest to scientists involved in data analyses of
-large-scale genomic sequencing data using R environment, particularly those
-with limited experience of low-level C programming and parallel computing.
+    To provide an efficient alternative to VCF for WGS data, we developed a new
+data format and accompanying Bioconductor package, ``SeqArray''. Key features
+of SeqArray are efficient storage including multiple high compression options,
+data retrieval by variant or sample subsets, support for parallel access and
+computing, and C++ integration in the R programming environment. The SeqArray
+package provides R functions for efficient block-wise computations, and enables
+scientists to develop custom R scripts for exploratory data analysis.
 
     Webpage: \url{http://github.com/zhengxwen/SeqArray},
         \url{http://www.bioconductor.org/packages/SeqArray/}
