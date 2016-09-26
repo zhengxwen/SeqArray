@@ -610,7 +610,7 @@ summary(m.variant)
 
 ```{r}
 # Or call the function in SeqArray
-summary(seqMissing(genofile, per.variant=TRUE))
+summary(seqMissing(genofile))
 ```
 
 .
@@ -681,7 +681,7 @@ summary(m.samp)
 n <- seqParallel(2, genofile, FUN = function(f)
     {
         n <- 0L    # an initial value
-        seqBlockApply(genofile, "genotype", function(x) {
+        seqBlockApply(f, "genotype", function(x) {
             n <<- n + rowSums(is.na(x), dims=2L)    # use "<<-" operator to update 'n' in the parent environment
         }, margin="by.variant")
         n    #output
@@ -697,7 +697,7 @@ summary(m.samp)
 
 ```{r}
 # Call the function in SeqArray
-summary(seqMissing(genofile))
+summary(seqMissing(genofile, per.variant=FALSE))
 ```
 
 .

@@ -1,22 +1,22 @@
-\name{seqApply}
-\alias{seqApply}
-\title{Apply Functions Over Array Margins}
+\name{seqBlockApply}
+\alias{seqBlockApply}
+\title{Apply Functions Over Array Margins via Blocking}
 \description{
     Returns a vector or list of values obtained by applying a function to
-margins of genotypes and annotations.
+margins of genotypes and annotations via blocking.
 }
 \usage{
-seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
-    as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
-    var.index=c("none", "relative", "absolute"), parallel=FALSE,
-    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
+    as.is=c("none", "list", "unlist"), var.index=c("none", "relative", "absolute"),
+    bsize=1024L, parallel=FALSE, .useraw=FALSE, .progress=FALSE,
+    .list_dup=TRUE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{var.name}{the variable name(s), see details}
     \item{FUN}{the function to be applied}
     \item{margin}{giving the dimension which the function will be applied over}
-    \item{as.is}{returned value: a list, an integer vector, etc;
+    \item{as.is}{returned value: a list, a vector or none;
         \code{as.is} can be a \code{\link{connection}} object, or a GDS node
         \code{\link{gdsn.class}} object; if "unlist" is used, produces a vector
         which contains all the atomic components, via
@@ -28,6 +28,7 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         \code{margin = "by.variant"}: \code{"relative"} for indexing in the
         selection defined by \code{\link{seqSetFilter}}, \code{"absolute"}
         for indexing with respect to all data}
+    \item{bsize}{block size}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
@@ -61,7 +62,7 @@ the high-speed memory instead of disk.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqBlockApply}}, \code{\link{seqSetFilter}},
+    \code{\link{seqApply}}, \code{\link{seqSetFilter}},
     \code{\link{seqGetData}}, \code{\link{seqParallel}},
     \code{\link{seqGetParallel}}
 }
@@ -93,78 +94,15 @@ seqApply(f, "genotype", FUN=print, margin="by.variant", .useraw=TRUE)
 seqApply(f, "genotype", FUN=print, margin="by.sample")
 seqApply(f, "genotype", FUN=print, margin="by.sample", .useraw=TRUE)
 
-
-# read multiple variables variant by variant
-seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id",
-    DP="annotation/format/DP"), FUN=print, as.is="none")
-
-# get the numbers of alleles per variant
-seqApply(f, "allele",
-    FUN=function(x) length(unlist(strsplit(x,","))), as.is="integer")
-
-# output to a file
-fl <- file("tmp.txt", "wt")
-seqApply(f, "genotype", FUN=sum, na.rm=TRUE, as.is=fl)
-close(fl)
-readLines("tmp.txt")
-
-seqApply(f, "genotype", FUN=sum, na.rm=TRUE, as.is=stdout())
-seqApply(f, "genotype", FUN=sum, na.rm=TRUE, as.is="integer")
-# should be identical
-
-
-
-################################################################
-# with an index of variant
-
-seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id"),
-    FUN=function(index, x) { print(index); print(x); index },
-    as.is="integer", var.index="relative")
-# it is as the same as
-which(seqGetFilter(f)$variant.sel)
-
-
-
-################################################################
-# reset sample and variant filters
-seqResetFilter(f)
-
-# calculate the frequency of reference allele,
-#   a faster version could be obtained by C coding
-af <- seqApply(f, "genotype", FUN=function(x) mean(x==0L, na.rm=TRUE),
-    as.is="double")
-length(af)
-summary(af)
-
-
-
-################################################################
-# apply the user-defined function sample by sample
-
-# reset sample and variant filters
-seqResetFilter(f)
-summary(seqApply(f, "genotype", FUN=function(x) { mean(is.na(x)) },
-    margin="by.sample", as.is="double"))
-
-# set sample and variant filters
-set.seed(100)
-seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)],
-    variant.id=sample(variant.id, 10))
-
-seqApply(f, "genotype", FUN=print, margin="by.variant", as.is="none")
-
-seqApply(f, "genotype", FUN=print, margin="by.sample", as.is="none")
-
-seqApply(f, c(sample.id="sample.id", genotype="genotype"), FUN=print,
-    margin="by.sample", as.is="none")
+# read in block
+seqGetData(f, "$dosage")
+seqBlockApply(f, "$dosage", print, bsize=3)
+seqBlockApply(f, "$dosage", function(x) x, as.is="list", bsize=3)
+seqBlockApply(f, c(dos="$dosage", pos="position"), print, bsize=3)
 
 
 # close the GDS file
 seqClose(f)
-
-
-# delete the temporary file
-unlink("tmp.txt")
 }
 
 \keyword{gds}
