@@ -155,7 +155,7 @@ eig <- eigen(s)
 [..................................................]  0%, ETC: --- 
 [=>................................................]  2%, ETC: 5.4m
 ...
-[==================================================] 100%, ETC: 0s
+[==================================================] 100%, completed
 ```
 
 ```R
@@ -180,7 +180,7 @@ eig <- eigen(s)
 [..................................................]  0%, ETC: ---
 [==================>...............................] 35%, ETC: 9s
 [======================================>...........] 75%, ETC: 3s
-[==================================================] 100%, ETC: 0s
+[==================================================] 100%, completed
 ```
 
 `seqParallel()` utilizes the facilities offered by the R parallel package to perform calculations within a cluster or SMP environment, and the genotypes are automatically split into non-overlapping parts. The parallel implementation with R is shown as follows, and the C optimized function is also available in the SNPRelate package.
@@ -518,7 +518,7 @@ abline(h=mean(sw$chr22.val), lty=3, col="red", lwd=2)
 
 # GENESIS
 
-The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers methodology for estimating and accounting for population and pedigree structure in genetic analyses. The current implementation provides functions to perform PC-AiR and PC-Relate [@Conomos2015;  @Conomos2016]. PC-AiR performs PCA on whole-genome genotypes taking into account known or cryptic relatedness in the study sample. PC-Relate uses ancestry representative principal components to accurately estimate measures of recent genetic relatedness. In addition, the development version of GENESIS includes support for SeqArray files in mixed model association testing and introduces aggregate tests of rare variants including burden and sequence kernel association tests [@Wu2011].
+The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers methodology for estimating and accounting for population and pedigree structure in genetic analyses. The current implementation provides functions to perform PC-AiR and PC-Relate [@Conomos2015;  @Conomos2016]. PC-AiR performs PCA on whole-genome genotypes taking into account known or cryptic relatedness in the study sample. PC-Relate uses ancestry representative principal components to estimate measures of recent genetic relatedness. In addition, the development version of GENESIS includes support for SeqArray files in mixed model association testing and aggregate tests of rare variants.
 
 .
 
