@@ -411,7 +411,7 @@ seqVCF_SampID <- function(vcf.fn)
 #
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
-    storage.option="ZIP_RA", info.import=NULL, fmt.import=NULL,
+    storage.option="LZMA_RA", info.import=NULL, fmt.import=NULL,
     genotype.var.name="GT", ignore.chr.prefix="chr",
     reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
     digest=TRUE, parallel=FALSE, verbose=TRUE)
@@ -954,7 +954,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     {
         # FORMAT Type
         switch(tolower(header$format$Type[i]),
-            integer = { mode <- "int32"; int_type[i] <- 1L },
+            integer = { mode <- "vl_int"; int_type[i] <- 1L },
             float = { mode <- "float"; int_type[i] <- 2L },
             character = { mode <- "string"; int_type[i] <- 4L },
             string = { mode <- "string"; int_type[i] <- 4L },
@@ -1133,7 +1133,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             for (f in gdslist)
                 append.gdsn(v, index.gdsn(f, nm))
             readmode.gdsn(v)
-            if (verbose) cat("   ", nm)
+            if (verbose)
+            {
+                cat("   ", nm)
+                flush(stdout())
+            }
             .DigestCode(v, digest, verbose)
         }
 
@@ -1180,6 +1184,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         for (i in seq_along(ptmpfn))
             seqClose(gdslist[[i]])
 
+        # remove temporary files
         unlink(ptmpfn, force=TRUE)
     }
 

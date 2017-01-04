@@ -5,7 +5,7 @@
     Reformats Variant Call Format (VCF) files.
 }
 \usage{
-seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="ZIP_RA",
+seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", reference=NULL, start=1L, count=-1L,
     optimize=TRUE, raise.error=TRUE, digest=TRUE, parallel=FALSE,

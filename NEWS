@@ -1,3 +1,14 @@
+CHANGES IN VERSION 1.15.0-1.15.1
+-------------------------
+
+    o The default compression setting in `seqVCF2GDS()` is changed from
+      "ZIP_RA" to "LZMA_RA"
+
+    o `seqVCF2GDS()`: variable-length encoding method is used to store
+      integers in the FORMAT field of VCF files to reduce the file size and
+      compression time
+
+
 CHANGES IN VERSION 1.13.0-1.13.6
 -------------------------
 

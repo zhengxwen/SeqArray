@@ -195,11 +195,11 @@ The columns `Number`, `Type` and `Description` are defined by the 1000 Genomes P
 # convert, save in "tmp.gds"
 seqVCF2GDS(vcf.fn, "tmp.gds")
 
-# maximize the compression level with zlib compression
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA.max", verbose=FALSE)
-
-# compress data with LZMA compression algorithm
+# maximize the compression level with LZMA compression
 seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="LZMA_RA.max", verbose=FALSE)
+
+# compress data with zlib compression algorithm when random-access memory is limited
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA", verbose=FALSE)
 
 seqSummary("tmp.gds")
 ```
