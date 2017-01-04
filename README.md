@@ -94,44 +94,44 @@ seqClose(f)
 
 ```R
 ## Object of class "SeqVarGDSClass"
-## File: SeqArray/extdata/CEU_Exon.gds (387.3K)
+## File: SeqArray/extdata/CEU_Exon.gds (298.6K)
 ## +    [  ] *
 ## |--+ description   [  ] *
-## |--+ sample.id   { VStr8 90 ZIP_ra(30.8%), 222B }
-## |--+ variant.id   { Int32 1348 ZIP_ra(35.7%), 1.9K }
-## |--+ position   { Int32 1348 ZIP_ra(86.4%), 4.6K }
-## |--+ chromosome   { VStr8 1348 ZIP_ra(2.66%), 91B }
-## |--+ allele   { VStr8 1348 ZIP_ra(17.2%), 928B }
+## |--+ sample.id   { Str8 90 LZMA_ra(35.8%), 258B } *
+## |--+ variant.id   { Int32 1348 LZMA_ra(16.8%), 906B } *
+## |--+ position   { Int32 1348 LZMA_ra(64.6%), 3.4K } *
+## |--+ chromosome   { Str8 1348 LZMA_ra(4.63%), 158B } *
+## |--+ allele   { Str8 1348 LZMA_ra(16.7%), 902B } *
 ## |--+ genotype   [  ] *
-## |  |--+ data   { Bit2 2x90x1348 ZIP_ra(28.4%), 16.8K } *
-## |  |--+ ~data   { Bit2 2x1348x90 ZIP_ra(36.0%), 21.3K } *
-## |  |--+ extra.index   { Int32 3x0 ZIP_ra, 17B } *
-## |  \--+ extra   { Int16 0 ZIP_ra, 17B }
+## |  |--+ data   { Bit2 2x90x1348 LZMA_ra(26.3%), 15.6K } *
+## |  |--+ ~data   { Bit2 2x1348x90 LZMA_ra(29.3%), 17.3K }
+## |  |--+ extra.index   { Int32 3x0 LZMA_ra, 19B } *
+## |  \--+ extra   { Int16 0 LZMA_ra, 19B }
 ## |--+ phase   [  ]
-## |  |--+ data   { Bit1 90x1348 ZIP_ra(0.36%), 55B } *
-## |  |--+ ~data   { Bit1 1348x90 ZIP_ra(0.36%), 55B } *
-## |  |--+ extra.index   { Int32 3x0 ZIP_ra, 17B } *
-## |  \--+ extra   { Bit1 0 ZIP_ra, 17B }
+## |  |--+ data   { Bit1 90x1348 LZMA_ra(0.91%), 138B } *
+## |  |--+ ~data   { Bit1 1348x90 LZMA_ra(0.91%), 138B }
+## |  |--+ extra.index   { Int32 3x0 LZMA_ra, 19B } *
+## |  \--+ extra   { Bit1 0 LZMA_ra, 19B }
 ## |--+ annotation   [  ]
-## |  |--+ id   { VStr8 1348 ZIP_ra(41.0%), 5.8K }
-## |  |--+ qual   { Float32 1348 ZIP_ra(0.91%), 49B }
-## |  |--+ filter   { Int32,factor 1348 ZIP_ra(0.89%), 48B } *
+## |  |--+ id   { Str8 1348 LZMA_ra(38.4%), 5.5K } *
+## |  |--+ qual   { Float32 1348 LZMA_ra(2.26%), 122B } *
+## |  |--+ filter   { Int32,factor 1348 LZMA_ra(2.26%), 122B } *
 ## |  |--+ info   [  ]
-## |  |  |--+ AA   { VStr8 1348 ZIP_ra(24.2%), 653B } *
-## |  |  |--+ AC   { Int32 1348 ZIP_ra(27.2%), 1.4K } *
-## |  |  |--+ AN   { Int32 1348 ZIP_ra(20.6%), 1.1K } *
-## |  |  |--+ DP   { Int32 1348 ZIP_ra(62.6%), 3.3K } *
-## |  |  |--+ HM2   { Bit1 1348 ZIP_ra(117.2%), 198B } *
-## |  |  |--+ HM3   { Bit1 1348 ZIP_ra(117.2%), 198B } *
-## |  |  |--+ OR   { VStr8 1348 ZIP_ra(14.0%), 238B } *
-## |  |  |--+ GP   { VStr8 1348 ZIP_ra(34.4%), 5.3K } *
-## |  |  \--+ BN   { Int32 1348 ZIP_ra(21.6%), 1.1K } *
+## |  |  |--+ AA   { Str8 1348 LZMA_ra(25.6%), 690B } *
+## |  |  |--+ AC   { Int32 1348 LZMA_ra(24.2%), 1.3K } *
+## |  |  |--+ AN   { Int32 1348 LZMA_ra(19.8%), 1.0K } *
+## |  |  |--+ DP   { Int32 1348 LZMA_ra(47.9%), 2.5K } *
+## |  |  |--+ HM2   { Bit1 1348 LZMA_ra(150.3%), 254B } *
+## |  |  |--+ HM3   { Bit1 1348 LZMA_ra(150.3%), 254B } *
+## |  |  |--+ OR   { Str8 1348 LZMA_ra(20.1%), 342B } *
+## |  |  |--+ GP   { Str8 1348 LZMA_ra(24.4%), 3.8K } *
+## |  |  \--+ BN   { Int32 1348 LZMA_ra(20.9%), 1.1K } *
 ## |  \--+ format   [  ]
 ## |     \--+ DP   [  ] *
-## |        |--+ data   { Int32 90x1348 ZIP_ra(33.8%), 160.3K }
-## |        \--+ ~data   { Int32 1348x90 ZIP_ra(32.2%), 152.8K }
+## |        |--+ data   { Int32 90x1348 LZMA_ra(25.1%), 118.8K } *
+## |        \--+ ~data   { Int32 1348x90 LZMA_ra(24.1%), 114.2K }
 ## \--+ sample.annotation   [  ]
-##    \--+ family   { VStr8 90 ZIP_ra(34.7%), 135B }
+##    \--+ family   { Str8 90 LZMA_ra(57.1%), 222B }
 ```
 
 
