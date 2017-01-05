@@ -254,21 +254,36 @@ seqParallelSetup(FALSE)
 ## GRanges and GRangesList
 
 In this section, we illustrate how to work with Bioconductor core packages for performing common queries to retrieve data from a SeqArray file. The `GRanges` and `GRangesList` classes manipulate genomic range data and can be used in the function `seqSetFilter()` to define a data subset. For example, the annotation information of each exon, the coding range and transcript ID are stored in the `TxDb.Hsapiens.UCSC.hg19.knownGene` object for the UCSC known gene annotations on hg19.
-```{r message=FALSE}
+```R
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 ```
-```{r}
+```R
 # get the exons grouped by gene
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 txs <- exonsBy(txdb, "gene")
 ```
 where `exonsBy()` returns a `GRangesList` object for all known genes in the database.
 
-```{r}
+```R
 seqSetFilter(file, txs)  # define an exon filter
-
+```
+```
+## # of selected variants: 1,050
+```
+```R
 # VCF export with exon variants
 seqGDS2VCF(file, "exons.vcf.gz")
+```
+```
+## Tue Jan  3 15:43:55 2017
+## VCF Export: exons.vcf.gz
+##     1,092 samples, 1,050 variants
+##     INFO Field: <none>
+##     FORMAT Field: <none>
+## 
+[..................................................]  0%, ETC: ---    
+[==================================================] 100%, completed      
+## Tue Jan  3 15:43:55 2017    Done.
 ```
 If random-access memory is sufficiently large, users could load all exon variants via `seqGetData(file, "genotype")`; otherwise, data have to be loaded by chunk or a user-defined function is applied over variants by `seqApply()`.
 
@@ -285,10 +300,41 @@ seqSetFilterChrom(file, 22, from.bp=10000000, to.bp=30000000)
 
 vcf <- asVCF(file, chr.prefix="chr")
 vcf
-
+```
+```R
 locateVariants(vcf, txdb, CodingVariants())
 ```
-
+```
+## GRanges object with 524 ranges and 9 metadata columns:
+##       seqnames               ranges strand | LOCATION  LOCSTART    LOCEND   QUERYID        TXID         CDSID
+##          <Rle>            <IRanges>  <Rle> | <factor> <integer> <integer> <integer> <character> <IntegerList>
+##     1    chr22 [17071862, 17071862]      - |   coding      1579      1579       128       74436        216505
+##     2    chr22 [17073170, 17073170]      - |   coding       271       271       129       74436        216505
+##     3    chr22 [17589225, 17589225]      + |   coding      1116      1116       377       73481        214034
+##     4    chr22 [17601466, 17601466]      - |   coding       552       552       382       74444        216522
+##     5    chr22 [17629357, 17629357]      - |   coding       424       424       394       74446        216528
+##   ...      ...                  ...    ... .      ...       ...       ...       ...         ...           ...
+##   520    chr22 [29913278, 29913278]      - |   coding      1567      1567      7023       74771        217273
+##   521    chr22 [29924156, 29924156]      - |   coding       977       977      7030       74768        217279
+##   522    chr22 [29924156, 29924156]      - |   coding       977       977      7030       74769        217279
+##   523    chr22 [29924156, 29924156]      - |   coding       977       977      7030       74770        217279
+##   524    chr22 [29924156, 29924156]      - |   coding       977       977      7030       74771        217279
+##            GENEID       PRECEDEID        FOLLOWID
+##       <character> <CharacterList> <CharacterList>
+##     1      150160                                
+##     2      150160                                
+##     3       23765                                
+##     4       27439                                
+##     5       27440                                
+##   ...         ...             ...             ...
+##   520        8563                                
+##   521        8563                                
+##   522        8563                                
+##   523        8563                                
+##   524        8563                                
+##   -------
+##   seqinfo: 1 sequence from an unspecified genome; no seqlengths
+```
 
 ```{r echo=FALSE}
 unlink("exons.vcf.gz", force=TRUE)
@@ -518,7 +564,7 @@ abline(h=mean(sw$chr22.val), lty=3, col="red", lwd=2)
 
 # GENESIS
 
-The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers methodology for estimating and accounting for population and pedigree structure in genetic analyses. The current implementation provides functions to perform PC-AiR and PC-Relate [@Conomos2015;  @Conomos2016]. PC-AiR performs PCA on whole-genome genotypes taking into account known or cryptic relatedness in the study sample. PC-Relate uses ancestry representative principal components to estimate measures of recent genetic relatedness. In addition, the development version of GENESIS includes support for SeqArray files in mixed model association testing and aggregate tests of rare variants.
+The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers methodology for estimating and accounting for population and pedigree structure in genetic analyses. The current implementation provides functions to perform PC-AiR and PC-Relate [@Conomos2015;  @Conomos2016]. PC-AiR performs PCA on whole-genome genotypes taking into account known or cryptic relatedness in the study sample. PC-Relate uses ancestry representative principal components to estimate measures of recent genetic relatedness. In addition, GENESIS includes support for SeqArray files in mixed model association testing and aggregate tests of rare variants like burden and SKAT tests.
 
 .
 

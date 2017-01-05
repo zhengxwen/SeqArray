@@ -8,7 +8,7 @@ Imports: methods, parallel, S4Vectors, IRanges, GenomicRanges,
         GenomeInfoDb, SummarizedExperiment, Biostrings, VariantAnnotation
 LinkingTo: gdsfmt
 Suggests: BiocParallel, digest, crayon, RUnit, Biobase, BiocGenerics, knitr,
-        Rcpp, SNPRelate, TxDb.Hsapiens.UCSC.hg19.knownGene
+        Rcpp, SNPRelate
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu"),
         person("Stephanie", "Gogarten", role="aut",
