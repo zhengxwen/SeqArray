@@ -1,1 +1,4 @@
-BiocGenerics:::testPackage("SeqArray")
+if (Sys.info()[['sysname']] != "Windows")
+{
+	BiocGenerics:::testPackage("SeqArray")
+}

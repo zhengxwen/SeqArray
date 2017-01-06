@@ -13,21 +13,18 @@ library(SeqArray)
 
 test_examples <- function()
 {
-	if (Sys.info()[['sysname']] != "Windows")
-	{
-		function.list <- readRDS(
-			system.file("Meta", "Rd.rds", package="SeqArray"))$Name
+	function.list <- readRDS(
+		system.file("Meta", "Rd.rds", package="SeqArray"))$Name
 
-		sapply(function.list, FUN = function(func.name)
-			{
-				args <- list(
-					topic=func.name,
-					package="SeqArray",
-					echo=FALSE, verbose=FALSE, ask=FALSE
-				)
-				suppressWarnings(do.call(example, args))
-				NULL
-			})
-	}
+	sapply(function.list, FUN = function(func.name)
+		{
+			args <- list(
+				topic=func.name,
+				package="SeqArray",
+				echo=FALSE, verbose=FALSE, ask=FALSE
+			)
+			suppressWarnings(do.call(example, args))
+			NULL
+		})
 	invisible()
 }
