@@ -1103,12 +1103,16 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         # all GDS variables to be merged
         varnm <- c("variant.id", "position", "chromosome", "allele",
-            "genotype/data", "genotype/@data", "genotype/extra",
-            "phase/data", "phase/extra",
+            "genotype/data", "genotype/@data",
+            "genotype/extra", "genotype/extra.index",
+            "phase/data", "phase/extra", "phase/extra.index",
             "annotation/id", "annotation/qual")
 
         if (is.null(index.gdsn(gfile, "phase/data", silent=TRUE)))
-            varnm <- setdiff(varnm, c("phase/data", "phase/extra"))
+        {
+            varnm <- setdiff(varnm,
+                c("phase/data", "phase/extra", "phase/extra.index"))
+        }
 
         s <- ls.gdsn(index.gdsn(gfile, "annotation/info"), include.hidden=TRUE)
         if (length(s) > 0L)
@@ -1122,10 +1126,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         }
 
         if (verbose) cat("Merging:\n")
-
         filtervar <- character()
-        geno.extra.idx <- NULL
-        phase.extra.idx <- NULL
 
         # open all temporary files
         for (fn in ptmpfn)
@@ -1135,14 +1136,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             # merge variables
             for (nm in varnm)
                 append.gdsn(index.gdsn(gfile, nm), index.gdsn(tmpgds, nm))
-            # merge genotype/extra.index
-            v <- read.gdsn(index.gdsn(tmpgds, "genotype/extra.index"))
-            if (length(v) > 0L)
-                geno.extra.idx <- cbind(geno.extra.idx, v)
-            # merge phase/extra.index
-            v <- read.gdsn(index.gdsn(tmpgds, "phase/extra.index"))
-            if (length(v) > 0L)
-                phase.extra.idx <- cbind(phase.extra.idx, v)
             # merge filter variable (a factor variable)
             filtervar <- c(filtervar, as.character(
                 read.gdsn(index.gdsn(tmpgds, "annotation/filter"))))
@@ -1157,18 +1150,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         readmode.gdsn(varFilter)
         s <- levels(filtervar)
         filterlevels <- c(s, setdiff(header$filter$ID, s))
-
-        if (!is.null(geno.extra.idx))
-        {
-            append.gdsn(index.gdsn(gfile, "genotype/extra.index"),
-                geno.extra.idx)
-        }
-
-        if (!is.null(phase.extra.idx))
-        {
-            append.gdsn(index.gdsn(gfile, "phase/extra.index"),
-                phase.extra.idx)
-        }
 
         # remove temporary files
         unlink(ptmpfn, force=TRUE)
