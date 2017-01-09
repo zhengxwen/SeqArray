@@ -10,7 +10,7 @@
 #######################################################################
 # Merge multiple GDS files
 #
-seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA",
+seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     verbose=TRUE)
 {
@@ -43,7 +43,13 @@ seqMerge <- function(gds.fn, out.fn, storage.option="ZIP_RA",
     flist <- vector("list", length(gds.fn))
     on.exit({ for (f in flist) seqClose(f) })
     for (i in seq_along(gds.fn))
+    {
+        if (verbose)
+            cat("    opening '", gds.fn[i], "' ...", sep="")
         flist[[i]] <- seqOpen(gds.fn[i])
+        if (verbose)
+            cat(" [done]\n")
+    }
     if (verbose)
     {
         s <- sum(file.size(gds.fn), na.rm=TRUE)

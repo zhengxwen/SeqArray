@@ -5,16 +5,16 @@
     Merges multiple SeqArray GDS files.
 }
 \usage{
-seqMerge(gds.fn, out.fn, storage.option="ZIP_RA", info.var=NULL, fmt.var=NULL,
+seqMerge(gds.fn, out.fn, storage.option="LZMA_RA", info.var=NULL, fmt.var=NULL,
     samp.var=NULL, optimize=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file names of multiple GDS files}
     \item{out.fn}{the output file name}
     \item{storage.option}{specify the storage and compression option,
-        "ZIP_RA" (\code{\link{seqStorageOption}("ZIP_RA")}) by default; or
+        "ZIP_RA" (\code{\link{seqStorageOption}("ZIP_RA")}); or
         "LZMA_RA" to use LZMA compression algorithm with higher compression
-        ratio}
+        ratio (by default)}
     \item{info.var}{characters, the variable name(s) in the INFO field;
         \code{NULL} for all variables, or \code{character()} excludes all
         INFO variables}

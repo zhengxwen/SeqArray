@@ -1131,6 +1131,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         # open all temporary files
         for (fn in ptmpfn)
         {
+            if (verbose)
+                cat("    opening '", basename(fn), "' ...", sep="")
             # open the gds file
             tmpgds <- seqOpen(fn)
             # merge variables
@@ -1141,9 +1143,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 read.gdsn(index.gdsn(tmpgds, "annotation/filter"))))
             # close the file
             seqClose(tmpgds)
-            if (verbose) cat("    ", basename(fn), "\n", sep="")
+            if (verbose)
+                cat(" [done]\n")
         }
-
 
         filtervar <- as.factor(filtervar)
         append.gdsn(varFilter, filtervar)
