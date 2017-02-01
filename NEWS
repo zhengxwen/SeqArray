@@ -1,4 +1,9 @@
-CHANGES IN VERSION 1.15.0-1.15.2
+CHANGES IN VERSION 1.15.0-1.15.3
+
+    o the version number was bumped for the Bioconductor develop version 3.5
+
+
+CHANGES IN VERSION 1.14.1
 -------------------------
 
     o The default compression setting in `seqVCF2GDS()` and `seqMerge()` is

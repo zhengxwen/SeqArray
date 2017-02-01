@@ -34,7 +34,8 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         \code{\link{seqParallel}} for more details.}
     \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
-        instead of INTEGER if possible}
+        for small numbers instead of INTEGER if possible, it is needed to
+        detect data type (RAW or INTEGER) in the user-defined function}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{.list_dup}{internal use only}
     \item{...}{optional arguments to \code{FUN}}

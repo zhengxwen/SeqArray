@@ -10,7 +10,9 @@ seqGetData(gdsfile, var.name, .useraw=FALSE)
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{var.name}{the variable name, see details}
-    \item{.useraw}{use RAW instead of INTEGER for genotypes and dosages}
+    \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
+        genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
+        for small numbers instead of INTEGER if possible}
 }
 \value{
     Return vectors or lists.
