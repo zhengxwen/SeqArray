@@ -1,6 +1,8 @@
 CHANGES IN VERSION 1.15.0-1.15.3
 
-    o the version number was bumped for the Bioconductor develop version 3.5
+    o a new argument 'intersect' in `seqSetFilter()` and `seqSetFilterChrom()`
+
+    o a new function `seqSetFilterCond()`
 
 
 CHANGES IN VERSION 1.14.1

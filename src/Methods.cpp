@@ -28,6 +28,7 @@ using namespace SeqArray;
 
 extern "C"
 {
+
 // ======================================================================
 
 /// Calculate the missing rate per variant
@@ -259,7 +260,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleStr2(SEXP allele)
 
 // ======================================================================
 
-/// Get a list of allele frequencies
+/// Get a list of allele counts
 COREARRAY_DLL_EXPORT SEXP FC_AlleleCount(SEXP List)
 {
 	SEXP Geno = VECTOR_ELT(List, 0);
@@ -309,6 +310,23 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleCount(SEXP List)
 
 	return rv;
 }
+
+
+/// Get a list of reference allele counts
+COREARRAY_DLL_EXPORT SEXP FC_AlleleCount2(SEXP Geno)
+{
+	const size_t N = XLENGTH(Geno);
+	size_t n0, nmiss;
+	if (TYPEOF(Geno) == RAWSXP)
+		vec_i8_count2((const char*)RAW(Geno), N, 0, 0xFF, &n0, &nmiss);
+	else
+		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &n0, &nmiss);
+	SEXP rv = NEW_INTEGER(2);
+	int *p = INTEGER(rv);
+	p[0] = n0; p[1] = nmiss;
+	return rv;
+}
+
 
 
 // ======================================================================

@@ -558,6 +558,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 }
 
 
+// ================================================================
+
 static bool is_numeric(const string &txt)
 {
 	char *endptr = (char*)(txt.c_str());
@@ -567,12 +569,15 @@ static bool is_numeric(const string &txt)
 
 /// set a working space flag with selected chromosome(s)
 COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
-	SEXP is_num, SEXP frombp, SEXP tobp, SEXP verbose)
+	SEXP is_num, SEXP frombp, SEXP tobp, SEXP intersect, SEXP verbose)
 {
 	int nProtected = 0;
 	int *pFrom=NULL, *pTo=NULL;
 
 	int IsNum = Rf_asLogical(is_num);
+	int IsIntersect = Rf_asLogical(intersect);
+	if (IsIntersect == NA_INTEGER)
+		error("'intersect' should be either FALSE or TRUE.");
 
 	if (Rf_isNull(include))
 	{
@@ -601,7 +606,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
 
-		vector<C_BOOL> &array = Sel.Variant;
+		vector<C_BOOL> &sel_array = Sel.Variant;
+		vector<C_BOOL> tmp_array;
+		if (IsIntersect) tmp_array.resize(sel_array.size());
+
+		vector<C_BOOL> &array = IsIntersect ? tmp_array : sel_array;
 		memset(&array[0], FALSE, array.size());
 
 		if (Rf_isNull(include))
@@ -686,20 +695,34 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 						size_t i = p->Start;
 						size_t n = p->Length;
 						C_Int32 *s = &((*varPos)[0]) + i;
-						for (; n > 0; n--)
+						if (!IsIntersect)
 						{
-							if (RngSet.IsIncluded(*s++))
-								array[i] = TRUE;
-							i ++;
+							for (; n > 0; n--, i++)
+								if (RngSet.IsIncluded(*s++)) array[i] = TRUE;
+						} else {
+							C_BOOL *b = &sel_array[i];
+							for (; n > 0; n--, i++, s++)
+							{
+								if (*b++)
+									if (RngSet.IsIncluded(*s)) array[i] = TRUE;
+							}
 						}
 					}
 				}
 			}
 		}
 
+		if (IsIntersect)
+		{
+			C_BOOL *p = &sel_array[0];
+			C_BOOL *s = &array[0];
+			for (size_t n=sel_array.size(); n > 0; n--)
+				(*p++) &= (*s++);
+		}
+
 		if (Rf_asLogical(verbose) == TRUE)
 		{
-			int n = GetNumOfTRUE(&array[0], array.size());
+			int n = GetNumOfTRUE(&sel_array[0], sel_array.size());
 			Rprintf("# of selected variants: %s\n", PrettyInt(n));
 		}
 
@@ -708,6 +731,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 	COREARRAY_CATCH
 }
 
+
+// ================================================================
 
 /// set a working space flag with selected variant id
 COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile, SEXP UseRaw)
@@ -1144,7 +1169,9 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 4),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
-		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SetChrom, 6),
+		CALL(SEQ_SetChrom, 7),
+
+		CALL(SEQ_SplitSelection, 5),
 		CALL(SEQ_GetSpace, 2),
 
 		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),

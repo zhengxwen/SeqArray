@@ -164,7 +164,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
 
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
     variant.sel="GRanges"),
-    function(object, variant.sel, rm.txt="chr", verbose=TRUE)
+    function(object, variant.sel, rm.txt="chr", intersect=FALSE, verbose=TRUE)
     {
         z <- seqnames(variant.sel)
         levels(z) <- sub(rm.txt, "", levels(z))
@@ -173,6 +173,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
             include = as.character(z),
             from.bp = BiocGenerics::start(variant.sel),
             to.bp   = BiocGenerics::end(variant.sel),
+            intersect = intersect,
             verbose = verbose)
         invisible()
     }
@@ -180,16 +181,16 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
 
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
     variant.sel="GRangesList"),
-    function(object, variant.sel, rm.txt="chr", verbose=TRUE)
+    function(object, variant.sel, rm.txt="chr", intersect=FALSE, verbose=TRUE)
     {
-        seqSetFilter(object, unlist(variant.sel), rm.txt, verbose)
+        seqSetFilter(object, unlist(variant.sel), rm.txt, intersect, verbose)
         invisible()
     }
 )
 
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
     variant.sel="IRanges"),
-    function(object, variant.sel, chr, verbose=TRUE)
+    function(object, variant.sel, chr, intersect=FALSE, verbose=TRUE)
     {
         stopifnot(is.vector(chr))
         if (length(chr) > 1L)
@@ -201,6 +202,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
             include = chr,
             from.bp = BiocGenerics::start(variant.sel),
             to.bp   = BiocGenerics::end(variant.sel),
+            intersect = intersect,
             verbose = verbose)
         invisible()
     }
@@ -232,19 +234,69 @@ seqResetFilter <- function(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 # Set a filter according to specified chromosomes
 #
 seqSetFilterChrom <- function(object, include=NULL, is.num=NA,
-    from.bp=NULL, to.bp=NULL, verbose=TRUE)
+    from.bp=NULL, to.bp=NULL, intersect=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(inherits(object, "SeqVarGDSClass"))
     stopifnot(is.null(include) | is.numeric(include) | is.character(include))
-    stopifnot(is.logical(is.num))
-
+    stopifnot(is.logical(is.num), length(is.num)==1L)
     stopifnot(is.null(from.bp) | is.numeric(from.bp))
     stopifnot(is.null(to.bp) | is.numeric(to.bp))
+    stopifnot(is.logical(intersect), length(intersect)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # call C function
-    .Call(SEQ_SetChrom, object, include, is.num, from.bp, to.bp, verbose)
+    .Call(SEQ_SetChrom, object, include, is.num, from.bp, to.bp, intersect,
+        verbose)
+
+    invisible()
+}
+
+
+
+#######################################################################
+# Set a filter according to specified conditions
+#
+seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
+    parallel=seqGetParallel(), .progress=FALSE, verbose=TRUE)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.numeric(maf), length(maf)==1L)
+    stopifnot(is.numeric(mac), length(mac)==1L)
+    stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
+    stopifnot(is.logical(.progress), length(.progress)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (!all(c(is.na(maf), is.na(mac), is.na(missing.rate))))
+    {
+        # calculation
+        n <- seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(f, pg)
+            {
+                seqApply(f, "genotype", margin="by.variant", as.is="list",
+                    FUN = .cfunction("FC_AlleleCount2"),
+                    .useraw=NA, .progress=pg & (process_index==1L))
+            }, pg=.progress)
+        N <- .seldim(gdsfile)
+        N <- N[1L] * N[2L]    # the total number of alleles per site
+        n0 <- sapply(n, `[`, i=1L)
+        nm <- sapply(n, `[`, i=2L)
+        nn <- N - nm    # the number of non-missing alleles per site
+        n0 <- pmin(n0, nn-n0)
+        # selection
+        if (!is.na(mac))
+            sel <- n0 >= mac
+        else
+            sel <- rep(TRUE, length(n0))
+        if (!is.na(maf))
+            sel <- sel & (n0/nn >= maf)
+        if (!is.na(missing.rate))
+            sel <- sel & (nm/N <= missing.rate)
+        # set filter
+        seqSetFilter(gdsfile, variant.sel=sel, action="intersect",
+            verbose=verbose)
+    }
 
     invisible()
 }

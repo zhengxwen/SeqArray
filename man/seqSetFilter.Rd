@@ -16,14 +16,14 @@
     action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
     verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRanges}(object, variant.sel,
-    rm.txt="chr", verbose=TRUE)
+    rm.txt="chr", intersect=FALSE, verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRangesList}(object, variant.sel,
-    rm.txt="chr", verbose=TRUE)
+    rm.txt="chr", intersect=FALSE, verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,IRanges}(object, variant.sel,
-    chr, verbose=TRUE)
+    chr, intersect=FALSE, verbose=TRUE)
 seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
-    verbose=TRUE)
+    intersect=FALSE, verbose=TRUE)
 }
 \arguments{
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
@@ -55,12 +55,18 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
     \item{chr}{a vector of character for chromsome coding}
     \item{sample}{logical, if \code{TRUE}, include all samples}
     \item{variant}{logical, if \code{TRUE}, include all variants}
-    \item{include}{NULL, or character for specified chromosome(s)}
+    \item{include}{NULL, or a vector of characters for specified chromosome(s)}
     \item{is.num}{a logical variable: \code{TRUE}, chromosome code is numeric;
         \code{FALSE}, chromosome is not numeric; \code{is.num=TRUE} is usually
         used to exclude non-autosomes}
-    \item{from.bp}{NULL, no limit; numeric, the lower bound of position}
-    \item{to.bp}{NULL, no limit; numeric, the upper bound of position}
+    \item{from.bp}{NULL, no limit; a numeric vector, the lower bound of
+    	position}
+    \item{to.bp}{NULL, no limit; a numeric vector, the upper bound of
+    	position}
+    \item{intersect}{if \code{FALSE}, the candidate variants for selection are
+        all possible variants (by default); if \code{TRUE}, the candidate variants
+        are from the selected variants defined via the previous call
+        \code{seqSetFilter()}}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{
@@ -79,8 +85,9 @@ as 0, and \code{NA} in \code{to.bp} is treated as the maximum of integer
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqSetFilterChrom}}, \code{\link{seqGetFilter}},
-    \code{\link{seqGetData}}, \code{\link{seqApply}}
+    \code{\link{seqSetFilterChrom}}, \code{\link{seqSetFilterCond}},
+    \code{\link{seqGetFilter}}, \code{\link{seqGetData}},
+    \code{\link{seqApply}}
 }
 
 \examples{
@@ -162,6 +169,17 @@ seqSetFilterChrom(f, c(1, 6), from.bp=c(1000000, 29719561),
     to.bp=c(90000000, 32883508))
 seqSummary(f, "genotype", check="none")
 seqGetData(f, "chromosome")
+
+
+## intersection option
+
+seqResetFilter(f)
+seqSetFilterChrom(f, 6, from.bp=29719561, to.bp=32883508)  # MHC
+seqSetFilterChrom(f, include=6)  # chromosome 6
+
+seqResetFilter(f)
+seqSetFilterChrom(f, 6, from.bp=29719561, to.bp=32883508)  # MHC
+seqSetFilterChrom(f, include=6, intersect=TRUE)  # MHC region only
 
 
 
