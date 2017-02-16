@@ -1381,12 +1381,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			GDS_Array_AppendData(varAllele, 1, &cell, svStrUTF8);
 
 			// determine how many alleles
-			int num_allele = 0;
-			for (const char *p = cell.c_str(); *p; )
+			int num_allele;
+			if (cell != "." && cell != ".,.")
 			{
-				num_allele ++;
-				while (*p && (*p != ',')) p ++;
-				if (*p == ',') p ++;
+				num_allele = 0;
+				for (const char *p = cell.c_str(); *p; )
+				{
+					num_allele ++;
+					while (*p && (*p != ',')) p ++;
+					if (*p == ',') p ++;
+				}
+			} else {
+				num_allele = INT_MAX;
 			}
 
 
@@ -1763,6 +1769,19 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 			// -------------------------------------------------
 			// write genotypes
+
+			// need to identify num_allele if missing
+			if (num_allele == INT_MAX)
+			{
+				num_allele = 0;
+				C_Int16 *p = &Genotypes[0];
+				for (size_t n=num_samp_ploidy; n > 0; n--, p++)
+				{
+					if ((*p >= 0) && (*p > num_allele))
+						num_allele = *p;
+				}
+				num_allele ++;
+			}
 
 			// determine how many bits
 			int num_bits = 2;

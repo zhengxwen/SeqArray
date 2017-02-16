@@ -1,8 +1,11 @@
-CHANGES IN VERSION 1.15.0-1.15.3
+CHANGES IN VERSION 1.15.0-1.15.4
 
     o a new argument 'intersect' in `seqSetFilter()` and `seqSetFilterChrom()`
 
     o a new function `seqSetFilterCond()`
+
+    o `seqVCF2GDS()` allows arbitrary numbers of different alleles if REF and
+      ALT in VCF are missing
 
 
 CHANGES IN VERSION 1.14.1
