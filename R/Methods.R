@@ -262,8 +262,8 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.numeric(maf), length(maf)==1L)
-    stopifnot(is.numeric(mac), length(mac)==1L)
+    stopifnot(is.numeric(maf), length(maf) %in% 1L:2L)
+    stopifnot(is.numeric(mac), length(mac) %in% 1L:2L)
     stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
@@ -285,12 +285,19 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
         nn <- N - nm    # the number of non-missing alleles per site
         n0 <- pmin(n0, nn-n0)
         # selection
-        if (!is.na(mac))
-            sel <- n0 >= mac
-        else
-            sel <- rep(TRUE, length(n0))
-        if (!is.na(maf))
-            sel <- sel & (n0/nn >= maf)
+        sel <- rep(TRUE, length(n0))
+        if (!is.na(mac[1L]))
+            sel <- sel & (mac[1L] <= n0)
+        if (!is.na(mac[2L]))
+            sel <- sel & (n0 < mac[2L])
+        if (any(!is.na(maf)))
+        {
+            p <- n0 / nn
+            if (!is.na(maf[1L]))
+                sel <- sel & (maf[1L] <= p)
+            if (!is.na(maf[2L]))
+                sel <- sel & (p < maf[2L])
+        }
         if (!is.na(missing.rate))
             sel <- sel & (nm/N <= missing.rate)
         # set filter
