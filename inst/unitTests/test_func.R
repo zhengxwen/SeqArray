@@ -12,6 +12,7 @@ library(RUnit)
 	# open the GDS file
 	gds.fn <- seqExampleFileName("gds")
 	f <- seqOpen(gds.fn)
+	on.exit(seqClose(f))
 
 	set.seed(1000)
 	samp.id <- seqGetData(f, "sample.id")
@@ -31,8 +32,7 @@ library(RUnit)
 	)
 	save(Valid, file="Valid.RData", compress="xz")
 
-	# close the GDS file
-	seqClose(f)
+	invisible()
 }
 
 
@@ -48,6 +48,7 @@ test_allele_freq <- function()
 	# open the GDS file
 	gds.fn <- seqExampleFileName("gds")
 	f <- seqOpen(gds.fn)
+	on.exit(seqClose(f))
 
 	samp.id <- seqGetData(f, "sample.id")
 	variant.id <- seqGetData(f, "variant.id")
@@ -80,8 +81,6 @@ test_allele_freq <- function()
 		checkEquals(Valid$fcAlleleFreq$d4, d, paste0("seqAlleleFreq 4:", p))
 	}
 
-	# close the GDS file
-	seqClose(f)
 	invisible()
 }
 
@@ -89,8 +88,8 @@ test_allele_freq <- function()
 test_random_genotype <- function()
 {
 	# open the GDS file
-	gds.fn <- seqExampleFileName("gds")
-	f <- seqOpen(gds.fn)
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
 
 	seqResetFilter(f)
 	gm <- seqGetData(f, "genotype")
@@ -109,8 +108,6 @@ test_random_genotype <- function()
 		checkEquals(m1, m2, "genotype: random access")
 	}
 
-	# close the GDS file
-	seqClose(f)
 	invisible()
 }
 
@@ -118,8 +115,8 @@ test_random_genotype <- function()
 test_dosage <- function()
 {
 	# open the GDS file
-	gds.fn <- seqExampleFileName("gds")
-	f <- seqOpen(gds.fn)
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
 
 	gm <- seqGetData(f, "genotype")
 	dm <- seqGetData(f, "$dosage")
@@ -136,8 +133,6 @@ test_dosage <- function()
 	dim(m) <- dim(dm)
 	checkEquals(dm, m, "dosage, raw")
 
-	# close the GDS file
-	seqClose(f)
 	invisible()
 }
 
@@ -145,8 +140,8 @@ test_dosage <- function()
 test_random_dosage <- function()
 {
 	# open the GDS file
-	gds.fn <- seqExampleFileName("gds")
-	f <- seqOpen(gds.fn)
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
 
 	seqResetFilter(f)
 	gm <- seqGetData(f, "$dosage")
@@ -165,8 +160,6 @@ test_random_dosage <- function()
 		checkEquals(m1, m2, "dosage: random access")
 	}
 
-	# close the GDS file
-	seqClose(f)
 	invisible()
 }
 
@@ -216,8 +209,8 @@ test_random_phase <- function()
 test_random_info <- function()
 {
 	# open the GDS file
-	gds.fn <- seqExampleFileName("gds")
-	f <- seqOpen(gds.fn)
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
 
 	set.seed(200)
 	num <- seqSummary(f, "genotype", check="none", verbose=FALSE)$dim[3L]
@@ -246,8 +239,6 @@ test_random_info <- function()
 		}
 	}
 
-	# close the GDS file
-	seqClose(f)
 	invisible()
 }
 
@@ -255,8 +246,8 @@ test_random_info <- function()
 test_random_format <- function()
 {
 	# open the GDS file
-	gds.fn <- seqExampleFileName("gds")
-	f <- seqOpen(gds.fn)
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
 
 	seqResetFilter(f)
 	dat <- seqGetData(f, "annotation/format/DP")
@@ -280,7 +271,46 @@ test_random_format <- function()
 		checkEquals(y, m, "FORMAT: random access")
 	}
 
-	# close the GDS file
-	seqClose(f)
+	invisible()
+}
+
+
+test.apply_vs_blockapply <- function()
+{
+	# open the GDS file
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
+
+	# genotype
+	v1 <- seqApply(f, "genotype", function(x) mean(x, na.rm=TRUE),
+		as.is="double")
+	v2 <- seqBlockApply(f, "genotype", function(x)
+		colMeans(x, na.rm=TRUE, dims=2L), as.is="unlist")
+	checkEquals(v1, v2, "Apply vs BlockApply: genotype")
+
+	# phase
+	v1 <- seqApply(f, "phase", function(x) mean(x, na.rm=TRUE),
+		as.is="double")
+	v2 <- seqBlockApply(f, "phase", function(x)
+		colMeans(x, na.rm=TRUE), as.is="unlist")
+	checkEquals(v1, v2, "Apply vs BlockApply: phase")
+
+	# annotation/info/AC
+	v1 <- seqApply(f, "annotation/info/AC", function(x) x, as.is="double")
+	v2 <- seqBlockApply(f, "annotation/info/AC", function(x) x, as.is="unlist")
+	checkEquals(v1, v2, "Apply vs BlockApply: AC")
+
+	# annotation/info/BN
+	v1 <- seqApply(f, "annotation/info/BN", function(x) x, as.is="double")
+	v2 <- seqBlockApply(f, "annotation/info/BN", function(x) x, as.is="unlist")
+	checkEquals(v1, v2, "Apply vs BlockApply: BN")
+
+	# annotation/format/DP
+	v1 <- seqApply(f, "annotation/format/DP", function(x) mean(x, na.rm=TRUE),
+		as.is="double")
+	v2 <- seqBlockApply(f, "annotation/format/DP", function(x)
+		colMeans(x$data, na.rm=TRUE), as.is="unlist")
+	checkEquals(v1, v2, "Apply vs BlockApply: DP")
+
 	invisible()
 }
