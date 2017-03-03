@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2016    Xiuwen Zheng
+// Copyright (C) 2013-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

@@ -2,7 +2,7 @@
 //
 // pkg_test.cpp: package testing with C/C++ codes
 //
-// Copyright (C) 2016    Xiuwen Zheng
+// Copyright (C) 2016-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

@@ -2,7 +2,7 @@
 //
 // ReadBySample.h: Read data sample by sample
 //
-// Copyright (C) 2015-2016    Xiuwen Zheng
+// Copyright (C) 2015-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

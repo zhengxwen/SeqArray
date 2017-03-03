@@ -2,7 +2,7 @@
 //
 // GetData.cpp: Get data from the GDS file
 //
-// Copyright (C) 2015-2016    Xiuwen Zheng
+// Copyright (C) 2015-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -585,10 +585,10 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 	} else {
 		throw ErrSeqArray(
 			"'%s' is not a standard variable name, and the standard format:\n"
-			"\tsample.id, variant.id, position, chromosome, allele, genotype\n"
-			"\tannotation/id, annotation/qual, annotation/filter\n"
-			"\tannotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME\n"
-			"\tsample.annotation/VARIABLE_NAME", name);
+			"    sample.id, variant.id, position, chromosome, allele, genotype\n"
+			"    annotation/id, annotation/qual, annotation/filter\n"
+			"    annotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME\n"
+			"    sample.annotation/VARIABLE_NAME", name);
 	}
 
 	return rv_ans;

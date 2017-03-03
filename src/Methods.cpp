@@ -2,7 +2,7 @@
 //
 // Methods.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2015-2016    Xiuwen Zheng
+// Copyright (C) 2015-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

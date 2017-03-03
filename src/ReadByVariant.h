@@ -2,7 +2,7 @@
 //
 // ReadByVariant.h: Read data variant by variant
 //
-// Copyright (C) 2013-2016    Xiuwen Zheng
+// Copyright (C) 2013-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

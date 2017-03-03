@@ -281,35 +281,43 @@ test.apply_vs_blockapply <- function()
 	f <- seqOpen(seqExampleFileName("gds"))
 	on.exit(seqClose(f))
 
+	n <- seqSummary(f, "genotype", verbose=FALSE)$dim[3L]
+
+	# randoms variant set
+	set.seed(1000)
+	seqSetFilter(f, variant.sel=sample.int(n, 2/3*n))
+
 	# genotype
 	v1 <- seqApply(f, "genotype", function(x) mean(x, na.rm=TRUE),
 		as.is="double")
 	v2 <- seqBlockApply(f, "genotype", function(x)
-		colMeans(x, na.rm=TRUE, dims=2L), as.is="unlist")
+		colMeans(x, na.rm=TRUE, dims=2L), as.is="unlist", bsize=128L)
 	checkEquals(v1, v2, "Apply vs BlockApply: genotype")
 
 	# phase
 	v1 <- seqApply(f, "phase", function(x) mean(x, na.rm=TRUE),
 		as.is="double")
 	v2 <- seqBlockApply(f, "phase", function(x)
-		colMeans(x, na.rm=TRUE), as.is="unlist")
+		colMeans(x, na.rm=TRUE), as.is="unlist", bsize=128L)
 	checkEquals(v1, v2, "Apply vs BlockApply: phase")
 
 	# annotation/info/AC
 	v1 <- seqApply(f, "annotation/info/AC", function(x) x, as.is="double")
-	v2 <- seqBlockApply(f, "annotation/info/AC", function(x) x, as.is="unlist")
+	v2 <- seqBlockApply(f, "annotation/info/AC", function(x) x,
+		as.is="unlist", bsize=128L)
 	checkEquals(v1, v2, "Apply vs BlockApply: AC")
 
 	# annotation/info/BN
 	v1 <- seqApply(f, "annotation/info/BN", function(x) x, as.is="double")
-	v2 <- seqBlockApply(f, "annotation/info/BN", function(x) x, as.is="unlist")
+	v2 <- seqBlockApply(f, "annotation/info/BN", function(x) x,
+		as.is="unlist", bsize=128L)
 	checkEquals(v1, v2, "Apply vs BlockApply: BN")
 
 	# annotation/format/DP
 	v1 <- seqApply(f, "annotation/format/DP", function(x) mean(x, na.rm=TRUE),
 		as.is="double")
 	v2 <- seqBlockApply(f, "annotation/format/DP", function(x)
-		colMeans(x$data, na.rm=TRUE), as.is="unlist")
+		colMeans(x$data, na.rm=TRUE), as.is="unlist", bsize=128L)
 	checkEquals(v1, v2, "Apply vs BlockApply: DP")
 
 	invisible()

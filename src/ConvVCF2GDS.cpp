@@ -2,7 +2,7 @@
 //
 // ConvVCF2GDS.cpp: format conversion from VCF to GDS
 //
-// Copyright (C) 2013-2016    Xiuwen Zheng
+// Copyright (C) 2013-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

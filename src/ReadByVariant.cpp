@@ -2,7 +2,7 @@
 //
 // ReadByVariant.cpp: Read data variant by variant
 //
-// Copyright (C) 2013-2016    Xiuwen Zheng
+// Copyright (C) 2013-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -843,9 +843,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"
-					"\tvariant.id, position, chromosome, allele, "
-					"annotation/id, annotation/qual, annotation/filter\n"
-					"\tannotation/info/VARIABLE_NAME', annotation/format/VARIABLE_NAME",
+					"    variant.id, position, chromosome, allele, annotation/id, annotation/qual, annotation/filter\n"
+					"    annotation/info/VARIABLE_NAME', annotation/format/VARIABLE_NAME",
 					s.c_str());
 			}
 		}

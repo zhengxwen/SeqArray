@@ -2,7 +2,7 @@
 //
 // ReadBySample.cpp: Read data sample by sample
 //
-// Copyright (C) 2015-2016    Xiuwen Zheng
+// Copyright (C) 2015-2017    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -560,8 +560,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"
-					"\tsample.id, genotype, annotation/format/VARIABLE_NAME\n"
-					"\tsample.annotation/VARIABLE_NAME",
+					"    sample.id, genotype, annotation/format/VARIABLE_NAME\n"
+					"    sample.annotation/VARIABLE_NAME",
 					s.c_str());
 			}
 
