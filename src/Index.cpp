@@ -138,6 +138,33 @@ void CIndex::GetInfo(size_t pos, C_Int64 &Sum, int &Value)
 	Value = Values[AccIndex];
 }
 
+SEXP CIndex::GetLen_Sel(const C_BOOL sel[])
+{
+	size_t n = GetNumOfTRUE(sel, TotalLength);
+	SEXP ans = PROTECT(NEW_INTEGER(n));
+	int *pAns = INTEGER(ans);
+
+	int *pV = &Values[0];
+	C_UInt32 *pL = &Lengths[0], L = *pL;
+	while (n > 0)
+	{
+		if (L == 0)
+		{
+			L = *(++pL); pV ++;
+			continue;  // in case, L = 0
+		}
+		L--;
+		if (*sel++)
+		{
+			*pAns++ = *pV;
+			n --;
+		}
+	}
+
+	UNPROTECT(1);
+	return ans;
+}
+
 
 // ===========================================================
 

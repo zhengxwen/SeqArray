@@ -168,6 +168,8 @@ public:
 	void InitOne(int num);
 	/// return the accumulated sum of values and current value in Lengths and Values given by a position
 	void GetInfo(size_t pos, C_Int64 &Sum, int &Value);
+	/// get lengths with selection
+	SEXP GetLen_Sel(const C_BOOL sel[]);
 	/// return true if empty
 	inline bool Empty() const { return (TotalLength <= 0); }
 

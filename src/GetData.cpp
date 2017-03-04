@@ -305,16 +305,10 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 
 	} else if (strncmp(name, "annotation/info/@", 17) == 0)
 	{
-		PdAbstractArray N = File.GetObj(name, FALSE);
-		if (N != NULL)
+		if (File.GetObj(name, FALSE) != NULL)
 		{
-			// check
-			if ((GDS_Array_DimCnt(N) != 1) ||
-					(GDS_Array_GetTotalCount(N) != File.VariantNum()))
-				throw ErrSeqArray(ERR_DIM, name);
-			// read
-			C_BOOL *ss = Sel.pVariant();
-			rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
+			CIndex &V = File.VarIndex(name);
+			rv_ans = V.GetLen_Sel(Sel.pVariant());
 		}
 
 	} else if (strncmp(name, "annotation/info/", 16) == 0)
@@ -382,16 +376,10 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 	{
 		string name2(name);
 		name2.erase(18, 1).append("/@data");
-		PdAbstractArray N = File.GetObj(name2.c_str(), FALSE);
-		if (N != NULL)
+		if (File.GetObj(name2.c_str(), FALSE) != NULL)
 		{
-			// check
-			if ((GDS_Array_DimCnt(N) != 1) ||
-					(GDS_Array_GetTotalCount(N) != File.VariantNum()))
-				throw ErrSeqArray(ERR_DIM, name2.c_str());
-			// read
-			C_BOOL *ss = Sel.pVariant();
-			rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
+			CIndex &V = File.VarIndex(name2.c_str());
+			rv_ans = V.GetLen_Sel(Sel.pVariant());
 		}
 
 	} else if (strncmp(name, "annotation/format/", 18) == 0)
