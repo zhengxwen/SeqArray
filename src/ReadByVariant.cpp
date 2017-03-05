@@ -293,13 +293,7 @@ SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
 		{
 			VarIntGeno = PROTECT(allocMatrix(INTSXP, Ploidy, SampNum));
 			nProtected ++;
-			SEXP name_list = PROTECT(NEW_LIST(2));
-			SEXP tmp = PROTECT(NEW_CHARACTER(2));
-			SET_STRING_ELT(tmp, 0, mkChar("allele"));
-			SET_STRING_ELT(tmp, 1, mkChar("sample"));
-			SET_NAMES(name_list, tmp);
-			SET_DIMNAMES(VarIntGeno, name_list);
-			UNPROTECT(2);
+			SET_DIMNAMES(VarIntGeno, R_Geno_Dim2_Name);
 		}
 		return VarIntGeno;
 	} else {
@@ -307,13 +301,7 @@ SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
 		{
 			VarRawGeno = PROTECT(allocMatrix(RAWSXP, Ploidy, SampNum));
 			nProtected ++;
-			SEXP name_list = PROTECT(NEW_LIST(2));
-			SEXP tmp = PROTECT(NEW_CHARACTER(2));
-			SET_STRING_ELT(tmp, 0, mkChar("allele"));
-			SET_STRING_ELT(tmp, 1, mkChar("sample"));
-			SET_NAMES(name_list, tmp);
-			SET_DIMNAMES(VarRawGeno, name_list);
-			UNPROTECT(2);
+			SET_DIMNAMES(VarRawGeno, R_Geno_Dim2_Name);
 		}
 		return VarRawGeno;
 	}

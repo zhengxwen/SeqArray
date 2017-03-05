@@ -1100,6 +1100,24 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 
 
 // ===========================================================
+// initialize R objects when the package is loaded
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name)
+{
+	R_Geno_Dim2_Name = VECTOR_ELT(dim_name, 0);
+	R_Geno_Dim3_Name = VECTOR_ELT(dim_name, 1);
+	R_Dosage_Name = VECTOR_ELT(dim_name, 2);
+	R_Data_Name = VECTOR_ELT(dim_name, 3);
+	R_Data_Dim2_Name = VECTOR_ELT(dim_name, 4);
+	R_Data_Dim3_Name = VECTOR_ELT(dim_name, 5);
+	return R_NilValue;
+}
+
+
+
+
+// ===========================================================
 // the initial function when the package is loaded
 // ===========================================================
 
@@ -1155,6 +1173,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
+		CALL(SEQ_Pkg_Init, 1),
 		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
 		CALL(SEQ_ExternalName2, 2),         CALL(SEQ_ExternalName3, 3),
 		CALL(SEQ_ExternalName4, 4),         CALL(SEQ_ExternalName5, 5),

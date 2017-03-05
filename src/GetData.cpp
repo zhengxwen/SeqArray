@@ -278,17 +278,10 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				int *p = INTEGER(dim);
 				p[0] = File.Ploidy(); p[1] = nSample; p[2] = nVariant;
 			SET_DIM(rv_ans, dim);
-
-			SEXP name_list = PROTECT(NEW_LIST(3));
-			SEXP tmp = PROTECT(NEW_CHARACTER(3));
-				SET_STRING_ELT(tmp, 0, mkChar("allele"));
-				SET_STRING_ELT(tmp, 1, mkChar("sample"));
-				SET_STRING_ELT(tmp, 2, mkChar("variant"));
-				SET_NAMES(name_list, tmp);
-			SET_DIMNAMES(rv_ans, name_list);
+			SET_DIMNAMES(rv_ans, R_Geno_Dim3_Name);
 
 			// finally
-			UNPROTECT(4);
+			UNPROTECT(2);
 		}
 
 	} else if (strcmp(name, "@genotype") == 0)
@@ -356,8 +349,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				ss[1] = NeedArrayTRUEs(dim[1]);
 
 			PROTECT(rv_ans = NEW_LIST(2));
-				SEXP I32;
-				PROTECT(I32 = NEW_INTEGER(len.size()));
+				SEXP I32 = PROTECT(NEW_INTEGER(len.size()));
 				int *base = INTEGER(I32);
 				for (int i=0; i < (int)len.size(); i++)
 					base[i] = len[i];
@@ -365,11 +357,8 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				SET_ELEMENT(rv_ans, 1,
 					VAR_LOGICAL(N, GDS_R_Array_Read(N, dimst, dim, ss,
 					UseMode)));
-			SEXP tmp = PROTECT(NEW_CHARACTER(2));
-				SET_STRING_ELT(tmp, 0, mkChar("length"));
-				SET_STRING_ELT(tmp, 1, mkChar("data"));
-				SET_NAMES(rv_ans, tmp);
-			UNPROTECT(3);
+			SET_NAMES(rv_ans, R_Data_Name);
+			UNPROTECT(2);
 		}
 
 	} else if (strncmp(name, "annotation/format/@", 19) == 0)
@@ -423,28 +412,15 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			SET_ELEMENT(rv_ans, 0, I32);
 			SEXP DAT = GDS_R_Array_Read(N, dimst, dim, ss, UseMode);
 			SET_ELEMENT(rv_ans, 1, DAT);
-		SEXP tmp = PROTECT(NEW_CHARACTER(2));
-			SET_STRING_ELT(tmp, 0, mkChar("length"));
-			SET_STRING_ELT(tmp, 1, mkChar("data"));
-			SET_NAMES(rv_ans, tmp);
+			SET_NAMES(rv_ans, R_Data_Name);
 			if (XLENGTH(DAT) > 0)
 			{
-				SEXP name_list = PROTECT(NEW_LIST(ndim));
-				tmp = PROTECT(NEW_CHARACTER(ndim));
 				if (ndim == 2)
-				{
-					SET_STRING_ELT(tmp, 0, mkChar("sample"));
-					SET_STRING_ELT(tmp, 1, mkChar("variant"));
-				} else {
-					SET_STRING_ELT(tmp, 0, mkChar("n"));
-					SET_STRING_ELT(tmp, 1, mkChar("sample"));
-					SET_STRING_ELT(tmp, 2, mkChar("variant"));
-				}
-				SET_NAMES(name_list, tmp);
-				SET_DIMNAMES(VECTOR_ELT(rv_ans, 1), name_list);
-				UNPROTECT(2);
+					SET_DIMNAMES(VECTOR_ELT(rv_ans, 1), R_Data_Dim2_Name);
+				else
+					SET_DIMNAMES(VECTOR_ELT(rv_ans, 1), R_Data_Dim3_Name);
 			}
-		UNPROTECT(3);
+		UNPROTECT(2);
 
 	} else if (strncmp(name, "sample.annotation/", 18) == 0)
 	{
@@ -543,14 +519,9 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				} while (NodeVar.Next());
 			}
 
-			SEXP name_list = PROTECT(NEW_LIST(2));
-			SEXP tmp = PROTECT(NEW_CHARACTER(2));
-				SET_STRING_ELT(tmp, 0, mkChar("sample"));
-				SET_STRING_ELT(tmp, 1, mkChar("variant"));
-				SET_NAMES(name_list, tmp);
-			SET_DIMNAMES(rv_ans, name_list);
+			SET_DIMNAMES(rv_ans, R_Dosage_Name);
 			// finally
-			UNPROTECT(3);
+			UNPROTECT(1);
 		}
 
 	} else if (strcmp(name, "$num_allele") == 0)

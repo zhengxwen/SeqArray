@@ -497,6 +497,19 @@ protected:
 
 
 // ===========================================================
+// Pre-defined R objects
+// ===========================================================
+
+extern SEXP R_Geno_Dim2_Name;
+extern SEXP R_Geno_Dim3_Name;
+extern SEXP R_Dosage_Name;
+extern SEXP R_Data_Name;
+extern SEXP R_Data_Dim2_Name;
+extern SEXP R_Data_Dim3_Name;
+
+
+
+// ===========================================================
 // Define Functions
 // ===========================================================
 

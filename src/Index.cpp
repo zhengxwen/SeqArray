@@ -862,6 +862,20 @@ void CProgressStdOut::ShowProgress()
 
 
 // ===========================================================
+// Pre-defined R objects
+// ===========================================================
+
+SEXP R_Geno_Dim2_Name = R_NilValue;
+SEXP R_Geno_Dim3_Name = R_NilValue;
+SEXP R_Dosage_Name    = R_NilValue;
+SEXP R_Data_Name      = R_NilValue;
+SEXP R_Data_Dim2_Name = R_NilValue;
+SEXP R_Data_Dim3_Name = R_NilValue;
+
+
+
+
+// ===========================================================
 // Define Functions
 // ===========================================================
 

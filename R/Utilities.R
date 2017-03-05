@@ -11,9 +11,26 @@
 process_index <- 1L
 process_count <- 1L
 
+## Internal R objects
+.dim_name <- list(
+    geno_dim2 = list(allele=NULL, sample=NULL),
+    geno_dim3 = list(allele=NULL, sample=NULL, variant=NULL),
+    dosage_dim = list(sample=NULL, variant=NULL),
+    data_dim  = c("length", "data"),
+    data_dim2 = list(sample=NULL, variant=NULL),
+    data_dim3 = list(n=NULL, sample=NULL, variant=NULL)
+)
+
 
 
 #######################################################################
+
+.onAttach <- function(lib, pkg)
+{
+    .Call(SEQ_Pkg_Init, .dim_name)
+    TRUE
+}
+
 .Last.lib <- function(libpath)
 {
     cl <- getOption("seqarray.parallel", FALSE)
