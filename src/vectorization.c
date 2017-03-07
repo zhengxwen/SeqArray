@@ -183,6 +183,44 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 }
 
 
+/// get the number of non-zeros and the pointer to the first non-zero value
+const int8_t *vec_i8_cnt_nonzero_ptr(const int8_t *p, size_t n, size_t *out_n)
+{
+#ifdef COREARRAY_SIMD_SSE2
+
+#   ifdef COREARRAY_SIMD_AVX2
+
+	const __m256i ZERO2 = _mm256_setzero_si256();
+	for (; n >= 32; n-=32, p+=32)
+	{
+		__m256i v = _mm256_loadu_si256((__m256i const*)p);
+		v = _mm256_cmpeq_epi8(v, ZERO2);
+		if (_mm256_movemask_epi8(v) != -1) break;
+	}
+
+#   endif
+
+	const __m128i ZERO = _mm_setzero_si128();
+	for (; n >= 16; n-=16, p+=16)
+	{
+		__m128i v = _mm_loadu_si128((__m128i const*)p);
+		v = _mm_cmpeq_epi8(v, ZERO);
+		if (_mm_movemask_epi8(v) != 0xFFFF) break;
+	}
+
+#endif
+
+	// tail
+	for (; n > 0; n--, p++) if (*p) break;
+	const int8_t *ans = p;
+
+	n = vec_i8_cnt_nonzero(p, n);
+	if (out_n) *out_n = n;
+	return ans;
+}
+
+
+
 // ===========================================================
 // functions for int8
 // ===========================================================

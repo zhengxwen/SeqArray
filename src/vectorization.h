@@ -286,6 +286,11 @@ inline static int POPCNT_U64(uint64_t x)
 /// get the number of non-zeros
 COREARRAY_DLL_DEFAULT size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n);
 
+/// get the number of non-zeros and the pointer to the first non-zero value
+COREARRAY_DLL_DEFAULT const int8_t *vec_i8_cnt_nonzero_ptr(const int8_t *p,
+	size_t n, size_t *out_n);
+
+
 
 // ===========================================================
 // functions for int8

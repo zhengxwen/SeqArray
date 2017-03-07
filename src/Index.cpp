@@ -140,30 +140,127 @@ void CIndex::GetInfo(size_t pos, C_Int64 &Sum, int &Value)
 
 SEXP CIndex::GetLen_Sel(const C_BOOL sel[])
 {
-	size_t n = GetNumOfTRUE(sel, TotalLength);
-	SEXP ans = PROTECT(NEW_INTEGER(n));
-	int *pAns = INTEGER(ans);
-
-	int *pV = &Values[0];
-	C_UInt32 *pL = &Lengths[0], L = *pL;
-	while (n > 0)
+	size_t n;
+	const C_BOOL *p = (C_BOOL *)vec_i8_cnt_nonzero_ptr((const int8_t *)sel,
+		TotalLength, &n);
+	SEXP ans = NEW_INTEGER(n);
+	if (n > 0)
 	{
-		if (L == 0)
+		int *pV = &Values[0];
+		C_UInt32 *pL = &Lengths[0];
+		size_t L = *pL;
+		// skip non-selection
+		for (size_t m=p-sel; m > 0; )
 		{
-			L = *(++pL); pV ++;
-			continue;  // in case, L = 0
+			if (L == 0)
+			{
+				L = *(++pL); pV ++;
+				continue;  // in case, L = 0
+			}
+			if (L <= m)
+			{
+				m -= L; L = 0;
+			} else {
+				L -= m; m = 0;
+			}
 		}
-		L--;
-		if (*sel++)
+		// get lengths
+		int *pAns = INTEGER(ans);
+		while (n > 0)
 		{
-			*pAns++ = *pV;
-			n --;
+			if (L == 0)
+			{
+				L = *(++pL); pV ++;
+				continue;  // in case, L = 0
+			}
+			L--;
+			if (*p++)
+			{
+				*pAns++ = *pV;
+				n --;
+			}
 		}
 	}
-
-	UNPROTECT(1);
 	return ans;
 }
+
+SEXP CIndex::GetLen_Sel(const C_BOOL sel[], int &out_var_start,
+	int &out_var_count, vector<C_BOOL> &out_var_sel)
+{
+	size_t n;
+	const C_BOOL *p = (C_BOOL *)vec_i8_cnt_nonzero_ptr((const int8_t *)sel,
+		TotalLength, &n);
+	SEXP ans = NEW_INTEGER(n);
+	out_var_start = 0;
+	out_var_count = 0;
+
+	if (n > 0)
+	{
+		int *pV = &Values[0];
+		C_UInt32 *pL = &Lengths[0];
+		size_t L = *pL;
+		// skip non-selection
+		for (size_t m=p-sel; m > 0; )
+		{
+			if (L == 0)
+			{
+				L = *(++pL); pV ++;
+				continue;  // in case, L = 0
+			}
+			if (L <= m)
+			{
+				m -= L; out_var_start += L * (*pV); L = 0;
+			} else {
+				L -= m; out_var_start += m * (*pV); m = 0;
+			}
+		}
+		sel = p;
+		// get the total length
+		int *pVV = pV;
+		C_UInt32 *pLL = pL;
+		size_t LL = L;
+		int *pAns = INTEGER(ans);
+		for (size_t m=n; m > 0; )
+		{
+			if (L == 0)
+			{
+				L = *(++pL); pV ++;
+				continue;  // in case, L = 0
+			}
+			L--;
+			out_var_count += (*pV);
+			if (*p++)
+			{
+				*pAns++ = *pV;
+				m --;
+			}
+		}
+		// set bool selection
+		out_var_sel.resize(out_var_count, TRUE);
+		C_BOOL *pB = &out_var_sel[0];
+		p = sel; pV = pVV; pL = pLL; L = LL;
+		while (n > 0)
+		{
+			if (L == 0)
+			{
+				L = *(++pL); pV ++;
+				continue;  // in case, L = 0
+			}
+			L--;
+			if (*p++)
+			{
+				pB += *pV; n --;
+			} else {
+				for (size_t m=*pV; m > 0; m--) *pB++ = FALSE;
+			}
+		}
+	} else {
+		out_var_sel.clear();
+	}
+
+	return ans;
+}
+
 
 
 // ===========================================================
@@ -870,7 +967,6 @@ SEXP R_Geno_Dim3_Name = R_NilValue;
 SEXP R_Dosage_Name    = R_NilValue;
 SEXP R_Data_Name      = R_NilValue;
 SEXP R_Data_Dim2_Name = R_NilValue;
-SEXP R_Data_Dim3_Name = R_NilValue;
 
 
 

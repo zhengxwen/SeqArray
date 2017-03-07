@@ -47,96 +47,6 @@ static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 	return Array;
 }
 
-static void MAP_INDEX(PdAbstractArray Node, const vector<C_BOOL> &sel,
-	vector<int> &out_len, vector<C_BOOL> &out_var_sel,
-	C_Int32 &out_var_start, C_Int32 &out_var_count)
-{
-	if (GDS_Array_DimCnt(Node) != 1)
-		throw ErrSeqArray("Invalid dimension.");
-	C_Int64 Cnt = GDS_Array_GetTotalCount(Node);
-
-	if (sel.empty())
-	{
-		out_len.resize(Cnt);
-		C_Int32 _st=0, _cnt=Cnt;
-		GDS_Array_ReadData(Node, &_st, &_cnt, &out_len[0], svInt32);
-
-		out_var_start = 0;
-		out_var_count = 0;
-		for (vector<int>::iterator it=out_len.begin();
-			it != out_len.end(); it++)
-		{
-			if (*it > 0) out_var_count += *it;
-		}
-		out_var_sel.clear();
-		out_var_sel.resize(out_var_count, TRUE);
-
-	} else {
-		// check
-		if ((int)sel.size() != Cnt)
-			throw ErrSeqArray("Invalid dimension.");
-
-		// find the start
-		int _start = 0;
-		for (; _start < (int)sel.size(); _start++)
-			if (sel[_start]) break;
-		// find the end
-		int _end = sel.size()-1;
-		for (; _end >= 0; _end --)
-			if (sel[_end]) break;
-
-		if (_end >= 0)
-		{
-			const int N_MAX = 16384;
-			C_Int32 buffer[N_MAX];
-
-			out_var_start = 0;
-			int pos = 0;
-			while (pos < _start)
-			{
-				int L = _start - pos;
-				if (L > N_MAX) L = N_MAX;
-				GDS_Array_ReadData(Node, &pos, &L, buffer, svInt32);
-				pos += L;
-				for (int i=0; i < L; i++)
-				{
-					if (buffer[i] > 0)
-						out_var_start += buffer[i];
-				}
-			}
-
-			out_len.clear();
-			out_var_sel.clear();
-			while (pos <= _end)
-			{
-				int L = _end - pos + 1;
-				if (L > N_MAX) L = N_MAX;
-				GDS_Array_ReadData(Node, &pos, &L, buffer, svInt32);
-				for (int i=0; i < L; i++)
-				{
-					int LL = (buffer[i] > 0) ? buffer[i] : 0;
-					if (sel[pos+i])
-					{
-						out_len.push_back(LL);
-						for (int j=0; j < LL; j++)
-							out_var_sel.push_back(TRUE);
-					} else {
-						for (int j=0; j < LL; j++)
-							out_var_sel.push_back(FALSE);
-					}
-				}
-				pos += L;
-			}
-			
-			out_var_count = out_var_sel.size();
-		} else {
-			out_len.clear(); out_var_sel.clear();
-			out_var_start = out_var_count = 0;
-		}
-	}
-}
-
-
 
 // get data
 static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
@@ -330,32 +240,24 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 
 		} else {
 			// with index
-
-			// check
-			if ((GDS_Array_DimCnt(N_idx) != 1) ||
-					(GDS_Array_GetTotalCount(N_idx) != File.VariantNum()))
-				throw ErrSeqArray(ERR_DIM, name2.c_str());
-
-			C_Int32 dim[4], dimst[4];
-			memset(dimst, 0, sizeof(dimst));
-			GDS_Array_GetDim(N, dim, 2);
-
-			vector<int> len;
+			CIndex &V = File.VarIndex(name2);
+			int var_start, var_count;
 			vector<C_BOOL> var_sel;
-			MAP_INDEX(N_idx, Sel.Variant, len, var_sel, dimst[0], dim[0]);
+			SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant(), var_start, var_count, var_sel));
 
 			C_BOOL *ss[2] = { &var_sel[0], NULL };
+			C_Int32 dimst[2]  = { var_start, 0 };
+			C_Int32 dimcnt[2] = { var_count, 0 };
 			if (ndim == 2)
-				ss[1] = NeedArrayTRUEs(dim[1]);
+			{
+				GDS_Array_GetDim(N, dimcnt, 2);
+				dimcnt[0] = var_count;
+			}
 
 			PROTECT(rv_ans = NEW_LIST(2));
-				SEXP I32 = PROTECT(NEW_INTEGER(len.size()));
-				int *base = INTEGER(I32);
-				for (int i=0; i < (int)len.size(); i++)
-					base[i] = len[i];
 				SET_ELEMENT(rv_ans, 0, I32);
 				SET_ELEMENT(rv_ans, 1,
-					VAR_LOGICAL(N, GDS_R_Array_Read(N, dimst, dim, ss,
+					VAR_LOGICAL(N, GDS_R_Array_Read(N, dimst, dimcnt, ss,
 					UseMode)));
 			SET_NAMES(rv_ans, R_Data_Name);
 			UNPROTECT(2);
@@ -380,46 +282,26 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		string name1 = string(name) + "/data";
 		string name2 = string(name) + "/@data";
 		PdAbstractArray N = File.GetObj(name1.c_str(), TRUE);
-		PdAbstractArray N_idx = File.GetObj(name2.c_str(), TRUE);
 
-		// check
-		int ndim = GDS_Array_DimCnt(N);
-		if ((ndim!=2) && (ndim!=3))
-			throw ErrSeqArray(ERR_DIM, name1.c_str());
-		C_Int32 dim[4];
-		GDS_Array_GetDim(N, dim, 3);
-		if (dim[1] != File.SampleNum())
-			throw ErrSeqArray(ERR_DIM, name1.c_str());
-		if ((GDS_Array_DimCnt(N_idx) != 1) ||
-				(GDS_Array_GetTotalCount(N_idx) != File.VariantNum()))
-			throw ErrSeqArray(ERR_DIM, name2.c_str());
-
-		C_Int32 dimst[4];
-		memset(dimst, 0, sizeof(dimst));
-		vector<int> len;
+		// with index
+		CIndex &V = File.VarIndex(name2);
+		int var_start, var_count;
 		vector<C_BOOL> var_sel;
-		MAP_INDEX(N_idx, Sel.Variant, len, var_sel, dimst[0], dim[0]);
+		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant(), var_start, var_count, var_sel));
 
-		C_BOOL *ss[3] = { &var_sel[0], Sel.pSample(), NULL };
-		if (ndim == 3)
-			ss[2] = NeedArrayTRUEs(dim[2]);
+		C_BOOL *ss[2] = { &var_sel[0], Sel.pSample() };
+		C_Int32 dimst[2]  = { var_start, 0 };
+		C_Int32 dimcnt[2];
+		GDS_Array_GetDim(N, dimcnt, 2);
+		dimcnt[0] = var_count;
 
 		PROTECT(rv_ans = NEW_LIST(2));
-			SEXP I32 = PROTECT(NEW_INTEGER(len.size()));
-			int *base = INTEGER(I32);
-			for (int i=0; i < (int)len.size(); i++)
-				base[i] = len[i];
 			SET_ELEMENT(rv_ans, 0, I32);
-			SEXP DAT = GDS_R_Array_Read(N, dimst, dim, ss, UseMode);
+			SEXP DAT = GDS_R_Array_Read(N, dimst, dimcnt, ss, UseMode);
 			SET_ELEMENT(rv_ans, 1, DAT);
 			SET_NAMES(rv_ans, R_Data_Name);
 			if (XLENGTH(DAT) > 0)
-			{
-				if (ndim == 2)
-					SET_DIMNAMES(VECTOR_ELT(rv_ans, 1), R_Data_Dim2_Name);
-				else
-					SET_DIMNAMES(VECTOR_ELT(rv_ans, 1), R_Data_Dim3_Name);
-			}
+				SET_DIMNAMES(DAT, R_Data_Dim2_Name);
 		UNPROTECT(2);
 
 	} else if (strncmp(name, "sample.annotation/", 18) == 0)

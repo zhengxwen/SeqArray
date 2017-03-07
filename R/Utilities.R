@@ -17,8 +17,7 @@ process_count <- 1L
     geno_dim3 = list(allele=NULL, sample=NULL, variant=NULL),
     dosage_dim = list(sample=NULL, variant=NULL),
     data_dim  = c("length", "data"),
-    data_dim2 = list(sample=NULL, variant=NULL),
-    data_dim3 = list(n=NULL, sample=NULL, variant=NULL)
+    data_dim2 = list(sample=NULL, variant=NULL)
 )
 
 

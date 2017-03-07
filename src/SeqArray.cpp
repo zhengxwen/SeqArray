@@ -1110,7 +1110,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name)
 	R_Dosage_Name = VECTOR_ELT(dim_name, 2);
 	R_Data_Name = VECTOR_ELT(dim_name, 3);
 	R_Data_Dim2_Name = VECTOR_ELT(dim_name, 4);
-	R_Data_Dim3_Name = VECTOR_ELT(dim_name, 5);
 	return R_NilValue;
 }
 

@@ -170,6 +170,9 @@ public:
 	void GetInfo(size_t pos, C_Int64 &Sum, int &Value);
 	/// get lengths with selection
 	SEXP GetLen_Sel(const C_BOOL sel[]);
+	/// get lengths and bool selection from a set of selected variants
+	SEXP GetLen_Sel(const C_BOOL sel[], int &out_var_start, int &out_var_count,
+		vector<C_BOOL> &out_var_sel);
 	/// return true if empty
 	inline bool Empty() const { return (TotalLength <= 0); }
 
@@ -505,7 +508,6 @@ extern SEXP R_Geno_Dim3_Name;
 extern SEXP R_Dosage_Name;
 extern SEXP R_Data_Name;
 extern SEXP R_Data_Dim2_Name;
-extern SEXP R_Data_Dim3_Name;
 
 
 
@@ -515,6 +517,7 @@ extern SEXP R_Data_Dim3_Name;
 
 /// Get the number of TRUEs
 #define GetNumOfTRUE(ptr, n)    vec_i8_cnt_nonzero((C_Int8*)(ptr), n)
+
 
 /// return the length in val, it is safe to call when val=R_NilValue
 COREARRAY_DLL_LOCAL size_t RLength(SEXP val);

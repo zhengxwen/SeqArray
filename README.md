@@ -148,9 +148,3 @@ seqClose(f)
 | seqGetData   | Get data from a SeqArray file with a defined filter. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
 | seqApply     | Apply a user-defined function over array margins. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
 | seqParallel  | Apply functions in parallel. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
-
-
-## Significant User-visible Changes (since v1.11.16)
-
-* `seqSummary(gds, "genotype")$seldim` returns a vector with 3 integers (ploidy, # of selected samples, # of selected variants) instead of 2 integers
-
