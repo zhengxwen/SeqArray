@@ -1,0 +1,16 @@
+citHeader("To cite SeqArray in publications use:")
+
+citEntry(entry="Article",
+    title = "SeqArray -- A storage-efficient high-performance data format for WGS variant calls",
+    author = personList(person("Xiuwen", "Zheng"), person("Stephanie", "Gogarten"),
+        person("Michael", "Lawrence"), person("Adrienne", "Stilp"), person("Matthew", "Conomos"),
+        person("Bruce", "Weir"), person("Cathy", "Laurie"), person("David", "Levine")),
+    journal = "Bioinformatics",
+    year = "2017",
+    doi = "10.1093/bioinformatics/btx145",
+
+    textVersion =
+        paste("Xiuwen Zheng, Stephanie M. Gogarten, Michael Lawrence, Adrienne Stilp, Matthew P. Conomos, Bruce S. Weir, Cathy Laurie, David Levine.",
+            "SeqArray -- A storage-efficient high-performance data format for WGS variant calls.",
+            "Bioinformatics 2017; doi: 10.1093/bioinformatics/btx145")
+)

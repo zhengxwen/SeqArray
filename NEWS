@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.15.0-1.15.4
+CHANGES IN VERSION 1.15.0-1.15.5
 
     o a new argument 'intersect' in `seqSetFilter()` and `seqSetFilterChrom()`
 
@@ -6,6 +6,11 @@ CHANGES IN VERSION 1.15.0-1.15.4
 
     o `seqVCF2GDS()` allows arbitrary numbers of different alleles if REF and
       ALT in VCF are missing
+
+    o optimize internal indexing for FORMAT annotations to  avoid reloading
+      the indexing from the GDS file
+
+    o CITATION file
 
 
 CHANGES IN VERSION 1.14.1
