@@ -5,16 +5,15 @@
     Converts a SNP GDS file to a SeqArray GDS file.
 }
 \usage{
-seqSNP2GDS(gds.fn, out.fn, storage.option="ZIP_RA", optimize=TRUE,
+seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA", optimize=TRUE,
     digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file name of SNP format}
     \item{out.fn}{the file name, output a file of SeqArray format}
     \item{storage.option}{specify the storage and compression options,
-        by default \code{\link{seqStorageOption}("ZIP_RA")}; or
-        \code{"LZMA_RA"} to use LZMZ compression algorithm with higher
-        compression ratio}
+        \code{"LZMA_RA"} to use LZMA compression algorithm with higher
+        compression ratio compared to \code{"ZIP_RA"}}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",

@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.15.0-1.15.5
+CHANGES IN VERSION 1.16.0
 
     o a new argument 'intersect' in `seqSetFilter()` and `seqSetFilterChrom()`
 
@@ -10,7 +10,17 @@ CHANGES IN VERSION 1.15.0-1.15.5
     o optimize internal indexing for FORMAT annotations to  avoid reloading
       the indexing from the GDS file
 
-    o CITATION file
+    o a new CITATION file
+
+    o 'LZMA_RA' is the default compression method in `seqBED2GDS()` and
+      `seqSNP2GDS()`
+
+
+CHANGES IN VERSION 1.15.0-1.15.6
+
+-------------------------
+
+    o the version number was bumped for the Bioconductor develop version 3.4
 
 
 CHANGES IN VERSION 1.14.1

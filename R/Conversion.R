@@ -397,7 +397,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 # Convert a SNP GDS file to a SeqArray GDS file
 #
 
-seqSNP2GDS <- function(gds.fn, out.fn, storage.option="ZIP_RA",
+seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     optimize=TRUE, digest=TRUE, verbose=TRUE)
 {
     # check
@@ -623,7 +623,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="ZIP_RA",
 #
 
 seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
-    compress.geno="ZIP_RA", compress.annotation="ZIP_RA",
+    compress.geno="LZMA_RA", compress.annotation="LZMA_RA",
     optimize=TRUE, digest=TRUE, verbose=TRUE)
 {
     # check

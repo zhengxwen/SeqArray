@@ -20,9 +20,8 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "Index.h"
-#include "ReadBySample.h"
 #include "ReadByVariant.h"
-#include <stdio.h>
+#include "ReadBySample.h"
 
 
 using namespace SeqArray;
@@ -122,8 +121,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		(strcmp(name, "annotation/filter")==0) )
 	{
 		// ===========================================================
-		// variant.id, position, chromosome, allele, annotation/id
-		// annotation/qual, annotation/filter
+		// variant.id, allele, annotation/id, annotation/qual, annotation/filter
 
 		PdAbstractArray N = File.GetObj(name, TRUE);
 		// check
@@ -133,25 +131,6 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		// read
 		C_BOOL *ss = Sel.pVariant();
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
-
-	} else if (strcmp(name, "phase") == 0)
-	{
-		// ===========================================================
-		// phase/
-
-		PdAbstractArray N = File.GetObj("phase/data", TRUE);
-		// check
-		int ndim = GDS_Array_DimCnt(N);
-		C_Int32 dim[4];
-		GDS_Array_GetDim(N, dim, 3);
-		if (ndim<2 || ndim>3 || dim[0]!= File.VariantNum() ||
-				dim[1]!=File.SampleNum())
-			throw ErrSeqArray(ERR_DIM, name);
-		// read
-		C_BOOL *ss[3] = { Sel.pVariant(), Sel.pSample(), NULL };
-		if (ndim == 3)
-			ss[2] = NeedArrayTRUEs(dim[2]);
-		rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 
 	} else if (strcmp(name, "genotype") == 0)
 	{
@@ -205,6 +184,60 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		// read
 		C_BOOL *ss = Sel.pVariant();
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
+
+	} else if (strcmp(name, "$dosage") == 0)
+	{
+		// ===========================================================
+		// dosage data
+
+		ssize_t nSample  = File.SampleSelNum();
+		ssize_t nVariant = File.VariantSelNum();
+
+		if ((nSample > 0) && (nVariant > 0))
+		{
+			// initialize GDS genotype Node
+			CApply_Variant_Dosage NodeVar(File, false);
+
+			if (use_raw)
+			{
+				rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
+				C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
+				do {
+					NodeVar.ReadDosage(base);
+					base += nSample;
+				} while (NodeVar.Next());
+			} else {
+				rv_ans = PROTECT(allocMatrix(INTSXP, nSample, nVariant));
+				int *base = INTEGER(rv_ans);
+				do {
+					NodeVar.ReadDosage(base);
+					base += nSample;
+				} while (NodeVar.Next());
+			}
+
+			SET_DIMNAMES(rv_ans, R_Dosage_Name);
+			// finally
+			UNPROTECT(1);
+		}
+
+	} else if (strcmp(name, "phase") == 0)
+	{
+		// ===========================================================
+		// phase/
+
+		PdAbstractArray N = File.GetObj("phase/data", TRUE);
+		// check
+		int ndim = GDS_Array_DimCnt(N);
+		C_Int32 dim[4];
+		GDS_Array_GetDim(N, dim, 3);
+		if (ndim<2 || ndim>3 || dim[0]!= File.VariantNum() ||
+				dim[1]!=File.SampleNum())
+			throw ErrSeqArray(ERR_DIM, name);
+		// read
+		C_BOOL *ss[3] = { Sel.pVariant(), Sel.pSample(), NULL };
+		if (ndim == 3)
+			ss[2] = NeedArrayTRUEs(dim[2]);
+		rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 
 	} else if (strncmp(name, "annotation/info/@", 17) == 0)
 	{
@@ -370,41 +403,6 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			}
 		}
 		UNPROTECT(1);
-
-	} else if (strcmp(name, "$dosage") == 0)
-	{
-		// ===========================================================
-		// dosage data
-
-		ssize_t nSample  = File.SampleSelNum();
-		ssize_t nVariant = File.VariantSelNum();
-
-		if ((nSample > 0) && (nVariant > 0))
-		{
-			// initialize GDS genotype Node
-			CApply_Variant_Dosage NodeVar(File, false);
-
-			if (use_raw)
-			{
-				rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
-				C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
-				do {
-					NodeVar.ReadDosage(base);
-					base += nSample;
-				} while (NodeVar.Next());
-			} else {
-				rv_ans = PROTECT(allocMatrix(INTSXP, nSample, nVariant));
-				int *base = INTEGER(rv_ans);
-				do {
-					NodeVar.ReadDosage(base);
-					base += nSample;
-				} while (NodeVar.Next());
-			}
-
-			SET_DIMNAMES(rv_ans, R_Dosage_Name);
-			// finally
-			UNPROTECT(1);
-		}
 
 	} else if (strcmp(name, "$num_allele") == 0)
 	{

@@ -6,7 +6,7 @@
 }
 \usage{
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,
-    compress.geno="ZIP_RA", compress.annotation="ZIP_RA",
+    compress.geno="LZMA_RA", compress.annotation="LZMA_RA",
     optimize=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{
