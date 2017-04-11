@@ -406,12 +406,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_id,
 			R_xlen_t m = XLENGTH(var_id);
 			for (R_xlen_t i=0; i < m; i++)
 				set_id.insert(string(CHAR(STRING_ELT(var_id, i))));
-			// sample id
+			// variant id
 			vector<string> var_id(Count);
 			C_Int32 _st=0, _cnt=Count;
 			GDS_Array_ReadData(varVariant, &_st, &_cnt, &var_id[0], svStrUTF8);
 
-			// set selection
 			// set selection
 			if (!intersect_flag)
 			{
