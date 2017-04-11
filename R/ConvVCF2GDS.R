@@ -199,6 +199,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
             scan(text=s, what=character(), sep=":", quiet=TRUE, nmax=1) },
             simplify=TRUE, USE.NAMES=FALSE))
         num <- sapply(strsplit(txt, "[|/]"), function(x) length(x) )
+        num[txt %in% "."] <- NA_integer_
         tab <- table(num)
         ploidy <- as.integer(names(which.max(tab)))
     } else
