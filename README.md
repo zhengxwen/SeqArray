@@ -148,3 +148,8 @@ seqClose(f)
 | seqGetData   | Get data from a SeqArray file with a defined filter. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
 | seqApply     | Apply a user-defined function over array margins. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
 | seqParallel  | Apply functions in parallel. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
+
+
+## Also See
+
+[PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variants in Python
