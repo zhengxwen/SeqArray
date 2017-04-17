@@ -583,11 +583,11 @@ The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers metho
 
 # Resources
 
-1. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html)
-2. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
-3. SeqVarTools R package: [http://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html](http://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html)
-4. SNPRelate R package: [http://github.com/zhengxwen/SNPRelate](http://github.com/zhengxwen/SNPRelate), [http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html)
-5. GENESIS R package: [http://www.bioconductor.org/packages/release/bioc/html/GENESIS.html](http://www.bioconductor.org/packages/release/bioc/html/GENESIS.html)
+1. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)
+2. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://bioconductor.org/packages/SeqArray](http://bioconductor.org/packages/SeqArray)
+3. SeqVarTools R package: [http://bioconductor.org/packages/SeqVarTools](http://bioconductor.org/packages/SeqVarTools)
+4. SNPRelate R package: [http://github.com/zhengxwen/SNPRelate](http://github.com/zhengxwen/SNPRelate), [http://bioconductor.org/packages/SNPRelate](http://bioconductor.org/packages/SNPRelate)
+5. GENESIS R package: [http://bioconductor.org/packages/GENESIS](http://bioconductor.org/packages/GENESIS)
 
 
 # Session Information
