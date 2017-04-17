@@ -966,8 +966,8 @@ seqClose(genofile)
 
 # Resources
 
-1. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html](http://www.bioconductor.org/packages/release/bioc/html/gdsfmt.html)
-2. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
+1. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)
+2. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://bioconductor.org/packages/SeqArray](http://bioconductor.org/packages/SeqArray)
 
 
 # Session Information
