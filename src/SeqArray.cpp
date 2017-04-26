@@ -220,7 +220,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_id,
 }
 
 
-/// set a working space with selected sample id (logical/raw vector, or index)
+/// set a working space with selected samples (logical/raw vector, or index)
 COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 	SEXP intersect, SEXP verbose)
 {
@@ -437,7 +437,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_id,
 }
 
 
-/// set a working space with selected variant id (logical/raw vector, or index)
+/// set a working space with selected variants (logical/raw vector, or index)
 COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 	SEXP intersect, SEXP verbose)
 {
@@ -830,22 +830,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
 		C_BOOL *sel;
 		if (strcmp(split_str, "by.variant") == 0)
 		{
-			if (s.Variant.empty())
-			{
-				s.Variant.resize(
-					GDS_Array_GetTotalCount(GDS_Node_Path(
-					GDS_R_SEXP2FileRoot(gdsfile), "variant.id", TRUE)), TRUE);
-			}
 			sel = &s.Variant[0];
 			SelectCount = GetNumOfTRUE(sel, s.Variant.size());
 		} else if (strcmp(split_str, "by.sample") == 0)
 		{
-			if (s.Sample.empty())
-			{
-				s.Sample.resize(
-					GDS_Array_GetTotalCount(GDS_Node_Path(
-					GDS_R_SEXP2FileRoot(gdsfile), "sample.id", TRUE)), TRUE);
-			}
 			sel = &s.Sample[0];
 			SelectCount = GetNumOfTRUE(sel, s.Sample.size());
 		} else {
