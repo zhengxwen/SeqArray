@@ -1,4 +1,11 @@
+CHANGES IN VERSION 1.17.0-1.17.1
+
+    o progress information: showing overall running time when completed
+
+
 CHANGES IN VERSION 1.16.0
+
+-------------------------
 
     o a new argument 'intersect' in `seqSetFilter()` and `seqSetFilterChrom()`
 

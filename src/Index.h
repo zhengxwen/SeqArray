@@ -478,8 +478,9 @@ public:
 
 protected:
 	C_Int64 TotalCount;  ///< the total number
-	C_Int64 Counter;  ///< the current counter
-	Rconnection File;  ///< R connection
+	C_Int64 Counter;     ///< the current counter
+	Rconnection File;    ///< R connection
+	time_t _start_time;  ///< the starting time
 	bool NewLine;
 	double _start, _step;
 	C_Int64 _hit;

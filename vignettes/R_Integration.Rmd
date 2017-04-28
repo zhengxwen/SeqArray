@@ -136,7 +136,7 @@ Principal Component Analysis (PCA) is a common tool used in exploratory data ana
 # covariance variable with an initial value
 s <- 0
 
-seqApply(f, "$dosage", function(x)
+seqApply(file, "$dosage", function(x)
     {
         p <- 0.5 * mean(x, na.rm=TRUE)      # allele frequency
         g <- (x - 2*p) / sqrt(p*(1-p))      # normalized by allele frequency
@@ -153,9 +153,9 @@ eig <- eigen(s)
 
 ```
 [..................................................]  0%, ETC: --- 
-[=>................................................]  2%, ETC: 5.4m
+[==================>...............................] 36%, ETC: 4.1m
 ...
-[==================================================] 100%, completed
+[==================================================] 100%, completed in 14.3m
 ```
 
 ```R
@@ -180,7 +180,7 @@ eig <- eigen(s)
 [..................................................]  0%, ETC: ---
 [==================>...............................] 35%, ETC: 9s
 [======================================>...........] 75%, ETC: 3s
-[==================================================] 100%, completed
+[==================================================] 100%, completed in 14s
 ```
 
 `seqParallel()` utilizes the facilities offered by the R parallel package to perform calculations within a cluster or SMP environment, and the genotypes are automatically split into non-overlapping parts. The parallel implementation with R is shown as follows, and the C optimized function is also available in the SNPRelate package.
@@ -282,7 +282,7 @@ seqGDS2VCF(file, "exons.vcf.gz")
 ##     FORMAT Field: <none>
 ## 
 [..................................................]  0%, ETC: ---    
-[==================================================] 100%, completed      
+[==================================================] 100%, completed in 0s    
 ## Tue Jan  3 15:43:55 2017    Done.
 ```
 If random-access memory is sufficiently large, users could load all exon variants via `seqGetData(file, "genotype")`; otherwise, data have to be loaded by chunk or a user-defined function is applied over variants by `seqApply()`.
