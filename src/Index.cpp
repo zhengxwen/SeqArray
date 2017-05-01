@@ -861,7 +861,7 @@ void CProgress::ShowProgress()
 			{
 				ConnPutText(File, "[%s] %2.0f%%, ETC: %s\n", bar, p, time_str(s));
 			} else {
-				ConnPutText(File, "\r[%s] %2.0f%%, ETC: %s  ", bar, p, time_str(s));
+				ConnPutText(File, "\r[%s] %2.0f%%, ETC: %s    ", bar, p, time_str(s));
 				if (Counter >= TotalCount) ConnPutText(File, "\n");
 			}
 		} else {
