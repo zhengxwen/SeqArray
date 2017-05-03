@@ -70,7 +70,7 @@ library(VariantAnnotation)
   ## .test_info(info(vcf), info(gdsobj))
   ## .test_geno(geno(vcf), geno(gdsobj))
 
-  vcfg <- asVCF(gdsobj)
+  vcfg <- seqAsVCF(gdsobj)
   .test_rowRanges(rowRanges(vcf), rowRanges(vcfg))
   .test_colData(colData(vcf), colData(vcfg))
   .test_header(header(vcf), header(vcfg))
@@ -125,7 +125,7 @@ test_info_geno <- function() {
                  param=ScanVcfParam(info=info, geno=geno))
   gdsobj <- seqOpen(gdsfile)
 
-  vcfg <- asVCF(gdsobj, info=info, geno=geno)
+  vcfg <- seqAsVCF(gdsobj, info=info, geno=geno)
   .test_header(header(vcf), header(vcfg))
   .test_info(info(vcf), info(vcfg))
   .test_geno(geno(vcf), geno(vcfg))
@@ -143,7 +143,7 @@ test_info_geno_na <- function() {
                  param=ScanVcfParam(info=info, geno=geno))
   gdsobj <- seqOpen(gdsfile)
 
-  vcfg <- asVCF(gdsobj, info=info, geno=geno)
+  vcfg <- seqAsVCF(gdsobj, info=info, geno=geno)
   checkEquals(0, length(info(vcfg)))
   checkEquals(0, length(geno(vcfg)))
   .test_header(header(vcf), header(vcfg))
@@ -168,7 +168,7 @@ test_filters <- function() {
   vcf <- readVcf(vcffile, genome="hg19",
                  param=ScanVcfParam(info=info, geno=geno,
                    samples=samples, which=granges(gdsobj)))
-  vcfg <- asVCF(gdsobj, info=info, geno=geno)
+  vcfg <- seqAsVCF(gdsobj, info=info, geno=geno)
 
   .test_rowRanges(rowRanges(vcf), rowRanges(vcfg))
   .test_colData(colData(vcf), colData(vcfg))

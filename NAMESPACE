@@ -7,44 +7,47 @@ useDynLib(SeqArray,
     SEQ_SetSpaceSample, SEQ_SetSpaceSample2,
     SEQ_SetSpaceVariant, SEQ_SetSpaceVariant2, SEQ_SplitSelection,
     SEQ_SetChrom, SEQ_GetSpace,
-
     SEQ_Summary, SEQ_System,
-
     SEQ_VCF_NumLines, SEQ_VCF_Split, SEQ_VCF_Parse,
     SEQ_ToVCF_Init, SEQ_ToVCF_Done, SEQ_ToVCF, SEQ_ToVCF_Di_WrtFmt,
-
     SEQ_Quote, SEQ_GetData, SEQ_Apply_Variant, SEQ_Apply_Sample,
     SEQ_BApply_Variant,
-
     SEQ_ConvBEDFlag, SEQ_ConvBED2GDS,
     SEQ_SelectFlag,
-
     SEQ_IntAssign, SEQ_DNAStrSet,
-
     SEQ_Pkg_Init,
     SEQ_ExternalName0, SEQ_ExternalName1, SEQ_ExternalName2,
     SEQ_ExternalName3, SEQ_ExternalName4, SEQ_ExternalName5
 )
+
 
 # Import all packages listed as Imports or Depends
 import(methods)
 import(gdsfmt)
 importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
     makeCluster, makeForkCluster, mclapply, stopCluster)
-import(Biostrings)
-import(S4Vectors)
-import(IRanges)
-import(GenomicRanges)
 
-importFrom(utils, count.fields, read.table, flush.console)
+# import(Biostrings)
+# import(S4Vectors)
+# import(IRanges)
+# import(GenomicRanges)
+
+
+importFrom(utils, read.table, flush.console)
+importClassesFrom(IRanges, IRanges)
+importFrom(IRanges, IRanges, IntegerList, NumericList, CharacterList)
 importClassesFrom(GenomicRanges, GRanges, GRangesList)
-importFrom(VariantAnnotation, VCF, VCFHeader, readVcf)
-importClassesFrom(VariantAnnotation, VCF, CollapsedVCF, VCFHeader)
-importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF,
-                  header, fixed, info, geno)
-importMethodsFrom(SummarizedExperiment, colData, rowRanges)
-importFrom(GenomeInfoDb, renameSeqlevels)
-importMethodsFrom(GenomeInfoDb, seqlevels)
+importFrom(GenomicRanges, GRanges)
+importMethodsFrom(GenomicRanges, granges)
+importMethodsFrom(GenomeInfoDb, seqnames)
+
+# importFrom(VariantAnnotation, VCF, VCFHeader, readVcf)
+# importClassesFrom(VariantAnnotation, VCF, CollapsedVCF, VCFHeader)
+# importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF,
+#                   header, fixed, info, geno)
+# importMethodsFrom(SummarizedExperiment, colData, rowRanges)
+# importFrom(GenomeInfoDb, renameSeqlevels)
+# importMethodsFrom(GenomeInfoDb, seqlevels)
 
 
 # Export all names
@@ -54,6 +57,8 @@ export(.Last.lib)
 exportClasses(SeqVarGDSClass)
 
 
-exportMethods(granges, ref, alt, qual, filt, asVCF, header, fixed,
-              info, geno, colData, rowRanges)
+exportMethods(granges)
 exportMethods(seqClose, seqSetFilter)
+
+# exportMethods(granges, ref, alt, qual, filt, asVCF, header, fixed,
+#               info, geno, colData, rowRanges)

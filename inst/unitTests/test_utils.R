@@ -1,13 +1,3 @@
-test_refAllele <- function() {
-  x <- c("A,G", "AA,G", "A,GG", "A,G,T", "A", "AA")
-  checkIdentical(c("A","AA","A","A", "A", "AA"), SeqArray:::.refAllele(x))
-}
-
-test_altAllele <- function() {
-  x <- c("A,G", "AA,G", "A,GG", "A,G,T", "A", "AA")
-  checkIdentical(c("G","G","GG","G,T", "", ""), SeqArray:::.altAllele(x))
-}
-
 .test_variableLengthToList <- function() {
   x <- list(length=c(1,1,2,1,3,1),
             data=c(1,1,1:2,1,1:3,1))
@@ -25,7 +15,10 @@ test_altAllele <- function() {
   checkIdentical(xm, .variableLengthToMatrix(x))
 }
 
+
 test_colData <- function() {
+  ## load VariantAnnotation and export functions
+  seqAsVCF(NULL)
   ## test with no sample annotation  
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()

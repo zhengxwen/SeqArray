@@ -36,6 +36,11 @@ allele.
 
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
+
+\code{"$ref"} returns a character vector of reference alleles
+
+\code{"$alt"} returns a character vector of alternative alleles (delimited by
+comma)
 }
 
 \author{Xiuwen Zheng}

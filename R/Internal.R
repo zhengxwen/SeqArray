@@ -6,6 +6,26 @@
 #
 
 
+#######################################################################
+# Internal variable(s)
+#
+
+# package-wide variable
+.packageEnv <- new.env()
+
+# asVCF exported functions
+.asVCF_Export <- function()
+{
+    isTRUE(.packageEnv$vcf_export)
+}
+
+# set asVCF export flag
+.asVCF_SetTRUE <- function()
+{
+    .packageEnv$vcf_export <- TRUE
+}
+
+
 
 #######################################################################
 # Get the numbers of selected samples and variants
