@@ -125,8 +125,8 @@ head(seqGetData(gds, "sample.id"))
 ## variants
 granges(gds)
 
-\donttest{
-seqAsVCF(NULL)  # enable exporting the generic methods
+\dontrun{
+seqAsVCF(NULL)  ## enable exporting the generic methods
 
 ## alleles as comma-separated character strings
 head(seqGetData(gds, "allele"))

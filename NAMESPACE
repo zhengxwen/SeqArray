@@ -26,14 +26,8 @@ import(methods)
 import(gdsfmt)
 importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
     makeCluster, makeForkCluster, mclapply, stopCluster)
-
-# import(Biostrings)
-# import(S4Vectors)
-# import(IRanges)
-# import(GenomicRanges)
-
-
 importFrom(utils, read.table, flush.console)
+
 importClassesFrom(IRanges, IRanges)
 importFrom(IRanges, IRanges, IntegerList, NumericList, CharacterList)
 importClassesFrom(GenomicRanges, GRanges, GRangesList)
@@ -41,24 +35,11 @@ importFrom(GenomicRanges, GRanges)
 importMethodsFrom(GenomicRanges, granges)
 importMethodsFrom(GenomeInfoDb, seqnames)
 
-# importFrom(VariantAnnotation, VCF, VCFHeader, readVcf)
-# importClassesFrom(VariantAnnotation, VCF, CollapsedVCF, VCFHeader)
-# importMethodsFrom(VariantAnnotation, ref, alt, qual, filt, asVCF,
-#                   header, fixed, info, geno)
-# importMethodsFrom(SummarizedExperiment, colData, rowRanges)
-# importFrom(GenomeInfoDb, renameSeqlevels)
-# importMethodsFrom(GenomeInfoDb, seqlevels)
-
 
 # Export all names
 exportPattern("^seq*")
-export(.Last.lib)
+export(.onAttach, .Last.lib)
 
 exportClasses(SeqVarGDSClass)
-
-
 exportMethods(granges)
 exportMethods(seqClose, seqSetFilter)
-
-# exportMethods(granges, ref, alt, qual, filt, asVCF, header, fixed,
-#               info, geno, colData, rowRanges)
