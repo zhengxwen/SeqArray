@@ -3,7 +3,6 @@
 
 \alias{SeqVarGDSClass-class}
 \alias{SeqVarGDSClass}
-\alias{seqAsVCF}
 \alias{granges,SeqVarGDSClass-method}
 \alias{ref,SeqVarGDSClass-method}
 \alias{alt,SeqVarGDSClass-method}
@@ -126,7 +125,7 @@ head(seqGetData(gds, "sample.id"))
 granges(gds)
 
 \dontrun{
-seqAsVCF(NULL)  ## enable exporting the generic methods
+seqAsVCFInit()  ## enable exporting the generic methods
 
 ## alleles as comma-separated character strings
 head(seqGetData(gds, "allele"))

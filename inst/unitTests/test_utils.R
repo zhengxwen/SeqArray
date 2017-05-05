@@ -18,7 +18,7 @@
 
 test_colData <- function() {
   ## load VariantAnnotation and export functions
-  seqAsVCF(NULL)
+  seqAsVCFInit()
   ## test with no sample annotation  
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()

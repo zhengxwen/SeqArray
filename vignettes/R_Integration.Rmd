@@ -294,11 +294,11 @@ SeqArray can also export data with selected variants and samples as a `VCF` obje
 ```{r message=FALSE}
 library(VariantAnnotation)
 ```
-```R
+```{r}
 # select a region [10Mb, 30Mb] on chromosome 22
 seqSetFilterChrom(file, 22, from.bp=10000000, to.bp=30000000)
 
-vcf <- asVCF(file, chr.prefix="chr")
+vcf <- seqAsVCF(file, chr.prefix="chr")
 vcf
 ```
 ```R
