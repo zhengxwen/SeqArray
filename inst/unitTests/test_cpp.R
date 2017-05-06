@@ -87,7 +87,7 @@ test_int_count <- function()
 	for (st in sample.int(1000L, 25L))
 	{
 		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- sample.int(256L, n, replace=TRUE)
+		v <- sample.int(255L, n, replace=TRUE)
 		fd <- sample(v, 1L)
 
 		n1 <- SeqArray:::.cfunction3("test_int32_count")(v, st, fd)
@@ -105,7 +105,7 @@ test_i8_count <- function()
 	for (st in sample.int(1000L, 25L))
 	{
 		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- as.raw(sample.int(256L, n, replace=TRUE))
+		v <- as.raw(sample.int(255L, n, replace=TRUE))
 		fd <- sample(v, 1L)
 
 		n1 <- SeqArray:::.cfunction3("test_i8_count")(v, st, fd)
@@ -123,7 +123,7 @@ test_int_count2 <- function()
 	for (st in sample.int(1000L, 25L))
 	{
 		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- sample.int(256L, n, replace=TRUE)
+		v <- sample.int(255L, n, replace=TRUE)
 		fd1 <- sample(v, 1L)
 		fd2 <- sample(v, 1L)
 
@@ -142,7 +142,7 @@ test_i8_count2 <- function()
 	for (st in sample.int(1000L, 25L))
 	{
 		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- as.raw(sample.int(256L, n, replace=TRUE))
+		v <- as.raw(sample.int(255L, n, replace=TRUE))
 		fd1 <- sample(v, 1L)
 		fd2 <- sample(v, 1L)
 
@@ -161,7 +161,7 @@ test_int_count3 <- function()
 	for (st in sample.int(1000L, 25L))
 	{
 		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- sample.int(256L, n, replace=TRUE)
+		v <- sample.int(255L, n, replace=TRUE)
 		fd1 <- sample(v, 1L)
 		fd2 <- sample(v, 1L)
 		fd3 <- sample(v, 1L)
@@ -182,7 +182,7 @@ test_i8_count3 <- function()
 	for (st in sample.int(1000L, 25L))
 	{
 		n <- 50000L + sample.int(64L, 1L) - 1L
-		v <- as.raw(sample.int(256L, n, replace=TRUE))
+		v <- as.raw(sample.int(255L, n, replace=TRUE))
 		fd1 <- sample(v, 1L)
 		fd2 <- sample(v, 1L)
 		fd3 <- sample(v, 1L)
@@ -203,7 +203,7 @@ test_int_replace <- function()
 	for (st in sample.int(1000L, 25L))
 	{
 		n <- 50000L + sample.int(64L, 1L) - 1L
-		v1 <- sample.int(256L, n, replace=TRUE)
+		v1 <- sample.int(255L, n, replace=TRUE)
 		fd <- sample(v1, 1L)
 		sub <- sample(v1, 1L)
 

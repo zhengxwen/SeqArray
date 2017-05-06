@@ -32,7 +32,8 @@ to create a \code{SeqVarGDSClass} object.
 
 \section{Accessors}{
 	In the following code snippets \code{x} is a SeqVarGDSClass object. Users
-must call \code{seqAsVCF(x)} to enable the generic methods.
+must call \code{seqAsVCFInit()} and \code{seqAsVCF(x)} to enable the generic
+methods.
 	\describe{
 		\item{}{
 			\code{granges(x)}:
@@ -86,7 +87,8 @@ must call \code{seqAsVCF(x)} to enable the generic methods.
 
 \section{Coercion methods}{
 	In the following code snippets \code{x} is a SeqVarGDSClass object. Users
-must call \code{seqAsVCF(x)} to enable the generic methods.
+must call \code{seqAsVCFInit()} and \code{seqAsVCF(x)} to enable the generic
+methods.
 	\describe{
 		\item{}{
 			\code{asVCF(x, chr.prefix="", info=NULL, geno=NULL)}:
@@ -106,12 +108,8 @@ must call \code{seqAsVCF(x)} to enable the generic methods.
 \author{Stephanie Gogarten, Xiuwen Zheng}
 
 \seealso{
-  \code{\link[gdsfmt]{gds.class}},
-  \code{\link{seqVCF2GDS}},
-  \code{\link{seqOpen}},
-  \code{\link{seqGetData}},
-  \code{\link{seqSetFilter}},
-  \code{\link{seqClose}}
+    \code{\link[gdsfmt]{gds.class}}, \code{\link{seqOpen}},
+    \code{\link{seqAsVCFInit}}, \code{\link{seqAsVCF}}
 }
 
 \examples{
