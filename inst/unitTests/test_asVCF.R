@@ -91,7 +91,7 @@ library(VariantAnnotation)
 test_asVCF_filterInHead <- function() {
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+  seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
   .test_asVCF(vcffile, gdsfile)
   unlink(gdsfile)
 }
@@ -99,7 +99,7 @@ test_asVCF_filterInHead <- function() {
 test_asVCF_altInHead <- function() {
   vcffile <- system.file("extdata", "gl_chr1.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+  seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
   .test_asVCF(vcffile, gdsfile)
   unlink(gdsfile)
 }
@@ -108,7 +108,7 @@ test_asVCF_altInHead <- function() {
 ## test_asVCF_c22 <- function() {
 ##   vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
 ##   gdsfile <- tempfile()
-##   seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+##   seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
 ##   .test_asVCF(vcffile, gdsfile)
 ##   unlink(gdsfile)
 ## }
@@ -116,7 +116,7 @@ test_asVCF_altInHead <- function() {
 test_info_geno <- function() {
   vcffile <- system.file("extdata", "gl_chr1.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+  seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
 
   info <- c("AN", "VT")
   geno <- "DS"
@@ -156,7 +156,7 @@ test_info_geno_na <- function() {
 test_filters <- function() {
   vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+  seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
 
   gdsobj <- seqOpen(gdsfile)
   samples <- seqGetData(gdsobj, "sample.id")[1:5]

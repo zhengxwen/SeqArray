@@ -22,7 +22,7 @@ test_colData <- function() {
   ## test with no sample annotation  
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
-  seqVCF2GDS(vcffile, gdsfile, verbose=FALSE)
+  seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
   gds <- seqOpen(gdsfile)
   annot <- colData(gds)
   checkTrue(ncol(annot) == 1)
