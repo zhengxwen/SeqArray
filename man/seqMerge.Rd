@@ -69,10 +69,13 @@ fn <- paste0("tmp", 1:split.cnt, ".gds")
 
 # convert to 5 gds files
 for (i in 1:split.cnt)
-    seqVCF2GDS(vcf.fn, fn[i], start=start[i], count=count[i])
+{
+    seqVCF2GDS(vcf.fn, fn[i], storage.option="ZIP_RA",
+        start=start[i], count=count[i])
+}
 
 # merge
-seqMerge(fn, "tmp.gds")
+seqMerge(fn, "tmp.gds", storage.option="ZIP_RA")
 seqSummary("tmp.gds")
 
 
@@ -88,7 +91,7 @@ add.gdsn(f, "sample.id", paste("S", 1:length(sid)), replace=TRUE)
 closefn.gds(f)
 
 # merging
-seqMerge(c(vcf.fn, "test.gds"), "output.gds")
+seqMerge(c(vcf.fn, "test.gds"), "output.gds", storage.option="ZIP_RA")
 
 
 

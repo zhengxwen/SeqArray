@@ -46,7 +46,7 @@ seqVCF_Header(vcf.fn)
 seqVCF_SampID(vcf.fn)
 
 # convert
-seqVCF2GDS(vcf.fn, "tmp.gds")
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
 seqSummary("tmp.gds")
 
 # list the structure of GDS variables

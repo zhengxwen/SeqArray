@@ -191,15 +191,13 @@ seqVCF_Header(vcf.fn)
 
 The columns `Number`, `Type` and `Description` are defined by the 1000 Genomes Project: [VCF format](http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41). Briefly, the Number entry is an Integer that describes the number of values that can be included with the INFO field. For example, if the INFO field contains a single number, then this value should be 1; if the INFO field describes a pair of numbers, then this value should be 2 and so on. If the field has one value per alternate allele then this value should be `A`; if the field has one value for each possible genotype then this value should be `G`.  If the number of possible values varies, is unknown, or is unbounded, then this value should be `.`. The `Flag` type indicates that the INFO field does not contain an entry, and hence the Number should be 0 in this case. Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field).
 
+```R
+# convert, save in "tmp.gds" with the default lzma compression algorithm
+seqVCF2GDS(vcf.fn, "tmp.gds", verbose=FALSE)
+```
 ```{r}
-# convert, save in "tmp.gds"
-seqVCF2GDS(vcf.fn, "tmp.gds")
-
-# maximize the compression level with LZMA compression
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="LZMA_RA.max", verbose=FALSE)
-
-# compress data with zlib compression algorithm when random-access memory is limited
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA", verbose=FALSE)
+# compress data with the zlib compression algorithm when random-access memory is limited
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
 
 seqSummary("tmp.gds")
 ```
@@ -274,7 +272,7 @@ vcf.fn <- seqExampleFileName("vcf")
 # or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # convert
-seqVCF2GDS(vcf.fn, "tmp.gds", verbose=FALSE)
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA", verbose=FALSE)
 
 # make sure that open with "readonly=FALSE"
 genofile <- seqOpen("tmp.gds", readonly=FALSE)

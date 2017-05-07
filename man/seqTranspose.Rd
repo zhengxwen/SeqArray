@@ -33,7 +33,7 @@ provided in the future version.
 (vcf.fn <- seqExampleFileName("vcf"))
 
 # convert
-seqVCF2GDS(vcf.fn, "tmp.gds")
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
 
 # list the structure of GDS variables
 f <- seqOpen("tmp.gds", FALSE)

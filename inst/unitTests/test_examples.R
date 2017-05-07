@@ -13,6 +13,9 @@ library(SeqArray)
 
 test_examples <- function()
 {
+	if (Sys.info()[['sysname']] == "Windows")
+		return(invisible())
+
 	function.list <- readRDS(
 		system.file("Meta", "Rd.rds", package="SeqArray"))$Name
 
@@ -23,6 +26,7 @@ test_examples <- function()
 				package="SeqArray",
 				echo=FALSE, verbose=FALSE, ask=FALSE
 			)
+			message("Running the examples in '", func.name, "()':")
 			suppressWarnings(do.call(example, args))
 			NULL
 		})

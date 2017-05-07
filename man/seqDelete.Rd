@@ -33,7 +33,7 @@ vcf.fn <- seqExampleFileName("vcf")
 # or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # convert
-seqVCF2GDS(vcf.fn, "tmp.gds")
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
 
 # display
 (f <- seqOpen("tmp.gds", FALSE))

@@ -36,7 +36,7 @@ size by up to 2X as genotype data and all format data are duplicated.
 # or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
 
 # convert
-seqVCF2GDS(vcf.fn, "tmp.gds")
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
 
 # prepare data for the SeqVarTools package
 seqOptimize("tmp.gds", target="by.sample")

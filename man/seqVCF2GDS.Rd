@@ -98,10 +98,10 @@ The variant call format and VCFtools. Bioinformatics 27, 2156-2158.
 vcf.fn <- seqExampleFileName("vcf")
 
 # conversion
-seqVCF2GDS(vcf.fn, "tmp.gds")
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
 
 # conversion in parallel
-seqVCF2GDS(vcf.fn, "tmp_p2.gds", parallel=2L)
+seqVCF2GDS(vcf.fn, "tmp_p2.gds", storage.option="ZIP_RA", parallel=2L)
 
 
 # display
@@ -111,7 +111,8 @@ seqClose(f)
 
 
 # convert without the INFO fields
-seqVCF2GDS(vcf.fn, "tmp.gds", info.import=character(0))
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA",
+    info.import=character(0))
 
 # display
 (f <- seqOpen("tmp.gds"))
@@ -120,7 +121,8 @@ seqClose(f)
 
 
 # convert without the INFO and FORMAT fields
-seqVCF2GDS(vcf.fn, "tmp.gds", info.import=character(0), fmt.import=character(0))
+seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA",
+    info.import=character(0), fmt.import=character(0))
 
 # display
 (f <- seqOpen("tmp.gds"))
