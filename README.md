@@ -27,7 +27,7 @@ Release Version: v1.16.0
 * [Help Documents](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html), [Overview Slides](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
 
-Development Version: v1.17.0
+Development Version: v1.17.1
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
@@ -143,11 +143,11 @@ seqClose(f)
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
-| seqSetFilter | Define a data subset of samples or variants. [»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
-| seqApply     | Apply a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
-| seqParallel  | Apply functions in parallel. [»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
+| seqVCF2GDS   | Reformat VCF files. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
+| seqSetFilter | Define a data subset of samples or variants. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
+| seqGetData   | Get data from a SeqArray file with a defined filter. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
+| seqApply     | Apply a user-defined function over array margins. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
+| seqParallel  | Apply functions in parallel. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
 
 
 ## Also See
