@@ -143,11 +143,11 @@ seqClose(f)
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
-| seqSetFilter | Define a data subset of samples or variants. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
-| seqApply     | Apply a user-defined function over array margins. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
-| seqParallel  | Apply functions in parallel. [![](vignettes/link.png)](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
+| seqVCF2GDS   | Reformat VCF files. [»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html)  |
+| seqSetFilter | Define a data subset of samples or variants. [»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html)  |
+| seqGetData   | Get data from a SeqArray file with a defined filter. [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqApply     | Apply a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
+| seqParallel  | Apply functions in parallel. [»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html)  |
 
 
 ## Also See
