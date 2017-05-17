@@ -7,27 +7,6 @@
 
 
 #######################################################################
-# Internal variable(s)
-#
-
-# package-wide variable
-.packageEnv <- new.env()
-
-# asVCF exported functions
-.asVCF_Export <- function()
-{
-    isTRUE(.packageEnv$vcf_export)
-}
-
-# set asVCF export flag
-.asVCF_SetTRUE <- function()
-{
-    .packageEnv$vcf_export <- TRUE
-}
-
-
-
-#######################################################################
 # Get the numbers of selected samples and variants
 #
 .seldim <- function(gdsfile)
@@ -726,4 +705,50 @@
     }
 
     invisible()
+}
+
+#######################################################################
+# Convert to a VariantAnnotation object
+#
+
+.variableLengthToList <- function(x)
+{
+    xl <- list()
+    j <- 1L
+    for (i in 1:length(x$length))
+    {
+        len <- x$length[i]
+        if (len > 0L)
+        {
+            xl[[i]] <- x$data[j:(j+len-1)]
+            j <- j+len
+        } else {
+            xl[[i]] <- NA
+        }
+    }
+    xl
+}
+
+.toAtomicList <- function(x, type)
+{
+    switch(type,
+        Character=CharacterList(x),
+        String=CharacterList(x),
+        Integer=IntegerList(x),
+        Float=NumericList(x))
+}
+
+.variableLengthToMatrix <- function(x)
+{
+    xl <- list()
+    i <- 1L
+    for (j in seq_along(x))
+    {
+        for (k in seq_len(NROW(x[[j]])))
+        {
+            xl[[i]] <- x[[j]][k,]
+            i <- i + 1L
+        }
+    }
+    matrix(xl, nrow=NROW(x[[1L]]), ncol=length(x))
 }

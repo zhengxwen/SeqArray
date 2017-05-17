@@ -4,11 +4,10 @@ Title: Big Data Management of Whole-genome Sequence Variant Calls
 Version: 1.17.1
 Date: 2017-05-07
 Depends: R (>= 3.3.0), gdsfmt (>= 1.10.1)
-Imports: methods, parallel, IRanges, GenomicRanges, GenomeInfoDb
+Imports: methods, parallel, IRanges, GenomicRanges, GenomeInfoDb, Biostrings, S4Vectors
 LinkingTo: gdsfmt
 Suggests: digest, crayon, RUnit, knitr, Rcpp, SNPRelate, Biobase, BiocParallel,
-        BiocGenerics, Biostrings, S4Vectors, VariantAnnotation,
-        SummarizedExperiment
+        BiocGenerics, VariantAnnotation
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu"),
         person("Stephanie", "Gogarten", role="aut",
