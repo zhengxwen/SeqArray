@@ -88,7 +88,6 @@ gds.fn <- seqExampleFileName("gds")
 
 # open a GDS file
 f <- seqOpen(gds.fn)
-
 # display the contents of the GDS file
 f
 
@@ -143,11 +142,12 @@ seqClose(f)
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
-| seqSetFilter | Define a data subset of samples or variants. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
-| seqApply     | Apply a user-defined function over array margins. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
-| seqParallel  | Apply functions in parallel. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
+| seqVCF2GDS   | Reformat VCF files. [»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
+| seqSetFilter | Define a data subset of samples or variants. [»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
+| seqGetData   | Get data from a SeqArray file with a defined filter. [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
+| seqApply     | Apply a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
+| seqParallel  | Apply functions in parallel. [»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
+| ...  | [»](http://zhengxwen.github.io/SeqArray/release/help/00Index.html) |
 
 
 ## Also See

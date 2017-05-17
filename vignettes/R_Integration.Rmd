@@ -73,11 +73,11 @@ seqSummary(file)
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
-| seqSetFilter | Define a data subset of samples or variants. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
-| seqApply     | Apply a user-defined function over array margins. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
-| seqParallel  | Apply functions in parallel. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
+| seqVCF2GDS   | Reformat VCF files. [»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
+| seqSetFilter | Define a data subset of samples or variants. [»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
+| seqGetData   | Get data from a SeqArray file with a defined filter. [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
+| seqApply     | Apply a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
+| seqParallel  | Apply functions in parallel. [»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
 
 Genotypic data and annotations are stored in an array-oriented manner, providing efficient data access using the R programming language. Table 1 lists five key functions provided in the SeqArray package and many data analyses can be done using just these functions.
 

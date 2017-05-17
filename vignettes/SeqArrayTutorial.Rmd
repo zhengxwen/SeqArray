@@ -62,11 +62,11 @@ For data writing with multiple processes, SeqArray stores data in separate local
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
-| seqSetFilter | Define a data subset of samples or variants. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
-| seqApply     | Apply a user-defined function over array margins. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
-| seqParallel  | Apply functions in parallel. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
+| seqVCF2GDS   | Reformat VCF files. [»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
+| seqSetFilter | Define a data subset of samples or variants. [»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
+| seqGetData   | Get data from a SeqArray file with a defined filter. [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
+| seqApply     | Apply a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
+| seqParallel  | Apply functions in parallel. [»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
 
 .
 
@@ -326,13 +326,13 @@ unlink("tmp.gds")
 
 | Function       | Description |
 |:---------------|:-------------------------------------------|
-| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [»»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
-| seqApply       | Applies a user-defined function over array margins. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
-| seqNumAllele   | Numbers of alleles per site. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqNumAllele.html)  |
-| seqMissing     | Missing genotype percentages. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqMissing.html)  |
-| seqAlleleFreq  | Allele frequencies. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleFreq.html)  |
-| seqAlleleCount | Allele counts. [»»](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleCount.html)  |
-| ...            | [»»](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)  |
+| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
+| seqApply       | Applies a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
+| seqNumAllele   | Numbers of alleles per site. [»](http://zhengxwen.github.io/SeqArray/release/help/seqNumAllele.html)  |
+| seqMissing     | Missing genotype percentages. [»](http://zhengxwen.github.io/SeqArray/release/help/seqMissing.html)  |
+| seqAlleleFreq  | Allele frequencies. [»](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleFreq.html)  |
+| seqAlleleCount | Allele counts. [»](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleCount.html)  |
+| ...            | [»](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)  |
 
 .
 
