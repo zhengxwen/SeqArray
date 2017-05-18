@@ -15,7 +15,16 @@
 \alias{geno,SeqVarGDSClass,ANY-method}
 \alias{rowRanges,SeqVarGDSClass-method}
 \alias{colData,SeqVarGDSClass-method}
-\alias{asVCF,SeqVarGDSClass-method}
+\alias{ref}
+\alias{alt}
+\alias{filt}
+\alias{qual}
+\alias{fixed}
+\alias{header}
+\alias{info}
+\alias{geno}
+\alias{rowRanges}
+\alias{colData}
 
 \title{SeqVarGDSClass}
 
@@ -31,9 +40,7 @@ to create a \code{SeqVarGDSClass} object.
 }
 
 \section{Accessors}{
-	In the following code snippets \code{x} is a SeqVarGDSClass object. Users
-must call \code{seqAsVCFInit()} and \code{seqAsVCF(x)} to enable the generic
-methods.
+	In the following code snippets \code{x} is a SeqVarGDSClass object. 
 	\describe{
 		\item{}{
 			\code{granges(x)}:
@@ -62,7 +69,7 @@ methods.
 		}
 		\item{}{
 			\code{header(x)}:
-			Returns the header.
+			Returns the header as a \code{\link[IRanges]{DataFrameList}}.
 		}
 		\item{}{
 			\code{rowRanges(x)}:
@@ -86,20 +93,11 @@ methods.
 }
 
 \section{Coercion methods}{
-	In the following code snippets \code{x} is a SeqVarGDSClass object. Users
-must call \code{seqAsVCFInit()} and \code{seqAsVCF(x)} to enable the generic
-methods.
+	In the following code snippets \code{x} is a SeqVarGDSClass object.
 	\describe{
 		\item{}{
-			\code{asVCF(x, chr.prefix="", info=NULL, geno=NULL)}:
-			Coerces a SeqVarGDSClass object to a
-			\link[VariantAnnotation]{VCF-class} object.
-			Row names correspond to the variant.id.  \code{info} and
-			\code{geno} specify the 'INFO' and 'GENO' (FORMAT) fields to
-			return, respectively.  If not specified, all fields are returned;
-			if 'NA' no fields are returned.  Use \code{\link{seqSetFilter}}
-			prior to calling \code{asVCF} to specify samples and variants to
-			return.
+			\code{seqAsVCF(x, chr.prefix="", info=NULL, geno=NULL)}:
+			
 		}
 	}
 }
@@ -108,8 +106,7 @@ methods.
 \author{Stephanie Gogarten, Xiuwen Zheng}
 
 \seealso{
-    \code{\link[gdsfmt]{gds.class}}, \code{\link{seqOpen}},
-    \code{\link{seqAsVCFInit}}, \code{\link{seqAsVCF}}
+    \code{\link[gdsfmt]{gds.class}}, \code{\link{seqOpen}}
 }
 
 \examples{
@@ -123,8 +120,6 @@ head(seqGetData(gds, "sample.id"))
 granges(gds)
 
 \dontrun{
-seqAsVCFInit()  ## enable exporting the generic methods
-
 ## alleles as comma-separated character strings
 head(seqGetData(gds, "allele"))
 

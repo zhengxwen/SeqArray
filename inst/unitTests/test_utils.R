@@ -17,14 +17,12 @@
 
 
 test_colData <- function() {
-  ## load VariantAnnotation and export functions
-  seqAsVCFInit()
   ## test with no sample annotation  
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
   seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
   gds <- seqOpen(gdsfile)
-  annot <- colData(gds)
+  annot <- SeqArray::colData(gds)
   checkTrue(ncol(annot) == 1)
   seqClose(gds)
   unlink(gdsfile)
@@ -32,7 +30,7 @@ test_colData <- function() {
   ## test with annotation
   gdsfile <- seqExampleFileName("gds")
   gds <- seqOpen(gdsfile)
-  annot <- colData(gds)
+  annot <- SeqArray::colData(gds)
   checkTrue(ncol(annot) > 1)
   seqClose(gds)
 }

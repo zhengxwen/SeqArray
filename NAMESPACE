@@ -28,12 +28,15 @@ importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
     makeCluster, makeForkCluster, mclapply, stopCluster)
 importFrom(utils, read.table, flush.console)
 
+importFrom(S4Vectors, DataFrame, SimpleList)
 importClassesFrom(IRanges, IRanges)
-importFrom(IRanges, IRanges, IntegerList, NumericList, CharacterList)
+importFrom(IRanges, IRanges, IntegerList, NumericList, CharacterList, DataFrameList)
 importClassesFrom(GenomicRanges, GRanges, GRangesList)
 importFrom(GenomicRanges, GRanges)
 importMethodsFrom(GenomicRanges, granges)
-importMethodsFrom(GenomeInfoDb, seqnames)
+importMethodsFrom(GenomeInfoDb, seqnames, seqlevels)
+importFrom(GenomeInfoDb, renameSeqlevels)
+importFrom(Biostrings, DNAStringSet, DNAStringSetList)
 
 
 # Export all names
@@ -41,5 +44,6 @@ exportPattern("^seq*")
 export(.onAttach, .Last.lib)
 
 exportClasses(SeqVarGDSClass)
-exportMethods(granges)
+exportMethods(granges, ref, alt, qual, filt, header, fixed,
+              info, geno, colData, rowRanges)
 exportMethods(seqClose, seqSetFilter)

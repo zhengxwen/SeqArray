@@ -1,40 +1,44 @@
 \name{seqAsVCF}
 \alias{seqAsVCF}
-\alias{seqAsVCFInit}
 \title{VariantAnnotation objects}
 \description{
-    Imports the VariantAnnotation package and export the generic methods
-associated with SeqVarGDSClass class.
+    Create a \link[VariantAnnotation]{VCF-class} object
 }
 \usage{
-seqAsVCFInit()
-seqAsVCF(gdsfile, ...)
+seqAsVCF(x, chr.prefix="", info=NULL, geno=NULL)
 }
 \arguments{
-    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{...}{optional arguments to \code{asVCF}}
+    \item{x}{a \code{\link{SeqVarGDSClass}} object}
+    \item{chr.prefix}{prefix to add to seqlevels}
+    \item{info}{which INFO fields to return}
+    \item{geno}{which GENO fields to return}
 }
 \details{
-    The generic methods \code{ref}, \code{alt}, \code{qual}, \code{filt},
-\code{fixed}, \code{header}, \code{info}, \code{geno}, \code{asVCF},
-\code{rowRanges} and \code{colData} are exported and associated with a
-\code{\link{SeqVarGDSClass}} object after calling \code{seqAsVCFInit()}
-or \code{seqAsVCF()}.
+Coerces a SeqVarGDSClass object to a
+\link[VariantAnnotation]{VCF-class} object.
+Row names correspond to the variant.id.  \code{info} and
+\code{geno} specify the 'INFO' and 'GENO' (FORMAT) fields to
+return, respectively.  If not specified, all fields are returned;
+if 'NA' no fields are returned.  Use \code{\link{seqSetFilter}}
+prior to calling \code{seqAsVCF} to specify samples and variants to
+return.
+
+The \pkg{VariantAnnotation} package should be loaded to explore this object.
 }
 \value{
-    None or a \code{\link[VariantAnnotation]{CollapsedVCF}} object.
+    A \code{\link[VariantAnnotation]{CollapsedVCF}} object.
 }
 
-\author{Xiuwen Zheng}
+\author{Stephanie Gogarten, Xiuwen Zheng}
 \seealso{
-    \code{\link{asVCF,SeqVarGDSClass-method}}
+    \code{\link[VariantAnnotation]{VCF}}
 }
 
 \examples{
 gds <- seqOpen(seqExampleFileName("gds"))
 
 \dontrun{
-seqAsVCFInit()  ## enable exporting the generic methods
+library(VariantAnnotation)
 seqAsVCF(gds)
 }
 
