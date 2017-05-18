@@ -7,8 +7,6 @@ setGeneric("seqSetFilter", function(object, variant.sel, ...)
 
 # setGeneric("seqAppend", function(object, ...) standardGeneric("seqAppend"))
 
-setGeneric("seqAsVCF", function(x, ...) standardGeneric("seqAsVCF"))
-
 # redefine generics from VariantAnnotation and SummarizedExperiment to reduce package load time
 setGeneric("ref", function(x, ...) standardGeneric("ref"))
 setGeneric("alt", function(x, ...) standardGeneric("alt"))

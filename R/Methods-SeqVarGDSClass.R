@@ -72,10 +72,6 @@ setMethod("fixed", "SeqVarGDSClass", function(x)
 
 setMethod("header", "SeqVarGDSClass", function(x)
 {
-    requireNamespace("VariantAnnotation", quietly=TRUE, verbose=FALSE)
-    
-    sample.id <- seqGetData(x, "sample.id")
-
     ## info
     seqsum <- seqSummary(x, check="none", verbose=FALSE)
     infoHd <- seqsum$info
@@ -125,7 +121,7 @@ setMethod("header", "SeqVarGDSClass", function(x)
         hdr[["FILTER"]] <- DataFrame(Description=des[,2L], row.names=des[,1L])
     }
 
-    VariantAnnotation::VCFHeader(samples=sample.id, header=hdr)
+    hdr
 })
 
 
@@ -251,45 +247,6 @@ setMethod("geno", "SeqVarGDSClass", function(x, genovar=NULL)
     }
     if (is.null(names(genoSl))) names(genoSl) <- character()
     genoSl
-})
-
-
-setMethod("seqAsVCF", "SeqVarGDSClass", function(x, chr.prefix="", info=NULL, geno=NULL)
-{
-    requireNamespace("VariantAnnotation", quietly=TRUE, verbose=FALSE)
-    
-    stopifnot(is.character(chr.prefix), length(chr.prefix)==1L)
-
-    seqsum <- seqSummary(x, check="none", verbose=FALSE)
-    if (!is.null(info))
-    {
-        validInfo <- seqsum$info$ID
-        infoDiff <- setdiff(info, c(validInfo, NA))
-        if (length(infoDiff) > 0)
-        {
-            warning(paste("info fields not present:", infoDiff))
-            info <- intersect(info, validInfo)
-        }
-    }
-    if (!is.null(geno))
-    {
-        validGeno <- seqsum$format$ID
-        genoDiff <- setdiff(geno, c(validGeno, NA))
-        if (length(genoDiff) > 0)
-        {
-            warning(paste("geno fields not present:", genoDiff))
-            geno <- intersect(geno, validGeno)
-        }
-    }
-    vcf <- VariantAnnotation::VCF(rowRanges=SeqArray::rowRanges(x),
-                                  colData=SeqArray::colData(x),
-                                  exptData=SimpleList(header=header(x)),
-                                  fixed=SeqArray::fixed(x),
-                                  info=SeqArray::info(x, info=info),
-                                  geno=SeqArray::geno(x, geno=geno))
-    if (chr.prefix != "")
-        vcf <- renameSeqlevels(vcf, paste0(chr.prefix, seqlevels(vcf)))
-    vcf
 })
 
 

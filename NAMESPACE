@@ -46,4 +46,4 @@ export(.onAttach, .Last.lib)
 exportClasses(SeqVarGDSClass)
 exportMethods(granges, ref, alt, qual, filt, header, fixed,
               info, geno, colData, rowRanges)
-exportMethods(seqClose, seqSetFilter, seqAsVCF)
+exportMethods(seqClose, seqSetFilter)
