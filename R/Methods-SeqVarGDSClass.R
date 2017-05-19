@@ -256,11 +256,11 @@ setMethod("geno", "SeqVarGDSClass", function(x, genovar=NULL)
 setMethod("rowRanges", "SeqVarGDSClass", function(x)
 {
     granges(x,
-            ID=seqGetData(x, "annotation/id"),
-            REF=SeqArray::ref(x),
-            ALT=SeqArray::alt(x),
-            QUAL=SeqArray::qual(x),
-            FILTER=SeqArray::filt(x))
+        ID=seqGetData(x, "annotation/id"),
+        REF=SeqArray::ref(x),
+        ALT=SeqArray::alt(x),
+        QUAL=SeqArray::qual(x),
+        FILTER=SeqArray::filt(x))
 })
 
 
