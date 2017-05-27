@@ -50,7 +50,8 @@ using namespace SeqArray;
 COREARRAY_DLL_EXPORT SEXP SEQ_File_Init(SEXP gdsfile)
 {
 	COREARRAY_TRY
-		GetFileInfo(gdsfile);
+		CFileInfo &file = GetFileInfo(gdsfile);
+		file.Selection();  // force to initialize selection
 	COREARRAY_CATCH
 }
 
