@@ -63,10 +63,10 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
     	position}
     \item{to.bp}{NULL, no limit; a numeric vector, the upper bound of
     	position}
-    \item{intersect}{if \code{FALSE}, the candidate variants for selection are
-        all possible variants (by default); if \code{TRUE}, the candidate variants
-        are from the selected variants defined via the previous call
-        \code{seqSetFilter()}}
+    \item{intersect}{if \code{FALSE}, the candidate samples/variants for
+        selection are all samples/variants (by default); if \code{TRUE}, the
+        candidate samples/variants are from the selected samples/variants
+        defined via the previous call}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{

@@ -4,7 +4,7 @@ CHANGES IN VERSION 1.17.0-1.17.2
 
     o new names "$ref" and "$alt" are allowed in `seqGetData()`
 
-    o not import VariantAnnotation methods until `seqAsVCF()` is called
+    o move VariantAnnotation to the suggest field from the import field
 
 
 CHANGES IN VERSION 1.16.0
