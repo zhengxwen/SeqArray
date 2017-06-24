@@ -866,6 +866,7 @@ void CProgress::ShowProgress()
 			}
 		} else {
 			int n = Counter / PROGRESS_LINE_NUM;
+			n = (n / 10) + (n % 10 ? 1 : 0);
 			string s(n, '.');
 			if (NewLine)
 			{
