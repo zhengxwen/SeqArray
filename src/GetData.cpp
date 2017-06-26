@@ -525,10 +525,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 	if (prog_flag == NA_LOGICAL)
 		error("'.progress' must be TRUE or FALSE.");
 
-	int dup_flag = Rf_asLogical(RGetListElement(param, "list_dup"));
-	if (dup_flag == NA_LOGICAL)
-		error("'.list_dup' must be TRUE or FALSE.");
-
 	COREARRAY_TRY
 
 		// File information
@@ -688,7 +684,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 			switch (DatType)
 			{
 			case 1:  // list
-				if (dup_flag) call_val = duplicate(call_val);
 				SET_ELEMENT(rv_ans, idx, call_val);
 				break;
 			case 2:  // connection

@@ -426,7 +426,7 @@ seqApply <- function(gdsfile, var.name, FUN,
 seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     as.is=c("none", "list", "unlist"),
     var.index=c("none", "relative", "absolute"), bsize=1024L, parallel=FALSE,
-    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+    .useraw=FALSE, .progress=FALSE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -437,8 +437,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     var.index <- match.arg(var.index)
     stopifnot(is.numeric(bsize), length(bsize)==1L)
     njobs <- .NumParallel(parallel)
-    param <- list(bsize=bsize, useraw=.useraw, progress=.progress,
-        list_dup=.list_dup)
+    param <- list(bsize=bsize, useraw=.useraw, progress=.progress)
 
     if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
     {
