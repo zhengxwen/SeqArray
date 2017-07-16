@@ -6,6 +6,8 @@ CHANGES IN VERSION 1.17.0-1.17.3
 
     o move VariantAnnotation to the suggest field from the import field
 
+    o remove an unused argument '.list_dup' in seqBlockApply()
+
 
 CHANGES IN VERSION 1.16.0
 
