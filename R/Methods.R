@@ -108,6 +108,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
                         "'sample.sel' and 'variant.sel' should be NULL.")
                 }
                 .Call(SEQ_FilterPushLast, object)
+                return(invisible())
             },
             "push+set" = {
                 .Call(SEQ_FilterPushEmpty, object)

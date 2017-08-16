@@ -77,8 +77,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushEmpty(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = Rf_asInteger(RGetListElement(gdsfile, "id"));
-		map<int, CFileInfo>::iterator it =
-			GDSFile_ID_Info.find(id);
+		map<int, CFileInfo>::iterator it = GDSFile_ID_Info.find(id);
 		if (it != GDSFile_ID_Info.end())
 		{
 			it->second.SelList.push_back(TSelection());
@@ -93,8 +92,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushLast(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = Rf_asInteger(RGetListElement(gdsfile, "id"));
-		map<int, CFileInfo>::iterator it =
-			GDSFile_ID_Info.find(id);
+		map<int, CFileInfo>::iterator it = GDSFile_ID_Info.find(id);
 		if (it != GDSFile_ID_Info.end())
 		{
 			if (!it->second.SelList.empty())
@@ -112,8 +110,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPop(SEXP gdsfile)
 {
 	COREARRAY_TRY
 		int id = Rf_asInteger(RGetListElement(gdsfile, "id"));
-		map<int, CFileInfo>::iterator it =
-			GDSFile_ID_Info.find(id);
+		map<int, CFileInfo>::iterator it = GDSFile_ID_Info.find(id);
 		if (it != GDSFile_ID_Info.end())
 		{
 			if (it->second.SelList.size() <= 1)
@@ -715,6 +712,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 
 		if (IsIntersect)
 		{
+			// TODO: optimized by SIMD
 			C_BOOL *p = &sel_array[0];
 			C_BOOL *s = &array[0];
 			for (size_t n=sel_array.size(); n > 0; n--)

@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.17.0-1.17.3
+CHANGES IN VERSION 1.17.0-1.17.4
 
     o progress information: showing overall running time when completed
 
@@ -6,7 +6,9 @@ CHANGES IN VERSION 1.17.0-1.17.3
 
     o move VariantAnnotation to the suggest field from the import field
 
-    o remove an unused argument '.list_dup' in seqBlockApply()
+    o remove an unused argument '.list_dup' in `seqBlockApply()`
+
+    o fix an unexpected behavior in `seqSetFilter(, action="push")`
 
 
 CHANGES IN VERSION 1.16.0

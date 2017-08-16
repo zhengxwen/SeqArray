@@ -1,10 +1,11 @@
 Package: SeqArray
 Type: Package
 Title: Big Data Management of Whole-genome Sequence Variant Calls
-Version: 1.17.3
-Date: 2017-06-26
+Version: 1.17.4
+Date: 2017-08-16
 Depends: R (>= 3.3.0), gdsfmt (>= 1.10.1)
-Imports: methods, parallel, IRanges, GenomicRanges, GenomeInfoDb, Biostrings, S4Vectors
+Imports: methods, parallel, IRanges, GenomicRanges, GenomeInfoDb, Biostrings,
+        S4Vectors
 LinkingTo: gdsfmt
 Suggests: digest, crayon, RUnit, knitr, Rcpp, SNPRelate, Biobase, BiocParallel,
         BiocGenerics, VariantAnnotation
