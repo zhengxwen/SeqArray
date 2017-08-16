@@ -114,7 +114,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
                 .Call(SEQ_FilterPushEmpty, object)
             },
             "push+intersect" = {
-                .Call(SEQ_FilterPushEmpty, object)
+                .Call(SEQ_FilterPushLast, object)
                 setflag <- TRUE
             },
             "pop" = {

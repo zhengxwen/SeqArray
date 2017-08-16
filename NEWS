@@ -8,7 +8,8 @@ CHANGES IN VERSION 1.17.0-1.17.4
 
     o remove an unused argument '.list_dup' in `seqBlockApply()`
 
-    o fix an unexpected behavior in `seqSetFilter(, action="push")`
+    o fix the unexpected behaviors in `seqSetFilter(, action="push")` and
+      `seqSetFilter(, action="push+intersect")`
 
 
 CHANGES IN VERSION 1.16.0
