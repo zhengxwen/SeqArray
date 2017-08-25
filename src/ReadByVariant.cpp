@@ -328,7 +328,7 @@ CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw):
 	CApply_Variant_Geno(File, use_raw)
 {
 	fVarType = ctDosage;
-	ExtPtr.reset(sizeof(int)*CellCount);
+	ExtPtr2.reset(sizeof(int)*CellCount);
 	VarDosage = NULL;
 }
 
@@ -353,7 +353,7 @@ SEXP CApply_Variant_Dosage::NeedRData(int &nProtected)
 
 void CApply_Variant_Dosage::ReadDosage(int *Base)
 {
-	int *p = (int *)ExtPtr.get();
+	int *p = (int *)ExtPtr2.get();
 	int missing = _ReadGenoData(p);
 
 	// count the number of reference allele
@@ -380,7 +380,7 @@ void CApply_Variant_Dosage::ReadDosage(int *Base)
 
 void CApply_Variant_Dosage::ReadDosage(C_UInt8 *Base)
 {
-	C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
+	C_UInt8 *p = (C_UInt8 *)ExtPtr2.get();
 	C_UInt8 missing = _ReadGenoData(p);
 
 	// count the number of reference allele

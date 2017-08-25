@@ -11,6 +11,9 @@ CHANGES IN VERSION 1.17.0-1.17.4
     o fix the unexpected behaviors in `seqSetFilter(, action="push")` and
       `seqSetFilter(, action="push+intersect")`
 
+    o fix a bug in `seqGetData(f, "$dosage")` when the number of unique alleles
+      at a site greater than 3 (https://github.com/zhengxwen/SeqArray/issues/21)
+
 
 CHANGES IN VERSION 1.16.0
 

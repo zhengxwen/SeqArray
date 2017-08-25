@@ -116,7 +116,8 @@ public:
 class COREARRAY_DLL_LOCAL CApply_Variant_Dosage: public CApply_Variant_Geno
 {
 protected:
-	SEXP VarDosage;    ///< dosage R object
+	SEXP VarDosage;        ///< dosage R object
+	VEC_AUTO_PTR ExtPtr2;  ///< a pointer to the additional buffer for dosages
 public:
 	/// constructor
 	CApply_Variant_Dosage(CFileInfo &File, int use_raw);
