@@ -121,22 +121,89 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 // SNP GDS --> SeqArray GDS
 // ======================================================================
 
-COREARRAY_DLL_EXPORT SEXP FC_SNP2GDS(SEXP Geno)
+static bool UseMajorAsRef = false;
+
+COREARRAY_DLL_EXPORT SEXP FC_SNP2GDS_Ref(SEXP MajorRef)
 {
-	size_t n = Rf_length(Geno);
-	SEXP Dest = NEW_INTEGER(2*n);
-	int *s = INTEGER(Geno), *p = INTEGER(Dest);
-	for (; (n--) > 0; p+=2)
+	UseMajorAsRef = (Rf_asLogical(MajorRef) == TRUE);
+	return R_NilValue;
+}
+
+COREARRAY_DLL_EXPORT SEXP FC_SNP2GDS(SEXP X)
+{
+	SEXP Geno = VECTOR_ELT(X, 0);
+	size_t n  = Rf_length(Geno);
+
+	SEXP Allele = VECTOR_ELT(X, 1);
+	int sign_pos = -1;
+	const char *base = CHAR(STRING_ELT(Allele, 0));
 	{
-		switch (*s++)
+		const char *p = base;
+		for (; *p != 0; p++)
 		{
-			case  0: p[0] = p[1] = 0; break;
-			case  1: p[0] = 1; p[1] = 0; break;
-			case  2: p[0] = p[1] = 1; break;
-			default: p[0] = p[1] = -1;
+			if (*p == '/')  // format A/B
+				{ sign_pos = p - base; break; }
 		}
 	}
-	return Dest;
+
+	// check allele
+	bool rev_flag = false;
+	if (UseMajorAsRef && sign_pos>=0)
+	{
+		int *s=INTEGER(Geno), sum=0, nvalid=0;
+		for (size_t i=0; i < n; i++, s++)
+		{
+			if (0 <= *s && *s <= 2)
+			{
+				nvalid ++;
+				sum += *s;
+			}
+		}
+		rev_flag = (sum < nvalid);
+	}
+
+	SEXP rv_ans = PROTECT(NEW_LIST(2));
+	SEXP Dest = NEW_INTEGER(2*n);
+	SET_ELEMENT(rv_ans, 0, Dest);
+	SET_ELEMENT(rv_ans, 1, Allele);
+
+	int *s = INTEGER(Geno), *p = INTEGER(Dest);
+
+	if (rev_flag)
+	{
+		string ss(strlen(base), 0);
+		size_t nn = strlen(base+sign_pos+1);
+		memcpy(&ss[0], base+sign_pos+1, nn);
+		ss[nn] = ',';
+		memcpy(&ss[nn+1], base, sign_pos);
+		memcpy((void*)base, &ss[0], ss.size());
+		for (; (n--) > 0; p+=2)
+		{
+			switch (*s++)
+			{
+				case 0: p[0] = p[1] = 0; break;
+				case 1: p[0] = 0; p[1] = 1; break;
+				case 2: p[0] = p[1] = 1; break;
+				default: p[0] = p[1] = -1;
+			}
+		}
+	} else {
+		if (sign_pos >= 0)
+			((char*)base)[sign_pos] = ',';
+		for (; (n--) > 0; p+=2)
+		{
+			switch (*s++)
+			{
+				case 0: p[0] = p[1] = 1; break;
+				case 1: p[0] = 0; p[1] = 1; break;
+				case 2: p[0] = p[1] = 0; break;
+				default: p[0] = p[1] = -1;
+			}
+		}
+	}
+
+	UNPROTECT(1);
+	return rv_ans;
 }
 
 

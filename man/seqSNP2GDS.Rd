@@ -5,8 +5,8 @@
     Converts a SNP GDS file to a SeqArray GDS file.
 }
 \usage{
-seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA", optimize=TRUE,
-    digest=TRUE, verbose=TRUE)
+seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA",
+    major.ref=TRUE, optimize=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file name of SNP format}
@@ -14,6 +14,8 @@ seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA", optimize=TRUE,
     \item{storage.option}{specify the storage and compression options,
         \code{"LZMA_RA"} to use LZMA compression algorithm with higher
         compression ratio compared to \code{"ZIP_RA"}}
+    \item{major.ref}{if TRUE, use the major allele as a reference allele;
+        otherwise, use A allele in SNP GDS file as a reference allele}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",

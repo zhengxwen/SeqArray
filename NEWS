@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.17.0-1.17.4
+CHANGES IN VERSION 1.17.0-1.17.5
 
     o progress information: showing overall running time when completed
 
@@ -13,6 +13,9 @@ CHANGES IN VERSION 1.17.0-1.17.4
 
     o fix a bug in `seqGetData(f, "$dosage")` when the number of unique alleles
       at a site greater than 3 (https://github.com/zhengxwen/SeqArray/issues/21)
+
+    o fix a bug in `seqSNP2GDS()` for inverted genotypes during importing data
+      (https://github.com/zhengxwen/SeqArray/issues/22)
 
 
 CHANGES IN VERSION 1.16.0

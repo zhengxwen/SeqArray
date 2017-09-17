@@ -398,11 +398,12 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 #
 
 seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
-    optimize=TRUE, digest=TRUE, verbose=TRUE)
+    major.ref=TRUE, optimize=TRUE, digest=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
     stopifnot(is.character(out.fn), length(out.fn)==1L)
+    stopifnot(is.logical(major.ref), length(major.ref)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
@@ -479,15 +480,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     .DigestCode(n, digest, verbose)
 
     # add allele
-    if (verbose) cat("    allele")
-    n <- .AddVar(storage.option, dstfile, "allele",
-        .cfunction("FC_AlleleStr2")(read.gdsn(index.gdsn(srcfile, "snp.allele"))),
-        closezip=TRUE)
-    .DigestCode(n, digest, verbose)
-
-    sync.gds(dstfile)
-
-
+    nd_allele <- .AddVar(storage.option, dstfile, "allele", storage="character")
     # add a folder for genotypes
     if (verbose) cat("    genotype")
     varGeno <- addfolder.gdsn(dstfile, "genotype")
@@ -495,12 +488,20 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     put.attr.gdsn(varGeno, "Description", "Genotype")
 
     # add genotypes to genotype/data
-    n <- .AddVar(storage.option, varGeno, "data", storage="bit2",
+    .cfunction("FC_SNP2GDS_Ref")(major.ref)
+    nd_geno <- .AddVar(storage.option, varGeno, "data", storage="bit2",
         valdim=c(2L, nSamp, 0L))
-    apply.gdsn(index.gdsn(srcfile, "genotype"), ifelse(snpfirstdim, 1L, 2L),
-        FUN=.cfunction("FC_SNP2GDS"), as.is="gdsnode", target.node=n)
-    readmode.gdsn(n)
-    .DigestCode(n, digest, verbose)
+    apply.gdsn(list(
+            index.gdsn(srcfile, "genotype"), index.gdsn(srcfile, "snp.allele")),
+    	c(ifelse(snpfirstdim, 1L, 2L), 1L),
+        FUN=.cfunction("FC_SNP2GDS"), as.is="gdsnode",
+        target.node=list(nd_geno, nd_allele))
+    readmode.gdsn(nd_geno)
+    .DigestCode(nd_geno, digest, verbose)
+
+    if (verbose) cat("    allele")
+    readmode.gdsn(nd_allele)
+    .DigestCode(nd_allele, digest, verbose)
 
     n <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
         visible=FALSE)
