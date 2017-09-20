@@ -370,7 +370,11 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestDone(SEXP Algo)
 /// Applied digest function
 COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 {
-	if (Rf_isInteger(Data))
+	if (TYPEOF(Data) == RAWSXP)
+	{
+		const size_t n = XLENGTH(Data);
+		(*md5_update)(&md5_ctx, RAW(Data), n);
+	} else if (Rf_isInteger(Data))
 	{
 		const size_t n = XLENGTH(Data);
 		(*md5_update)(&md5_ctx, INTEGER(Data), n*sizeof(int));

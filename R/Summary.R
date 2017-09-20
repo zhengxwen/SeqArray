@@ -757,7 +757,7 @@ seqSummary <- function(gdsfile, varname=NULL,
 #######################################################################
 # summarize
 #
-seqDigest <- function(gdsfile, varname, algo=c("md5"))
+seqDigest <- function(gdsfile, varname, algo=c("md5"), .progress=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -768,7 +768,7 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"))
     {
         .cfunction("FC_DigestInit")(algo)
         seqApply(gdsfile, varname, FUN=.cfunction("FC_DigestScan"),
-            margin="by.variant", as.is="none")
+            margin="by.variant", as.is="none", .useraw=NA, .progress=.progress)
         .cfunction("FC_DigestDone")(algo)
     } else
         NA_character_
