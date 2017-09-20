@@ -5,13 +5,13 @@
     Create hash function digests for all or a subset of data
 }
 \usage{
-seqDigest(gdsfile, varname, algo=c("md5"), .progress=TRUE)
+seqDigest(gdsfile, varname, algo=c("md5"), verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{varname}{the variable name(s), see details}
     \item{algo}{the digest hash algorithm: "md5"}
-    \item{.progress}{if \code{TRUE}, show progress information}
+    \item{verbose}{if \code{TRUE}, show progress information}
 }
 \details{
     The variable name should be \code{"sample.id"}, \code{"variant.id"},
