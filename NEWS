@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.17.0-1.17.6
+CHANGES IN VERSION 1.18.0
 
     o progress information: showing overall running time when completed
 
@@ -15,9 +15,11 @@ CHANGES IN VERSION 1.17.0-1.17.6
       at a site greater than 3 (https://github.com/zhengxwen/SeqArray/issues/21)
 
     o fix a bug in `seqSNP2GDS()` for inverted genotypes during importing data
-      (https://github.com/zhengxwen/SeqArray/issues/22)
+      from SNP GDS files (https://github.com/zhengxwen/SeqArray/issues/22)
 
     o new argument '.progress' in `seqDigest()`
+
+    o new argument 'ref.allele' in `seqAlleleCount()`
 
 
 CHANGES IN VERSION 1.16.0

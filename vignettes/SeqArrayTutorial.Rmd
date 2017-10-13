@@ -6,9 +6,6 @@ output:
   html_document:
     theme: spacelab
     toc: true
-    toc_float:
-      collapsed: false
-      smooth_scroll: false
     number_sections: true
   pdf_document:
     toc: true

@@ -589,25 +589,78 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, .progress=FALSE,
                     as.is="double", FUN = .cfunction("FC_AF_Allele"),
                     .useraw=NA, .progress=pg & (process_index==1L))
             }, ref=ref.allele, pg=.progress)
+    } else {
+        stop("Invalid 'ref.allele'.")
     }
 }
 
 
 
 #######################################################################
-# Allele Counts
+# Allele counts
 #
-seqAlleleCount <- function(gdsfile, .progress=FALSE, parallel=seqGetParallel())
+seqAlleleCount <- function(gdsfile, ref.allele=0L, .progress=FALSE,
+    parallel=seqGetParallel())
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(.progress), length(.progress)==1L)
 
-    seqParallel(parallel, gdsfile, split="by.variant",
-        FUN = function(f, pg)
+    if (is.null(ref.allele))
+    {
+        seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(f, pg)
+            {
+                seqApply(f, c("genotype", "$num_allele"), margin="by.variant",
+                    as.is="list", FUN = .cfunction("FC_AlleleCount"),
+                    .useraw=NA, .progress=pg & (process_index==1L))
+            }, pg=.progress)
+    } else if (is.numeric(ref.allele))
+    {
+        dm <- .seldim(gdsfile)
+        if (!(length(ref.allele) %in% c(1L, dm[3L])))
+            stop("'length(ref.allele)' should be 1 or the number of selected variants.")
+
+        if (length(ref.allele) == 1L)
         {
-            seqApply(f, c("genotype", "$num_allele"), margin="by.variant",
-                as.is="list", FUN = .cfunction("FC_AlleleCount"),
-                .useraw=NA, .progress=pg & (process_index==1L))
-        }, pg=.progress)
+            seqParallel(parallel, gdsfile, split="by.variant",
+                FUN = function(f, ref, pg)
+                {
+                    .cfunction("FC_AF_SetIndex")(ref)
+                    seqApply(f, c("genotype", "$num_allele"),
+                        as.is="integer", FUN = .cfunction("FC_AC_Index"),
+                        .useraw=NA, .progress=pg & (process_index==1L))
+                }, ref=ref.allele, pg=.progress)
+        } else {
+            ref.allele <- as.integer(ref.allele)
+            seqParallel(parallel, gdsfile, split="by.variant",
+                .selection.flag=TRUE,
+                FUN = function(f, selflag, ref, pg)
+                {
+                    s <- ref[selflag]
+                    .cfunction("FC_AF_SetIndex")(s)
+                    seqApply(f, c("genotype", "$num_allele"),
+                        as.is="integer", FUN = .cfunction("FC_AC_Index"),
+                        .useraw=NA, .progress=pg & (process_index==1L))
+                }, ref=ref.allele, pg=.progress)
+        }
+    } else if (is.character(ref.allele))
+    {
+        dm <- .seldim(gdsfile)
+        if (length(ref.allele) != dm[3L])
+            stop("'length(ref.allele)' should be the number of selected variants.")
+
+        seqParallel(parallel, gdsfile, split="by.variant",
+            .selection.flag=TRUE,
+            FUN = function(f, selflag, ref, pg)
+            {
+                s <- ref[selflag]
+                .cfunction("FC_AF_SetAllele")(s)
+                seqApply(f, c("genotype", "allele"), margin="by.variant",
+                    as.is="double", FUN = .cfunction("FC_AC_Allele"),
+                    .useraw=NA, .progress=pg & (process_index==1L))
+            }, ref=ref.allele, pg=.progress)
+    } else {
+        stop("Invalid 'ref.allele'.")
+    }
 }

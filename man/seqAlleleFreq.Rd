@@ -7,7 +7,7 @@
 }
 \usage{
 seqAlleleFreq(gdsfile, ref.allele=0L, .progress=FALSE, parallel=seqGetParallel())
-seqAlleleCount(gdsfile, .progress=FALSE, parallel=seqGetParallel())
+seqAlleleCount(gdsfile, ref.allele=0L, .progress=FALSE, parallel=seqGetParallel())
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -21,13 +21,13 @@ seqAlleleCount(gdsfile, .progress=FALSE, parallel=seqGetParallel())
 }
 \value{
     If \code{ref.allele=NULL}, the function returns a list of allele
-frequencies according to all allele per site. If \code{ref.allele} is a single
-numeric value (like \code{0L}), it returns a numeric vector for the specified
-alleles (\code{0L} for the reference allele, \code{1L} for the first alternative
-allele, etc). If \code{ref.allele} is a numeric vector, \code{ref.allele}
-specifies each allele per site. If \code{ref.allele} is a character vector,
-\code{ref.allele} specifies the desired allele for each site (e.g,
-ancestral allele for the derived allele frequency).
+frequencies/counts according to all allele per site. If \code{ref.allele} is a
+single numeric value (like \code{0L}), it returns a numeric/integer vector for
+the specified allele (\code{0L} for the reference allele, \code{1L} for the
+first alternative allele, etc). If \code{ref.allele} is a numeric vector,
+\code{ref.allele} specifies each allele per site. If \code{ref.allele} is a
+character vector, \code{ref.allele} specifies the desired allele for each site
+(e.g, ancestral allele for the derived allele frequency/count).
 }
 
 \author{Xiuwen Zheng}
@@ -51,10 +51,15 @@ summary(seqAlleleFreq(f, 0L, .progress=TRUE))
 
 # return a numeric vector, AA is ancestral allele
 AA <- toupper(seqGetData(f, "annotation/info/AA")$data)
-summary(seqAlleleFreq(f, AA))
+head(seqAlleleFreq(f, AA))
 
 # allele counts
-head(seqAlleleCount(f, .progress=TRUE))
+head(seqAlleleCount(f, NULL, .progress=TRUE))
+
+head(seqAlleleCount(f, 0L, .progress=TRUE))
+
+head(seqAlleleCount(f, AA, .progress=TRUE))
+
 
 # close the GDS file
 seqClose(f)
