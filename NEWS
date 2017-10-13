@@ -24,6 +24,8 @@ CHANGES IN VERSION 1.18.0
     o slightly improve the computational efficiency of `seqAlleleFreq()` and
       `seqAlleleCount()` when 'ref.allele=0'
 
+    o fix an issue of no phase data in `seqExport()`
+
 
 CHANGES IN VERSION 1.16.0
 -------------------------

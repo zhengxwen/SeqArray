@@ -103,6 +103,38 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
         .DigestCode(dstidx, digest, FALSE)
     }
 
+    cp.phase <- function(folder, samp.sel, var.sel, show=verbose)
+    {
+        if (show) cat("    phase")
+        dat1 <- index.gdsn(gdsfile, "phase/data")
+        dat2 <- index.gdsn(gdsfile, "phase/~data", silent=TRUE)
+
+        dst1 <- add.gdsn(folder, "data", storage=dat1)
+        put.attr.gdsn(dst1, val=dat1)
+        if (!is.null(dat2))
+        {
+            dst2 <- add.gdsn(folder, "~data", storage=dat2)
+            put.attr.gdsn(dst2, val=dat2)
+        }
+
+        dm <- objdesp.gdsn(dat1)$dim
+        sel <- vector("list", length(dm))
+        sel[[length(dm)]] <- var.sel
+        sel[[length(dm)-1L]] <- samp.sel
+        assign.gdsn(dst1, dat1, append=FALSE, seldim=sel)
+        readmode.gdsn(dst1)
+        .DigestCode(dst1, digest, show)
+
+        if (!is.null(dat2))
+        {
+            sel[[length(dm)]] <- samp.sel
+            sel[[length(dm)-1L]] <- var.sel
+            assign.gdsn(dst2, dat2, append=FALSE, seldim=sel)
+            readmode.gdsn(dst2)
+            .DigestCode(dst2, digest, show)
+        }
+    }
+
     cp.info <- function(folder, sel, name, name2, show=verbose)
     {
         if (show) cat("   ", name2)
@@ -176,7 +208,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## phase
     node <- addfolder.gdsn(outfile, "phase")
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "phase"))
-    # cp2(node, S$sample.sel, S$variant.sel, "phase")
+    cp.phase(node, S$sample.sel, S$variant.sel)
 
     if (prod(objdesp.gdsn(index.gdsn(gdsfile, "phase/extra.index"))$dim) <= 0)
     {
