@@ -21,6 +21,9 @@ CHANGES IN VERSION 1.18.0
 
     o new argument 'ref.allele' in `seqAlleleCount()`
 
+    o slightly improve the computational efficiency of `seqAlleleFreq()` and
+      `seqAlleleCount()` when 'ref.allele=0'
+
 
 CHANGES IN VERSION 1.16.0
 -------------------------

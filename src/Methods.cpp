@@ -163,6 +163,19 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_SetIndex(SEXP RefIndex)
 	return R_NilValue;
 }
 
+/// Get reference allele frequency
+COREARRAY_DLL_EXPORT SEXP FC_AF_Ref(SEXP Geno)
+{
+	const size_t N = XLENGTH(Geno);
+	size_t n, m;
+	if (TYPEOF(Geno) == RAWSXP)
+		vec_i8_count2((const char*)RAW(Geno), N, 0, NA_RAW, &m, &n);
+	else
+		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &m, &n);
+	n = N - n;
+	return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
+}
+
 /// Get allele frequency
 COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 {
@@ -184,6 +197,18 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 	}
 
 	return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
+}
+
+/// Get reference allele count
+COREARRAY_DLL_EXPORT SEXP FC_AC_Ref(SEXP Geno)
+{
+	const size_t N = XLENGTH(Geno);
+	int ans;
+	if (TYPEOF(Geno) == RAWSXP)
+		ans = vec_i8_count((const char*)RAW(Geno), N, 0);
+	else
+		ans = vec_i32_count(INTEGER(Geno), N, 0);
+	return ScalarInteger(ans);
 }
 
 /// Get allele count

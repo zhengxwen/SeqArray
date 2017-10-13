@@ -37,6 +37,8 @@ seqMerge(gds.fn, out.fn, storage.option="LZMA_RA", info.var=NULL, fmt.var=NULL,
     The function merges multiple SeqArray GDS files. Users can specify the
 compression method and level for the new GDS file. If \code{gds.fn} contains
 one file, users can change the storage type to create a new file.
+
+    WARNING: the functionality of \code{seqMerge()} is limited.
 }
 
 \author{Xiuwen Zheng}

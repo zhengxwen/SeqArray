@@ -546,21 +546,32 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, .progress=FALSE,
             }, pg=.progress)
     } else if (is.numeric(ref.allele))
     {
-        dm <- .seldim(gdsfile)
-        if (!(length(ref.allele) %in% c(1L, dm[3L])))
-            stop("'length(ref.allele)' should be 1 or the number of selected variants.")
-
         if (length(ref.allele) == 1L)
         {
-            seqParallel(parallel, gdsfile, split="by.variant",
-                FUN = function(f, ref, pg)
-                {
-                    .cfunction("FC_AF_SetIndex")(ref)
-                    seqApply(f, c("genotype", "$num_allele"),
-                        as.is="double", FUN = .cfunction("FC_AF_Index"),
-                        .useraw=NA, .progress=pg & (process_index==1L))
-                }, ref=ref.allele, pg=.progress)
+            if (ref.allele == 0L)
+            {
+                seqParallel(parallel, gdsfile, split="by.variant",
+                    FUN = function(f, pg)
+                    {
+                        seqApply(f, "genotype", as.is="double",
+                            FUN = .cfunction("FC_AF_Ref"),
+                            .useraw=NA, .progress=pg & (process_index==1L))
+                    }, pg=.progress)
+            } else {
+                seqParallel(parallel, gdsfile, split="by.variant",
+                    FUN = function(f, ref, pg)
+                    {
+                        .cfunction("FC_AF_SetIndex")(ref)
+                        seqApply(f, c("genotype", "$num_allele"),
+                            as.is="double", FUN = .cfunction("FC_AF_Index"),
+                            .useraw=NA, .progress=pg & (process_index==1L))
+                    }, ref=ref.allele, pg=.progress)
+            }
         } else {
+            dm <- .seldim(gdsfile)
+            if (length(ref.allele) != dm[3L])
+                stop("'length(ref.allele)' should be 1 or the number of selected variants.")
+
             ref.allele <- as.integer(ref.allele)
             seqParallel(parallel, gdsfile, split="by.variant",
                 .selection.flag=TRUE,
@@ -617,21 +628,32 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, .progress=FALSE,
             }, pg=.progress)
     } else if (is.numeric(ref.allele))
     {
-        dm <- .seldim(gdsfile)
-        if (!(length(ref.allele) %in% c(1L, dm[3L])))
-            stop("'length(ref.allele)' should be 1 or the number of selected variants.")
-
         if (length(ref.allele) == 1L)
         {
-            seqParallel(parallel, gdsfile, split="by.variant",
-                FUN = function(f, ref, pg)
-                {
-                    .cfunction("FC_AF_SetIndex")(ref)
-                    seqApply(f, c("genotype", "$num_allele"),
-                        as.is="integer", FUN = .cfunction("FC_AC_Index"),
-                        .useraw=NA, .progress=pg & (process_index==1L))
-                }, ref=ref.allele, pg=.progress)
+            if (ref.allele == 0L)
+            {
+                seqParallel(parallel, gdsfile, split="by.variant",
+                    FUN = function(f, pg)
+                    {
+                        seqApply(f, "genotype", as.is="integer",
+                            FUN = .cfunction("FC_AC_Ref"),
+                            .useraw=NA, .progress=pg & (process_index==1L))
+                    }, pg=.progress)
+            } else {
+                seqParallel(parallel, gdsfile, split="by.variant",
+                    FUN = function(f, ref, pg)
+                    {
+                        .cfunction("FC_AF_SetIndex")(ref)
+                        seqApply(f, c("genotype", "$num_allele"),
+                            as.is="integer", FUN = .cfunction("FC_AC_Index"),
+                            .useraw=NA, .progress=pg & (process_index==1L))
+                    }, ref=ref.allele, pg=.progress)
+            }
         } else {
+            dm <- .seldim(gdsfile)
+            if (length(ref.allele) != dm[3L])
+                stop("'length(ref.allele)' should be 1 or the number of selected variants.")
+
             ref.allele <- as.integer(ref.allele)
             seqParallel(parallel, gdsfile, split="by.variant",
                 .selection.flag=TRUE,

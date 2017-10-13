@@ -55,11 +55,8 @@ head(seqAlleleFreq(f, AA))
 
 # allele counts
 head(seqAlleleCount(f, NULL, .progress=TRUE))
-
 head(seqAlleleCount(f, 0L, .progress=TRUE))
-
 head(seqAlleleCount(f, AA, .progress=TRUE))
-
 
 # close the GDS file
 seqClose(f)
