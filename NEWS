@@ -2,7 +2,8 @@ CHANGES IN VERSION 1.18.0
 
     o progress information: showing overall running time when completed
 
-    o new names "$ref" and "$alt" are allowed in `seqGetData()`
+    o new variable names "$ref" and "$alt" can be used in `seqGetData()` and
+      `seqBlockApply()`
 
     o move VariantAnnotation to the suggest field from the import field
 
@@ -25,6 +26,12 @@ CHANGES IN VERSION 1.18.0
       `seqAlleleCount()` when 'ref.allele=0'
 
     o fix an issue of no phase data in `seqExport()`
+
+    o `seqGetData(f, "$chrom_pos")` outputs characters with the format
+      'chromosome:position' instead of 'chromosome_position'
+
+    o new variable name "$chrom_pos_allele" can be used in `seqGetData()` and
+      `seqBlockApply()`
 
 
 CHANGES IN VERSION 1.16.0

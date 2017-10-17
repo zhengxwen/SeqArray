@@ -52,6 +52,10 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
+\code{"$chrom_pos"} returns characters with the combination of chromosome and
+position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
+the combination of chromosome, position and allele, e.g., "1:1272721_A_G".
+
     The algorithm is highly optimized by blocking the computations to exploit
 the high-speed memory instead of disk.
 }

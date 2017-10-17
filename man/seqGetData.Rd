@@ -29,9 +29,6 @@ seqGetData(gdsfile, var.name, .useraw=FALSE)
 \code{"annotation/format/@VARIABLE_NAME"} are used to obtain the index
 associated with these variables.
 
-\code{"$chrom_pos"} returns characters with the combination of chromosome and
-position, e.g., "1_1272721".
-
 \code{"$dosage"} returns a RAW/INTEGER matrix for the dosages of reference
 allele.
 
@@ -42,6 +39,10 @@ alleles.
 
 \code{"$alt"} returns a character vector of alternative alleles (delimited by
 comma)
+
+\code{"$chrom_pos"} returns characters with the combination of chromosome and
+position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
+the combination of chromosome, position and allele, e.g., "1:1272721_A_G".
 }
 
 \author{Xiuwen Zheng}
