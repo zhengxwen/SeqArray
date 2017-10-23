@@ -1,13 +1,32 @@
 CHANGES IN VERSION 1.18.0
 
+NEW FEATURES
+
     o progress information: showing overall running time when completed
 
     o new variable names "$ref" and "$alt" can be used in `seqGetData()` and
       `seqBlockApply()`
 
+    o new argument '.progress' in `seqDigest()`
+
+    o new argument 'ref.allele' in `seqAlleleCount()`
+
+    o new variable name "$chrom_pos_allele" can be used in `seqGetData()` and
+      `seqBlockApply()`
+
+UTILITIES
+
     o move VariantAnnotation to the suggest field from the import field
 
     o remove an unused argument '.list_dup' in `seqBlockApply()`
+
+    o slightly improve the computational efficiency of `seqAlleleFreq()` and
+      `seqAlleleCount()` when 'ref.allele=0'
+
+    o `seqGetData(f, "$chrom_pos")` outputs characters with the format
+      'chromosome:position' instead of 'chromosome_position'
+
+BUG FIXES
 
     o fix the unexpected behaviors in `seqSetFilter(, action="push")` and
       `seqSetFilter(, action="push+intersect")`
@@ -18,20 +37,7 @@ CHANGES IN VERSION 1.18.0
     o fix a bug in `seqSNP2GDS()` for inverted genotypes during importing data
       from SNP GDS files (https://github.com/zhengxwen/SeqArray/issues/22)
 
-    o new argument '.progress' in `seqDigest()`
-
-    o new argument 'ref.allele' in `seqAlleleCount()`
-
-    o slightly improve the computational efficiency of `seqAlleleFreq()` and
-      `seqAlleleCount()` when 'ref.allele=0'
-
     o fix an issue of no phase data in `seqExport()`
-
-    o `seqGetData(f, "$chrom_pos")` outputs characters with the format
-      'chromosome:position' instead of 'chromosome_position'
-
-    o new variable name "$chrom_pos_allele" can be used in `seqGetData()` and
-      `seqBlockApply()`
 
 
 CHANGES IN VERSION 1.16.0
