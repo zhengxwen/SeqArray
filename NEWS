@@ -1,4 +1,14 @@
+CHANGES IN VERSION 1.18.1
+-------------------------
+
+BUG FIXES
+
+    o fix an issue: `seqSetFilterChrom()` extends a genomic range
+      upstream and downstream 1bp
+
+
 CHANGES IN VERSION 1.18.0
+-------------------------
 
 NEW FEATURES
 

@@ -471,8 +471,8 @@ bool CRangeSet::IsIncluded(int point)
 {
 	TRange rng;
 	rng.Start = rng.End = point;
-	set<TRange, less_range>::iterator it = _RangeSet.find(rng);
-	return it != _RangeSet.end();
+	set<TRange, less_range>::iterator p = _RangeSet.find(rng);
+	return (p != _RangeSet.end()) && (p->Start <= point) && (point <= p->End);
 }
 
 
