@@ -150,9 +150,9 @@ seqClose(f)
 | ...  | [»](http://zhengxwen.github.io/SeqArray/release/help/00Index.html) |
 
 
-## Features
+## Performance
 
-Performance update ... (in progress)
+Update ... (in progress)
 
 
 ## Also See
