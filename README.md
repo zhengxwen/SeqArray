@@ -150,6 +150,11 @@ seqClose(f)
 | ...  | [»](http://zhengxwen.github.io/SeqArray/release/help/00Index.html) |
 
 
+## Features
+
+Performance update ... (in progress)
+
+
 ## Also See
 
 [PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variants in Python
