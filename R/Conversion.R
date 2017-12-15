@@ -13,7 +13,7 @@
 #
 
 seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
-    verbose=TRUE)
+    use_Rsamtools=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -69,12 +69,19 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
         if (ext == ".gz")
         {
-            if (requireNamespace("Rsamtools"))
+            if (.Platform$OS.type == "windows")
+                use_Rsamtools <- FALSE
+            if (isTRUE(use_Rsamtools) & requireNamespace("Rsamtools"))
             {
                 ofile <- .Call(SEQ_bgzip_create, vcf.fn)
             } else {
                 if (verbose)
-                    cat("Hint: install Rsamtools to enable the bgzf output.\n")
+                {
+                    if (.Platform$OS.type != "windows")
+                        cat("Hint: install Rsamtools to enable the bgzf output.\n")
+                    else
+                        cat("Hint: output to a general gzip file ...\n")
+                }
                 ofile <- gzfile(vcf.fn, "wb")
             }
         } else if (ext == ".bz")

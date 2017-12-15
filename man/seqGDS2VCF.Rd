@@ -2,10 +2,11 @@
 \alias{seqGDS2VCF}
 \title{Convert to a VCF File}
 \description{
-    Converts a SeqArray GDS file to a VCF file.
+    Converts a SeqArray GDS file to a Variant Call Format (VCF) file.
 }
 \usage{
-seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
+seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, use_Rsamtools=TRUE,
+    verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -17,6 +18,7 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
     \item{fmt.var}{a list of variable names in the FORMAT field, or NULL for
         using all variables; \code{character(0)} for no variable
         in the FORMAT field}
+    \item{use_Rsamtools}{TRUE for loading the Rsamtools package, see details}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
@@ -26,12 +28,10 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, verbose=TRUE)
     \code{\link{seqSetFilter}} can be used to define a subset of data for
 the export.
 
-    GDS -- Genomic Data Structures used for storing genetic array-oriented
-        data, and the file format defined in the \link{gdsfmt} package.
-
-    VCF -- The Variant Call Format (VCF), which is a generic format for
-        storing DNA polymorphism data such as SNPs, insertions, deletions and
-        structural variants, together with rich annotations.
+    If the filename extension is "gz", the gzip compression algorithm is used
+to compress the output data. When the Rsamtools package is installed, the
+exported file utilizes the bgzf format (\link[Rsamtools]{bgzip}, a variant of
+gzip format) allowing for fast indexing.
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,
