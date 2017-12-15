@@ -5,6 +5,10 @@ UTILITIES
 
     o `seqDigest(f, "annotation/filter")` works on a factor variable
 
+NEW FEATURES
+
+    o `seqGDS2VCF()` outputs a bgzip vcf file for tabix indexing
+
 
 CHANGES IN VERSION 1.18.1
 -------------------------

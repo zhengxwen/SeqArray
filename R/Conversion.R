@@ -69,7 +69,14 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
         if (ext == ".gz")
         {
-            ofile <- gzfile(vcf.fn, "wb")
+            if (requireNamespace("Rsamtools"))
+            {
+                ofile <- .Call(SEQ_bgzip_create, vcf.fn)
+            } else {
+                if (verbose)
+                    cat("Hint: install Rsamtools to enable the bgzf output.\n")
+                ofile <- gzfile(vcf.fn, "wb")
+            }
         } else if (ext == ".bz")
         {
             ofile <- bzfile(vcf.fn, "wb")

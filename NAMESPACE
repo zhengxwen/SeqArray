@@ -16,6 +16,7 @@ useDynLib(SeqArray,
     SEQ_SelectFlag,
     SEQ_IntAssign,
     SEQ_Pkg_Init,
+    SEQ_bgzip_create,
     SEQ_ExternalName0, SEQ_ExternalName1, SEQ_ExternalName2,
     SEQ_ExternalName3, SEQ_ExternalName4, SEQ_ExternalName5
 )

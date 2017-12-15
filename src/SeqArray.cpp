@@ -1115,6 +1115,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	extern SEXP SEQ_BApply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
+	extern SEXP SEQ_bgzip_create(SEXP);
+
 	static R_CallMethodDef callMethods[] =
 	{
 		CALL(SEQ_Pkg_Init, 1),
@@ -1147,6 +1149,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SelectFlag, 2),
 
 		CALL(SEQ_IntAssign, 2),
+
+		CALL(SEQ_bgzip_create, 1),
 
 		{ NULL, NULL, 0 }
 	};

@@ -388,6 +388,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleCount2(SEXP Geno)
 
 
 // ======================================================================
+// ======================================================================
 
 static const char *pkg_digest = "digest";
 static int digest_data_type = -1;
