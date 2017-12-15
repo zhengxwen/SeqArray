@@ -26,6 +26,12 @@ seqOpen <- function(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
     {
         # it does not throw any warning or error if FileFormat does not exist,
         # but it is encouraged to add this attribute
+        if (identical(at$FileFormat, "SNP_ARRAY"))
+        {
+            stop(sprintf(
+                "'%s' is a SNP GDS file, please use SNPRelate::snpgdsOpen().",
+                gds.fn))
+        }
         if (!identical(at$FileFormat, "SEQ_ARRAY"))
         {
             stop(sprintf("'%s' is not a SeqArray GDS file (%s).",

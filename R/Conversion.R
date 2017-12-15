@@ -651,7 +651,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     bed_flag <- .Call(SEQ_ConvBEDFlag, bedfile$con, readBin, new.env())
     if (verbose)
     {
-        cat("    BED file: \"", bed.fn, "\"", sep="")
+        cat("    BED file: '", bed.fn, "'", sep="")
         if (bed_flag == 0)
             cat(" in the individual-major mode (SNP X Sample)\n")
         else

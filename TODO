@@ -1,2 +1,3 @@
-* seqBCF2GDS, unimplemented
-* seqSlidingWindow, unimplemented
+* seqGDS2VCF, output bgzip
+* seqBCF2GDS
+* seqSlidingWindow

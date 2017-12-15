@@ -390,6 +390,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleCount2(SEXP Geno)
 // ======================================================================
 
 static const char *pkg_digest = "digest";
+static int digest_data_type = -1;
 
 #define PKG_LOAD(name)	\
 	*(DL_FUNC*)(&name) = R_FindSymbol(#name, pkg_digest, NULL); \
@@ -413,6 +414,7 @@ static md5_context md5_ctx;
 /// Initialize digest method
 COREARRAY_DLL_EXPORT SEXP FC_DigestInit(SEXP Algo)
 {
+	digest_data_type = -1;
 	if (!md5_starts) PKG_LOAD(md5_starts);
 	if (!md5_update) PKG_LOAD(md5_update);
 	if (!md5_finish) PKG_LOAD(md5_finish);
@@ -445,33 +447,60 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestDone(SEXP Algo)
 /// Applied digest function
 COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 {
-	if (TYPEOF(Data) == RAWSXP)
+	if (digest_data_type < 0)
 	{
-		const size_t n = XLENGTH(Data);
-		(*md5_update)(&md5_ctx, RAW(Data), n);
-	} else if (Rf_isInteger(Data))
+		if (TYPEOF(Data) == RAWSXP)
+			digest_data_type = 0;
+		else if (TYPEOF(Data) == INTSXP)
+			digest_data_type = !inherits(Data, "factor") ? 1 : 2;
+		else if (Rf_isLogical(Data))
+			digest_data_type = 3;
+		else if (Rf_isReal(Data))
+			digest_data_type = 4;
+		else if (Rf_isString(Data))
+			digest_data_type = 5;
+		else if (!Rf_isNull(Data))
+			error("Not support data type.");
+	}
+	switch (digest_data_type)
 	{
-		const size_t n = XLENGTH(Data);
-		(*md5_update)(&md5_ctx, INTEGER(Data), n*sizeof(int));
-	} else if (Rf_isLogical(Data))
-	{
-		const size_t n = XLENGTH(Data);
-		(*md5_update)(&md5_ctx, LOGICAL(Data), n*sizeof(int));
-	} else if (Rf_isReal(Data))
-	{
-		const size_t n = XLENGTH(Data);
-		(*md5_update)(&md5_ctx, REAL(Data), n*sizeof(double));
-	} else if (Rf_isString(Data))
-	{
-		const size_t n = XLENGTH(Data);
-		for (size_t i=0; i < n; i++)
-		{
-			const char *s = CHAR(STRING_ELT(Data, i));
-			(*md5_update)(&md5_ctx, (void*)s, strlen(s)+1);
-		}
-	} else if (!Rf_isNull(Data))
-	{
-		error("Not support data type.");
+		case 0:
+			(*md5_update)(&md5_ctx, RAW(Data), XLENGTH(Data));
+			break;
+		case 1:
+			(*md5_update)(&md5_ctx, INTEGER(Data), XLENGTH(Data)*sizeof(int));
+			break;
+		case 2:
+			{
+				int *p = INTEGER(Data);
+				SEXP ls = getAttrib(Data, R_LevelsSymbol);
+				int nls = LENGTH(ls);
+				for (size_t n=XLENGTH(Data); n > 0; n--, p++)
+				{
+					const char *s;
+					if ((0 < *p) && (*p <= nls))
+						s = CHAR(STRING_ELT(ls, *p - 1));
+					else
+						s = "";
+					(*md5_update)(&md5_ctx, (void*)s, strlen(s)+1);
+				}
+			}
+			break;
+		case 3:
+			(*md5_update)(&md5_ctx, LOGICAL(Data), XLENGTH(Data)*sizeof(int));
+			break;
+		case 4:
+			(*md5_update)(&md5_ctx, REAL(Data), XLENGTH(Data)*sizeof(double));
+			break;
+		case 5:
+			{
+				const size_t n = XLENGTH(Data);
+				for (size_t i=0; i < n; i++)
+				{
+					const char *s = CHAR(STRING_ELT(Data, i));
+					(*md5_update)(&md5_ctx, (void*)s, strlen(s)+1);
+				}
+			}
 	}
 
 	return R_NilValue;

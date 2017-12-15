@@ -40,6 +40,7 @@ create a hash digest for the subset only.
 f <- seqOpen(gds.fn)
 
 seqDigest(f, "genotype")
+seqDigest(f, "annotation/filter")
 seqDigest(f, "annotation/format/DP")
 
 # close the GDS file
