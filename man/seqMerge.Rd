@@ -6,7 +6,7 @@
 }
 \usage{
 seqMerge(gds.fn, out.fn, storage.option="LZMA_RA", info.var=NULL, fmt.var=NULL,
-    samp.var=NULL, optimize=TRUE, digest=TRUE, verbose=TRUE)
+    samp.var=NULL, optimize=TRUE, digest=TRUE, geno.pad=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file names of multiple GDS files}
@@ -28,6 +28,8 @@ seqMerge(gds.fn, out.fn, storage.option="LZMA_RA", info.var=NULL, fmt.var=NULL,
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
         if TRUE or a digest algorithm is specified}
+    \item{geno.pad}{TRUE, pad a 2-bit genotype array in bytes to avoid
+        recompressing genotypes if possible}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

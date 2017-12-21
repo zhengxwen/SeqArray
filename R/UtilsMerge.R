@@ -12,7 +12,7 @@
 #
 seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
-    verbose=TRUE)
+    geno.pad=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn))
@@ -30,6 +30,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
+    stopifnot(is.logical(geno.pad), length(geno.pad)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose)
@@ -254,6 +255,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                 valdim=c(nSamp, 0L))
         }
 
+        geno_idx <- NULL
         for (i in seq_along(flist))
         {
             if (verbose)
@@ -279,15 +281,32 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                 assign.gdsn(n2, n4, seldim=s, append=TRUE,
                     .value=NA_integer_, .substitute=0)
             }
+            geno_idx <- c(geno_idx, read.gdsn(index.gdsn(flist[[i]],
+                "genotype/@data")))
+            if (geno.pad && i<length(flist) && ploidy==2L)
+            {
+                if (prod(objdesp.gdsn(n)$dim) %% 4)
+                {
+                    f <- flist[[i]]
+                    seqSetFilter(f, variant.sel=.dim(f)[3L], verbose=FALSE)
+                    v <- seqGetData(f, "genotype")
+                    seqResetFilter(f, verbose=FALSE)
+                    dim(v) <- NULL
+                    vv <- rep(0L, ploidy*nSamp)
+                    vv[is.na(v)] <- -1
+                    append.gdsn(n1, vv)
+                    k <- length(geno_idx)
+                    geno_idx[k] <- geno_idx[k] + 1L
+                    if (verbose) cat(".")
+                }
+            }
         }
 
         readmode.gdsn(n1)
         readmode.gdsn(n2)
 
-
-        n <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
-            visible=FALSE)
-        .append_gds(n, flist, "genotype/@data")
+        n <- .AddVar(storage.option, varGeno, "@data", geno_idx,
+            storage="uint8", visible=FALSE)
         .DigestCode(n, digest, FALSE)
 
         # TODO

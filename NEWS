@@ -1,9 +1,12 @@
-CHANGES IN VERSION 1.19.2
+CHANGES IN VERSION 1.19.2-1.19.3
 -------------------------
 
 UTILITIES
 
     o `seqDigest(f, "annotation/filter")` works on a factor variable
+
+    o improve the efficiency of `seqMerge()` to avoid genotype recompression
+      by padding the 2-bit genotype array in bytes
 
 NEW FEATURES
 
