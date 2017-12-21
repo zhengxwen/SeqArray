@@ -285,7 +285,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                 "genotype/@data")))
             if (geno.pad && i<length(flist) && ploidy==2L)
             {
-                if (prod(objdesp.gdsn(n)$dim) %% 4)
+                if (prod(objdesp.gdsn(n1)$dim) %% 4L)
                 {
                     f <- flist[[i]]
                     seqSetFilter(f, variant.sel=.dim(f)[3L], verbose=FALSE)
@@ -293,7 +293,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                     seqResetFilter(f, verbose=FALSE)
                     dim(v) <- NULL
                     vv <- rep(0L, ploidy*nSamp)
-                    vv[is.na(v)] <- -1
+                    vv[is.na(v)] <- -1L
                     append.gdsn(n1, vv)
                     k <- length(geno_idx)
                     geno_idx[k] <- geno_idx[k] + 1L
