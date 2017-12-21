@@ -24,7 +24,7 @@ process_count <- 1L
 
 #######################################################################
 
-.onAttach <- function(lib, pkg)
+.onLoad <- function(lib, pkg)
 {
     .Call(SEQ_Pkg_Init, .dim_name)
     TRUE
