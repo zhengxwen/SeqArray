@@ -163,7 +163,7 @@ void CApply_Variant_Geno::Init(CFileInfo &File, int use_raw)
 
 	// initialize
 	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant();
+	MarginalSelect = File.Selection().pVariant;
 	GenoIndex = &File.GenoIndex();
 	SiteCount = ssize_t(DLen[1]) * DLen[2];
 	SampNum = File.SampleSelNum();
@@ -175,7 +175,7 @@ void CApply_Variant_Geno::Init(CFileInfo &File, int use_raw)
 	Selection.resize(SiteCount);
 	C_BOOL *p = &Selection[0];
 	memset(p, TRUE, SiteCount);
-	C_BOOL *s = File.Selection().pSample();
+	C_BOOL *s = File.Selection().pSample;
 	for (int n=DLen[1]; n > 0; n--)
 	{
 		if (*s++ == FALSE)
@@ -447,7 +447,7 @@ void CApply_Variant_Phase::Init(CFileInfo &File, bool use_raw)
 
 	// initialize
 	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant();
+	MarginalSelect = File.Selection().pVariant;
 	SiteCount = ssize_t(DLen[1]) * DLen[2];
 	SampNum = File.SampleSelNum();
 	CellCount = SampNum * DLen[2];
@@ -458,7 +458,7 @@ void CApply_Variant_Phase::Init(CFileInfo &File, bool use_raw)
 	Selection.resize(SiteCount);
 	C_BOOL *p = &Selection[0];
 	memset(p, TRUE, SiteCount);
-	C_BOOL *s = File.Selection().pSample();
+	C_BOOL *s = File.Selection().pSample;
 	for (int n=DLen[1]; n > 0; n--)
 	{
 		if (*s++ == FALSE)
@@ -620,14 +620,14 @@ void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name)
 	// initialize
 	SVType = GDS_Array_GetSVType(Node);
 	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant();
+	MarginalSelect = File.Selection().pVariant;
 	VarIndex = &File.VarIndex(GDS_PATH_PREFIX(var_name, '@'));
 	SampNum = File.SampleSelNum();
 	_TotalSampNum = File.SampleNum();
 
 	// initialize selection
 	SelPtr[0] = NULL;
-	SelPtr[1] = File.Selection().pSample();
+	SelPtr[1] = File.Selection().pSample;
 
 	Reset();
 }

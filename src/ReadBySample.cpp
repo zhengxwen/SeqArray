@@ -501,27 +501,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 		// the GDS root node
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
 
-		// init selection
-		if (Sel.Sample.empty())
-		{
-			PdAbstractArray N = GDS_Node_Path(Root, "sample.id", TRUE);
-			int Cnt = GDS_Array_GetTotalCount(N);
-			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'sample.id'.");
-			Sel.Sample.resize(Cnt, TRUE);
-		}
-		if (Sel.Variant.empty())
-		{
-			PdAbstractArray N = GDS_Node_Path(Root, "variant.id", TRUE);
-			int Cnt = GDS_Array_GetTotalCount(N);
-			if (Cnt < 0) throw ErrSeqArray("Invalid dimension of 'variant.id'.");
-			Sel.Variant.resize(Cnt, TRUE);
-		}
-
 		// the number of calling PROTECT
 		int nProtected = 0;
 
 		// the number of selected variants
-		int nSample = GetNumOfTRUE(&Sel.Sample[0], Sel.Sample.size());
+		int nSample = File.SampleSelNum();
 		if (nSample <= 0)
 			throw ErrSeqArray("There is no selected sample.");
 
@@ -565,8 +549,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 					s.c_str());
 			}
 
-			NodeList[i].InitObject(VarType, s.c_str(), Root, Sel.Variant.size(),
-				&Sel.Variant[0], Sel.Sample.size(), &Sel.Sample[0],
+			NodeList[i].InitObject(VarType, s.c_str(), Root, File.VariantNum(),
+				Sel.pVariant, File.SampleNum(), Sel.pSample,
 				use_raw_flag != FALSE);
 		}
 

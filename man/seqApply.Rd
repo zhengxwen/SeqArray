@@ -97,7 +97,7 @@ seqApply(f, "genotype", FUN=print, margin="by.sample", .useraw=TRUE)
 
 
 # read multiple variables variant by variant
-seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id",
+seqApply(f, c(geno="genotype", phase="phase", rsid="annotation/id",
     DP="annotation/format/DP"), FUN=print, as.is="none")
 
 # get the numbers of alleles per variant
@@ -119,7 +119,7 @@ seqApply(f, "genotype", FUN=sum, na.rm=TRUE, as.is="integer")
 ################################################################
 # with an index of variant
 
-seqApply(f, c(geno="genotype", phase="phase", qual="annotation/id"),
+seqApply(f, c(geno="genotype", phase="phase", rsid="annotation/id"),
     FUN=function(index, x) { print(index); print(x); index },
     as.is="integer", var.index="relative")
 # it is as the same as

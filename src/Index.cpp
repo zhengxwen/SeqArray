@@ -481,12 +481,31 @@ bool CRangeSet::IsIncluded(int point)
 // SeqArray GDS file information
 // ===========================================================
 
+TSelection::TSelection(size_t nSamp, size_t nVar)
+{
+	pSample = new C_BOOL[nSamp];
+	pVariant = new C_BOOL[nVar];
+	Link = NULL;
+}
+
+TSelection::~TSelection()
+{
+	if (pSample)
+		{ delete[] pSample; pSample = NULL; }
+	if (pVariant)
+		{ delete[] pVariant; pVariant = NULL; }
+	Link = NULL;
+}
+
+//
+
 static const char *ERR_DIM = "Invalid dimension of '%s'.";
 static const char *ERR_FILE_ROOT = "CFileInfo::FileRoot should be initialized.";
 
 CFileInfo::CFileInfo(PdGDSFolder root)
 {
 	_Root = NULL;
+	_SelList = NULL;
 	_SampleNum = _VariantNum = 0;
 	ResetRoot(root);
 }
@@ -495,6 +514,18 @@ CFileInfo::~CFileInfo()
 {
 	_Root = NULL;
 	_SampleNum = _VariantNum = 0;
+	clear_selection();
+}
+
+void CFileInfo::clear_selection()
+{
+	for (TSelection *p=_SelList; p != NULL; )
+	{
+		TSelection *n = p;
+		p = p->Link;
+		delete n;
+	}
+	_SelList = NULL;
 }
 
 void CFileInfo::ResetRoot(PdGDSFolder root)
@@ -503,9 +534,9 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 	{
 		// initialize
 		_Root = root;
-		SelList.clear();
 		_Chrom.Clear();
 		_Position.clear();
+		clear_selection();
 
 		// sample.id
 		PdAbstractArray Node = GDS_Node_Path(root, "sample.id", TRUE);
@@ -533,6 +564,11 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 				_Ploidy = DLen[2];
 			}
 		}
+
+		// initialize selection
+		_SelList = new TSelection(_SampleNum, _VariantNum);
+		memset(_SelList->pSample, TRUE, _SampleNum);
+		memset(_SelList->pVariant, TRUE, _VariantNum);
 	}
 }
 
@@ -540,16 +576,28 @@ TSelection &CFileInfo::Selection()
 {
 	if (!_Root)
 		throw ErrSeqArray(ERR_FILE_ROOT);
-	if (SelList.empty())
-		SelList.push_back(TSelection());
+	return *_SelList;
+}
 
-	TSelection &s = SelList.back();
-	if (s.Sample.empty())
-		s.Sample.resize(_SampleNum, TRUE);
-	if (s.Variant.empty())
-		s.Variant.resize(_VariantNum, TRUE);
+TSelection &CFileInfo::Push_Selection(bool init_samp, bool init_var)
+{
+	TSelection *n = new TSelection(_SampleNum, _VariantNum);
+	n->Link = _SelList;
+	if (init_samp)
+		memcpy(n->pSample, _SelList->pSample, _SampleNum);
+	if (init_var)
+		memcpy(n->pVariant, _SelList->pVariant, _VariantNum);
+	_SelList = n;
+	return *n;
+}
 
-	return s;
+void CFileInfo::Pop_Selection()
+{
+	if (_SelList==NULL || _SelList->Link==NULL)
+		throw ErrSeqArray("No filter can be pop up.");
+	TSelection *n = _SelList;
+	_SelList = n->Link;
+	delete n;
 }
 
 CChromIndex &CFileInfo::Chromosome()
@@ -612,14 +660,14 @@ PdAbstractArray CFileInfo::GetObj(const char *name, C_BOOL MustExist)
 
 int CFileInfo::SampleSelNum()
 {
-	TSelection &sel = Selection();
-	return vec_i8_cnt_nonzero((C_Int8*)&sel.Sample[0], _SampleNum);
+	TSelection &s = Selection();
+	return vec_i8_cnt_nonzero((C_Int8*)s.pSample, _SampleNum);
 }
 
 int CFileInfo::VariantSelNum()
 {
-	TSelection &sel = Selection();
-	return vec_i8_cnt_nonzero((C_Int8*)&sel.Variant[0], _VariantNum);
+	TSelection &s = Selection();
+	return vec_i8_cnt_nonzero((C_Int8*)s.pVariant, _VariantNum);
 }
 
 
@@ -713,7 +761,7 @@ CApply_Variant::CApply_Variant(): CVarApply()
 CApply_Variant::CApply_Variant(CFileInfo &File): CVarApply()
 {
 	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant();
+	MarginalSelect = File.Selection().pVariant;
 }
 
 

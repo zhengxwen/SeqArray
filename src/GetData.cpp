@@ -69,7 +69,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				(GDS_Array_GetTotalCount(N) != File.SampleNum()))
 			throw ErrSeqArray(ERR_DIM, name);
 		// read
-		C_BOOL *ss = Sel.pSample();
+		C_BOOL *ss = Sel.pSample;
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 
 	} else if (strcmp(name, "position") == 0)
@@ -80,7 +80,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			const int *base = &File.Position()[0];
 			rv_ans = NEW_INTEGER(n);
 			int *p = INTEGER(rv_ans);
-			C_BOOL *s = Sel.pVariant();
+			C_BOOL *s = Sel.pVariant;
 			for (size_t m=File.VariantNum(); m > 0; m--)
 			{
 				if (*s++) *p++ = *base;
@@ -96,7 +96,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		{
 			CChromIndex &Chrom = File.Chromosome();
 			rv_ans = PROTECT(NEW_CHARACTER(n));
-			C_BOOL *s = Sel.pVariant();
+			C_BOOL *s = Sel.pVariant;
 			size_t m = File.VariantNum();
 			size_t p = 0;
 			SEXP last = mkChar("");
@@ -129,7 +129,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				(GDS_Array_GetTotalCount(N) != File.VariantNum()))
 			throw ErrSeqArray(ERR_DIM, name);
 		// read
-		C_BOOL *ss = Sel.pVariant();
+		C_BOOL *ss = Sel.pVariant;
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 
 	} else if (strcmp(name, "genotype") == 0)
@@ -182,7 +182,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				(GDS_Array_GetTotalCount(N) != File.VariantNum()))
 			throw ErrSeqArray(ERR_DIM, VarName);
 		// read
-		C_BOOL *ss = Sel.pVariant();
+		C_BOOL *ss = Sel.pVariant;
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, &ss, UseMode);
 
 	} else if (strcmp(name, "$dosage") == 0)
@@ -234,7 +234,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				dim[1]!=File.SampleNum())
 			throw ErrSeqArray(ERR_DIM, name);
 		// read
-		C_BOOL *ss[3] = { Sel.pVariant(), Sel.pSample(), NULL };
+		C_BOOL *ss[3] = { Sel.pVariant, Sel.pSample, NULL };
 		if (ndim == 3)
 			ss[2] = NeedArrayTRUEs(dim[2]);
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
@@ -244,7 +244,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		if (File.GetObj(name, FALSE) != NULL)
 		{
 			CIndex &V = File.VarIndex(name);
-			rv_ans = V.GetLen_Sel(Sel.pVariant());
+			rv_ans = V.GetLen_Sel(Sel.pVariant);
 		}
 
 	} else if (strncmp(name, "annotation/info/", 16) == 0)
@@ -265,7 +265,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			// no index
 			C_Int32 dim[4];
 			GDS_Array_GetDim(N, dim, 2);
-			C_BOOL *ss[2] = { Sel.pVariant(), NULL };
+			C_BOOL *ss[2] = { Sel.pVariant, NULL };
 			if (ndim == 2)
 				ss[1] = NeedArrayTRUEs(dim[1]);
 			rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
@@ -276,7 +276,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			CIndex &V = File.VarIndex(name2);
 			int var_start, var_count;
 			vector<C_BOOL> var_sel;
-			SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant(), var_start, var_count, var_sel));
+			SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count, var_sel));
 
 			C_BOOL *ss[2] = { &var_sel[0], NULL };
 			C_Int32 dimst[2]  = { var_start, 0 };
@@ -303,7 +303,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		if (File.GetObj(name2.c_str(), FALSE) != NULL)
 		{
 			CIndex &V = File.VarIndex(name2.c_str());
-			rv_ans = V.GetLen_Sel(Sel.pVariant());
+			rv_ans = V.GetLen_Sel(Sel.pVariant);
 		}
 
 	} else if (strncmp(name, "annotation/format/", 18) == 0)
@@ -320,9 +320,9 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		CIndex &V = File.VarIndex(name2);
 		int var_start, var_count;
 		vector<C_BOOL> var_sel;
-		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant(), var_start, var_count, var_sel));
+		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count, var_sel));
 
-		C_BOOL *ss[2] = { &var_sel[0], Sel.pSample() };
+		C_BOOL *ss[2] = { &var_sel[0], Sel.pSample };
 		C_Int32 dimst[2]  = { var_start, 0 };
 		C_Int32 dimcnt[2];
 		GDS_Array_GetDim(N, dimcnt, 2);
@@ -353,7 +353,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		if (dim[0] != File.SampleNum())
 			throw ErrSeqArray(ERR_DIM, name);
 
-		C_BOOL *ss[2] = { Sel.pSample(), NULL };
+		C_BOOL *ss[2] = { Sel.pSample, NULL };
 		if (ndim == 2)
 			ss[1] = NeedArrayTRUEs(dim[1]);
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
@@ -388,7 +388,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		// read
 		size_t n = File.VariantSelNum();
 		vector<string> buffer(n);
-		C_BOOL *ss = Sel.pVariant();
+		C_BOOL *ss = Sel.pVariant;
 		GDS_Array_ReadDataEx(N, NULL, NULL, &ss, &buffer[0], svStrUTF8);
 		// output
 		rv_ans = PROTECT(NEW_CHARACTER(n));
@@ -414,7 +414,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		// read
 		size_t n = File.VariantSelNum();
 		vector<string> buffer(n);
-		C_BOOL *ss = Sel.pVariant();
+		C_BOOL *ss = Sel.pVariant;
 		GDS_Array_ReadDataEx(N, NULL, NULL, &ss, &buffer[0], svStrUTF8);
 		// output
 		rv_ans = PROTECT(NEW_CHARACTER(n));
@@ -443,7 +443,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		vector<string> chr(n);
 		vector<C_Int32> pos(n);
 
-		C_BOOL *ss = Sel.pVariant();
+		C_BOOL *ss = Sel.pVariant;
 		GDS_Array_ReadDataEx(N1, NULL, NULL, &ss, &chr[0], svStrUTF8);
 		GDS_Array_ReadDataEx(N2, NULL, NULL, &ss, &pos[0], svInt32);
 
@@ -489,7 +489,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		vector<C_Int32> pos(n);
 		vector<string> allele(n);
 
-		C_BOOL *ss = Sel.pVariant();
+		C_BOOL *ss = Sel.pVariant;
 		GDS_Array_ReadDataEx(N1, NULL, NULL, &ss, &chr[0], svStrUTF8);
 		GDS_Array_ReadDataEx(N2, NULL, NULL, &ss, &pos[0], svInt32);
 		GDS_Array_ReadDataEx(N3, NULL, NULL, &ss, &allele[0], svStrUTF8);
@@ -640,14 +640,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 
 
 		// local selection
-		File.SelList.push_back(TSelection());
-		TSelection &Sel = File.SelList.back();
-		Sel.Sample = Selection.Sample;
-		Sel.Variant.resize(File.VariantNum());
+		TSelection &Sel = File.Push_Selection(true, false);
+		memset(Sel.pVariant, 0, File.VariantNum());
 
 		C_BOOL *pBase, *pSel, *pEnd;
-		pBase = pSel = Selection.pVariant();
-		pEnd = pBase + Selection.Variant.size();
+		pBase = pSel = Selection.pVariant;
+		pEnd = pBase + File.VariantNum();
 
 		// progress object
 		CProgressStdOut progress(NumBlock, prog_flag);
@@ -667,8 +665,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 
 			// assign sub-selection
 			{
-				C_BOOL *pNewSel = Sel.pVariant();
-				memset(pNewSel, 0, Sel.Variant.size());
+				C_BOOL *pNewSel = Sel.pVariant;
+				memset(pNewSel, 0, File.VariantNum());
 				// for-loop
 				for (int bs=bsize; bs > 0; bs--)
 				{
@@ -754,7 +752,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 			progress.Forward();
 		}
 
-		File.SelList.pop_back();
+		File.Pop_Selection();
 
 		// finally
 		UNPROTECT(nProtected);

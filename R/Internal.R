@@ -658,9 +658,9 @@
 
 .DigestFile <- function(gfile, digest, verbose)
 {
-    ## digest hash functions
+    ## digest
     flag <- verbose & (isTRUE(digest) | is.character(digest))
-    if (flag) cat("Hash function digests:\n")
+    if (flag) cat("Digests:\n")
 
     for (nm in c("sample.id", "variant.id", "position", "chromosome", "allele"))
     {

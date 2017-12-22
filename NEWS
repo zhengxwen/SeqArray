@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.19.2-1.19.3
+CHANGES IN VERSION 1.19.2-1.19.4
 -------------------------
 
 UTILITIES
@@ -7,6 +7,8 @@ UTILITIES
 
     o improve the efficiency of `seqMerge()` to avoid genotype recompression
       by padding the 2-bit genotype array in bytes
+
+    o use `.onLoad()` instead of `.onAttach()`
 
 NEW FEATURES
 
