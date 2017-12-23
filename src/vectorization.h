@@ -296,9 +296,6 @@ COREARRAY_DLL_DEFAULT const int8_t *vec_i8_cnt_nonzero_ptr(const int8_t *p,
 // functions for int8
 // ===========================================================
 
-/// return the pointer to the non-zeros character starting from p
-COREARRAY_DLL_DEFAULT const char *vec_i8_ptr_nonzero(const char *p, size_t n);
-
 /// count how many 'val' in 'p'
 COREARRAY_DLL_DEFAULT size_t vec_i8_count(const char *p, size_t n, char val);
 
@@ -380,11 +377,15 @@ COREARRAY_DLL_DEFAULT void vec_i32_shr_b2(int32_t *p, size_t n);
 
 
 // ===========================================================
-// functions for char
+// functions for searching characters
 // ===========================================================
 
+/// find CRLF character
 COREARRAY_DLL_DEFAULT const char *vec_char_find_CRLF(const char *p, size_t n);
 
+/// find non-zero
+COREARRAY_DLL_DEFAULT const int8_t *vec_bool_find_true(const int8_t *p,
+	const int8_t *end);
 
 
 #ifdef __cplusplus

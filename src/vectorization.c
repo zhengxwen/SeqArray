@@ -225,17 +225,6 @@ const int8_t *vec_i8_cnt_nonzero_ptr(const int8_t *p, size_t n, size_t *out_n)
 // functions for int8
 // ===========================================================
 
-/// return the pointer to the non-zero character starting from p
-const char *vec_i8_ptr_nonzero(const char *p, size_t n)
-{
-	// tail
-	for (; n > 0; n--, p++)
-		if (*p) break;
-
-	return p;
-}
-
-
 size_t vec_i8_count(const char *p, size_t n, char val)
 {
 	size_t num = 0;
@@ -1411,5 +1400,30 @@ tail:
 	for (; n > 0; n--, p++)
 		if (*p=='\n' || *p=='\r') break;
 
+	return p;
+}
+
+
+/// find non-zero
+COREARRAY_DLL_DEFAULT const int8_t *vec_bool_find_true(const int8_t *p,
+	const int8_t *end)
+{
+#ifdef COREARRAY_SIMD_AVX2
+	for (; p+32 < end; p+=32)
+	{
+		__m256i v = _mm256_loadu_si256((__m256i const*)p);
+		if (!_mm256_testz_si256(v, v)) break;
+	}
+#endif
+#ifdef COREARRAY_SIMD_SSE2
+	__m128i zero = _mm_setzero_si128();
+	for (; p+16 < end; p+=16)
+	{
+		__m128i v = _mm_loadu_si128((__m128i const*)p);
+		v = _mm_cmpeq_epi8(v, zero);
+		if (_mm_movemask_epi8(v) != 0xFFFF) break;
+	}
+#endif
+	for (; p < end; p++) if (*p) break;
 	return p;
 }

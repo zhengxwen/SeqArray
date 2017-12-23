@@ -767,12 +767,8 @@ void CVarApply::Reset()
 
 bool CVarApply::Next()
 {
-	C_BOOL *p = MarginalSelect + Position;
-	while (Position < MarginalSize)
-	{
-		Position ++;
-		if (*(++p)) break;
-	}
+	int8_t *p = (int8_t*)MarginalSelect;
+	Position = vec_bool_find_true(p+Position+1, p+MarginalSize) - p;
 	return (Position < MarginalSize);
 }
 
