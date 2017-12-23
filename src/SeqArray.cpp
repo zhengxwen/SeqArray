@@ -132,6 +132,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_id,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
+		Sel.ClearFlagGenoSel();
+
 		C_BOOL *pArray = Sel.pSample;
 		int Count = File.SampleNum();
 		PdAbstractArray varSamp = File.GetObj("sample.id", TRUE);
@@ -228,6 +230,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
+		Sel.ClearFlagGenoSel();
+
 		C_BOOL *pArray = Sel.pSample;
 		int Count = File.SampleNum();
 

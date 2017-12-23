@@ -172,19 +172,7 @@ void CApply_Variant_Geno::Init(CFileInfo &File, int use_raw)
 	UseRaw = use_raw;
 
 	// initialize selection
-	Selection.resize(SiteCount);
-	C_BOOL *p = &Selection[0];
-	memset(p, TRUE, SiteCount);
-	C_BOOL *s = File.Selection().pSample;
-	for (int n=DLen[1]; n > 0; n--)
-	{
-		if (*s++ == FALSE)
-		{
-			for (int m=DLen[2]; m > 0; m--) *p ++ = FALSE;
-		} else {
-			p += DLen[2];
-		}
-	}
+	pSelection = File.Selection().GetFlagGenoSel(File);
 
 	ExtPtr.reset(SiteCount);
 	VarIntGeno = VarRawGeno = NULL;
@@ -201,13 +189,13 @@ int CApply_Variant_Geno::_ReadGenoData(int *Base)
 	{
 		CdIterator it;
 		GDS_Iter_Position(Node, &it, Index*SiteCount);
-		GDS_Iter_RDataEx(&it, Base, SiteCount, svInt32, &Selection[0]);
+		GDS_Iter_RDataEx(&it, Base, SiteCount, svInt32, pSelection);
 
 		const int bit_mask = 0x03;
 		int missing = bit_mask;
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
-			GDS_Iter_RDataEx(&it, ExtPtr.get(), SiteCount, svUInt8, &Selection[0]);
+			GDS_Iter_RDataEx(&it, ExtPtr.get(), SiteCount, svUInt8, pSelection);
 
 			C_UInt8 shift = i * 2;
 			C_UInt8 *s = (C_UInt8*)ExtPtr.get();
@@ -235,7 +223,7 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 	{
 		CdIterator it;
 		GDS_Iter_Position(Node, &it, Index*SiteCount);
-		GDS_Iter_RDataEx(&it, Base, SiteCount, svUInt8, &Selection[0]);
+		GDS_Iter_RDataEx(&it, Base, SiteCount, svUInt8, pSelection);
 
 		const C_UInt8 bit_mask = 0x03;
 		C_UInt8 missing = bit_mask;
@@ -247,7 +235,7 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
-			GDS_Iter_RDataEx(&it, ExtPtr.get(), SiteCount, svUInt8, &Selection[0]);
+			GDS_Iter_RDataEx(&it, ExtPtr.get(), SiteCount, svUInt8, pSelection);
 
 			C_UInt8 shift = i * 2;
 			C_UInt8 *s = (C_UInt8*)ExtPtr.get();

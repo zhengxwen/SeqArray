@@ -82,8 +82,8 @@ protected:
 	ssize_t SiteCount;  ///< the total number of entries at a site
 	ssize_t CellCount;  ///< the selected number of entries at a site
 	int UseRaw;  ///< whether use RAW type: FALSE, int; TRUE, raw; NA: auto
-	vector<C_BOOL> Selection;  ///< the buffer of selection
-	VEC_AUTO_PTR ExtPtr;       ///< a pointer to the additional buffer
+	C_BOOL *pSelection;   ///< the selection pointer
+	VEC_AUTO_PTR ExtPtr;  ///< a pointer to the additional buffer
 	SEXP VarIntGeno;    ///< genotype R integer object
 	SEXP VarRawGeno;    ///< genotype R RAW object
 

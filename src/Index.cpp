@@ -486,6 +486,7 @@ TSelection::TSelection(size_t nSamp, size_t nVar)
 	pSample = new C_BOOL[nSamp];
 	pVariant = new C_BOOL[nVar];
 	Link = NULL;
+	pFlagGenoSel = NULL;
 }
 
 TSelection::~TSelection()
@@ -495,7 +496,40 @@ TSelection::~TSelection()
 	if (pVariant)
 		{ delete[] pVariant; pVariant = NULL; }
 	Link = NULL;
+	ClearFlagGenoSel();
 }
+
+void TSelection::ClearFlagGenoSel()
+{
+	if (pFlagGenoSel)
+		{ delete[] pFlagGenoSel; pFlagGenoSel = NULL; }
+}
+
+C_BOOL *TSelection::GetFlagGenoSel(CFileInfo &File)
+{
+	if (!pFlagGenoSel)
+	{
+		if (File.Ploidy() <= 0)
+			throw ErrSeqArray("Unable to determine ploidy.");
+		const size_t SampNum = File.SampleNum();
+		const size_t Ploidy = File.Ploidy();
+		const size_t SIZE = SampNum * Ploidy;
+		pFlagGenoSel = new C_BOOL[SIZE];  // set the output
+		C_BOOL *p = pFlagGenoSel, *s = pSample;
+		memset(p, TRUE, SIZE);
+		for (size_t n=SampNum; n > 0; n--)
+		{
+			if (*s++ == FALSE)
+			{
+				for (size_t m=Ploidy; m > 0; m--) *p++ = FALSE;
+			} else {
+				p += Ploidy;
+			}
+		}
+	}
+	return pFlagGenoSel;
+}
+
 
 //
 

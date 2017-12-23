@@ -306,6 +306,8 @@ protected:
 // SeqArray GDS file information
 // ===========================================================
 
+class CFileInfo;
+
 /// selection object used in GDS file
 struct COREARRAY_DLL_LOCAL TSelection
 {
@@ -315,6 +317,13 @@ struct COREARRAY_DLL_LOCAL TSelection
 
 	TSelection(size_t nSamp, size_t nVar);
 	~TSelection();
+
+	void ClearFlagGenoSel();
+	C_BOOL *GetFlagGenoSel(CFileInfo &File);
+
+private:
+	/// the pointer to the genotype selection according to the selected samples
+	C_BOOL *pFlagGenoSel;
 };
 
 
