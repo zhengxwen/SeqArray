@@ -1408,7 +1408,7 @@ tail:
 COREARRAY_DLL_DEFAULT const int8_t *vec_bool_find_true(const int8_t *p,
 	const int8_t *end)
 {
-#ifdef COREARRAY_SIMD_AVX2
+#ifdef COREARRAY_SIMD_AVX
 	for (; p+32 < end; p+=32)
 	{
 		__m256i v = _mm256_loadu_si256((__m256i const*)p);
@@ -1416,12 +1416,17 @@ COREARRAY_DLL_DEFAULT const int8_t *vec_bool_find_true(const int8_t *p,
 	}
 #endif
 #ifdef COREARRAY_SIMD_SSE2
+	#ifndef COREARRAY_SIMD_SSE4_1
 	__m128i zero = _mm_setzero_si128();
+	#endif
 	for (; p+16 < end; p+=16)
 	{
 		__m128i v = _mm_loadu_si128((__m128i const*)p);
-		v = _mm_cmpeq_epi8(v, zero);
-		if (_mm_movemask_epi8(v) != 0xFFFF) break;
+	#ifdef COREARRAY_SIMD_SSE4_1
+		if (!_mm_testz_si128(v, v)) break;
+	#else
+		if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF) break;
+	#endif
 	}
 #endif
 	for (; p < end; p++) if (*p) break;
