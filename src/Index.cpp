@@ -542,6 +542,17 @@ void TSelection::GetStructVariant()
 	}
 }
 
+void TSelection::ClearSelectVariant()
+{
+	if (varTrueNum < 0)
+	{
+		memset(pVariant, 0, numVar);
+	} else {
+		memset(pVariant+varStart, 0, varEnd-varStart);
+	}
+	varTrueNum = varStart = varEnd = 0;
+}
+
 void TSelection::ClearStructSample()
 {
 	if (pFlagGenoSel)

@@ -667,13 +667,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 			// assign sub-selection
 			{
 				// clear selection
-				Sel.GetStructVariant();
-				C_BOOL *pNewSel = Sel.pVariant;
-				memset(pNewSel+Sel.varStart, 0, Sel.varEnd-Sel.varStart);
+				Sel.ClearSelectVariant();
 				// find the first TRUE
 				pSel = VEC_BOOL_FIND_TRUE(pSel, pEnd);
 				Sel.varStart = pSel - pBase;
 				// for-loop
+				C_BOOL *pNewSel = Sel.pVariant;
 				int bs = bsize;
 				for (; bs > 0; bs--)
 				{

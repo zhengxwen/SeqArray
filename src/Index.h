@@ -328,6 +328,8 @@ struct COREARRAY_DLL_LOCAL TSelection
 	C_BOOL *GetFlagGenoSel();
 	/// get the structure of selected variants
 	void GetStructVariant();
+	/// clear selected varaints
+	void ClearSelectVariant();
 
 	/// clear the structure of selected samples for resetting the sample filter
 	void ClearStructSample();

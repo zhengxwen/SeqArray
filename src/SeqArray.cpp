@@ -451,13 +451,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
-		Sel.ClearStructVariant();
 
 		C_BOOL *pArray = Sel.pVariant;
 		int Count = File.VariantNum();
 
 		if (Rf_isLogical(var_sel) || IS_RAW(var_sel))
 		{
+			Sel.ClearStructVariant();
 			// a logical vector for selected samples
 			if (!intersect_flag)
 			{
@@ -503,7 +503,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 		{
 			if (Rf_isReal(var_sel))
 				var_sel = AS_INTEGER(var_sel);
-
 			if (!intersect_flag)
 			{
 				int *pI = INTEGER(var_sel);
@@ -515,14 +514,27 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 					if ((I != NA_INTEGER) && ((I < 1) || (I > Count)))
 						throw ErrSeqArray("Out of range 'variant.sel'.");
 				}
+				// clear
+				Sel.ClearSelectVariant();
 				// set values
-				memset((void*)pArray, 0, Count);
+				ssize_t num = 0, st=Count, ed=0;
 				pI = INTEGER(var_sel);
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
-					if (I != NA_INTEGER) pArray[I-1] = TRUE;
+					if (I != NA_INTEGER)
+					{
+						num ++;
+						ssize_t ii = I - 1;
+						pArray[ii] = TRUE;
+						if (ii < st) st = ii;
+						if (I > ed) ed = I;
+					}
 				}
+				// set the structure of selected variants
+				Sel.varTrueNum = num;
+				Sel.varStart = st;
+				Sel.varEnd = ed;
 			} else {
 				int Cnt = File.VariantSelNum();
 				int *pI = INTEGER(var_sel);
@@ -549,10 +561,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 					int I = *pI ++;
 					if (I != NA_INTEGER) pArray[Idx[I-1]] = TRUE;
 				}
+				Sel.ClearStructVariant();
 			}
 		} else if (Rf_isNull(var_sel))
 		{
 			memset(pArray, TRUE, Count);
+			Sel.varStart = 0;
+			Sel.varEnd = Sel.varTrueNum = Count;
 		} else
 			throw ErrSeqArray("Invalid type of 'variant.sel'.");
 
