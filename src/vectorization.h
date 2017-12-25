@@ -380,6 +380,9 @@ COREARRAY_DLL_DEFAULT void vec_i32_shr_b2(int32_t *p, size_t n);
 // functions for searching characters
 // ===========================================================
 
+#define  VEC_BOOL_FIND_TRUE(p, end)    \
+	(C_BOOL*)vec_bool_find_true((int8_t*)(p), (int8_t*)(end))
+
 /// find CRLF character
 COREARRAY_DLL_DEFAULT const char *vec_char_find_CRLF(const char *p, size_t n);
 

@@ -72,7 +72,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_File_Done(SEXP gdsfile)
 // Set a working space
 // ===========================================================
 
-/// push the current filter to the stack
+/// push the current filter to the stack and reset the filter
 COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushEmpty(SEXP gdsfile)
 {
 	COREARRAY_TRY
@@ -90,7 +90,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushEmpty(SEXP gdsfile)
 }
 
 
-/// push the current filter to the stack
+/// push the current filter to the stack and not reset the filter
 COREARRAY_DLL_EXPORT SEXP SEQ_FilterPushLast(SEXP gdsfile)
 {
 	COREARRAY_TRY
@@ -132,7 +132,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_id,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
-		Sel.ClearFlagGenoSel();
+		Sel.ClearStructSample();
 
 		C_BOOL *pArray = Sel.pSample;
 		int Count = File.SampleNum();
@@ -230,7 +230,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
-		Sel.ClearFlagGenoSel();
+		Sel.ClearStructSample();
 
 		C_BOOL *pArray = Sel.pSample;
 		int Count = File.SampleNum();
@@ -353,6 +353,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_id,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
+		Sel.ClearStructVariant();
+
 		C_BOOL *pArray = Sel.pVariant;
 		int Count = File.VariantNum();
 		PdAbstractArray varVariant = File.GetObj("variant.id", TRUE);
@@ -449,6 +451,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
+		Sel.ClearStructVariant();
+
 		C_BOOL *pArray = Sel.pVariant;
 		int Count = File.VariantNum();
 
@@ -607,8 +611,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 
 		CFileInfo &File = GetFileInfo(gdsfile);
 		TSelection &Sel = File.Selection();
-		const size_t array_size = File.VariantNum();
+		Sel.ClearStructVariant();
 
+		const size_t array_size = File.VariantNum();
 		C_BOOL *sel_array = Sel.pVariant;
 		vector<C_BOOL> tmp_array;
 		if (IsIntersect) tmp_array.resize(array_size);
@@ -835,10 +840,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
 		{
 			sel = s.pVariant;
 			SelectCount = File.VariantSelNum();
+			s.ClearStructVariant();
 		} else if (strcmp(split_str, "by.sample") == 0)
 		{
 			sel = s.pSample;
 			SelectCount = File.SampleSelNum();
+			s.ClearStructSample();
 		} else {
 			return rv_ans;
 		}
@@ -1034,6 +1041,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 	#endif
 	#ifdef COREARRAY_SIMD_FMA4
 		ss.push_back("FMA4");
+	#endif
+	#ifdef COREARRAY_POPCNT
+		ss.push_back("POPCNT");
 	#endif
 		SEXP SIMD = PROTECT(NEW_CHARACTER(ss.size()));
 		nProtect ++;

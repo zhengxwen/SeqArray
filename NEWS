@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.19.2-1.19.4
+CHANGES IN VERSION 1.19.2-1.19.5
 -------------------------
 
 UTILITIES
@@ -8,20 +8,23 @@ UTILITIES
     o improve the efficiency of `seqMerge()` to avoid genotype recompression
       by padding the 2-bit genotype array in bytes
 
-    o use `.onLoad()` instead of `.onAttach()`
+    o significantly improve `seqBlockApply()` (its speed is close to
+      `seqApply()`)
 
 NEW FEATURES
 
     o `seqGDS2VCF()` outputs a bgzip vcf file for tabix indexing
 
 
-CHANGES IN VERSION 1.18.1
+CHANGES IN VERSION 1.18.1-1.18.2
 -------------------------
 
 BUG FIXES
 
     o fix an issue: `seqSetFilterChrom()` extends a genomic range
       upstream and downstream 1bp
+
+    o use `.onLoad()` instead of `.onAttach()`
 
 
 CHANGES IN VERSION 1.18.0

@@ -311,19 +311,34 @@ class CFileInfo;
 /// selection object used in GDS file
 struct COREARRAY_DLL_LOCAL TSelection
 {
+	TSelection *Link;  ///< the pointer to the last one
 	C_BOOL *pSample;   ///< sample selection
 	C_BOOL *pVariant;  ///< variant selection
-	TSelection *Link;  ///< the pointer to the last one
 
-	TSelection(size_t nSamp, size_t nVar);
+	ssize_t varTrueNum;  ///< the number of TRUEs in pVariant, -1 for requiring initialization
+	ssize_t varStart;    ///< the start position of the first TRUE in pVariant
+	ssize_t varEnd;      ///< the next position of the last TRUE in pVariant
+
+	/// constructor
+	TSelection(CFileInfo &File, bool init);
+	/// destructor
 	~TSelection();
 
-	void ClearFlagGenoSel();
-	C_BOOL *GetFlagGenoSel(CFileInfo &File);
+	/// get the bool array for genotype selection
+	C_BOOL *GetFlagGenoSel();
+	/// get the structure of selected variants
+	void GetStructVariant();
+
+	/// clear the structure of selected samples for resetting the sample filter
+	void ClearStructSample();
+	/// clear the structure of selected variants for resetting the variant filter
+	void ClearStructVariant();
 
 private:
-	/// the pointer to the genotype selection according to the selected samples
-	C_BOOL *pFlagGenoSel;
+	size_t numSamp;    ///< the total number of samples
+	size_t numVar;     ///< the total number of variants
+	size_t numPloidy;  ///< the ploidy
+	C_BOOL *pFlagGenoSel;  ///< the pointer to the genotype selection according to the selected samples
 };
 
 
@@ -425,7 +440,8 @@ class COREARRAY_DLL_LOCAL CVarApply: public CVariable
 {
 protected:
 	TVarType fVarType;       ///< VCF data type
-	ssize_t MarginalSize;    ///< the size in MarginalSelect
+	ssize_t MarginalStart;   ///< the start position in MarginalSelect
+	ssize_t MarginalEnd;     ///< the ending position in MarginalSelect
 	C_BOOL *MarginalSelect;  ///< pointer to variant selection
 
 public:
@@ -466,6 +482,9 @@ public:
 	CApply_Variant();
 	/// constructor with file information
 	CApply_Variant(CFileInfo &File);
+
+protected:
+	void InitMarginal(CFileInfo &File);
 };
 
 

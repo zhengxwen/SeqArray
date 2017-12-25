@@ -162,8 +162,7 @@ void CApply_Variant_Geno::Init(CFileInfo &File, int use_raw)
 		throw ErrSeqArray(ERR_DIM, VAR_NAME);
 
 	// initialize
-	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant;
+	InitMarginal(File);
 	GenoIndex = &File.GenoIndex();
 	SiteCount = ssize_t(DLen[1]) * DLen[2];
 	SampNum = File.SampleSelNum();
@@ -172,7 +171,7 @@ void CApply_Variant_Geno::Init(CFileInfo &File, int use_raw)
 	UseRaw = use_raw;
 
 	// initialize selection
-	pSelection = File.Selection().GetFlagGenoSel(File);
+	pSelection = File.Selection().GetFlagGenoSel();
 
 	ExtPtr.reset(SiteCount);
 	VarIntGeno = VarRawGeno = NULL;
@@ -434,8 +433,7 @@ void CApply_Variant_Phase::Init(CFileInfo &File, bool use_raw)
 		throw ErrSeqArray(ERR_DIM, VAR_NAME);
 
 	// initialize
-	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant;
+	InitMarginal(File);
 	SiteCount = ssize_t(DLen[1]) * DLen[2];
 	SampNum = File.SampleSelNum();
 	CellCount = SampNum * DLen[2];
@@ -606,9 +604,8 @@ void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name)
 		throw ErrSeqArray(ERR_DIM, var_name);
 
 	// initialize
+	InitMarginal(File);
 	SVType = GDS_Array_GetSVType(Node);
-	MarginalSize = File.VariantNum();
-	MarginalSelect = File.Selection().pVariant;
 	VarIndex = &File.VarIndex(GDS_PATH_PREFIX(var_name, '@'));
 	SampNum = File.SampleSelNum();
 	_TotalSampNum = File.SampleNum();

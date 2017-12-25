@@ -641,6 +641,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 
 		// local selection
 		TSelection &Sel = File.Push_Selection(true, false);
+		Sel.ClearStructVariant();
 		memset(Sel.pVariant, 0, File.VariantNum());
 
 		C_BOOL *pBase, *pSel, *pEnd;
@@ -665,10 +666,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 
 			// assign sub-selection
 			{
+				// clear selection
+				Sel.GetStructVariant();
 				C_BOOL *pNewSel = Sel.pVariant;
-				memset(pNewSel, 0, File.VariantNum());
+				memset(pNewSel+Sel.varStart, 0, Sel.varEnd-Sel.varStart);
+				// find the first TRUE
+				pSel = VEC_BOOL_FIND_TRUE(pSel, pEnd);
+				Sel.varStart = pSel - pBase;
 				// for-loop
-				for (int bs=bsize; bs > 0; bs--)
+				int bs = bsize;
+				for (; bs > 0; bs--)
 				{
 					while ((pSel < pEnd) && (*pSel == FALSE))
 						pSel ++;
@@ -679,6 +686,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 					} else
 						break;
 				}
+				Sel.varTrueNum = bsize - bs;
+				Sel.varEnd = pSel - pBase;
 			}
 
 			// load data and call the user-defined function
