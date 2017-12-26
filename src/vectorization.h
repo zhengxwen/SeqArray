@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include <string.h>
 
+
 #if defined(COREARRAY_SIMD_SSE) && defined(COREARRAY_SIMD_SSE2)
 
 #   include <xmmintrin.h>  // SSE
@@ -367,6 +368,9 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage2(const int32_t *p,
 
 /// shifting *p right by 2 bits, assuming p is 4-byte aligned
 COREARRAY_DLL_DEFAULT void vec_i32_shr_b2(int32_t *p, size_t n);
+
+/// bounds checking, return 0 if fails
+COREARRAY_DLL_DEFAULT int vec_i32_bound_check(int32_t *p, size_t n, int bound);
 
 
 

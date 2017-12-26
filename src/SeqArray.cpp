@@ -445,6 +445,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_id,
 COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 	SEXP intersect, SEXP verbose)
 {
+	static const char *ERR_OUT_RANGE = "Out of range 'variant.sel'.";
 	int intersect_flag = Rf_asLogical(intersect);
 
 	COREARRAY_TRY
@@ -505,30 +506,25 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				var_sel = AS_INTEGER(var_sel);
 			if (!intersect_flag)
 			{
-				int *pI = INTEGER(var_sel);
 				R_xlen_t N = XLENGTH(var_sel);
 				// check
-				for (R_xlen_t i=0; i < N; i++)
-				{
-					int I = *pI ++;
-					if ((I != NA_INTEGER) && ((I < 1) || (I > Count)))
-						throw ErrSeqArray("Out of range 'variant.sel'.");
-				}
+				if (!vec_i32_bound_check(INTEGER(var_sel), N, Count))
+					throw ErrSeqArray(ERR_OUT_RANGE);
 				// clear
 				Sel.ClearSelectVariant();
 				// set values
 				ssize_t num = 0, st=Count, ed=0;
-				pI = INTEGER(var_sel);
+				int *pI = INTEGER(var_sel);
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
 					if (I != NA_INTEGER)
 					{
 						num ++;
-						ssize_t ii = I - 1;
-						pArray[ii] = TRUE;
-						if (ii < st) st = ii;
 						if (I > ed) ed = I;
+						ssize_t ii = I - 1;
+						if (ii < st) st = ii;
+						pArray[ii] = TRUE;
 					}
 				}
 				// set the structure of selected variants
@@ -537,15 +533,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				Sel.varEnd = ed;
 			} else {
 				int Cnt = File.VariantSelNum();
-				int *pI = INTEGER(var_sel);
 				R_xlen_t N = XLENGTH(var_sel);
 				// check
-				for (R_xlen_t i=0; i < N; i++)
-				{
-					int I = *pI ++;
-					if ((I != NA_INTEGER) && ((I < 1) || (I > Cnt)))
-						throw ErrSeqArray("Out of range 'variant.sel'.");
-				}
+				if (!vec_i32_bound_check(INTEGER(var_sel), N, Cnt))
+					throw ErrSeqArray(ERR_OUT_RANGE);
 				// get the current index
 				vector<int> Idx;
 				Idx.reserve(Cnt);
@@ -555,7 +546,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				}
 				// set values
 				memset((void*)pArray, 0, Count);
-				pI = INTEGER(var_sel);
+				int *pI = INTEGER(var_sel);
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
