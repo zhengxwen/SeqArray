@@ -11,7 +11,7 @@ seqTranspose(gdsfile, var.name, compress=NULL, verbose=TRUE)
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{var.name}{the variable name with '/' as a separator}
     \item{compress}{the compression option used in
-        \code{\link[gdsfmt]{add.gdsn}}; or determine automatically
+        \code{\link{add.gdsn}}; or determine automatically
         if \code{NULL}}
     \item{verbose}{if \code{TRUE}, show information}
 }

@@ -30,7 +30,7 @@
 
 \description{
 	A \code{SeqVarGDSClass} object provides access to a GDS file containing
-Variant Call Format (VCF) data. It extends \code{\link[gdsfmt]{gds.class}}.
+Variant Call Format (VCF) data. It extends \code{\link{gds.class}}.
 }
 
 \details{
@@ -49,11 +49,11 @@ to create a \code{SeqVarGDSClass} object.
 		}
 		\item{}{
 			\code{ref(x)}:
-				Returns the reference alleles as a \code{\link[Biostrings]{DNAStringSet}}.
+				Returns the reference alleles as a \code{\link{DNAStringSet}}.
 		}
 		\item{}{
 			\code{alt(x)}:
-			Returns the alternate alleles as a \code{\link[Biostrings]{DNAStringSetList}}.
+			Returns the alternate alleles as a \code{\link{DNAStringSetList}}.
 		}
 		\item{}{
 			\code{qual(x)}:
@@ -69,7 +69,7 @@ to create a \code{SeqVarGDSClass} object.
 		}
 		\item{}{
 			\code{header(x)}:
-			Returns the header as a \code{\link[IRanges]{DataFrameList}}.
+			Returns the header as a \code{\link{DataFrameList}}.
 		}
 		\item{}{
 			\code{rowRanges(x)}:
@@ -106,7 +106,7 @@ to create a \code{SeqVarGDSClass} object.
 \author{Stephanie Gogarten, Xiuwen Zheng}
 
 \seealso{
-    \code{\link[gdsfmt]{gds.class}}, \code{\link{seqOpen}}
+    \code{\link{gds.class}}, \code{\link{seqOpen}}
 }
 
 \examples{

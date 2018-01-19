@@ -30,7 +30,7 @@ the export.
 
     If the filename extension is "gz", the gzip compression algorithm is used
 to compress the output data. When the Rsamtools package is installed, the
-exported file utilizes the bgzf format (\link[Rsamtools]{bgzip}, a variant of
+exported file utilizes the bgzf format (\link[Rsamtools:zip]{bgzip}, a variant of
 gzip format) allowing for fast indexing.
 }
 \references{

@@ -26,12 +26,12 @@ return.
 The \pkg{VariantAnnotation} package should be loaded to explore this object.
 }
 \value{
-    A \code{\link[VariantAnnotation]{CollapsedVCF}} object.
+    A \code{\link[VariantAnnotation:VCF-class]{CollapsedVCF}} object.
 }
 
 \author{Stephanie Gogarten, Xiuwen Zheng}
 \seealso{
-    \code{\link[VariantAnnotation]{VCF}}
+    \code{\link[VariantAnnotation]{VCF-class}}
 }
 
 \examples{
