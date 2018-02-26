@@ -530,7 +530,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				// set the structure of selected variants
 				Sel.varTrueNum = num;
 				Sel.varStart = st;
-				Sel.varEnd = ed;
+				Sel.varEnd = (ed < st) ? st : ed;
 			} else {
 				int Cnt = File.VariantSelNum();
 				R_xlen_t N = XLENGTH(var_sel);
