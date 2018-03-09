@@ -260,6 +260,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 						"Invalid length of 'sample.sel' "
 						"(should be equal to the number of selected samples).");
 				}
+				Sel.ClearStructSample();
 				// set selection
 				if (Rf_isLogical(samp_sel))
 				{
@@ -458,10 +459,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 
 		if (Rf_isLogical(var_sel) || IS_RAW(var_sel))
 		{
-			Sel.ClearStructVariant();
 			// a logical vector for selected samples
 			if (!intersect_flag)
 			{
+				Sel.ClearStructVariant();
 				if (XLENGTH(var_sel) != Count)
 					throw ErrSeqArray("Invalid length of 'variant.sel'.");
 				// set selection
@@ -476,28 +477,50 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 						*pArray++ = ((*base++) != 0);
 				}
 			} else {
-				if (XLENGTH(var_sel) != File.VariantSelNum())
+				Count = XLENGTH(var_sel);
+				if (Count != File.VariantSelNum())
 				{
 					throw ErrSeqArray(
 						"Invalid length of 'variant.sel' "
 						"(should be equal to the number of selected variants).");
 				}
+				// call File.SampleSelNum() making varTrueNum, varStart and varEnd available
 				// set selection
+				pArray += Sel.varStart;
+				ssize_t num = 0;
 				if (Rf_isLogical(var_sel))
 				{
 					int *base = LOGICAL(var_sel);
-					for (int i=0; i < Count; i++, pArray++)
+					for (; Count > 0; pArray++)
 					{
 						if (*pArray)
-							*pArray = ((*base++) == TRUE);
+						{
+							Count--;
+							if ((*base++) == TRUE) num++; else *pArray = FALSE;
+						}
 					}
 				} else {
 					Rbyte *base = RAW(var_sel);
-					for (int i=0; i < Count; i++)
+					for (; Count > 0; pArray++)
 					{
 						if (*pArray)
-							*pArray = ((*base++) != 0);
+						{
+							Count--;
+							if ((*base++) != 0) num++; else *pArray = FALSE;
+						}
 					}
+				}
+				// set TSelection structure
+				if (num > 0)
+				{
+					C_BOOL *p = VEC_BOOL_FIND_TRUE(Sel.pVariant + Sel.varStart,
+						Sel.pVariant + Sel.varEnd);
+					Sel.varTrueNum = num;
+					Sel.varStart = p - Sel.pVariant;
+					for (; num > 0; ) if (*p++) num--;
+					Sel.varEnd = p - Sel.pVariant;
+				} else {
+					Sel.varTrueNum = Sel.varStart = Sel.varEnd = 0;
 				}
 			}
 		} else if (Rf_isInteger(var_sel) || Rf_isReal(var_sel))
@@ -907,7 +930,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 
 		// the selection
 		CFileInfo &File = GetFileInfo(gdsfile);
-		TSelection &Sel = File.Selection();
 		// the GDS root node
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(gdsfile);
 		// the variable name
