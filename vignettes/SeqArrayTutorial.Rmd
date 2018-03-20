@@ -367,6 +367,7 @@ Users can set a filter to samples and/or variants by `seqSetFilter()`. For examp
 ```{r}
 # set sample and variant filters
 seqSetFilter(genofile, sample.id=samp.id[c(2,4,6)])
+# or, seqSetFilter(genofile, sample.sel=c(2,4,6))
 set.seed(100)
 seqSetFilter(genofile, variant.id=sample(variant.id, 4))
 
@@ -378,6 +379,12 @@ Get genotypic data, it is a 3-dimensional array with respect to allele, sample a
 ```{r}
 # get genotypic data
 seqGetData(genofile, "genotype")
+```
+
+Get regular genotypes (i.e., genotype dosage, or the number of copies of reference allele), it is an integer matrix.
+```{r}
+# get the dosage of reference allele
+seqGetData(genofile, "$dosage")
 ```
 
 Now let us take a look at a variable-length dataset `annotation/info/AA`, which corresponds to the INFO column in the original VCF file. There are four variants, each variant has data with size ONE (`$length`), and data are saved in `$data` contiguously.

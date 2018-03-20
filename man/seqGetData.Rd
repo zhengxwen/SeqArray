@@ -42,7 +42,8 @@ comma)
 
 \code{"$chrom_pos"} returns characters with the combination of chromosome and
 position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
-the combination of chromosome, position and allele, e.g., "1:1272721_A_G".
+the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
+(i.e., chr:position_REF_ALT).
 }
 
 \author{Xiuwen Zheng}
