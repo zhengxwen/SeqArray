@@ -157,8 +157,8 @@ seqGetParallel <- function()
 #
 seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     "ZIP_RA.max", "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max",
-    "LZMA_RA", "LZMA_RA.fast", "LZMA_RA.max", "Ultra", "UltraMax", "none"), mode=NULL,
-    float.mode="float32", geno.compress=NULL, info.compress=NULL,
+    "LZMA_RA", "LZMA_RA.fast", "LZMA_RA.max", "Ultra", "UltraMax", "none"),
+    mode=NULL, float.mode="float32", geno.compress=NULL, info.compress=NULL,
     format.compress=NULL, index.compress=NULL, ...)
 {
     # check
@@ -182,15 +182,19 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     if (compression %in% c("ZIP_RA.max", "LZ4_RA.max", "LZMA_RA.max"))
     {
         suf_b <- ":1M"; suf_i <- ":1M"; suf_f <- ":4M"
+        if (is.null(index.compress)) index.compress <- compression
     } else if (compression=="LZMA_RA.ultra")
     {
         suf_b <- ":4M"; suf_i <- ":4M"; suf_f <- ":8M"
+        if (is.null(index.compress)) index.compress <- "LZMA.max"
     } else if (compression=="LZMA_RA.ultra_max")
     {
         suf_b <- suf_i <- suf_f <- ":8M"
+        if (is.null(index.compress)) index.compress <- "LZMA.max"
     } else {
         suf_b <- suf_i <- ""
         suf_f <- ":1M"
+        if (is.null(index.compress)) index.compress <- compression
     }
 
     if (is.null(geno.compress))
@@ -211,8 +215,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         format.compress = ifelse(is.null(format.compress),
             ifelse(compression=="", "", paste0(compression, suf_f)),
             format.compress),
-        index.compress = ifelse(is.null(index.compress), compression,
-            index.compress),
+        index.compress = index.compress,
         ...)
     class(rv) <- "SeqGDSStorageClass"
     return(rv)
