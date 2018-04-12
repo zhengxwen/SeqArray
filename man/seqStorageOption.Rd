@@ -7,7 +7,7 @@
 \usage{
 seqStorageOption(compression=c("ZIP_RA", "ZIP_RA.fast", "ZIP_RA.max",
     "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max", "LZMA_RA", "LZMA_RA.fast",
-    "LZMA_RA.max", "none"), mode=NULL, float.mode="float32",
+    "LZMA_RA.max", "Ultra", "UltraMax", "none"), mode=NULL, float.mode="float32",
     geno.compress=NULL, info.compress=NULL, format.compress=NULL,
     index.compress=NULL, ...)
 }

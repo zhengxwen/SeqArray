@@ -157,13 +157,15 @@ seqGetParallel <- function()
 #
 seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     "ZIP_RA.max", "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max",
-    "LZMA_RA", "LZMA_RA.fast", "LZMA_RA.max", "none"), mode=NULL,
+    "LZMA_RA", "LZMA_RA.fast", "LZMA_RA.max", "Ultra", "UltraMax", "none"), mode=NULL,
     float.mode="float32", geno.compress=NULL, info.compress=NULL,
     format.compress=NULL, index.compress=NULL, ...)
 {
     # check
     compression <- match.arg(compression)
-    if (compression == "none") compression <- ""
+    z <- switch(compression,
+        none="", Ultra="LZMA_RA.ultra", UltraMax="LZMA_RA.ultra_max")
+    if (!is.null(z)) compression <- z
 
     stopifnot(is.null(mode) | is.character(mode))
     stopifnot(is.character(float.mode), length(float.mode) > 0L)
@@ -178,18 +180,36 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         stopifnot(is.character(index.compress), length(index.compress)==1L)
 
     if (compression %in% c("ZIP_RA.max", "LZ4_RA.max", "LZMA_RA.max"))
-        suffix <- ":8M"
-    else
-        suffix <- ":1M"
+    {
+        suf_b <- ":1M"; suf_i <- ":1M"; suf_f <- ":4M"
+    } else if (compression=="LZMA_RA.ultra")
+    {
+        suf_b <- ":4M"; suf_i <- ":4M"; suf_f <- ":8M"
+    } else if (compression=="LZMA_RA.ultra_max")
+    {
+        suf_b <- suf_i <- suf_f <- ":8M"
+    } else {
+        suf_b <- suf_i <- ""
+        suf_f <- ":1M"
+    }
 
-    rv <- list(compression = compression,
+    if (is.null(geno.compress))
+    {
+        if (compression == "LZMA_RA.ultra")
+            geno.compress <- "LZMA_RA.ultra:1M"
+        else if (compression == "LZMA_RA.ultra_max")
+            geno.compress <- "LZMA_RA.ultra_max:8M"
+    }
+
+    rv <- list(compression = paste0(compression, suf_b),
         mode = mode, float.mode = float.mode,
         geno.compress = ifelse(is.null(geno.compress), compression,
             geno.compress),
-        info.compress = ifelse(is.null(info.compress), compression,
+        info.compress = ifelse(is.null(info.compress),
+            ifelse(compression=="", "", paste0(compression, suf_i)),
             info.compress),
         format.compress = ifelse(is.null(format.compress),
-            ifelse(compression=="", "", paste0(compression, suffix)),
+            ifelse(compression=="", "", paste0(compression, suf_f)),
             format.compress),
         index.compress = ifelse(is.null(index.compress), compression,
             index.compress),
