@@ -22,7 +22,8 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
         "LZMA_RA" to use LZMA compression algorithm with higher compression
         ratio by default; "ZIP_RA.max" and "LZMA_RA.max" correspond to the
         algorithms with a maximum compression level; the suffix "_RA" indicates
-        that fine-level random access is available}
+        that fine-level random access is available; see more details at
+        \code{\link{seqStorageOption}}}
     \item{info.import}{characters, the variable name(s) in the INFO field
         for import; or \code{NULL} for all variables}
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
@@ -81,7 +82,6 @@ higher compression ratio than zlib.
 
     If multiple cores/processes are specified in \code{parallel}, all VCF files
 are scanned to calculate the total number of variants before format conversion.
-
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,

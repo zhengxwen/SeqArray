@@ -31,6 +31,13 @@ seqStorageOption(compression=c("ZIP_RA", "ZIP_RA.fast", "ZIP_RA.max",
     \item{...}{other specified storage compression for corresponding variable,
         e.g., `annotation/info/HM`="ZIP_MAX"}
 }
+\details{
+    The compression modes \code{"Ultra"} and \code{"UltraMax"} attempt to
+maximize the compression ratio using gigabyte-sized or even terabyte-sized
+virtual memory, according to \code{"LZMA_RA.ultra"} and
+\code{"LZMA_RA.ultra_max"} in \code{\link{compression.gdsn}}. These features
+require gdsfmt (>=v1.16.0).
+}
 \value{
     Return a list with a class name "SeqGDSStorageClass".
 }
