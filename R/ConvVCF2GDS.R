@@ -1171,6 +1171,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         put.attr.gdsn(varFilter, "Description", dp)
     }
 
+    .optim_chrom(gfile)
     .DigestFile(gfile, digest, verbose)
 
     closefn.gds(gfile)

@@ -19,6 +19,9 @@ NEW FEATURES
 
     o two more options "Ultra" and "UltraMax" in `seqStorageOption()`
 
+    o '@chrom_rle_val' and '@chrom_rle_len' are added to a GDS file for
+      faster indexing of chromosome coding
+
 
 CHANGES IN VERSION 1.18.1-1.18.2
 -------------------------

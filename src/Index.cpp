@@ -361,6 +361,11 @@ CChromIndex::CChromIndex() { }
 
 void CChromIndex::AddChrom(PdGDSFolder Root)
 {
+	static const char *warn_msg =
+		"Warning: @chrom_rle_val and @chrom_rle_len are not correct, "
+		"please call 'seqOptimize(..., target='chromosome') to update "
+		"the chromosome indexing.\n";
+
 	PdAbstractArray varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 	C_Int32 NumVariant = GDS_Array_GetTotalCount(varVariant);
 
@@ -371,19 +376,59 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 		throw ErrSeqArray("Invalid dimension of 'chromosome'.");
 	if (NumChrom <= 0) return;
 
+	// initialize Map and RleChr
+	Map.clear();
+	RleChr.Clear();
+
+	// check whether RLE representation of chromosome
+	PdAbstractArray varChrVal = GDS_Node_Path(Root, "@chrom_rle_val", FALSE);
+	PdAbstractArray varChrLen = GDS_Node_Path(Root, "@chrom_rle_len", FALSE);
+	if (varChrVal && varChrLen)
+	{
+		int n1 = GDS_Array_GetTotalCount(varChrVal);
+		int n2 = GDS_Array_GetTotalCount(varChrLen);
+		if (GDS_Array_DimCnt(varChrVal)==1 && GDS_Array_DimCnt(varChrLen)==1 &&
+			n1 == n2)
+		{
+			string val[n1];
+			C_Int32 len[n1], idx=0;
+			GDS_Array_ReadData(varChrVal, &idx, &n1, &val[0], svStrUTF8);
+			GDS_Array_ReadData(varChrLen, &idx, &n1, &len[0], svInt32);
+
+			int ntot = 0;
+			for (int i=0; i < n1; i++) ntot += len[i];
+			if (ntot == NumVariant)
+			{
+				TRange rng;
+				rng.Start = 0;
+				for (int i=0; i < n1; i++)
+				{
+					rng.Length = len[i];
+					Map[val[i]].push_back(rng);
+					rng.Start += rng.Length;
+					RleChr.Add(val[i], len[i]);
+				}
+				RleChr.Init();
+				return;
+			} else
+				REprintf(warn_msg);
+
+		} else
+			REprintf(warn_msg);
+	} else if (varChrVal || varChrLen)
+	{
+		REprintf(warn_msg);
+	}
+
 	C_Int32 idx=0, len=1;
 	string last;
 	GDS_Array_ReadData(varChrom, &idx, &len, &last, svStrUTF8);
 	idx ++;
 
 	TRange rng;
-	rng.Start = 0;
-	rng.Length = 1;
+	rng.Start = 0; rng.Length = 1;
 
-	Map.clear();
-	PosToChr.Clear();
-
-	const C_Int32 NMAX = 4096;
+	const C_Int32 NMAX = 65536;
 	string txt[NMAX];
 
 	while (idx < NumChrom)
@@ -398,7 +443,7 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 				rng.Length ++;
 			} else {
 				Map[last].push_back(rng);
-				PosToChr.Add(last, rng.Length);
+				RleChr.Add(last, rng.Length);
 				last = string(txt[i].begin(), txt[i].end());
 				rng.Start = idx + i;
 				rng.Length = 1;
@@ -408,8 +453,8 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 	}
 
 	Map[last].push_back(rng);
-	PosToChr.Add(last, rng.Length);
-	PosToChr.Init();
+	RleChr.Add(last, rng.Length);
+	RleChr.Init();
 }
 
 void CChromIndex::Clear()

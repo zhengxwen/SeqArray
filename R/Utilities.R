@@ -676,20 +676,35 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
 # Optimize data by transposing
 #
 
-seqOptimize <- function(gdsfn, target=c("by.sample"),
+.optim_chrom <- function(gdsfile)
+{
+    n <- index.gdsn(gdsfile, "chromosome")
+    readmode.gdsn(n)
+    chr <- read.gdsn(n)
+    s <- rle(chr)
+    n1 <- add.gdsn(gdsfile, "@chrom_rle_val", s$values, replace=TRUE,
+        visible=FALSE)
+    n2 <- add.gdsn(gdsfile, "@chrom_rle_len", s$lengths, replace=TRUE,
+        visible=FALSE)
+    moveto.gdsn(n2, n)
+    moveto.gdsn(n1, n)
+    invisible()
+}
+
+seqOptimize <- function(gdsfn, target=c("chromosome", "by.sample"),
     format.var=TRUE, cleanup=TRUE, verbose=TRUE)
 {
     # check
-    stopifnot(is.character(gdsfn) & is.vector(gdsfn))
+    stopifnot(is.character(gdsfn), length(gdsfn)==1L)
     target <- match.arg(target)
     stopifnot(is.logical(format.var) || is.character(format.var))
-    stopifnot(is.logical(cleanup))
-    stopifnot(is.logical(verbose))
+    stopifnot(is.logical(cleanup), length(cleanup)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     gdsfile <- seqOpen(gdsfn, readonly=FALSE)
     on.exit({ seqClose(gdsfile) })
 
-    if (target == "by.sample")
+    if ("by.sample" %in% target)
     {
         # genotype
         if (verbose) cat("Working on 'genotype' ...\n")
@@ -723,6 +738,13 @@ seqOptimize <- function(gdsfn, target=c("by.sample"),
                 }
             }
         }
+    } else if ("chromosome" %in% target)
+    {
+        if (verbose)
+            cat("Adding run-length encoding for chromosome coding ...")
+        .optim_chrom(gdsfile)
+        if (verbose)
+            cat(" [Done]\n")
     }
 
     if (cleanup)

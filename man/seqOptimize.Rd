@@ -9,7 +9,7 @@ seqOptimize(gdsfn, target=c("by.sample"), format.var=TRUE, cleanup=TRUE,
     verbose=TRUE)
 }
 \arguments{
-    \item{gdsfn}{a \code{\link{SeqVarGDSClass}} object}
+    \item{gdsfn}{the file name of GDS}
     \item{target}{"by.sample" -- optimize GDS file for
         \code{seqApply(..., margin="by.sample")}}
     \item{format.var}{a character vector for selected variable names,

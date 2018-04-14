@@ -255,15 +255,15 @@ public:
 
 	/// whether it is empty
 	inline bool Empty() const { return Map.empty(); }
-
-	inline const string &operator [](size_t pos) { return PosToChr[pos]; }
+	/// return chromosome coding with the index 
+	inline const string &operator [](size_t idx) { return RleChr[idx]; }
 
 	/// map to TRangeList from chromosome coding
 	map<string, TRangeList> Map;
 
 protected:
-	/// position to chromosome
-	C_RLE<string> PosToChr;
+	/// indexing chromosome
+	C_RLE<string> RleChr;
 };
 
 

@@ -36,10 +36,14 @@ seqStorageOption(compression=c("ZIP_RA", "ZIP_RA.fast", "ZIP_RA.max",
 maximize the compression ratio using gigabyte-sized or even terabyte-sized
 virtual memory, according to \code{"LZMA_RA.ultra"} and
 \code{"LZMA_RA.ultra_max"} in \code{\link{compression.gdsn}}. These features
-require gdsfmt (>=v1.16.0).
+require gdsfmt (>=v1.16.0). \code{"Ultra"} and \code{"UltraMax"} may not
+increase the compression ratio much compared with \code{"LZMA_RA.max"}, and
+these options are designed for the users who want to exhaust the computational
+resources.
 }
 \value{
-    Return a list with a class name "SeqGDSStorageClass".
+    Return a list with a class name "SeqGDSStorageClass", contains the
+compression algorithm for each data type.
 }
 
 \author{Xiuwen Zheng}
