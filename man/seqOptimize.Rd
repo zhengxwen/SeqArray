@@ -5,13 +5,12 @@
     Transpose data array or matrix for possibly higher-speed access.
 }
 \usage{
-seqOptimize(gdsfn, target=c("by.sample"), format.var=TRUE, cleanup=TRUE,
-    verbose=TRUE)
+seqOptimize(gdsfn, target=c("chromosome", "by.sample"), format.var=TRUE,
+    cleanup=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfn}{the file name of GDS}
-    \item{target}{"by.sample" -- optimize GDS file for
-        \code{seqApply(..., margin="by.sample")}}
+    \item{target}{"chromosome", "by.sample"; see details}
     \item{format.var}{a character vector for selected variable names,
         or \code{TRUE} for all variables, according to "annotation/format"}
     \item{cleanup}{call \code{link{cleanup.gds}} if \code{TRUE}}
@@ -21,8 +20,14 @@ seqOptimize(gdsfn, target=c("by.sample"), format.var=TRUE, cleanup=TRUE,
     None.
 }
 \details{
-    Warning: optimizing GDS file for reading data by sample may increase file
-size by up to 2X as genotype data and all format data are duplicated.
+    \code{"chromosome"}: adding or updating two additional nodes
+    '@chrom_rle_val' and '@chrom_rle_len' for faster chromosome indexing,
+    requiring SeqArray>=v1.20.0.
+
+    \code{"by.sample"}: optimizing GDS file for
+    \code{seqApply(..., margin="by.sample")}. Warning: optimizing GDS file for
+    reading data by sample may increase file size by up to 2X as genotype data
+    and all format data are duplicated.
 }
 
 \author{Xiuwen Zheng}
