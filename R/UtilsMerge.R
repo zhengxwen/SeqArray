@@ -895,6 +895,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         }
     }
 
+    # add RLE of chromosome
+    .optim_chrom(gfile)
 
     ####  close files  ####
 

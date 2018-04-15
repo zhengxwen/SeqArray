@@ -296,9 +296,12 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             cp(node, S$sample.sel, nm, paste("sample.annotation", nm, sep="/"))
     }
 
+    # add RLE of chromosome
+    .optim_chrom(outfile)
+
+    # close the file
     on.exit()
     closefn.gds(outfile)
-
     if (verbose) cat("Done.\n")
 
     # optimize access efficiency
