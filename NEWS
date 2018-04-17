@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.19.2-1.19.8
+CHANGES IN VERSION 1.20.0
 -------------------------
 
 UTILITIES
@@ -15,12 +15,12 @@ UTILITIES
 
 NEW FEATURES
 
-    o `seqGDS2VCF()` outputs a bgzip vcf file for tabix indexing
+    o `seqGDS2VCF()` outputs a bgzip vcf file with tabix indexing
 
     o two more options "Ultra" and "UltraMax" in `seqStorageOption()`
 
     o '@chrom_rle_val' and '@chrom_rle_len' are added to a GDS file for
-      faster indexing of chromosome coding
+      faster chromosome indexing
 
 
 CHANGES IN VERSION 1.18.1-1.18.2
