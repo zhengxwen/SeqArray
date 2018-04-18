@@ -1221,6 +1221,13 @@ seqBCF2GDS <- function(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     cmd <- paste(shQuote(bcftools), "view", shQuote(bcf.fn))
     if (verbose)
         cat("Running:\n    ", cmd, "\n", sep="")
+    {
+        f <- pipe(paste(shQuote(bcftools), "-v"))
+        s <- readLines(f)
+        close(f)
+        if (length(s) <= 0L)
+            stop("Please install bcftools (http://samtools.github.io/bcftools).")
+    }
     pipefile <- pipe(cmd, "rt")
     on.exit(close(pipefile))
 
