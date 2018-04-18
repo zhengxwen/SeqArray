@@ -1,5 +1,6 @@
 \name{seqVCF2GDS}
 \alias{seqVCF2GDS}
+\alias{seqBCF2GDS}
 \title{Reformat VCF Files}
 \description{
     Reformats Variant Call Format (VCF) files.
@@ -10,10 +11,15 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     ignore.chr.prefix="chr", reference=NULL, start=1L, count=-1L,
     optimize=TRUE, raise.error=TRUE, digest=TRUE, parallel=FALSE,
     verbose=TRUE)
+seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
+    info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
+    ignore.chr.prefix="chr", reference=NULL, optimize=TRUE, raise.error=TRUE,
+    digest=TRUE, bcftools="bcftools", verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name(s) of VCF format; or a \code{\link{connection}}
         object}
+    \item{bcf.fn}{a file name of binary VCF format (BCF)}
     \item{out.fn}{the file name of output GDS file}
     \item{header}{if NULL, \code{header} is set to be
         \code{\link{seqVCF_Header}(vcf.fn)}}
@@ -52,6 +58,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
         the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details}
     \item{verbose}{if \code{TRUE}, show information}
+    \item{bcftools}{the path of the program \code{bcftools}}
 }
 \value{
     Return the file name of GDS format with an absolute path.

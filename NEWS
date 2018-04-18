@@ -22,6 +22,8 @@ NEW FEATURES
     o '@chrom_rle_val' and '@chrom_rle_len' are added to a GDS file for
       faster chromosome indexing
 
+    o new function `seqBCF2GDS()`
+
 
 CHANGES IN VERSION 1.18.1-1.18.2
 -------------------------

@@ -1200,3 +1200,39 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # output
     invisible(normalizePath(out.fn))
 }
+
+
+
+#######################################################################
+# Convert a BCF file to a GDS file
+#
+
+seqBCF2GDS <- function(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
+    info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
+    ignore.chr.prefix="chr", reference=NULL, optimize=TRUE, raise.error=TRUE,
+    digest=TRUE, bcftools="bcftools", verbose=TRUE)
+{
+    # check
+    stopifnot(is.character(bcf.fn), length(bcf.fn)==1L)
+    stopifnot(is.character(out.fn), length(out.fn)==1L)
+    stopifnot(is.character(bcftools), length(bcftools)==1L)
+
+    # command-line
+    cmd <- paste(shQuote(bcftools), "view", shQuote(bcf.fn))
+    if (verbose)
+        cat("Running:\n    ", cmd, "\n", sep="")
+    pipefile <- pipe(cmd, "rt")
+    on.exit(close(pipefile))
+
+    # run VCF to GDS
+    seqVCF2GDS(pipefile, out.fn, header=header,
+        storage.option=storage.option,
+        info.import=info.import, fmt.import=fmt.import,
+        genotype.var.name=genotype.var.name,
+        ignore.chr.prefix=ignore.chr.prefix,
+        reference=reference, optimize=optimize, raise.error=raise.error,
+        digest=digest, verbose=verbose)
+
+    # output
+    invisible(normalizePath(out.fn))
+}

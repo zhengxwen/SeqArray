@@ -652,6 +652,7 @@
         }
     } else if (verbose)
         cat("\n")
+    flush.console()
     invisible()
 }
 
