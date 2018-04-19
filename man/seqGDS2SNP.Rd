@@ -6,7 +6,7 @@
 }
 \usage{
 seqGDS2SNP(gdsfile, out.gdsfn, compress.geno="ZIP_RA",
-    compress.annotation="ZIP_RA", optimize=TRUE, verbose=TRUE)
+    compress.annotation="LZMA_RA", optimize=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{character (GDS file name), or

@@ -321,7 +321,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 #
 
 seqGDS2SNP <- function(gdsfile, out.gdsfn,
-    compress.geno="ZIP_RA", compress.annotation="ZIP_RA",
+    compress.geno="ZIP_RA", compress.annotation="LZMA_RA",
     optimize=TRUE, verbose=TRUE)
 {
     # check
@@ -343,6 +343,15 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
     {
         gdsfile <- seqOpen(gdsfile)
         on.exit({ seqClose(gdsfile) })
+    }
+
+    if (verbose)
+    {
+        dm <- .seldim(gdsfile)
+        cat("    # of samples: ", .pretty(dm[2L]), "\n", sep="")
+        cat("    # of variants: ", .pretty(dm[3L]), "\n", sep="")
+        cat("    genotype compression: ", compress.geno, "\n", sep="")
+        cat("    annotation compression: ", compress.annotation, "\n", sep="")
     }
 
     # create GDS file

@@ -20,8 +20,8 @@
 .dim <- function(gdsfile)
 {
     # dim[1L] -- ploidy
-    # dim[2L] -- # of selected samples
-    # dim[3L] -- # of selected variants
+    # dim[2L] -- # of total samples
+    # dim[3L] -- # of total variants
     .Call(SEQ_Summary, gdsfile, "genotype")$dim
 }
 
