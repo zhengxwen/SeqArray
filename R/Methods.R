@@ -262,6 +262,40 @@ seqSetFilterChrom <- function(object, include=NULL, is.num=NA,
 
 
 #######################################################################
+# Set a filter according to specified chromosomes and positions
+#
+seqSetFilterPos <- function(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
+    verbose=TRUE)
+{
+    # check
+    stopifnot(inherits(object, "SeqVarGDSClass"))
+    stopifnot(is.vector(chr))
+    stopifnot(is.vector(pos))
+    stopifnot(length(chr) == length(pos))
+    stopifnot(is.logical(intersect), length(intersect)==1L)
+    stopifnot(is.logical(multi.pos), length(multi.pos)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (!intersect)
+        seqResetFilter(object, sample=FALSE, verbose=FALSE)
+    if (multi.pos)
+    {
+        x <- paste0(seqGetData(object, "chromosome"), ":",
+            seqGetData(object, "position"))
+    } else {
+        x <- seqGetData(object, "$chrom_pos")
+    }
+    y <- paste0(chr, ":", pos)
+    seqSetFilter(object, variant.sel = x %in% y,
+        action = ifelse(intersect, "intersect", "set"),
+        verbose = verbose)
+
+    invisible()
+}
+
+
+
+#######################################################################
 # Set a filter according to specified conditions
 #
 seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,

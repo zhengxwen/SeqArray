@@ -6,6 +6,7 @@
 \alias{seqSetFilter,SeqVarGDSClass,IRanges-method}
 \alias{seqResetFilter}
 \alias{seqSetFilterChrom}
+\alias{seqSetFilterPos}
 \title{Set a Filter to Sample or Variant}
 \description{
     Sets a filter to sample and/or variant.
@@ -24,6 +25,8 @@
 seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
     intersect=FALSE, verbose=TRUE)
+seqSetFilterPos(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
+    verbose=TRUE)
 }
 \arguments{
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
@@ -53,6 +56,7 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
     \item{rm.txt}{a character, the characters will be removed from
         \code{seqnames(variant.sel)}}
     \item{chr}{a vector of character for chromsome coding}
+    \item{pos}{a vector of numeric values for genome coordinate}
     \item{sample}{logical, if \code{TRUE}, include all samples}
     \item{variant}{logical, if \code{TRUE}, include all variants}
     \item{include}{NULL, or a vector of characters for specified chromosome(s)}
@@ -67,6 +71,8 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
         selection are all samples/variants (by default); if \code{TRUE}, the
         candidate samples/variants are from the selected samples/variants
         defined via the previous call}
+    \item{multi.pos}{\code{FALSE}, use the first matched position;
+        \code{TRUE}, allow multiple variants at the same position}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{
