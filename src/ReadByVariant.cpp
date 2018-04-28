@@ -2,7 +2,7 @@
 //
 // ReadByVariant.cpp: Read data variant by variant
 //
-// Copyright (C) 2013-2017    Xiuwen Zheng
+// Copyright (C) 2013-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -311,10 +311,11 @@ void CApply_Variant_Geno::ReadGenoData(C_UInt8 *Base)
 // =====================================================================
 // Object for reading genotypes variant by variant
 
-CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw):
+CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw, bool alt):
 	CApply_Variant_Geno(File, use_raw)
 {
 	fVarType = ctDosage;
+	IsAlt = alt;
 	ExtPtr2.reset(sizeof(int)*CellCount);
 	VarDosage = NULL;
 }
@@ -322,9 +323,17 @@ CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw):
 void CApply_Variant_Dosage::ReadData(SEXP val)
 {
 	if (TYPEOF(val) != RAWSXP)
-		ReadDosage(INTEGER(val));
-	else
-		ReadDosage(RAW(val));
+	{
+		if (IsAlt)
+			ReadDosageAlt(INTEGER(val));
+		else
+			ReadDosage(INTEGER(val));
+	} else {
+		if (IsAlt)
+			ReadDosageAlt(RAW(val));
+		else
+			ReadDosage(RAW(val));
+	}
 }
 
 SEXP CApply_Variant_Dosage::NeedRData(int &nProtected)
@@ -355,8 +364,33 @@ void CApply_Variant_Dosage::ReadDosage(int *Base)
 			{
 				if (*p == 0)
 				{
-					if (cnt != NA_INTEGER)
-						cnt ++;
+					if (cnt != NA_INTEGER) cnt ++;
+				} else if (*p == missing)
+					cnt = NA_INTEGER;
+			}
+			*Base ++ = cnt;
+		}
+	}
+}
+
+void CApply_Variant_Dosage::ReadDosageAlt(int *Base)
+{
+	int *p = (int *)ExtPtr2.get();
+	int missing = _ReadGenoData(p);
+
+	// count the number of reference allele
+	if (Ploidy == 2) // diploid
+	{
+		vec_i32_cnt_dosage_alt2(p, Base, SampNum, 0, missing, NA_INTEGER);
+	} else {
+		for (int n=SampNum; n > 0; n--)
+		{
+			int cnt = 0;
+			for (int m=Ploidy; m > 0; m--, p++)
+			{
+				if (*p != 0)
+				{
+					if (cnt != NA_INTEGER) cnt ++;
 				} else if (*p == missing)
 					cnt = NA_INTEGER;
 			}
@@ -384,8 +418,35 @@ void CApply_Variant_Dosage::ReadDosage(C_UInt8 *Base)
 			{
 				if (*p == 0)
 				{
-					if (cnt != NA_RAW)
-						cnt ++;
+					if (cnt != NA_RAW) cnt ++;
+				} else if (*p == missing)
+					cnt = NA_RAW;
+			}
+			*Base ++ = cnt;
+		}
+	}
+}
+
+void CApply_Variant_Dosage::ReadDosageAlt(C_UInt8 *Base)
+{
+	C_UInt8 *p = (C_UInt8 *)ExtPtr2.get();
+	C_UInt8 missing = _ReadGenoData(p);
+
+	// count the number of reference allele
+	if (Ploidy == 2) // diploid
+	{
+		vec_i8_cnt_dosage_alt2((int8_t *)p, (int8_t *)Base, SampNum, 0,
+			missing, NA_RAW);
+	} else {
+		C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
+		for (int n=SampNum; n > 0; n--)
+		{
+			C_UInt8 cnt = 0;
+			for (int m=Ploidy; m > 0; m--, p++)
+			{
+				if (*p != 0)
+				{
+					if (cnt != NA_RAW) cnt ++;
 				} else if (*p == missing)
 					cnt = NA_RAW;
 			}
@@ -809,7 +870,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			} else if (s == "$dosage")
 			{
 				NodeList.push_back(
-					new CApply_Variant_Dosage(File, use_raw_flag));
+					new CApply_Variant_Dosage(File, use_raw_flag, false));
+			} else if (s == "$dosage_alt")
+			{
+				NodeList.push_back(
+					new CApply_Variant_Dosage(File, use_raw_flag, true));
 			} else if (s == "$num_allele")
 			{
 				NodeList.push_back(new CApply_Variant_NumAllele(File));

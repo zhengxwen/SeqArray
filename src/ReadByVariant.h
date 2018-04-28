@@ -2,7 +2,7 @@
 //
 // ReadByVariant.h: Read data variant by variant
 //
-// Copyright (C) 2013-2017    Xiuwen Zheng
+// Copyright (C) 2013-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -118,17 +118,22 @@ class COREARRAY_DLL_LOCAL CApply_Variant_Dosage: public CApply_Variant_Geno
 protected:
 	SEXP VarDosage;        ///< dosage R object
 	VEC_AUTO_PTR ExtPtr2;  ///< a pointer to the additional buffer for dosages
+	bool IsAlt;            ///< if true, return the dosage of alternative alleles
 public:
 	/// constructor
-	CApply_Variant_Dosage(CFileInfo &File, int use_raw);
+	CApply_Variant_Dosage(CFileInfo &File, int use_raw, bool alt);
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
 
 	/// read dosages in 32-bit integer
 	void ReadDosage(int *Base);
+	/// read dosages of alternative alleles in 32-bit integer
+	void ReadDosageAlt(int *Base);
 	/// read dosages in unsigned 8-bit intetger
 	void ReadDosage(C_UInt8 *Base);
+	/// read dosages of alternative alleles in unsigned 8-bit intetger
+	void ReadDosageAlt(C_UInt8 *Base);
 };
 
 

@@ -322,3 +322,27 @@ test.apply_vs_blockapply <- function()
 
 	invisible()
 }
+
+
+test.dosage_alt <- function()
+{
+	# open the GDS file
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
+
+	# check integer
+	g1 <- seqGetData(f, "$dosage")
+	g2 <- seqGetData(f, "$dosage_alt")
+	checkEquals(is.na(g1), is.na(g2), "GetData (int genotype): missing genotypes")
+	g <- g1 + g2
+	checkEquals(unique(c(g)), c(NA, 2L), "GetData (int genotype): sum of dosage and dosage_alt")
+
+	# check RAW
+	g1 <- seqGetData(f, "$dosage", .useraw=TRUE)
+	g2 <- seqGetData(f, "$dosage_alt", .useraw=TRUE)
+	checkEquals(g1==0xFF, g2==0xFF, "GetData (RAW genotype): missing genotypes")
+	g <- as.integer(g1) + as.integer(g2)
+	checkEquals(unique(g), c(510L, 2L), "GetData (RAW genotype): sum of dosage and dosage_alt")
+
+	invisible()
+}

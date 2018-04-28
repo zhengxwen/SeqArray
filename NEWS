@@ -26,6 +26,8 @@ NEW FEATURES
 
     o new function `seqSetFilterPos()`
 
+    o new variable "$dosage_alt" in `seqGetData()` and `seqApply()`
+
 
 CHANGES IN VERSION 1.18.1-1.18.2
 -------------------------

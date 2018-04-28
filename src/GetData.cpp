@@ -2,7 +2,7 @@
 //
 // GetData.cpp: Get data from the GDS file
 //
-// Copyright (C) 2015-2017    Xiuwen Zheng
+// Copyright (C) 2015-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -196,7 +196,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		if ((nSample > 0) && (nVariant > 0))
 		{
 			// initialize GDS genotype Node
-			CApply_Variant_Dosage NodeVar(File, false);
+			CApply_Variant_Dosage NodeVar(File, false, false);
 
 			if (use_raw)
 			{
@@ -211,6 +211,41 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 				int *base = INTEGER(rv_ans);
 				do {
 					NodeVar.ReadDosage(base);
+					base += nSample;
+				} while (NodeVar.Next());
+			}
+
+			SET_DIMNAMES(rv_ans, R_Dosage_Name);
+			// finally
+			UNPROTECT(1);
+		}
+
+	} else if (strcmp(name, "$dosage_alt") == 0)
+	{
+		// ===========================================================
+		// dosage data
+
+		ssize_t nSample  = File.SampleSelNum();
+		ssize_t nVariant = File.VariantSelNum();
+
+		if ((nSample > 0) && (nVariant > 0))
+		{
+			// initialize GDS genotype Node
+			CApply_Variant_Dosage NodeVar(File, false, true);
+
+			if (use_raw)
+			{
+				rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
+				C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
+				do {
+					NodeVar.ReadDosageAlt(base);
+					base += nSample;
+				} while (NodeVar.Next());
+			} else {
+				rv_ans = PROTECT(allocMatrix(INTSXP, nSample, nVariant));
+				int *base = INTEGER(rv_ans);
+				do {
+					NodeVar.ReadDosageAlt(base);
 					base += nSample;
 				} while (NodeVar.Next());
 			}

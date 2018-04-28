@@ -51,6 +51,9 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
 \code{"$dosage"} is also allowed for the dosages of reference allele (integer:
 0, 1, 2 and NA for diploid genotypes).
 
+\code{"$dosage_alt"} returns a RAW/INTEGER matrix for the dosages of alternative
+allele without distinguishing different alternative alleles.
+
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
