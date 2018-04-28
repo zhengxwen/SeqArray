@@ -118,7 +118,7 @@ class COREARRAY_DLL_LOCAL CApply_Variant_Dosage: public CApply_Variant_Geno
 protected:
 	SEXP VarDosage;        ///< dosage R object
 	VEC_AUTO_PTR ExtPtr2;  ///< a pointer to the additional buffer for dosages
-	bool IsAlt;            ///< if true, return the dosage of alternative alleles
+	bool IsAlt;            ///< if true, ReadData() returns the dosage of alternative alleles
 public:
 	/// constructor
 	CApply_Variant_Dosage(CFileInfo &File, int use_raw, bool alt);
