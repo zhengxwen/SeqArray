@@ -207,7 +207,7 @@ genmat <- seqParallel(2, file, FUN = function(f)
 genmat <- genmat * (nrow(genmat) / sum(diag(genmat)))
 
 # eigen-decomposition
-eig <- eigen(genmat)
+eig <- eigen(genmat, symmetric=TRUE)
 ```
 
 ```{r fig.width=5, fig.height=5, fig.align='center'}
