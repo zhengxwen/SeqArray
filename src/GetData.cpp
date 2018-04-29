@@ -547,7 +547,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			"    sample.id, variant.id, position, chromosome, allele, genotype\n"
 			"    annotation/id, annotation/qual, annotation/filter\n"
 			"    annotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME\n"
-			"    sample.annotation/VARIABLE_NAME", name);
+			"    sample.annotation/VARIABLE_NAME, etc", name);
 	}
 
 	return rv_ans;

@@ -198,10 +198,15 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         txt <- unlist(sapply(geno.text, function(s) {
             scan(text=s, what=character(), sep=":", quiet=TRUE, nmax=1) },
             simplify=TRUE, USE.NAMES=FALSE))
-        num <- sapply(strsplit(txt, "[|/]"), function(x) length(x) )
-        num[txt %in% "."] <- NA_integer_
-        tab <- table(num)
-        ploidy <- as.integer(names(which.max(tab)))
+        if (any(grepl(",", txt, fixed=TRUE)))
+        {
+            ploidy <- NA_integer_
+        } else {
+            num <- sapply(strsplit(txt, "[|/]"), function(x) length(x) )
+            num[txt %in% "."] <- NA_integer_
+            tab <- table(num)
+            ploidy <- as.integer(names(which.max(tab)))
+        }
     } else
         ploidy <- NA_integer_
 
@@ -566,30 +571,35 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         geno_idx <- which(header$format$ID == genotype.var.name)
         if (length(geno_idx) <= 0L)
         {
-            stop(sprintf(
-            "There is no variable in the FORMAT field according to '%s'.",
+            message(sprintf(
+                "No variable '%s' in the FORMAT field.",
                 genotype.var.name))
         } else if (length(geno_idx) > 1L)
         {
             stop(sprintf(
-            "There are more than one variable in the FORMAT field according to '%s'.",
+            "There are more than one variable in the FORMAT field according to '%s', please fix the header.",
                 genotype.var.name))
         } else {
             if (tolower(header$format$Type[geno_idx]) != "string")
             {
                 stop(sprintf(
-                "'%s' in the FORMAT field should be string-type according to genotypes.",
+                "'%s' in the FORMAT field should be string-type according to genotypes, please fix the header.",
                     genotype.var.name))
             }
             if (header$format$Number[geno_idx] != "1")
             {
                 stop(sprintf(
-                "'%s' in the FORMAT field should be one-length string-type.",
+                "'%s' in the FORMAT field should be one-length string-type, please fix the header.",
                     genotype.var.name))
             }
         }
-        geno_format <- header$format[geno_idx, ]
-        header$format <- header$format[-geno_idx, ]
+        if (length(geno_idx) > 0L)
+        {
+            geno_format <- header$format[geno_idx, ]
+            header$format <- header$format[-geno_idx, ]
+        } else {
+            geno_format <- list(Description="Genotype")
+        }
     } else {
         message("\t",
             "variable id in the FORMAT field should be defined ahead, ",

@@ -28,6 +28,8 @@ NEW FEATURES
 
     o new variable "$dosage_alt" in `seqGetData()` and `seqApply()`
 
+    o import VCF files with no GT in `seqVCF2GDS()`
+
 
 CHANGES IN VERSION 1.18.1-1.18.2
 -------------------------

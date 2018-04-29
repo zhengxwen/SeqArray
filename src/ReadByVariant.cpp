@@ -882,7 +882,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 				throw ErrSeqArray(
 					"'%s' is not a standard variable name, and the standard format:\n"
 					"    variant.id, position, chromosome, allele, annotation/id, annotation/qual, annotation/filter\n"
-					"    annotation/info/VARIABLE_NAME', annotation/format/VARIABLE_NAME",
+					"    annotation/info/VARIABLE_NAME', annotation/format/VARIABLE_NAME, etc",
 					s.c_str());
 			}
 		}

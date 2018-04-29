@@ -1579,7 +1579,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 				(*pF)->Init();
 			GetText(FALSE);
 
-			bool first_id_flag = true;
+			bool first_fmt_id_flag = true;
+			bool first_fmt_id_is_geno = false;
 			fmt_ptr.clear();
 
 			// parse
@@ -1600,36 +1601,33 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 				if ((Text_pBegin<Text_pEnd) && (*Text_pBegin==':'))
 					Text_pBegin ++;
 
-				if (first_id_flag)
+				if (first_fmt_id_flag)
 				{
+					first_fmt_id_flag = false;
 					// genotype ID
-					if (cell != geno_id)
+					first_fmt_id_is_geno = (cell == geno_id);
+					if (first_fmt_id_is_geno) continue;
+				}
+
+				// find ID
+				vector<TVCF_Format>::iterator p;
+				for (p=format_list.begin(); p != format_list.end(); p++)
+				{
+					if (p->name == cell)
+						{ p->used = true; break; }
+				}
+				if (p == format_list.end())
+				{
+					set<string>::iterator it = format_missing.find(cell);
+					if (it == format_missing.end())
 					{
-						throw ErrSeqArray("The first FORMAT ID should be '%s'.",
-							geno_id.c_str());
+						format_missing.insert(cell);
+						warning("Unknown FORMAT ID '%s' is ignored.",
+							cell.c_str());
 					}
-					first_id_flag = false;
 				} else {
-					// find ID
-					vector<TVCF_Format>::iterator p;
-					for (p=format_list.begin(); p != format_list.end(); p++)
-					{
-						if (p->name == cell)
-							{ p->used = true; break; }
-					}
-					if (p == format_list.end())
-					{
-						set<string>::iterator it = format_missing.find(cell);
-						if (it == format_missing.end())
-						{
-							format_missing.insert(cell);
-							warning("Unknown FORMAT ID '%s' is ignored.",
-								cell.c_str());
-						}
-					} else {
-						// push
-						fmt_ptr.push_back(&(*p));
-					}
+					// push
+					fmt_ptr.push_back(&(*p));
 				}
 			}
 
@@ -1652,78 +1650,81 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 				while ((Text_pBegin<Text_pEnd) && (*Text_pBegin==' '))
 					Text_pBegin ++;
 
-				// -------------------------------------------------
-				// the first field -- genotypes (GT)
-
-				const char *p = Text_pBegin;
-				while ((Text_pBegin<Text_pEnd) && (*Text_pBegin!=':'))
-					Text_pBegin ++;
-				const char *end = Text_pBegin;
-
-				if ((Text_pBegin<Text_pEnd) && (*Text_pBegin==':'))
-					Text_pBegin ++;
-
-				I32s.clear(); // genotype extra data
-				I8s.clear(); // phase extra data
-				size_t tmp_num_ploidy = 0;
-
-				while (p < end)
+				if (first_fmt_id_is_geno)
 				{
-					const char *start = p;
-					while ((p<end) && (*p!='|') && (*p!='/'))
-						p ++;
-					C_Int16 g = getGeno(start, p, num_allele);
+					// -------------------------------------------------
+					// the first field -- genotypes (GT)
 
-					tmp_num_ploidy ++;
-					if (tmp_num_ploidy <= num_ploidy)
-						*pGeno ++ = g;
-					else
-						I32s.push_back(g);
+					const char *p = Text_pBegin;
+					while ((Text_pBegin<Text_pEnd) && (*Text_pBegin!=':'))
+						Text_pBegin ++;
+					const char *end = Text_pBegin;
 
-					if (p < end)
+					if ((Text_pBegin<Text_pEnd) && (*Text_pBegin==':'))
+						Text_pBegin ++;
+
+					I32s.clear(); // genotype extra data
+					I8s.clear(); // phase extra data
+					size_t tmp_num_ploidy = 0;
+
+					while (p < end)
 					{
-						C_Int8 v;
-						if (*p == '|')
-						{
-							v = 1; p ++;
-						} else if (*p == '/')
-						{
-							v = 0; p ++;
-						}
-						if (tmp_num_ploidy <= num_ploidy_less)
-							*pPhase ++ = v;
+						const char *start = p;
+						while ((p<end) && (*p!='|') && (*p!='/'))
+							p ++;
+						C_Int16 g = getGeno(start, p, num_allele);
+
+						tmp_num_ploidy ++;
+						if (tmp_num_ploidy <= num_ploidy)
+							*pGeno ++ = g;
 						else
-							I8s.push_back(v);
+							I32s.push_back(g);
+
+						if (p < end)
+						{
+							C_Int8 v;
+							if (*p == '|')
+							{
+								v = 1; p ++;
+							} else if (*p == '/')
+							{
+								v = 0; p ++;
+							}
+							if (tmp_num_ploidy <= num_ploidy_less)
+								*pPhase ++ = v;
+							else
+								I8s.push_back(v);
+						}
 					}
-				}
 
-				for (size_t m=tmp_num_ploidy; m < num_ploidy; m++)
-					*pGeno ++ = -1;
-				for (size_t m=tmp_num_ploidy; m < num_ploidy_less; m++)
-					*pPhase ++ = 0;
+					for (size_t m=tmp_num_ploidy; m < num_ploidy; m++)
+						*pGeno ++ = -1;
+					for (size_t m=tmp_num_ploidy; m < num_ploidy_less; m++)
+						*pPhase ++ = 0;
 
-				// check "genotype/extra", e.g., triploid call: 0/0/1
-				if (!I32s.empty())
-				{
-					GDS_Array_AppendData(varGenoExtra, I32s.size(), &(I32s[0]), svInt32);
-					I32 = si + 1;
-					GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-					I32 = variant_index - variant_start_index;
-					GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-					I32 = I32s.size();
-					GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-				}
+					// check "genotype/extra", e.g., triploid call: 0/0/1
+					if (!I32s.empty())
+					{
+						GDS_Array_AppendData(varGenoExtra, I32s.size(), &(I32s[0]), svInt32);
+						I32 = si + 1;
+						GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
+						I32 = variant_index - variant_start_index;
+						GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
+						I32 = I32s.size();
+						GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
+					}
 
-				// check "phase/extra", e.g., triploid call: 0/0/1
-				if (varPhase && !I8s.empty())
-				{
-					GDS_Array_AppendData(varPhaseExtra, I8s.size(), &(I8s[0]), svInt8);
-					I32 = si + 1;
-					GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-					I32 = variant_index - variant_start_index;
-					GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-					I32 = I8s.size();
-					GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+					// check "phase/extra", e.g., triploid call: 0/0/1
+					if (varPhase && !I8s.empty())
+					{
+						GDS_Array_AppendData(varPhaseExtra, I8s.size(), &(I8s[0]), svInt8);
+						I32 = si + 1;
+						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+						I32 = variant_index - variant_start_index;
+						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+						I32 = I8s.size();
+						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+					}
 				}
 
 				// -------------------------------------------------
@@ -1767,47 +1768,52 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 				}
 			}
 
-			// -------------------------------------------------
-			// write genotypes
 
-			// need to identify num_allele if missing
-			if (num_allele == INT_MAX)
+			if (first_fmt_id_is_geno)
 			{
-				num_allele = 0;
-				C_Int16 *p = &Genotypes[0];
-				for (size_t n=num_samp_ploidy; n > 0; n--, p++)
+				// -------------------------------------------------
+				// write genotypes
+
+				// need to identify num_allele if missing
+				if (num_allele == INT_MAX)
 				{
-					if ((*p >= 0) && (*p > num_allele))
-						num_allele = *p;
+					num_allele = 0;
+					C_Int16 *p = &Genotypes[0];
+					for (size_t n=num_samp_ploidy; n > 0; n--, p++)
+					{
+						if ((*p >= 0) && (*p > num_allele))
+							num_allele = *p;
+					}
+					num_allele ++;
 				}
-				num_allele ++;
+
+				// determine how many bits
+				int num_bits = 2;
+				// plus ONE for missing value
+				while ((num_allele + 1) > (1 << num_bits))
+					num_bits += 2;
+				I32 = num_bits >> 1;
+				GDS_Array_AppendData(varGenoLen, 1, &I32, svInt32);
+
+				for (int bits=0; bits < num_bits; )
+				{
+					GDS_Array_AppendData(varGeno, num_samp_ploidy, &Genotypes[0],
+						svInt16);
+					bits += 2;
+					if (bits < num_bits)
+						vec_i16_shr_b2(&Genotypes[0], num_samp_ploidy);
+				}
+
+				// -------------------------------------------------
+				// write phase information
+
+				if (varPhase)
+				{
+					GDS_Array_AppendData(varPhase, num_samp_ploidy_less,
+						&(Phases[0]), svInt8);
+				}
 			}
 
-			// determine how many bits
-			int num_bits = 2;
-			// plus ONE for missing value
-			while ((num_allele + 1) > (1 << num_bits))
-				num_bits += 2;
-			I32 = num_bits >> 1;
-			GDS_Array_AppendData(varGenoLen, 1, &I32, svInt32);
-
-			for (int bits=0; bits < num_bits; )
-			{
-				GDS_Array_AppendData(varGeno, num_samp_ploidy, &Genotypes[0],
-					svInt16);
-				bits += 2;
-				if (bits < num_bits)
-					vec_i16_shr_b2(&Genotypes[0], num_samp_ploidy);
-			}
-
-			// -------------------------------------------------
-			// write phase information
-
-			if (varPhase)
-			{
-				GDS_Array_AppendData(varPhase, num_samp_ploidy_less,
-					&(Phases[0]), svInt8);
-			}
 
 			// -------------------------------------------------
 			// for-loop all format IDs: write
