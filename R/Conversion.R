@@ -420,12 +420,14 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
 # Convert a SNP GDS file to a SeqArray GDS file
 #
 
-seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
-    major.ref=TRUE, optimize=TRUE, digest=TRUE, verbose=TRUE)
+seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
+    ds.type=c("packedreal16", "float", "double"), optimize=TRUE, digest=TRUE,
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
     stopifnot(is.character(out.fn), length(out.fn)==1L)
+    ds.type <- match.arg(ds.type)
     stopifnot(is.logical(major.ref), length(major.ref)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
@@ -448,20 +450,26 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     nSamp <- prod(objdesp.gdsn(index.gdsn(srcfile, "sample.id"))$dim)
     nSNP <- prod(objdesp.gdsn(index.gdsn(srcfile, "snp.id"))$dim)
 
+    # check genotype type
     n <- index.gdsn(srcfile, "genotype")
     dm <- objdesp.gdsn(n)$dim
-    if (length(dm) != 2)
+    if (length(dm) != 2L)
         stop("'genotype' of SNP GDS should be a matrix.")
+    geno_type <- as.character(objdesp.gdsn(n)$type)
+    if (!(geno_type %in% c("Integer", "Real")))
+        stop("'genotype' should be integers or real numbers.")
+
+    # determine how genotypes are stored
     snpfirstdim <- TRUE
     rd <- names(get.attr.gdsn(n))
     if ("snp.order" %in% rd) snpfirstdim <- TRUE
     if ("sample.order" %in% rd) snpfirstdim <- FALSE
     if (snpfirstdim)
     {
-        if ((dm[1]!=nSNP) || (dm[2]!=nSamp))
+        if ((dm[1L]!=nSNP) || (dm[2L]!=nSamp))
             stop("Invalid dimension of 'genotype'.")
     } else {
-        if ((dm[1]!=nSamp) || (dm[2]!=nSNP))
+        if ((dm[1L]!=nSamp) || (dm[2L]!=nSNP))
             stop("Invalid dimension of 'genotype'.")
     }
 
@@ -510,35 +518,44 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     put.attr.gdsn(varGeno, "VariableName", "GT")
     put.attr.gdsn(varGeno, "Description", "Genotype")
 
-    # add genotypes to genotype/data
+    # major reference
     .cfunction("FC_SNP2GDS_Ref")(major.ref)
+
     nd_geno <- .AddVar(storage.option, varGeno, "data", storage="bit2",
         valdim=c(2L, nSamp, 0L))
-    apply.gdsn(list(
-            index.gdsn(srcfile, "genotype"), index.gdsn(srcfile, "snp.allele")),
-    	c(ifelse(snpfirstdim, 1L, 2L), 1L),
-        FUN=.cfunction("FC_SNP2GDS"), as.is="gdsnode",
-        target.node=list(nd_geno, nd_allele))
-    readmode.gdsn(nd_geno)
-    .DigestCode(nd_geno, digest, verbose)
-
-    if (verbose) cat("    allele")
-    readmode.gdsn(nd_allele)
-    .DigestCode(nd_allele, digest, verbose)
-
-    n <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
-        visible=FALSE)
-    .repeat_gds(n, 1L, nSNP)
-    readmode.gdsn(n)
-    .DigestCode(n, digest, FALSE)
-
+    nd_geno_idx <- .AddVar(storage.option, varGeno, "@data",
+        storage="uint8", visible=FALSE)
     n <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
         valdim=c(3L,0L), closezip=TRUE)
     put.attr.gdsn(n, "R.colnames",
         c("sample.index", "variant.index", "length"))
     .AddVar(storage.option, varGeno, "extra", storage="int16", closezip=TRUE)
 
-    sync.gds(dstfile)
+    if (geno_type == "Integer")
+    {
+        # add genotypes to genotype/data
+        apply.gdsn(list(index.gdsn(srcfile, "genotype"),
+                index.gdsn(srcfile, "snp.allele")),
+            c(ifelse(snpfirstdim, 1L, 2L), 1L),
+            FUN=.cfunction("FC_SNP2GDS"), as.is="gdsnode",
+            target.node=list(nd_geno, nd_allele))
+        readmode.gdsn(nd_geno)
+        .DigestCode(nd_geno, digest, verbose)
+
+        if (verbose) cat("    allele")
+        readmode.gdsn(nd_allele)
+        .DigestCode(nd_allele, digest, verbose)
+
+        .repeat_gds(nd_geno_idx, 1L, nSNP)
+        readmode.gdsn(nd_geno_idx)
+        .DigestCode(nd_geno_idx, digest, FALSE)
+
+        sync.gds(dstfile)
+    } else {
+        # add dosages to annotation/format/DS
+        readmode.gdsn(nd_geno)
+        readmode.gdsn(nd_geno_idx)
+    }
 
     # add a folder for phase information
     if (verbose) cat("    phase")
@@ -546,7 +563,8 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
     n <- .AddVar(storage.option, varPhase, "data", storage="bit1",
         valdim=c(nSamp, 0L))
-    .repeat_gds(n, 0L, as.double(nSNP)*nSamp)
+    if (geno_type == "Integer")
+        .repeat_gds(n, 0L, as.double(nSNP)*nSamp)
     readmode.gdsn(n)
     .DigestCode(n, digest, verbose)
 
@@ -557,6 +575,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     .AddVar(storage.option, varPhase, "extra", storage="bit1", closezip=TRUE)
 
     sync.gds(dstfile)
+
 
     # add annotation folder
     varAnnot <- addfolder.gdsn(dstfile, "annotation")
@@ -600,7 +619,41 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     }
 
     # add the FORMAT field
-    addfolder.gdsn(varAnnot, "format")
+    n <- addfolder.gdsn(varAnnot, "format")
+
+    # add dosages to annotation/format/DS
+    if (geno_type == "Real")
+    {
+        if (verbose) cat("    annotation/format/DS")
+        varGeno <- addfolder.gdsn(n, "DS")
+        put.attr.gdsn(varGeno, "Number", "1")
+        put.attr.gdsn(varGeno, "Type", "Float")
+        put.attr.gdsn(varGeno, "Description", "Estimated Alternate Allele Dosage")
+
+        nd_geno <- .AddVar(storage.option, varGeno, "data", storage=ds.type,
+            valdim=c(nSamp, 0L))
+        # add genotypes to genotype/data
+        apply.gdsn(list(index.gdsn(srcfile, "genotype"),
+                index.gdsn(srcfile, "snp.allele")),
+            c(ifelse(snpfirstdim, 1L, 2L), 1L),
+            FUN=.cfunction("FC_Dosage2GDS"), as.is="gdsnode",
+            target.node=list(nd_geno, nd_allele))
+
+        readmode.gdsn(nd_geno)
+        .DigestCode(nd_geno, digest, verbose)
+
+        if (verbose) cat("    allele")
+        readmode.gdsn(nd_allele)
+        .DigestCode(nd_allele, digest, verbose)
+
+        nd_geno_idx <- .AddVar(storage.option, varGeno, "@data",
+            storage="uint8", visible=FALSE)
+        .repeat_gds(nd_geno_idx, 1L, nSNP)
+        readmode.gdsn(nd_geno_idx)
+        .DigestCode(nd_geno_idx, digest, FALSE)
+
+        sync.gds(dstfile)
+    }
 
     # add sample annotation
     if (verbose) cat("    sample.annotation\n")

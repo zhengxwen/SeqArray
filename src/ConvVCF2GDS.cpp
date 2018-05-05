@@ -1534,7 +1534,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					if (it == info_missing.end())
 					{
 						info_missing.insert(cell);
-						Rf_warning("Unknown INFO ID '%s' is ignored.", cell.c_str());
+						Rf_warning("Unknown INFO ID '%s' is ignored (it should be defined in the meta-information lines).",
+							cell.c_str());
 					}
 				}
 			}
@@ -1622,7 +1623,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					if (it == format_missing.end())
 					{
 						format_missing.insert(cell);
-						warning("Unknown FORMAT ID '%s' is ignored.",
+						warning("Unknown FORMAT ID '%s' is ignored (it should be defined in the meta-information lines).",
 							cell.c_str());
 					}
 				} else {

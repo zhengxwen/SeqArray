@@ -5,8 +5,9 @@
     Converts a SNP GDS file to a SeqArray GDS file.
 }
 \usage{
-seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA",
-    major.ref=TRUE, optimize=TRUE, digest=TRUE, verbose=TRUE)
+seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
+    ds.type=c("packedreal16", "float", "double"), optimize=TRUE, digest=TRUE,
+    verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file name of SNP format}
@@ -16,6 +17,8 @@ seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA",
         compression ratio compared to \code{"ZIP_RA"}}
     \item{major.ref}{if TRUE, use the major allele as a reference allele;
         otherwise, use A allele in SNP GDS file as a reference allele}
+    \item{ds.type}{applicable when import dosages, the data type for storing
+        dosages; see \code{\link{add.gdsn}}}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
@@ -24,7 +27,10 @@ seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA",
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
-    Return the file name of SeqArray file with an absolute path.
+    Return the file name of SeqArray file with an absolute path. If the input
+file is genotype dosage, the dosage matrix is stored in the node
+\code{annotation/format/DS} with the estimated dosage of alternative alleles.
+Any value less than 0 and greater than 2 will be replaced by NaN.
 }
 
 \author{Xiuwen Zheng}

@@ -46,10 +46,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     for (i in seq_along(gds.fn))
     {
         if (verbose)
-            cat("    opening '", gds.fn[i], "' ...", sep="")
+            cat("    opening '", gds.fn[i], "'\n", sep="")
         flist[[i]] <- seqOpen(gds.fn[i])
-        if (verbose)
-            cat(" [done]\n")
     }
     if (verbose)
     {

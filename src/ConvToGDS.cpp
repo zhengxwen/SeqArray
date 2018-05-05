@@ -207,6 +207,72 @@ COREARRAY_DLL_EXPORT SEXP FC_SNP2GDS(SEXP X)
 }
 
 
+COREARRAY_DLL_EXPORT SEXP FC_Dosage2GDS(SEXP X)
+{
+	SEXP Geno = VECTOR_ELT(X, 0);
+	size_t n  = Rf_length(Geno);
+
+	SEXP Allele = VECTOR_ELT(X, 1);
+	int sign_pos = -1;
+	const char *base = CHAR(STRING_ELT(Allele, 0));
+	{
+		const char *p = base;
+		for (; *p != 0; p++)
+		{
+			if (*p == '/')  // format A/B
+				{ sign_pos = p - base; break; }
+		}
+	}
+
+	// check allele
+	bool rev_flag = false;
+	if (UseMajorAsRef && sign_pos>=0)
+	{
+		double *s=REAL(Geno), sum=0;
+		int nvalid=0;
+		for (size_t i=0; i < n; i++, s++)
+		{
+			if (R_FINITE(*s) && 0 <= *s && *s <= 2)
+			{
+				nvalid ++;
+				sum += *s;
+			}
+		}
+		rev_flag = (sum < nvalid);
+	}
+
+	SEXP rv_ans = PROTECT(NEW_LIST(2));
+	SEXP Dest = NEW_NUMERIC(n);
+	SET_ELEMENT(rv_ans, 0, Dest);
+	SET_ELEMENT(rv_ans, 1, Allele);
+
+	double *s = REAL(Geno), *p = REAL(Dest);
+
+	if (rev_flag)
+	{
+		// allele
+		string ss(strlen(base), 0);
+		size_t nn = strlen(base+sign_pos+1);
+		memcpy(&ss[0], base+sign_pos+1, nn);
+		ss[nn] = ',';
+		memcpy(&ss[nn+1], base, sign_pos);
+		memcpy((void*)base, &ss[0], ss.size());
+		// 2 - dosage
+		for (; n > 0; n--, p++, s++)
+			*p = (R_FINITE(*s) && 0 <= *s && *s <= 2) ? (*s) : R_NaN;
+	} else {
+		if (sign_pos >= 0)
+			((char*)base)[sign_pos] = ',';
+		// copy dosage
+		for (; n > 0; n--, p++, s++)
+			*p = (R_FINITE(*s) && 0 <= *s && *s <= 2) ? (2 - *s) : R_NaN;
+	}
+
+	UNPROTECT(1);
+	return rv_ans;
+}
+
+
 // ======================================================================
 // SeqArray GDS --> SNP GDS
 // ======================================================================
