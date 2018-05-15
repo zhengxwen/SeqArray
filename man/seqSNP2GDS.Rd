@@ -30,7 +30,7 @@ seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
     Return the file name of SeqArray file with an absolute path. If the input
 file is genotype dosage, the dosage matrix is stored in the node
 \code{annotation/format/DS} with the estimated dosage of alternative alleles.
-Any value less than 0 and greater than 2 will be replaced by NaN.
+Any value less than 0 or greater than 2 will be replaced by NaN.
 }
 
 \author{Xiuwen Zheng}
