@@ -621,22 +621,6 @@
 #######################################################################
 # Get the unique data frame
 #
-.UniqueDataFrame <- function(val)
-{
-    stopifnot(is.data.frame(val))
-
-    s <- apply(val, 1, FUN=function(x)
-        paste(paste(names(x), x, sep=": "), collapse=", "))
-    i <- duplicated(s)
-    if (any(i)) val <- val[i, ]
-    val
-}
-
-
-
-#######################################################################
-# Get the unique data frame
-#
 .DigestCode <- function(node, algo, verbose)
 {
     stopifnot(inherits(node, "gdsn.class"))

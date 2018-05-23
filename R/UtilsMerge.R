@@ -143,7 +143,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     reference <- as.character(unique(unlist(v)))
     .AddVar(storage.option, n, "reference", reference, closezip=TRUE,
         visible=FALSE)
-    
+
     alt <- NULL
     for (i in seq_along(flist))
     {
@@ -153,10 +153,10 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     }
     if (!is.null(alt))
     {
-        .AddVar(storage.option, n, "vcf.alt", .UniqueDataFrame(alt),
-            closezip=TRUE, visible=FALSE)
+        .AddVar(storage.option, n, "vcf.alt", unique(alt), closezip=TRUE,
+            visible=FALSE)
     }
-        
+
     contig <- NULL
     for (i in seq_along(flist))
     {
@@ -166,8 +166,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     }
     if (!is.null(contig))
     {
-        .AddVar(storage.option, n, "vcf.contig", .UniqueDataFrame(contig),
-            closezip=TRUE, visible=FALSE)
+        .AddVar(storage.option, n, "vcf.contig", unique(contig), closezip=TRUE,
+            visible=FALSE)
     }
 
     header <- NULL
@@ -179,8 +179,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     }
     if (!is.null(header))
     {
-        .AddVar(storage.option, n, "vcf.header", .UniqueDataFrame(header),
-            closezip=TRUE, visible=FALSE)
+        .AddVar(storage.option, n, "vcf.header", unique(header), closezip=TRUE,
+            visible=FALSE)
     }
         
 

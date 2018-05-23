@@ -273,6 +273,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         } else
             stop("INFO=", s[i])
     }
+    INFO <- unique(INFO)
     ans <- ans[ans$id != "INFO", ]
 
 
@@ -289,6 +290,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         else
             stop("FILTER=", s[i])
     }
+    FILTER <- unique(FILTER)
     ans <- ans[ans$id != "FILTER", ]
 
 
@@ -311,6 +313,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         } else
             stop("FORMAT=", s[i])
     }
+    FORMAT <- unique(FORMAT)
     ans <- ans[ans$id != "FORMAT", ]
 
 
@@ -328,6 +331,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         } else
             stop("ALT=", s[i])
     }
+    ALT <- unique(ALT)
     ans <- ans[ans$id != "ALT", ]
 
 
@@ -345,6 +349,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         } else
             stop("contig=", s[i])
     }
+    contig <- unique(contig)
     ans <- ans[ans$id != "contig", ]
 
 
@@ -353,6 +358,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     reference <- NULL
     s <- ans$value[ans$id == "reference"]
     if (length(s) > 0L) reference <- s
+    reference <- unique(reference)
     ans <- ans[ans$id != "reference", ]
 
 
