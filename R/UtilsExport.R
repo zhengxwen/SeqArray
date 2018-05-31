@@ -208,14 +208,16 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## phase
     node <- addfolder.gdsn(outfile, "phase")
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "phase"))
-    cp.phase(node, S$sample.sel, S$variant.sel)
-
-    if (prod(objdesp.gdsn(index.gdsn(gdsfile, "phase/extra.index"))$dim) <= 0)
+    if (!is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)))
     {
-        copyto.gdsn(node, index.gdsn(gdsfile, "phase/extra.index"))
-        copyto.gdsn(node, index.gdsn(gdsfile, "phase/extra"))
-    } else  # TODO
-        stop("Not implemented in 'phase/extra.index', please contact the author.")
+        cp.phase(node, S$sample.sel, S$variant.sel)
+        if (prod(objdesp.gdsn(index.gdsn(gdsfile, "phase/extra.index"))$dim) <= 0)
+        {
+            copyto.gdsn(node, index.gdsn(gdsfile, "phase/extra.index"))
+            copyto.gdsn(node, index.gdsn(gdsfile, "phase/extra"))
+        } else  # TODO
+            stop("Not implemented in 'phase/extra.index', please contact the author.")
+    }
 
     sync.gds(outfile)
 
