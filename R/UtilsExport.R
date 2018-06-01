@@ -317,3 +317,81 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     # output
     invisible(normalizePath(out.fn))
 }
+
+
+#######################################################################
+# Recompress the GDS file
+#
+seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
+    "UltraMax"), exclude=character(), optimize=TRUE, verbose=TRUE)
+{
+    stopifnot(is.character(gds.fn), length(gds.fn)==1L)
+    stopifnot(is.character(exclude))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    compress <- match.arg(compress)
+    if (compress == "Ultra")
+    {
+        node_compress <- "LZMA_RA.ultra:8M"
+        idx_compress <- "LZMA.max"
+    } else if (compress == "UltraMax")
+    {
+        node_compress <- "LZMA_RA.ultra_max:8M"
+        idx_compress <- "LZMA.max"
+    } else
+        stop("Not implemented.")
+
+    # open the file
+    f <- openfn.gds(gds.fn, readonly=FALSE)
+    on.exit({ closefn.gds(f) })
+    if (verbose)
+        cat("Open '", gds.fn, "' ...\n", sep="")
+
+    nm_lst <- ls.gdsn(f, include.hidden=TRUE, recursive=TRUE)
+    nm_lst <- nm_lst[!grepl("^description", nm_lst)]
+    nm_lst <- setdiff(nm_lst, c("@chrom_rle_val", "@chrom_rle_len"))
+    nm_lst <- setdiff(nm_lst, exclude)
+    for (nm in nm_lst)
+    {
+        n <- index.gdsn(f, nm)
+        dp <- objdesp.gdsn(n)
+        if (dp$is.array & prod(dp$dim)>0L)
+        {
+            if (verbose) cat("   ", nm)
+            # compress
+            sz <- dp$size
+            if (grepl("@", basename(nm), fixed=TRUE))
+            {
+                compression.gdsn(n, idx_compress)
+            } else {
+                compression.gdsn(n, node_compress)
+            }
+            sz2 <- objdesp.gdsn(n)$size
+            if (verbose)
+                cat(sprintf("\t[deflated %.1f%%]", (1-sz2/sz)*100))
+            # digest
+            if (!is.null(get.attr.gdsn(n)$md5))
+            {
+                digest.gdsn(n, algo="md5", action="add")
+                cat("  ", get.attr.gdsn(n)$md5, "\n", sep="")
+            } else {
+                cat("\n")
+            }
+        }
+    }
+
+    # close the file
+    on.exit()
+    closefn.gds(f)
+    if (verbose) cat("Done.\n")
+
+    # optimize access efficiency
+    if (optimize)
+    {
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
+        cleanup.gds(gds.fn, verbose=verbose)
+    }
+
+    invisible()
+}

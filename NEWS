@@ -12,6 +12,8 @@ NEW FEATURES
 
     o `seqVCF_Header()` allows a BCF file as an input
 
+    o a new function `seqRecompress()`
+
 BUG FIXES
 
     o `seqExport()` works with haploid data (e.g., Y chromosome)
