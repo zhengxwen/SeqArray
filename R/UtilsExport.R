@@ -330,13 +330,24 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     compress <- match.arg(compress)
-    if (compress == "Ultra")
+    if (compress == "ZIP")
     {
-        node_compress <- "LZMA_RA.ultra:8M"
+        node_compress <- fmt_compress <- idx_compress <- "ZIP_RA"
+    } else if (compress == "LZ4")
+    {
+        node_compress <- fmt_compress <- idx_compress <- "LZ4_RA"
+    } else if (compress == "LZMA")
+    {
+        node_compress <- fmt_compress <- idx_compress <- "LZMA_RA"
+    } else if (compress == "Ultra")
+    {
+        node_compress <- "LZMA_RA.ultra:4M"
+        fmt_compress <- "LZMA_RA.ultra:8M"
         idx_compress <- "LZMA.max"
     } else if (compress == "UltraMax")
     {
         node_compress <- "LZMA_RA.ultra_max:8M"
+        fmt_compress <- "LZMA_RA.ultra_max:8M"
         idx_compress <- "LZMA.max"
     } else
         stop("Not implemented.")
@@ -363,6 +374,9 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
             if (grepl("@", basename(nm), fixed=TRUE))
             {
                 compression.gdsn(n, idx_compress)
+            } else if (grepl("^annotation/format/", nm))
+            {
+                compression.gdsn(n, fmt_compress)
             } else {
                 compression.gdsn(n, node_compress)
             }
