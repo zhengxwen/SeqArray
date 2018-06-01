@@ -1,15 +1,16 @@
 \name{seqVCF_Header}
 \alias{seqVCF_Header}
-\title{Parse the Header of a VCF File}
+\title{Parse the Header of a VCF/BCF File}
 \description{
-    Parses the header of a VCF file.
+    Parses the meta-information lines of a VCF or BCF file.
 }
 \usage{
 seqVCF_Header(vcf.fn, getnum=FALSE)
 }
 \arguments{
-    \item{vcf.fn}{the file name; or a \code{\link{connection}} object}
-    \item{getnum}{if \code{TRUE}, return the number of samples and variants}
+    \item{vcf.fn}{the file name of VCF or BCF format;
+        or a \code{\link{connection}} object for VCF format}
+    \item{getnum}{if \code{TRUE}, return the total number of variants}
 }
 \value{
     Return a list (with a class name "SeqVCFHeaderClass", S3 object):
@@ -24,7 +25,9 @@ seqVCF_Header(vcf.fn, getnum=FALSE)
     \item{header}{the other header lines}
     \item{ploidy}{ploidy, two for humans}
     \item{num.sample}{the number of samples}
-    \item{num.variant}{the number of variants}
+    \item{num.variant}{the number of variants, applicable only if
+        \code{getnum=TRUE}}
+    \item{sample.id}{a vector of sample IDs in the VCF/BCF file}
 }
 \details{
     The ID description contains four columns: \code{ID} -- variable name;

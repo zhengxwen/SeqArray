@@ -41,10 +41,18 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     n <- 0L
     for (i in ilist)
     {
+        is_vcf_fn <- FALSE
         if (!inherits(vcf.fn, "connection"))
         {
             infile <- file(vcf.fn[i], open="rt")
             on.exit(close(infile))
+            if (grepl("\\.bcf$", vcf.fn[i], ignore.case=TRUE))
+            {
+                s <- readChar(infile, 9L)
+                if (substr(s, 1L, 4L) != "BCF\002")
+                    stop(vcf.fn[i], " should be BCF2 format.")
+            } else
+                is_vcf_fn <- TRUE
         } else {
             infile <- vcf.fn
         }
@@ -59,18 +67,11 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                 s <- substring(s, 3L)
                 ans <- c(ans, s)
             } else {
-                if (inherits(vcf.fn, "connection"))
+                samp.id <- scan(text=s, what=character(), sep="\t",
+                    quiet=TRUE)[-seq_len(9L)]
+                nSample <- length(samp.id)
+                if (is_vcf_fn)
                 {
-                    samp.id <- scan(text=s, what=character(0), sep="\t",
-                        quiet=TRUE)[-seq_len(9)]
-                    nSample <- length(samp.id)
-                } else {
-                    if (getnum)
-                    {
-                        s <- scan(text=s, what=character(0), sep="\t",
-                            quiet=TRUE)[-seq_len(9)]
-                        if (length(s) > nSample) nSample <- length(s)
-                    }
                     s <- readLines(infile, n=1L)
                     if (length(s) > 0L)
                     {
@@ -368,13 +369,10 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     rv <- list(fileformat=fileformat, info=INFO, filter=FILTER, format=FORMAT,
         alt=ALT, contig=contig, assembly=assembly, reference=reference,
         header=ans, ploidy=ploidy)
+    rv$num.sample <- nSample
     if (getnum)
-    {
-        rv$num.sample <- nSample
         rv$num.variant <- nVariant
-    }
-    if (!is.null(samp.id))
-        rv$sample.id <- samp.id
+    rv$sample.id <- samp.id
     class(rv) <- "SeqVCFHeaderClass"
     rv
 }

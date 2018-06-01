@@ -10,6 +10,8 @@ NEW FEATURES
 
     o `seqSNP2GDS()` imports dosage GDS files
 
+    o `seqVCF_Header()` allows a BCF file as an input
+
 BUG FIXES
 
     o `seqExport()` works with haploid data (e.g., Y chromosome)
