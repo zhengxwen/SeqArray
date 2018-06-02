@@ -17,7 +17,13 @@ seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax"),
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{
-    This function requires gdsfmt (>= 1.17.2).
+    This function requires gdsfmt (>= v1.17.2). \code{\link{seqVCF2GDS}} usually
+takes lots of memory when the compression method \code{"LZMA_RA.max"},
+\code{"Ultra"} or \code{"UltraMax"} is specified. So users could call
+\code{seqVCF2GDS(, storage.option="ZIP_RA")} first, and then recompress the
+GDS file with a higher compression option, e.g., \code{"UltraMax"}.
+\code{seqRecompress()} takes much less memory, since it recompresses data in
+a GDS node each time.
 }
 \value{
     None.
@@ -30,12 +36,9 @@ seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax"),
 
 \examples{
 gds.fn <- seqExampleFileName("gds")
-
 file.copy(gds.fn, "tmp.gds")
 
-\dontrun{
-seqRecompress(gds.fn, "UltraMax")
-}
+seqRecompress(gds.fn, "LZMA")
 
 unlink("tmp.gds")
 }

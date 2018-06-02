@@ -89,6 +89,11 @@ higher compression ratio than zlib.
 
     If multiple cores/processes are specified in \code{parallel}, all VCF files
 are scanned to calculate the total number of variants before format conversion.
+
+    \code{storage.option="Ultra"} and \code{storage.option="UltraMax"} need much
+large memory. Users may consider using \code{\link{seqRecompress}} to recompress
+the GDS file after calling \code{seqVCF2GDS()}, since \code{seqRecompress()}
+takes much less memory when \code{"Ultra"} or \code{"UltraMax"} is used.
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,
@@ -99,7 +104,8 @@ The variant call format and VCFtools. Bioinformatics 27, 2156-2158.
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqVCF_Header}}, \code{\link{seqStorageOption}},
-    \code{\link{seqMerge}}, \code{\link{seqGDS2VCF}}
+    \code{\link{seqMerge}}, \code{\link{seqGDS2VCF}},
+    \code{\link{seqRecompress}}
 }
 
 \examples{
