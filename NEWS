@@ -14,6 +14,8 @@ NEW FEATURES
 
     o a new function `seqRecompress()`
 
+    o a new function `seqCheck()` for checking a SeqArray file
+
 BUG FIXES
 
     o `seqExport()` works with haploid data (e.g., Y chromosome)

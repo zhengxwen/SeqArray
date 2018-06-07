@@ -41,7 +41,7 @@
         } else {
             if (s1 != "")
             {
-                s <- paste(s, sQuote(s1), "passes")
+                s <- paste0(s, "\t", sQuote(s1), " [OK]")
                 ans <- TRUE
             }
             if (s2 != "")
@@ -785,4 +785,87 @@ seqSystem <- function()
         seqarray.parallel = seqGetParallel()
     )
     rv
+}
+
+
+#######################################################################
+# Perform the checking for the GDS file
+#
+
+.check_var_dim <- function(f, nm, type, cnt, verbose)
+{
+    if (verbose) cat("    ", nm, sep="")
+    dp <- objdesp.gdsn(index.gdsn(f, nm))
+    if (isTRUE(dp$type != type))
+        s <- "Invalid data type."
+    else if (dp$is.array && (length(dp$dim)!=1L || dp$dim[1L]!=cnt))
+        s <- "Invalid dimension."
+    else
+        s <- ""
+    rv <- data.frame(ok=(s==""), info=s, stringsAsFactors=FALSE)
+    rownames(rv) <- nm
+    rv
+}
+
+seqCheck <- function(gdsfile, verbose=TRUE)
+{
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass") | is.character(gdsfile))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (is.character(gdsfile) && length(gdsfile)==1L)
+    {
+        if (verbose)
+            cat("Open '", gdsfile, "'\n", sep="")
+        gdsfile <- seqOpen(gdsfile)
+        on.exit({ seqClose(gdsfile) })
+    }
+
+    # the output value
+    ans <- list()
+
+    # hash check
+    if (verbose)
+        cat("Hash check:\n")
+    nm_lst <- ls.gdsn(gdsfile, include.hidden=TRUE, recursive=TRUE)
+    s <- sapply(nm_lst, function(nm) {
+            ns <- names(get.attr.gdsn(index.gdsn(gdsfile, nm)))
+            any(ns %in% c("md5", "sha1", "sha256", "sha384", "sha512"))
+        })
+    nm_lst <- nm_lst[s]
+    ans$hash <- data.frame(
+        algo = sapply(nm_lst, function(nm) {
+            paste(intersect(c("md5", "sha1", "sha256", "sha384", "sha512"),
+                names(get.attr.gdsn(index.gdsn(gdsfile, nm)))), collapse=",")
+        }),
+        ok = sapply(nm_lst, function(nm)
+            all(.check_digest(gdsfile, nm, verbose))),
+        stringsAsFactors=FALSE)
+
+    # dimension check
+    # gds_dm[1L] -- ploidy
+    # gds_dm[2L] -- # of total samples
+    # gds_dm[3L] -- # of total variants
+    gds_dm <- .dim(gdsfile)
+    if (verbose)
+        cat("Dimension check:\n")
+
+    # add to the result
+    addtab <- function(dat) {
+        tab <<- rbind(tab, dat)
+        if (verbose) cat(ifelse(dat$ok, "\t[OK]\n", "\t[Error]\n"))
+        invisible()
+    }
+
+    tab <- NULL
+    addtab(
+        .check_var_dim(gdsfile, "variant.id", NA, gds_dm[3L], verbose))
+    addtab(
+        .check_var_dim(gdsfile, "position", "Integer", gds_dm[3L], verbose))
+    addtab(
+        .check_var_dim(gdsfile, "chromosome", "String", gds_dm[3L], verbose))
+    addtab(
+        .check_var_dim(gdsfile, "allele", "String", gds_dm[3L], verbose))
+    ans$dimension <- tab
+
+    invisible(ans)
 }
