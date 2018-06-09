@@ -142,11 +142,11 @@ seqClose(f)
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [»](https://rdrr.io/bioc/SeqArray/man/seqVCF2GDS.html) |
-| seqSetFilter | Define a data subset of samples or variants. [»](https://rdrr.io/bioc/SeqArray/man/seqSetFilter.html) |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [»](https://rdrr.io/bioc/SeqArray/man/seqGetData.html) |
-| seqApply     | Apply a user-defined function over array margins. [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html) |
-| seqParallel  | Apply functions in parallel. [»](https://rdrr.io/bioc/SeqArray/man/seqParallel.html) |
+| seqVCF2GDS   | Reformat VCF files [»](https://rdrr.io/bioc/SeqArray/man/seqVCF2GDS.html) |
+| seqSetFilter | Define a data subset of samples or variants [»](https://rdrr.io/bioc/SeqArray/man/seqSetFilter.html) |
+| seqGetData   | Get data from a SeqArray file with a defined filter [»](https://rdrr.io/bioc/SeqArray/man/seqGetData.html) |
+| seqApply     | Apply a user-defined function over array margins [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html) |
+| seqParallel  | Apply functions in parallel [»](https://rdrr.io/bioc/SeqArray/man/seqParallel.html) |
 | ...  | [»](https://rdrr.io/bioc/SeqArray/man/) |
 
 

@@ -1,8 +1,8 @@
 \name{seqCheck}
 \alias{seqCheck}
-\title{Perform Data Integrity}
+\title{Data Integrity Checking}
 \description{
-    Performs data integrity for a SeqArray GDS file.
+    Performs data integrity on a SeqArray GDS file.
 }
 \usage{
 seqCheck(gdsfile, verbose=TRUE)

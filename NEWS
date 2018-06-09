@@ -18,7 +18,9 @@ NEW FEATURES
 
 BUG FIXES
 
-    o `seqExport()` works with haploid data (e.g., Y chromosome)
+    o `seqExport()` fails to export haploid data (e.g., Y chromosome)
+
+    o `seqVCF2GDS()` fails to convert INFO variables when Number="R"
 
 
 CHANGES IN VERSION 1.20.0

@@ -927,7 +927,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     if (!is.na(header$info$Version[i]))
                         put.attr.gdsn(node, "Version", header$info$Version[i])
 
-                    if (s %in% c(".", "A", "G"))
+                    if (s %in% c(".", "A", "G", "R"))
                     {
                         node <- .AddVar(storage.option, varInfo,
                             paste("@", header$info$ID[i], sep=""),
