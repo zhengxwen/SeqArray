@@ -14,7 +14,17 @@ NEW FEATURES
 
     o a new function `seqRecompress()`
 
-    o a new function `seqCheck()` for checking a SeqArray file
+    o a new function `seqCheck()` for checking the data integrity of a SeqArray
+      file
+
+BUG FIXES
+
+    o `seqVCF2GDS()` and `seqVCF_Header()` are able to import site-only VCF
+      files (i.e., VCF with no sample)
+
+
+CHANGES IN VERSION 1.20.1
+-------------------------
 
 BUG FIXES
 

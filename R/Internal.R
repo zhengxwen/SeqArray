@@ -623,20 +623,23 @@
 #
 .DigestCode <- function(node, algo, verbose)
 {
-    stopifnot(inherits(node, "gdsn.class"))
-    if (isTRUE(algo) | is.character(algo))
+    if (!is.null(node))
     {
-        if (isTRUE(algo)) algo <- "md5"
-        h <- digest.gdsn(node, algo=algo, action="add")
-        if (verbose)
+        stopifnot(inherits(node, "gdsn.class"))
+        if (isTRUE(algo) | is.character(algo))
         {
-            s <- paste0("  [", algo, ": ", h, "]")
-            if (.crayon()) s <- crayon::blurred(s)
-            cat(s, "\n", sep="")
-        }
-    } else if (verbose)
-        cat("\n")
-    flush.console()
+            if (isTRUE(algo)) algo <- "md5"
+            h <- digest.gdsn(node, algo=algo, action="add")
+            if (verbose)
+            {
+                s <- paste0("  [", algo, ": ", h, "]")
+                if (.crayon()) s <- crayon::blurred(s)
+                cat(s, "\n", sep="")
+            }
+        } else if (verbose)
+            cat("\n")
+        flush.console()
+    }
     invisible()
 }
 
@@ -654,7 +657,7 @@
     }
 
     if (flag) cat("    genotype")
-    .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
+    .DigestCode(index.gdsn(gfile, "genotype/data", silent=TRUE), digest, verbose)
     .DigestCode(index.gdsn(gfile, "genotype/@data"), digest, FALSE)
 
     n <- index.gdsn(gfile, "phase/data", silent=TRUE)
@@ -685,7 +688,7 @@
     for (n in ls.gdsn(node))
     {
         if (flag) cat("    annotation/format/", n, sep="")
-        .DigestCode(index.gdsn(node, paste0(n, "/data")), digest, verbose)
+        .DigestCode(index.gdsn(node, paste0(n, "/data"), silent=TRUE), digest, verbose)
         .DigestCode(index.gdsn(node, paste0(n, "/@data")), digest, FALSE)
     }
 

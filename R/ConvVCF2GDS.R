@@ -194,7 +194,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     #########################################################
     # ploidy
 
-    if (!is.null(geno.text))
+    if (length(geno.text))
     {
         txt <- unlist(sapply(geno.text, function(s) {
             scan(text=s, what=character(), sep=":", quiet=TRUE, nmax=1) },
@@ -487,7 +487,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             {
                 samp.id <- seqVCF_SampID(vcf.fn[i])
                 if (length(samp.id) <= 0L)
-                    stop("There is no sample in the VCF file.")
+                    message("No sample in '", vcf.fn[i], "'")
             } else {
                 tmp <- seqVCF_SampID(vcf.fn[i])
                 if (length(samp.id) != length(tmp))
@@ -549,6 +549,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (!is.character(storage.tmp))
             storage.tmp <- "customized"
         cat("    compression method: ", storage.tmp, "\n", sep="")
+        cat("    # of samples: ", length(header$sample.id), "\n", sep="")
         flush.console()
     }
 
@@ -605,9 +606,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             geno_format <- list(Description="Genotype")
         }
     } else {
-        message("\t",
-            "variable id in the FORMAT field should be defined ahead, ",
-            "and the undefined id is/are ignored during the conversion.")
+        if (length(samp.id) > 0L)
+        {
+            message("\t",
+                "variable id in the FORMAT field should be defined ahead, ",
+                "and the undefined id is/are ignored during the conversion.")
+        }
         geno_format <- list(Description="Genotype")
     }
 
@@ -786,8 +790,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (is.na(header$ploidy)) header$ploidy <- 2L
     if (header$ploidy > 0L)
     {
-        geno.node <- .AddVar(storage.option, varGeno, "data",
-            storage=genotype.storage, valdim=c(header$ploidy, nSamp, 0L))
+        if (nSamp > 0L)
+        {
+            geno.node <- .AddVar(storage.option, varGeno, "data",
+                storage=genotype.storage, valdim=c(header$ploidy, nSamp, 0L))
+        } else
+            geno.node <- NULL
     } else
         stop("Invalid ploidy.")
     node <- .AddVar(storage.option, varGeno, "@data", storage="uint8",
@@ -802,7 +810,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     # add phase folder
     varPhase <- addfolder.gdsn(gfile, "phase")
-    if (header$ploidy > 1L)
+    if (header$ploidy > 1L && nSamp > 0L)
     {
         # add data
         if (header$ploidy > 2L)
@@ -1006,7 +1014,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             put.attr.gdsn(node, "Type", header$format$Type[i])
             put.attr.gdsn(node, "Description", header$format$Description[i])
 
-            .AddVar(storage.option, node, "data", storage=mode, valdim=c(nSamp, 0L))
+            if (nSamp > 0L)
+                .AddVar(storage.option, node, "data", storage=mode, valdim=c(nSamp, 0L))
             .AddVar(storage.option, node, "@data", storage="int32", visible=FALSE)
         }
     }
@@ -1082,7 +1091,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     linecnt, new.env())
 
                 filterlevels <- unique(c(filterlevels, v))
-                if (verbose) print(geno.node)
+                if (verbose && !is.null(geno.node))
+                    print(geno.node)
 
                 close(infile)
                 infile <- NULL

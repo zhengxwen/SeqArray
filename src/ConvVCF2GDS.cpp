@@ -2,7 +2,7 @@
 //
 // ConvVCF2GDS.cpp: format conversion from VCF to GDS
 //
-// Copyright (C) 2013-2017    Xiuwen Zheng
+// Copyright (C) 2013-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1173,21 +1173,21 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		PdAbstractArray varQual = GDS_Node_Path(Root, "annotation/qual", TRUE);
 		PdAbstractArray varFilter = GDS_Node_Path(Root, "annotation/filter", TRUE);
 
-		PdAbstractArray varGeno = GDS_Node_Path(Root, "genotype/data", TRUE);
+		PdAbstractArray varGeno = GDS_Node_Path(Root, "genotype/data", FALSE);
 		PdAbstractArray varGenoLen = GDS_Node_Path(Root, "genotype/@data", TRUE);
 		PdAbstractArray varGenoExtraIdx = GDS_Node_Path(Root, "genotype/extra.index", TRUE);
 		PdAbstractArray varGenoExtra = GDS_Node_Path(Root, "genotype/extra", TRUE);
 
-		const int GenoNumBits= GDS_Array_GetBitOf(varGeno);
+		const int GenoNumBits = varGeno ? GDS_Array_GetBitOf(varGeno) : 2;
 		if (GenoNumBits != 2)
 			throw ErrSeqArray("Invalid data type in genotype/data, it should be bit2.");
 
 		PdAbstractArray varPhase, varPhaseExtraIdx, varPhaseExtra;
 		if (num_ploidy > 1)
 		{
-			varPhase = GDS_Node_Path(Root, "phase/data", TRUE);
-			varPhaseExtraIdx = GDS_Node_Path(Root, "phase/extra.index", TRUE);
-			varPhaseExtra = GDS_Node_Path(Root, "phase/extra", TRUE);
+			varPhase = GDS_Node_Path(Root, "phase/data", FALSE);
+			varPhaseExtraIdx = GDS_Node_Path(Root, "phase/extra.index", FALSE);
+			varPhaseExtra = GDS_Node_Path(Root, "phase/extra", FALSE);
 		} else {
 			varPhase = varPhaseExtraIdx = varPhaseExtra = NULL;
 		}
@@ -1433,7 +1433,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			// initialize
 			for (pI = info_list.begin(); pI != info_list.end(); pI++)
 				pI->used = false;
-			GetText(FALSE);
+			GetText(SampleNum<=0);
 			SkipTextWithDot();
 
 			// parse
@@ -1574,6 +1574,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 			// -----------------------------------------------------
 			// column 9: FORMAT
+
+			if (SampleNum <= 0) continue;
 
 			// initialize
 			for (pF = fmt_ptr.begin(); pF != fmt_ptr.end(); pF++)

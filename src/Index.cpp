@@ -2,7 +2,7 @@
 //
 // Index.cpp: Indexing Objects
 //
-// Copyright (C) 2016-2017    Xiuwen Zheng
+// Copyright (C) 2016-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -680,7 +680,8 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 				GDS_Array_GetDim(Node, DLen, 3);
 				_Ploidy = DLen[2];
 			}
-		}
+		} else
+			_Ploidy = 2;
 
 		// initialize selection
 		_SelList = new TSelection(*this, true);
