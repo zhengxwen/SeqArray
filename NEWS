@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.21.1-1.21.2
+CHANGES IN VERSION 1.21.1-1.21.3
 -------------------------
 
 UTILITIES
@@ -16,6 +16,8 @@ NEW FEATURES
 
     o a new function `seqCheck()` for checking the data integrity of a SeqArray
       file
+
+    o `seqGDS2SNP()` exports dosage GDS files
 
 BUG FIXES
 

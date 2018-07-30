@@ -2,7 +2,7 @@
 //
 // ConvToGDS.cpp: format conversion
 //
-// Copyright (C) 2015-2017    Xiuwen Zheng
+// Copyright (C) 2015-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -286,6 +286,38 @@ COREARRAY_DLL_EXPORT SEXP FC_GDS2SNP(SEXP geno)
 		p ++;
 	}
 	return geno;
+}
+
+
+// ======================================================================
+// SeqArray GDS --> Dosage GDS
+// ======================================================================
+
+static int FC_Num_Sample = 0;
+
+COREARRAY_DLL_EXPORT SEXP FC_SetNumSamp(SEXP num)
+{
+	FC_Num_Sample = Rf_asInteger(num);
+	return R_NilValue;
+}
+
+COREARRAY_DLL_EXPORT SEXP FC_GDS2Dosage(SEXP dosage)
+{
+	int n = LENGTH(dosage);
+	if (n < FC_Num_Sample)
+	{
+		dosage = NEW_NUMERIC(FC_Num_Sample);
+		double *dst = REAL(dosage);
+		for (int i=0; i < FC_Num_Sample; i++)
+			dst[i] = R_NaN;
+	} else if (n > FC_Num_Sample)
+	{
+		double *src = REAL(dosage);
+		dosage = NEW_NUMERIC(FC_Num_Sample);
+		double *dst = REAL(dosage);
+		memcpy(dst, src, sizeof(double)*FC_Num_Sample);
+	}
+	return dosage;
 }
 
 } // extern "C"

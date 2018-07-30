@@ -320,13 +320,14 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 # Convert a SeqArray GDS file to a SNP GDS file
 #
 
-seqGDS2SNP <- function(gdsfile, out.gdsfn,
-    compress.geno="ZIP_RA", compress.annotation="LZMA_RA",
+seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
+    compress.geno="LZMA_RA", compress.annotation="LZMA_RA",
     optimize=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
+    stopifnot(is.logical(dosage) | is.character(dosage), length(dosage)==1L)
     stopifnot(is.character(compress.geno), length(compress.geno)==1L)
     stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
@@ -335,7 +336,10 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
     if (verbose)
     {
         cat(date(), "\n", sep="")
-        cat("SeqArray GDS to SNP GDS Format:\n")
+        if (isTRUE(dosage) | is.character(dosage))
+            cat("SeqArray GDS to SNP GDS Dosage Format:\n")
+        else
+            cat("SeqArray GDS to SNP GDS Format:\n")
     }
 
     # if it is a file name
@@ -345,12 +349,27 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
         on.exit({ seqClose(gdsfile) })
     }
 
+    # dosage variable name
+    if (isTRUE(dosage) | is.character(dosage))
+    {
+        if (isTRUE(dosage))
+            dosage <- "annotation/format/DS"
+        else if (substr(dosage, 1L, 18L) != "annotation/format/")
+            dosage <- paste0("annotation/format/", dosage)
+    }
+
     if (verbose)
     {
         dm <- .seldim(gdsfile)
         cat("    # of samples: ", .pretty(dm[2L]), "\n", sep="")
         cat("    # of variants: ", .pretty(dm[3L]), "\n", sep="")
-        cat("    genotype compression: ", compress.geno, "\n", sep="")
+        if (is.character(dosage))
+        {
+            cat("    dosage compression: ", compress.geno, ", from [",
+                dosage, "]\n", sep="")
+        } else {
+            cat("    genotype compression: ", compress.geno, "\n", sep="")
+        }
         cat("    annotation compression: ", compress.annotation, "\n", sep="")
     }
 
@@ -358,19 +377,16 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
     gfile <- createfn.gds(out.gdsfn)
     # close the file at the end
     on.exit({
-        closefn.gds(gfile)
-        if (verbose)
-            cat("Done.\n", date(), "\n", sep="")
-        if (optimize)
-        {
-            if (verbose) cat("Optimize the access efficiency ...\n")
-            cleanup.gds(out.gdsfn, verbose=verbose)
-            if (verbose) cat(date(), "\n", sep="")
-        }
+        if (!is.null(gfile)) closefn.gds(gfile)
     }, add=TRUE)
 
     # add a flag
-    put.attr.gdsn(gfile$root, "FileFormat", "SNP_ARRAY")
+    if (!is.character(dosage))
+    {
+        put.attr.gdsn(gfile$root, "FileFormat", "SNP_ARRAY")
+    } else {
+        put.attr.gdsn(gfile$root, "FileFormat", "IMPUTED_DOSAGE")
+    }
 
     # add "sample.id"
     sampid <- seqGetData(gdsfile, "sample.id")
@@ -402,13 +418,34 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn,
         compress=compress.annotation, closezip=TRUE)
 
     # add "genotype"
-    gGeno <- add.gdsn(gfile, "genotype", storage="bit2",
-        valdim=c(length(sampid), 0L), compress=compress.geno)
-    put.attr.gdsn(gGeno, "sample.order")
+    if (!is.character(dosage))
+    {
+        gGeno <- add.gdsn(gfile, "genotype", storage="bit2",
+            valdim=c(length(sampid), 0L), compress=compress.geno)
+        put.attr.gdsn(gGeno, "sample.order")
+        seqApply(gdsfile, "$dosage", as.is=gGeno, .useraw=TRUE, .progress=verbose,
+            FUN = .cfunction("FC_GDS2SNP"))
+    } else {
+        .cfunction("FC_SetNumSamp")(length(sampid))
+        gGeno <- add.gdsn(gfile, "genotype", storage="float32",
+            valdim=c(length(sampid), 0L), compress=compress.geno)
+        put.attr.gdsn(gGeno, "sample.order")
+        seqApply(gdsfile, dosage, as.is=gGeno, .progress=verbose,
+            FUN = .cfunction("FC_GDS2Dosage"))
+    }
 
-    seqApply(gdsfile, "$dosage", as.is=gGeno, .useraw=TRUE, .progress=verbose,
-        FUN = .cfunction("FC_GDS2SNP"))
     readmode.gdsn(gGeno)
+    closefn.gds(gfile)
+    gfile <- NULL
+    if (verbose)
+        cat("Done.\n", date(), "\n", sep="")
+
+    if (optimize)
+    {
+        if (verbose) cat("Optimize the access efficiency ...\n")
+        cleanup.gds(out.gdsfn, verbose=verbose)
+        if (verbose) cat(date(), "\n", sep="")
+    }
 
     # output
     invisible(normalizePath(out.gdsfn))
