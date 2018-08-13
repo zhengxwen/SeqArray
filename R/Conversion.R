@@ -322,7 +322,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
 seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     compress.geno="LZMA_RA", compress.annotation="LZMA_RA",
-    optimize=TRUE, verbose=TRUE)
+    ds.type=c("packedreal16", "float", "double"), optimize=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
@@ -332,6 +332,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    ds.type <- match.arg(ds.type)
 
     if (verbose)
     {
@@ -427,7 +428,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
             FUN = .cfunction("FC_GDS2SNP"))
     } else {
         .cfunction("FC_SetNumSamp")(length(sampid))
-        gGeno <- add.gdsn(gfile, "genotype", storage="float32",
+        gGeno <- add.gdsn(gfile, "genotype", storage=ds.type,
             valdim=c(length(sampid), 0L), compress=compress.geno)
         put.attr.gdsn(gGeno, "sample.order")
         seqApply(gdsfile, dosage, as.is=gGeno, .progress=verbose,

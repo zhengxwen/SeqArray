@@ -6,7 +6,8 @@
 }
 \usage{
 seqGDS2SNP(gdsfile, out.gdsfn, dosage=FALSE, compress.geno="LZMA_RA",
-    compress.annotation="LZMA_RA", optimize=TRUE, verbose=TRUE)
+    compress.annotation="LZMA_RA", ds.type=c("packedreal16", "float", "double"),
+    optimize=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{character (GDS file name), or
@@ -20,6 +21,8 @@ seqGDS2SNP(gdsfile, out.gdsfn, dosage=FALSE, compress.geno="LZMA_RA",
     \item{compress.annotation}{the compression method for the GDS variables,
         except "genotype"; optional values are defined in the function
         \code{add.gdsn}}
+    \item{ds.type}{applicable when import dosages, the data type for storing
+        dosages; see \code{\link{add.gdsn}}}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}

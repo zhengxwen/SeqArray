@@ -303,7 +303,7 @@ COREARRAY_DLL_EXPORT SEXP FC_SetNumSamp(SEXP num)
 
 COREARRAY_DLL_EXPORT SEXP FC_GDS2Dosage(SEXP dosage)
 {
-	int n = LENGTH(dosage);
+	int n = Rf_isNull(dosage) ? 0 : LENGTH(dosage);
 	if (n < FC_Num_Sample)
 	{
 		dosage = NEW_NUMERIC(FC_Num_Sample);
