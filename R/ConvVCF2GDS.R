@@ -34,8 +34,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 
     # parse and determine how many copies of genomes: haploid, diploid or others
     geno.text <- NULL
-    nSample <- 0L
-    nVariant <- 0L
+    nSample <- nVariant <- 0L
     samp.id <- NULL
 
     n <- 0L
@@ -78,7 +77,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                         ss <- scan(text=s, what=character(), sep="\t", quiet=TRUE)
                         geno.text <- c(geno.text, ss[-seq_len(9L)])
                     }
-                    if (getnum)
+                    if (isTRUE(getnum))
                     {
                         nVariant <- nVariant + length(s) +
                             .Call(SEQ_VCF_NumLines, infile, FALSE)

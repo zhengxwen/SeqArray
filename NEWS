@@ -1,10 +1,13 @@
-CHANGES IN VERSION 1.21.1-1.21.3
+CHANGES IN VERSION 1.21.1-1.21.6
 -------------------------
 
 UTILITIES
 
     o avoid duplicated meta-information lines in `seqVCF2GDS()` and
       `seqVCF_Header()`
+
+    o require >= R_v3.5.0, since reading from connections in text mode is
+      buffered
 
 NEW FEATURES
 
@@ -23,6 +26,9 @@ BUG FIXES
 
     o `seqVCF2GDS()` and `seqVCF_Header()` are able to import site-only VCF
       files (i.e., VCF with no sample)
+
+    o fix `seqVCF2GDS()` and `seqBCF2GDS()` since reading from connections in
+      text mode is buffered for R >= v3.5.0
 
 
 CHANGES IN VERSION 1.20.1

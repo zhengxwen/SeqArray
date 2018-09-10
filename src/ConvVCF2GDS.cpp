@@ -64,6 +64,10 @@ static inline void end_timing()
 // define 
 // ===========================================================
 
+#if R_CONNECTIONS_VERSION != 1
+#error "No support of R_CONNECTIONS_VERSION"
+#endif
+
 static Rconnection VCF_File = NULL;  ///< R connection object
 
 static vector<char> VCF_Buffer;  ///< reading buffer
@@ -95,7 +99,22 @@ inline static void Done_VCF_Buffer()
 inline static void Read_VCF_Buffer()
 {
 	VCF_Buffer_Ptr = &VCF_Buffer[0];
-	size_t n = R_ReadConnection(VCF_File, VCF_Buffer_Ptr, VCF_BUFFER_SIZE);
+	size_t n = 0;
+	size_t unread_len = VCF_File->buff_stored_len - VCF_File->buff_pos;
+	if (unread_len > 0)
+	{
+		if (unread_len > VCF_BUFFER_SIZE) unread_len = VCF_BUFFER_SIZE;
+		memcpy(VCF_Buffer_Ptr, VCF_File->buff + VCF_File->buff_pos, unread_len);
+		VCF_Buffer_Ptr += unread_len;
+		VCF_File->buff_pos += unread_len;
+		n += unread_len;
+	}
+	if (n < VCF_BUFFER_SIZE)
+	{
+		size_t m = R_ReadConnection(VCF_File, VCF_Buffer_Ptr, VCF_BUFFER_SIZE-n);
+		n += m;
+	}
+	VCF_Buffer_Ptr = &VCF_Buffer[0];
 	VCF_Buffer_EndPtr = VCF_Buffer_Ptr + n;
 	if (n <= 0)
 	{

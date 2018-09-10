@@ -914,7 +914,7 @@ seqBlockApply(genofile, "$dosage", function(g)
         d <- (g*g - g*(1 + 2*p) + 2*p*p) / (2*p*(1-p))
         n <<- n + colSums(is.finite(d))        # output to the global variable 'n'
         s <<- s + colSums(d, na.rm=TRUE)       # output to the global variable 's'
-    }, margin="by.variant", as.is="none")
+    }, margin="by.variant", as.is="none", .progress=TRUE)
 
 # output
 summary(coeff <- s / n)

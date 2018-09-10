@@ -31,13 +31,18 @@
     n <- index.gdsn(gdsfile, varname, silent=TRUE)
     if (!is.null(n))
     {
-        s <- paste0("    ", name.gdsn(n, fullname=TRUE), ":")
+        if (verbose)
+        {
+            cat("    ", name.gdsn(n, fullname=TRUE), ":", sep="")
+            flush.console()
+        }
+        s <- ""
         v <- digest.gdsn(n, action="return")
         s1 <- paste(names(v)[which(v==TRUE)], collapse="/")
         s2 <- paste(names(v)[which(v==FALSE)], collapse="/")
         if (s1=="" & s2=="")
         {
-            s <- paste(s, "no digest")
+            s <- paste0(s, "\tno digest")
         } else {
             if (s1 != "")
             {
@@ -794,7 +799,11 @@ seqSystem <- function()
 
 .check_var_dim <- function(f, nm, type, cnt, verbose)
 {
-    if (verbose) cat("    ", nm, sep="")
+    if (verbose)
+    {
+        cat("    ", nm, sep="")
+        flush.console()
+    }
     dp <- objdesp.gdsn(index.gdsn(f, nm))
     if (isTRUE(dp$type != type))
         s <- "Invalid data type."
