@@ -266,9 +266,13 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         {
             if (!is.element(tolower(v$Type),
                     c("integer", "float", "flag", "character", "string")))
-                stop("INFO=", s[i])
+            {
+                stop("Invalid data type (", v$Type, ")\nINFO=", s[i])
+            }
             if (!CheckNum(v$Number))
-                stop("INFO=", s[i])
+            {
+                stop("Invalid number (", v$Number, ")\nINFO=", s[i])
+            }
             INFO <- rbind(INFO, v)
         } else
             stop("INFO=", s[i])
@@ -306,9 +310,13 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         {
             if (!is.element(tolower(v$Type),
                     c("integer", "float", "character", "string")))
-                stop("FORMAT=", s[i])
+            {
+                stop("Invalid data type (", v$Type, ")\nFORMAT=", s[i])
+            }
             if (!CheckNum(v$Number))
-                stop("FORMAT=", s[i])
+            {
+                stop("Invalid number (", v$Number, ")\nFORMAT=", s[i])
+            }
             FORMAT <- rbind(FORMAT, v)
         } else
             stop("FORMAT=", s[i])
