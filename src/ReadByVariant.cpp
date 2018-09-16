@@ -130,6 +130,33 @@ SEXP CApply_Variant_Chrom::NeedRData(int &nProtected)
 // =====================================================================
 // Object for reading genotypes variant by variant
 
+static inline void read_geno(CdIterator &it, int *out, TSelection::TSampStruct *p)
+{
+	C_Int64 base = it.Ptr;
+	for (; p->length > 0; p++)
+	{
+		it.Ptr = base + p->offset;
+		if (!p->sel)
+			out = (int*)GDS_Iter_RData(&it, out, p->length, svInt32);
+		else
+			out = (int*)GDS_Iter_RDataEx(&it, out, p->length, svInt32, p->sel);
+	}
+}
+
+static inline void read_geno(CdIterator &it, C_UInt8 *out, TSelection::TSampStruct *p)
+{
+	C_Int64 base = it.Ptr;
+	for (; p->length > 0; p++)
+	{
+		it.Ptr = base + p->offset;
+		if (!p->sel)
+			out = (C_UInt8*)GDS_Iter_RData(&it, out, p->length, svUInt8);
+		else
+			out = (C_UInt8*)GDS_Iter_RDataEx(&it, out, p->length, svUInt8, p->sel);
+	}
+}
+
+
 CApply_Variant_Geno::CApply_Variant_Geno(): CApply_Variant()
 {
 	fVarType = ctGenotype;
@@ -171,7 +198,7 @@ void CApply_Variant_Geno::Init(CFileInfo &File, int use_raw)
 	UseRaw = use_raw;
 
 	// initialize selection
-	pSelection = File.Selection().GetFlagGenoSel();
+	pSampSel = File.Selection().GetStructSample();
 
 	ExtPtr.reset(SiteCount);
 	VarIntGeno = VarRawGeno = NULL;
@@ -188,13 +215,14 @@ int CApply_Variant_Geno::_ReadGenoData(int *Base)
 	{
 		CdIterator it;
 		GDS_Iter_Position(Node, &it, Index*SiteCount);
-		GDS_Iter_RDataEx(&it, Base, SiteCount, svInt32, pSelection);
+		read_geno(it, Base, pSampSel);
 
 		const int bit_mask = 0x03;
 		int missing = bit_mask;
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
-			GDS_Iter_RDataEx(&it, ExtPtr.get(), SiteCount, svUInt8, pSelection);
+			GDS_Iter_Position(Node, &it, (Index+1)*SiteCount);
+			read_geno(it, (C_UInt8*)ExtPtr.get(), pSampSel);
 
 			C_UInt8 shift = i * 2;
 			C_UInt8 *s = (C_UInt8*)ExtPtr.get();
@@ -222,7 +250,7 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 	{
 		CdIterator it;
 		GDS_Iter_Position(Node, &it, Index*SiteCount);
-		GDS_Iter_RDataEx(&it, Base, SiteCount, svUInt8, pSelection);
+		read_geno(it, Base, pSampSel);
 
 		const C_UInt8 bit_mask = 0x03;
 		C_UInt8 missing = bit_mask;
@@ -234,7 +262,8 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
-			GDS_Iter_RDataEx(&it, ExtPtr.get(), SiteCount, svUInt8, pSelection);
+			GDS_Iter_Position(Node, &it, (Index+1)*SiteCount);
+			read_geno(it, (C_UInt8*)ExtPtr.get(), pSampSel);
 
 			C_UInt8 shift = i * 2;
 			C_UInt8 *s = (C_UInt8*)ExtPtr.get();

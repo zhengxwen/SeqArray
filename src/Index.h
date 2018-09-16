@@ -2,7 +2,7 @@
 //
 // Index.h: Indexing Objects
 //
-// Copyright (C) 2016-2017    Xiuwen Zheng
+// Copyright (C) 2016-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -311,6 +311,12 @@ class CFileInfo;
 /// selection object used in GDS file
 struct COREARRAY_DLL_LOCAL TSelection
 {
+	struct COREARRAY_DLL_LOCAL TSampStruct {
+		ssize_t length;
+		ssize_t offset;
+		C_BOOL *sel;
+	};
+
 	TSelection *Link;  ///< the pointer to the last one
 	C_BOOL *pSample;   ///< sample selection
 	C_BOOL *pVariant;  ///< variant selection
@@ -324,15 +330,15 @@ struct COREARRAY_DLL_LOCAL TSelection
 	/// destructor
 	~TSelection();
 
-	/// get the bool array for genotype selection
-	C_BOOL *GetFlagGenoSel();
+	/// get the pointer to the sample reading structure
+	TSampStruct *GetStructSample();
+	/// clear the structure of selected samples for resetting the sample filter
+	void ClearStructSample();
+
 	/// get the structure of selected variants
 	void GetStructVariant();
 	/// clear selected varaints
 	void ClearSelectVariant();
-
-	/// clear the structure of selected samples for resetting the sample filter
-	void ClearStructSample();
 	/// clear the structure of selected variants for resetting the variant filter
 	void ClearStructVariant();
 
@@ -341,6 +347,7 @@ private:
 	size_t numVar;     ///< the total number of variants
 	size_t numPloidy;  ///< the ploidy
 	C_BOOL *pFlagGenoSel;  ///< the pointer to the genotype selection according to the selected samples
+	vector<TSampStruct> pSampList;
 };
 
 

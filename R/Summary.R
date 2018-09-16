@@ -762,7 +762,7 @@ seqSummary <- function(gdsfile, varname=NULL,
 #######################################################################
 # summarize
 #
-seqDigest <- function(gdsfile, varname, algo=c("md5"), verbose=TRUE)
+seqDigest <- function(gdsfile, varname, algo=c("md5"), verbose=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -776,7 +776,7 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"), verbose=TRUE)
             margin="by.variant", as.is="none", .useraw=NA, .progress=verbose)
         .cfunction("FC_DigestDone")(algo)
     } else
-        NA_character_
+        stop("The digest package is not installed.")
 }
 
 

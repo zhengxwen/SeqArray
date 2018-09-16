@@ -1086,6 +1086,39 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 }
 
 
+
+// ===========================================================
+// debug information
+// ===========================================================
+
+/// the number of alleles per site
+COREARRAY_DLL_EXPORT SEXP SEQ_Debug(SEXP gdsfile)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		int ploidy = File.Ploidy();
+		TSelection &Sel = File.Selection();
+
+		Rprintf("Selected samples:\n");
+		TSelection::TSampStruct *p = Sel.GetStructSample();
+		while (p->length > 0)
+		{
+			Rprintf("    start: %d, length: %d, sel: %p\n", p->offset/ploidy,
+				p->length/ploidy, p->sel);
+			p ++;
+		}
+
+		Rprintf("Selected variants:\n");
+		Sel.GetStructVariant();
+		Rprintf("    start: %d, end: %d, num: %d\n", (int)Sel.varStart,
+			(int)Sel.varEnd, (int)Sel.varTrueNum);
+
+		return R_NilValue;
+	COREARRAY_CATCH
+}
+
+
+
 // ===========================================================
 // initialize R objects when the package is loaded
 // ===========================================================

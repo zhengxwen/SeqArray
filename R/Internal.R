@@ -702,6 +702,19 @@
     invisible()
 }
 
+
+
+#######################################################################
+# Convert to a VariantAnnotation object
+
+.seqDebug <- function(gdsfile)
+{
+    .Call("SEQ_Debug", gdsfile)
+    invisible()
+}
+
+
+
 #######################################################################
 # Convert to a VariantAnnotation object
 #
