@@ -394,9 +394,11 @@ static const char *pkg_digest = "digest";
 static int digest_data_type = -1;
 
 #define PKG_LOAD(name)	\
-	*(DL_FUNC*)(&name) = R_FindSymbol(#name, pkg_digest, NULL); \
-	if (!name) \
-		error("No function '%s' in the %s package", #name, pkg_digest);
+	{ \
+		*(DL_FUNC*)(&name) = R_FindSymbol(#name, pkg_digest, NULL); \
+		if (!name) \
+			error("No function '%s' in the %s package", #name, pkg_digest); \
+	}
 
 typedef struct _md5_context
 {

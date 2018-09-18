@@ -553,7 +553,7 @@ TSelection::~TSelection()
 TSelection::TSampStruct *TSelection::GetStructSample()
 {
 	// the block size considered in the block reading
-	static ptrdiff_t block_size = 128;
+	static ptrdiff_t block_size = 512;
 
 	if (!pFlagGenoSel)
 	{
