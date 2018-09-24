@@ -550,8 +550,11 @@ TSelection::~TSelection()
 	Link = NULL;
 }
 
-C_BOOL *TSelection::GetFlagGenoSel()
+TSelection::TSampStruct *TSelection::GetStructSample()
 {
+	// the block size considered in the block reading
+	static ptrdiff_t block_size = 512;
+
 	if (!pFlagGenoSel)
 	{
 		const size_t SIZE = numSamp * numPloidy;
@@ -568,7 +571,85 @@ C_BOOL *TSelection::GetFlagGenoSel()
 			}
 		}
 	}
-	return pFlagGenoSel;
+
+	if (pSampList.empty())
+	{
+		TSampStruct ss, last;
+		last.length = last.offset = 0; last.sel = NULL;
+		C_BOOL *pSt = pSample, *pEnd = pSample + numSamp;
+		// find the first TRUE
+		while (pSt<pEnd && !*pSt) pSt++;
+		// for-loop all TRUE blocks
+		for (; pSt < pEnd; )
+		{
+			// find the last TRUE of the TRUE block
+			C_BOOL *pE = pSt;
+			while (pE<pEnd && *pE) pE++;
+			// find the first TRUE of the next TRUE block
+			C_BOOL *pSt2 = pE;
+			while (pSt2<pEnd && !*pSt2) pSt2++;
+			//
+			if (pE-pSt >= block_size)
+			{
+				// TRUE block: long enough
+				if (last.length > 0)
+				{
+					pSampList.push_back(last);
+					last.length = 0;
+				}
+				ss.length = (pE - pSt) * numPloidy;
+				ss.offset = (pSt - pSample) * numPloidy;
+				ss.sel = NULL;
+				pSampList.push_back(ss);
+			} else if (pSt2-pE >= block_size)
+			{
+				// TRUE block: short, but far away from the next TRUE block
+				if (last.length > 0)
+				{
+					last.length = (pE - pSample) * numPloidy - last.offset;
+					pSampList.push_back(last);
+					last.length = 0;
+				} else {
+					ss.length = (pE - pSt) * numPloidy;
+					ss.offset = (pSt - pSample) * numPloidy;
+					ss.sel = NULL;
+					pSampList.push_back(ss);
+				}
+			} else {
+				// sparse
+				if (last.length > 0)
+				{
+					last.length = (pE - pSample) * numPloidy - last.offset;
+					if (!last.sel)
+						last.sel = pFlagGenoSel + last.offset;
+				} else {
+					last.length = (pE - pSt) * numPloidy;
+					last.offset = (pSt - pSample) * numPloidy;
+					last.sel = NULL;
+				}
+			}
+			// at last
+			pSt = pSt2;
+		}
+
+		// the ending one
+		if (last.length > 0)
+			pSampList.push_back(last);
+		ss.length = ss.offset = 0; ss.sel = NULL;
+		pSampList.push_back(ss);
+	}
+
+	return &pSampList[0];
+}
+
+void TSelection::ClearStructSample()
+{
+	if (pFlagGenoSel)
+	{
+		delete[] pFlagGenoSel;
+		pFlagGenoSel = NULL;
+	}
+	pSampList.clear();
 }
 
 void TSelection::GetStructVariant()
@@ -596,15 +677,6 @@ void TSelection::ClearSelectVariant()
 		memset(pVariant+varStart, 0, varEnd-varStart);
 	}
 	varTrueNum = varStart = varEnd = 0;
-}
-
-void TSelection::ClearStructSample()
-{
-	if (pFlagGenoSel)
-	{
-		delete[] pFlagGenoSel;
-		pFlagGenoSel = NULL;
-	}
 }
 
 void TSelection::ClearStructVariant()

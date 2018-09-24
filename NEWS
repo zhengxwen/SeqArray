@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.21.1-1.21.6
+CHANGES IN VERSION 1.21.1-1.21.7
 -------------------------
 
 UTILITIES
@@ -9,6 +9,11 @@ UTILITIES
     o require >= R_v3.5.0, since reading from connections in text mode is
       buffered
 
+    o `seqDigest()` requires the digest package
+
+    o optimization in reading genotypes from a subset of samples (according to
+      gdsfmt_1.17.5)
+
 NEW FEATURES
 
     o `seqSNP2GDS()` imports dosage GDS files
@@ -18,7 +23,7 @@ NEW FEATURES
     o a new function `seqRecompress()`
 
     o a new function `seqCheck()` for checking the data integrity of a SeqArray
-      file
+      GDS file
 
     o `seqGDS2SNP()` exports dosage GDS files
 

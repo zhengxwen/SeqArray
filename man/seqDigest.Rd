@@ -5,7 +5,7 @@
     Create hash function digests for all or a subset of data
 }
 \usage{
-seqDigest(gdsfile, varname, algo=c("md5"), verbose=TRUE)
+seqDigest(gdsfile, varname, algo=c("md5"), verbose=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
