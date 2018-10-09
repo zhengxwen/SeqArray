@@ -27,10 +27,9 @@ library(VariantAnnotation)
 .test_header <- function(hdv, hdg) {
   checkIdentical(samples(hdv), samples(hdg))
   ## The meta(VCFHeader) getter now returns a DataFrameList, not DataFrame.
-  ## The META DataFrame is now one element of the DataFrameList.
   ## tags with non-alphanumeric characters get ignored by scanBcfHeader
-  meta.hdg <- meta(hdg)$META[grep("^[[:alnum:]]+$", row.names(meta(hdg)$META)),,drop=FALSE]
-  checkIdentical(meta(hdv)$META[rownames(meta.hdg),,drop=FALSE], meta.hdg)
+  meta.hdg <- meta(hdg)[grep("^[[:alnum:]]+$", row.names(meta(hdg))),,drop=FALSE]
+  checkIdentical(meta(hdv)[rownames(meta.hdg),,drop=FALSE], meta.hdg)
   checkIdentical(fixed(hdv), fixed(hdg))
   checkIdentical(info(hdv), info(hdg))
   checkIdentical(geno(hdv), geno(hdg))
@@ -62,6 +61,7 @@ library(VariantAnnotation)
 
 .test_asVCF <- function(vcffile, gdsfile) {
   vcf <- readVcf(vcffile, genome="hg19")
+  showfile.gds(closeall=TRUE, verbose=FALSE)
   gdsobj <- seqOpen(gdsfile)
 
   ## .test_rowRanges(rowRanges(vcf), rowRanges(gdsobj))
@@ -114,6 +114,7 @@ test_asVCF_altInHead <- function() {
 ## }
 
 test_info_geno <- function() {
+  showfile.gds(closeall=TRUE, verbose=FALSE)
   vcffile <- system.file("extdata", "gl_chr1.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
   seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)
@@ -135,6 +136,7 @@ test_info_geno <- function() {
 }
 
 test_info_geno_na <- function() {
+  showfile.gds(closeall=TRUE, verbose=FALSE)
   vcffile <- seqExampleFileName("vcf")
   gdsfile <- seqExampleFileName("gds")
   info <- NA
@@ -154,6 +156,7 @@ test_info_geno_na <- function() {
 }
 
 test_filters <- function() {
+  showfile.gds(closeall=TRUE, verbose=FALSE)
   vcffile <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
   gdsfile <- tempfile()
   seqVCF2GDS(vcffile, gdsfile, storage.option="ZIP_RA", verbose=FALSE)

@@ -86,11 +86,11 @@ setMethod("header", "SeqVarGDSClass", function(x)
     ## meta
     des <- get.attr.gdsn(index.gdsn(x, "description"))
     ff <- des$vcf.fileformat
-    meta <- DataFrame(Value=ff, row.names="fileformat")
+    meta <- DataFrameList(fileformat=DataFrame(Value=ff, row.names="fileformat"))
     ref <- seqsum$reference
     if (length(ref) > 0L)
     {
-        meta <- rbind(meta, DataFrame(Value=ref, row.names="reference"))
+        meta <- c(meta, DataFrameList(reference=DataFrame(Value=ref, row.names="reference")))
     }
     n <- index.gdsn(x, "description/vcf.header", silent=TRUE)
     if (!is.null(n))
@@ -98,15 +98,16 @@ setMethod("header", "SeqVarGDSClass", function(x)
         des <- read.gdsn(n)
         ## ID=value header fields not parsed in GDS
         des <- des[!(des[,1L] %in% c("contig", "SAMPLE", "PEDIGREE")),]
-        ## deal with duplicate row names
-        if (any(duplicated(des[,1L])))
-        {
-            des[,1] <- make.unique(des[,1L])
+        fields <- unique(des[,1L])
+        for (f in fields) {
+            des.f <- des[des[,1L] %in% f,,drop=FALSE]
+            meta.des <- DataFrameList(DataFrame(Value=des.f[,2L], row.names=make.unique(des.f[,1L])))
+            names(meta.des) <- f
+            meta <- c(meta, meta.des)
         }
-        meta <- rbind(meta, DataFrame(Value=des[,2L], row.names=des[,1L]))
     }
 
-    hdr <- DataFrameList(META=meta, INFO=infoHd, FORMAT=genoHd)
+    hdr <- c(meta, DataFrameList(INFO=infoHd, FORMAT=genoHd))
 
     ## fixed
     des <- seqsum$allele
