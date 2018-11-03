@@ -16,7 +16,7 @@
 }
 
 
-test_colData <- function() {
+.test_colData <- function() {
   ## test with no sample annotation  
   vcffile <- system.file("extdata", "ex2.vcf", package="VariantAnnotation")
   gdsfile <- tempfile()
