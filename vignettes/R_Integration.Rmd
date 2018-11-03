@@ -160,7 +160,7 @@ eig <- eigen(s)
 [==================================================] 100%, completed in 14.3m
 ```
 
-```R
+```{r}
 # covariance variable with an initial value
 s <- 0
 
@@ -176,18 +176,12 @@ seqBlockApply(file, "$dosage", function(x)
 s <- s * (nrow(s) / sum(diag(s)))
 
 # eigen-decomposition
-eig <- eigen(s)
-```
-```
-[..................................................]  0%, ETC: ---
-[==================>...............................] 35%, ETC: 9s
-[======================================>...........] 75%, ETC: 3s
-[==================================================] 100%, completed in 14s
+eig <- eigen(s, symmetric=TRUE)
 ```
 
 `seqParallel()` utilizes the facilities offered by the R parallel package to perform calculations within a cluster or SMP environment, and the genotypes are automatically split into non-overlapping parts. The parallel implementation with R is shown as follows, and the C optimized function is also available in the SNPRelate package.
 
-```{r}
+```R
 # the datasets are automatically split into four non-overlapping parts
 genmat <- seqParallel(2, file, FUN = function(f)
     {
