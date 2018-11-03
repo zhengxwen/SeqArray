@@ -1,5 +1,6 @@
 language: r
-r: bioc-devel
+r:
+  - devel
 
 warnings_are_errors: true
 bioc_required: true
