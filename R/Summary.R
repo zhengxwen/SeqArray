@@ -420,7 +420,7 @@
 
     info <- index.gdsn(gdsfile, "annotation/info")
     ans <- NULL
-    for (nm in ls.gdsn(info))
+    for (nm in ls.gdsn(info, recursive=TRUE, include.dirs=FALSE))
     {
         a <- get.attr.gdsn(index.gdsn(info, nm))
         if (is.null(a$Number)) a$Number <- "A"
@@ -835,7 +835,8 @@ seqCheck <- function(gdsfile, verbose=TRUE)
     # hash check
     if (verbose)
         cat("Hash check:\n")
-    nm_lst <- ls.gdsn(gdsfile, include.hidden=TRUE, recursive=TRUE)
+    nm_lst <- ls.gdsn(gdsfile, include.hidden=TRUE, recursive=TRUE,
+        include.dirs=FALSE)
     s <- sapply(nm_lst, function(nm) {
             ns <- names(get.attr.gdsn(index.gdsn(gdsfile, nm)))
             any(ns %in% c("md5", "sha1", "sha256", "sha384", "sha512"))

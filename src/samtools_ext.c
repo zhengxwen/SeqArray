@@ -83,12 +83,12 @@ SEXP SEQ_bgzip_create(SEXP filename)
 		error("Cannot open '%s'.", fn);
 
 	con->private = bz;
-    con->isopen = TRUE;
-    con->canwrite = TRUE;
-    con->canread = FALSE;
-    con->text = FALSE;
-    con->close = &bzfile_close;
-    con->write = &bzfile_write;
+	con->isopen = TRUE;
+	con->canwrite = TRUE;
+	con->canread = FALSE;
+	con->text = FALSE;
+	con->close = &bzfile_close;
+	con->write = &bzfile_write;
 
 	return r_con;
 }

@@ -40,7 +40,7 @@ Development Version: v1.23.0
 Zheng X, Gogarten S, Lawrence M, Stilp A, Conomos M, Weir BS, Laurie C, Levine D (2017). SeqArray -- A storage-efficient high-performance data format for WGS variant calls. *Bioinformatics*. [DOI: 10.1093/bioinformatics/btx145](http://dx.doi.org/10.1093/bioinformatics/btx145).
 
 
-## Installation (requiring ≥ R_v3.3.0)
+## Installation (requiring ≥ R_v3.5.0)
 
 * Bioconductor repository:
 ```R
@@ -141,17 +141,18 @@ seqClose(f)
 
 ## Key Functions in the SeqArray Package
 
-| Function     | Description |
-|:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files [»](https://rdrr.io/bioc/SeqArray/man/seqVCF2GDS.html) |
-| seqSetFilter | Define a data subset of samples or variants [»](https://rdrr.io/bioc/SeqArray/man/seqSetFilter.html) |
-| seqGetData   | Get data from a SeqArray file with a defined filter [»](https://rdrr.io/bioc/SeqArray/man/seqGetData.html) |
-| seqApply     | Apply a user-defined function over array margins [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html) |
-| seqParallel  | Apply functions in parallel [»](https://rdrr.io/bioc/SeqArray/man/seqParallel.html) |
+| Function      | Description |
+|:--------------|:-------------------------------------------|
+| seqVCF2GDS    | Reformat VCF files [»](https://rdrr.io/bioc/SeqArray/man/seqVCF2GDS.html) |
+| seqSetFilter  | Define a data subset of samples or variants [»](https://rdrr.io/bioc/SeqArray/man/seqSetFilter.html) |
+| seqGetData    | Get data from a SeqArray file with a defined filter [»](https://rdrr.io/bioc/SeqArray/man/seqGetData.html) |
+| seqApply      | Apply a user-defined function over array margins [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html) |
+| seqBlockApply | Apply a user-defined function over array margins via blocking [»](https://rdrr.io/bioc/SeqArray/man/seqBlockApply.html) |
+| seqParallel   | Apply functions in parallel [»](https://rdrr.io/bioc/SeqArray/man/seqParallel.html) |
 | ...  | [»](https://rdrr.io/bioc/SeqArray/man/) |
 
 
-## Performance
+## Benchmarks
 
 Update ... (in progress)
 
