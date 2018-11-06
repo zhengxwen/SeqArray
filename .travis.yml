@@ -13,8 +13,6 @@ r_binary_packages:
 
 # Install packages from github
 r_github_packages:
-  - zhengxwen/gdsfmt
-  - zhengxwen/SNPRelate
   - Bioconductor/Rsamtools
   - Bioconductor/VariantAnnotation
 
