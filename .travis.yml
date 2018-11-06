@@ -1,6 +1,6 @@
 language: r
 r:
-  - devel
+  - release
 
 warnings_are_errors: true
 bioc_required: true

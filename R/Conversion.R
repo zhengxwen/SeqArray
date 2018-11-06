@@ -16,11 +16,19 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     use_Rsamtools=TRUE, verbose=TRUE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
+    if (is.character(gdsfile))
+        stopifnot(length(gdsfile)==1L)
     if (!inherits(vcf.fn, "connection"))
         stopifnot(is.character(vcf.fn), length(vcf.fn)==1L)
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
+
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile)
+        on.exit(seqClose(gdsfile))
+    }
 
     # get a summary
     z <- seqSummary(gdsfile, check="none", verbose=FALSE)
@@ -93,14 +101,14 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         } else {
             ofile <- file(vcf.fn, open="wb")
         }
-        on.exit({ close(ofile) })
+        on.exit(close(ofile), add=TRUE)
     } else {
         ofile <- vcf.fn
     }
 
     op <- options("useFancyQuotes")
     options(useFancyQuotes = FALSE)
-    on.exit({ options(op) }, add=TRUE)
+    on.exit(options(op), add=TRUE)
 
     if (verbose)
     {
@@ -120,7 +128,6 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # write the header
 
     txt <- character()
-
     a <- get.attr.gdsn(index.gdsn(gdsfile, "description"))
 
     # fileformat
@@ -294,11 +301,21 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         s <- c(s, paste("fmt.", z$format$ID, sep=""))
     names(nm) <- s
 
+    # C function name
+    if (is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)))
+    {
+        nm <- nm[nm != "phase"]
+        cfn <- "SEQ_ToVCF_Haploid"
+    } else {
+        if (length(nm.format)>0L | dm[1L]!=2L)
+            cfn <- "SEQ_ToVCF"
+        else
+            cfn <- "SEQ_ToVCF_Di_WrtFmt"
+    }
+
     # output lines by variant
     seqApply(gdsfile, nm, margin="by.variant", as.is="none",
-        .useraw=NA, .progress=verbose,
-        FUN = .cfunction(ifelse(length(nm.format)>0L | dm[1L]!=2L,
-            "SEQ_ToVCF", "SEQ_ToVCF_Di_WrtFmt")))
+        FUN=.cfunction(cfn), .useraw=NA, .progress=verbose)
 
     # finalize
     .Call(SEQ_ToVCF_Done)

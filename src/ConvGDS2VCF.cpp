@@ -2,7 +2,7 @@
 //
 // ConvGDS2VCF.cpp: format conversion from GDS to VCF
 //
-// Copyright (C) 2013-2017    Xiuwen Zheng
+// Copyright (C) 2013-2018    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -387,7 +387,7 @@ inline static void ExportHead(SEXP X)
 
 
 /// export the INFO and FORMAT fields
-inline static void ExportInfoFormat(SEXP X)
+inline static void ExportInfoFormat(SEXP X, size_t info_st)
 {
 	// variable list
 	SEXP VarNames = getAttrib(X, R_NamesSymbol);
@@ -400,9 +400,9 @@ inline static void ExportInfoFormat(SEXP X)
 	for (size_t i=0; i < cnt_info; i++)
 	{
 		// name, "info.*"
-		const char *nm = CHAR(STRING_ELT(VarNames, i + 8)) + 5;
+		const char *nm = CHAR(STRING_ELT(VarNames, i + info_st)) + 5;
 		// SEXP
-		SEXP D = VECTOR_ELT(X, i + 8);
+		SEXP D = VECTOR_ELT(X, i + info_st);
 
 		if (IS_LOGICAL(D))  // FLAG type
 		{
@@ -438,11 +438,11 @@ inline static void ExportInfoFormat(SEXP X)
 	for (size_t i=0; i < cnt_fmt; i++)
 	{
 		// name, "fmt.*"
-		SEXP D = VECTOR_ELT(X, i + cnt_info + 8);
+		SEXP D = VECTOR_ELT(X, i + cnt_info + info_st);
 		if (!isNull(D))
 		{
 			*pLine++ = ':';
-			const char *nm = CHAR(STRING_ELT(VarNames, i + cnt_info + 8));
+			const char *nm = CHAR(STRING_ELT(VarNames, i + cnt_info + info_st));
 			LineBuf_Append(nm + 4);
 			VCF_FORMAT_List.push_back(D);
 		}
@@ -521,7 +521,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Done()
 
 
 
-/// convert to VCF4
+/// convert to VCF4 in general
 COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 {
 	// initialize line pointer
@@ -529,7 +529,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
 	ExportHead(X);
 	// INFO, FORMAT
-	ExportInfoFormat(X);
+	ExportInfoFormat(X, 8);
 	// phase information
 	SEXP phase = VECTOR_ELT(X, 7);
 	C_UInt8 *pAllele = (C_UInt8*)RAW(phase);
@@ -541,7 +541,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 	{
 		C_UInt8 *pSamp = (C_UInt8*)RAW(geno);
 		// for-loop of samples
-		for (size_t i=0; i < VCF_NumSample; i ++)
+		for (size_t i=0; i < VCF_NumSample; i++)
 		{
 			// add '\t'
 			if (i > 0) *pLine++ = '\t';
@@ -572,7 +572,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF(SEXP X)
 	} else {
 		int *pSamp = INTEGER(geno);
 		// for-loop of samples
-		for (size_t i=0; i < VCF_NumSample; i ++)
+		for (size_t i=0; i < VCF_NumSample; i++)
 		{
 			// add '\t'
 			if (i > 0) *pLine++ = '\t';
@@ -631,7 +631,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
 	ExportHead(X);
 	// INFO, FORMAT
-	ExportInfoFormat(X);
+	ExportInfoFormat(X, 8);
 	// phase information
 	SEXP phase = VECTOR_ELT(X, 7);
 	C_UInt8 *pAllele = (C_UInt8*)RAW(phase);
@@ -770,6 +770,81 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 	} else {
 		size_t size = pLine - LineBegin - offset;
 		size_t n = R_WriteConnection(VCF_File, LineBegin + offset, size);
+		if (size != n)
+			throw ErrSeqArray("writing error.");
+	}
+
+	return R_NilValue;
+}
+
+
+
+// --------------------------------------------------------------
+
+/// convert to haploid VCF4
+COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Haploid(SEXP X)
+{
+	// initialize line pointer
+	LineBuf_InitPtr();
+	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
+	ExportHead(X);
+	// INFO, FORMAT
+	ExportInfoFormat(X, 7);
+
+	// genotype
+	SEXP geno = VECTOR_ELT(X, 6);
+
+	if (TYPEOF(geno) == RAWSXP)
+	{
+		C_UInt8 *pSamp = (C_UInt8*)RAW(geno);
+		// for-loop of samples
+		for (size_t i=0; i < VCF_NumSample; i++)
+		{
+			// add '\t'
+			if (i > 0) *pLine++ = '\t';
+			// genotypes
+			LineBuf_NeedSize(VCF_NumAllele << 3); // NumAllele*8
+			_Line_Append_Geno_Raw(*pSamp++);
+			// annotation
+			vector<SEXP>::iterator p;
+			for (p=VCF_FORMAT_List.begin(); p != VCF_FORMAT_List.end(); p++)
+			{
+				*pLine++ = ':';
+				size_t n = Rf_length(*p) / VCF_NumSample;
+				FORMAT_Write(*p, n, i, VCF_NumSample);
+			}
+		}
+	} else {
+		int *pSamp = INTEGER(geno);
+		// for-loop of samples
+		for (size_t i=0; i < VCF_NumSample; i++)
+		{
+			// add '\t'
+			if (i > 0) *pLine++ = '\t';
+			// genotypes
+			LineBuf_NeedSize(VCF_NumAllele << 3); // NumAllele*8
+			_Line_Append_Geno(*pSamp++);
+			// annotation
+			vector<SEXP>::iterator p;
+			for (p=VCF_FORMAT_List.begin(); p != VCF_FORMAT_List.end(); p++)
+			{
+				*pLine++ = ':';
+				size_t n = Rf_length(*p) / VCF_NumSample;
+				FORMAT_Write(*p, n, i, VCF_NumSample);
+			}
+		}
+	}
+
+	*pLine++ = '\n';
+
+	// output
+	if (VCF_File->text)
+	{
+		*pLine = 0;
+		put_text("%s", LineBegin);
+	} else {
+		size_t size = pLine - LineBegin;
+		size_t n = R_WriteConnection(VCF_File, LineBegin, size);
 		if (size != n)
 			throw ErrSeqArray("writing error.");
 	}
