@@ -154,7 +154,13 @@ seqClose(f)
 
 ## Benchmarks
 
+#### Reading genotypes in random sample subsets
+
+![](vignettes/benchmark_rand_samp.svg)
+
+
 Update ... (in progress)
+
 
 
 ## Also See
