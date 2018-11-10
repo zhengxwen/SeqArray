@@ -4,46 +4,51 @@
 
 
 <!-- Page 1 -->
-<svg x="0" y="0" width="770" height="495" viewBox="0 0 770 495" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg x="0" y="0" width="429" height="271" viewBox="0 0 429 271" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
 style="display: block;margin-left: auto;margin-right: auto;">
 <defs>
-<clipPath id="c0_1"><path d="M59.1,444.9V35.7H347.6V444.9Z" /></clipPath>
-<clipPath id="c1_1"><path d="M59.1,35.7V8.4H347.6V35.7Z" /></clipPath>
+<clipPath id="c0_1"><path d="M.4,272.6V.3H423.9V272.6Z" /></clipPath>
+<clipPath id="c1_1"><path d="M196.2,245V20H354.9V245Z" /></clipPath>
 
 <style type="text/css"><![CDATA[
 text { white-space: pre; }
 path, image { pointer-events: none; }
 
 .s1_1{
-font-size: 15.28px;
-font-family: Helvetica, Arial, sans-serif;
+font-size: 8.40px;
+font-family: Helvetica_8;
 fill: #000000;
 }
 .s2_1{
-font-size: 13.75px;
-font-family: Helvetica, Arial, sans-serif;
+font-size: 7.56px;
+font-family: Helvetica_8;
 fill: #1A1A1A;
 }
 .s3_1{
-font-size: 13.75px;
-font-family: Helvetica, Arial, sans-serif;
-fill: #4D4D4D;
+font-size: 7.56px;
+font-family: Helvetica_a;
+fill: #1A1A1A;
 }
 .s4_1{
-font-size: 16.81px;
-font-family: Helvetica, Arial, sans-serif;
-fill: #000000;
+font-size: 7.56px;
+font-family: Helvetica_8;
+fill: #4D4D4D;
 }
 .s5_1{
-font-size: 13.75px;
-font-family: Helvetica, Arial, sans-serif;
+font-size: 9.24px;
+font-family: Helvetica_8;
+fill: #000000;
+}
+.s6_1{
+font-size: 7.56px;
+font-family: Helvetica_8;
 fill: #000000;
 }
 
 .g0_1{
 fill: #FFFFFF;
 stroke: #FFFFFF;
-stroke-width: 1.6347224;
+stroke-width: 0.89909726;
 stroke-linecap: round;
 stroke-linejoin: round;
 }
@@ -53,14 +58,14 @@ fill: #EBEBEB;
 .g2_1{
 fill: none;
 stroke: #FFFFFF;
-stroke-width: 0.8097222;
+stroke-width: 0.44534722;
 stroke-linecap: butt;
 stroke-linejoin: round;
 }
 .g3_1{
 fill: none;
 stroke: #FFFFFF;
-stroke-width: 1.6347224;
+stroke-width: 0.89909726;
 stroke-linecap: butt;
 stroke-linejoin: round;
 }
@@ -76,7 +81,7 @@ fill: #D9D9D9;
 .g7_1{
 fill: none;
 stroke: #333333;
-stroke-width: 1.6347224;
+stroke-width: 0.89909726;
 stroke-linecap: butt;
 stroke-linejoin: round;
 }
@@ -86,7 +91,7 @@ fill: #FFFFFF;
 .g9_1{
 fill: #F2F2F2;
 stroke: #FFFFFF;
-stroke-width: 1.6347224;
+stroke-width: 0.89909726;
 stroke-linecap: round;
 stroke-linejoin: round;
 }
@@ -95,106 +100,126 @@ stroke-linejoin: round;
 
 </defs>
 <path d="M0,0
-L0,495
-L770,495
-L770,0 Z " 
+L0,271
+L429,271
+L429,0 Z " 
 fill="#FFFFFF" stroke="none" />
-<path d="M0,495H770V0H0V495Z" class="g0_1" />
 <g clip-path="url(#c0_1)">
-<path d="M59.1,444.9H347.6V35.7H59.1V444.9Z" class="g1_1" />
-<path d="M59.1,377.8H347.6M59.1,280.8H347.6M59.1,183.8H347.6M59.1,86.8H347.6" class="g2_1" />
-<path d="M59.1,426.3H347.6M59.1,329.3H347.6M59.1,232.3H347.6M59.1,135.3H347.6M59.1,38.3H347.6M77.9,444.9V35.7m31.4,409.2V35.7m31.3,409.2V35.7M172,444.9V35.7m31.4,409.2V35.7m31.3,409.2V35.7m31.4,409.2V35.7m31.3,409.2V35.7m31.4,409.2V35.7" class="g3_1" />
+<path d="M.4,272.6H423.9V.3H.4V272.6Z" class="g0_1" />
 </g>
-<path d="M77.9,426.3H92.1V354.6H77.9v71.7Z" class="g4_1" />
-<path d="M63.8,426.3H77.9V340.9H63.8v85.4Z" class="g5_1" />
-<path d="M109.3,426.3h14.1v-73H109.3v73Z" class="g4_1" />
-<path d="M95.2,426.3h14.1V317.9H95.2V426.3Z" class="g5_1" />
-<path d="M140.6,426.3h14.2V350.7H140.6v75.6Z" class="g4_1" />
-<path d="M126.5,426.3h14.2v-151H126.5v151Z" class="g5_1" />
-<path d="M172,426.3h14.1V346.4H172v79.9Z" class="g4_1" />
-<path d="M157.9,426.3H172v-195H157.9v195Z" class="g5_1" />
-<path d="M203.4,426.3h14.1V338.8H203.4v87.5Z" class="g4_1" />
-<path d="M189.3,426.3h14.1V159.1H189.3V426.3Z" class="g5_1" />
-<path d="M234.7,426.3h14.1v-102H234.7v102Z" class="g4_1" />
-<path d="M220.6,426.3h14.1V55.6H220.6V426.3Z" class="g5_1" />
-<path d="M266.1,426.3h14.1V317H266.1V426.3Z" class="g4_1" />
-<path d="M252,426.3h14.1V75.3H252v351Z" class="g5_1" />
-<path d="M297.4,426.3h14.2V312.4H297.4V426.3Z" class="g4_1" />
-<path d="M283.3,426.3h14.1V109.1H283.3V426.3Z" class="g5_1" />
-<path d="M328.8,426.3h14.1V323.1H328.8V426.3Z" class="g4_1" />
-<path d="M314.7,426.3h14.1V318.4H314.7V426.3Z" class="g5_1" />
-<text x="63" y="340" class="s1_1">1.19</text>
-<text x="94" y="317" class="s1_1">1.48</text>
-<text x="125" y="275" class="s1_1">2.00</text>
-<text x="157" y="242" class="s1_1">2.44</text>
-<text x="188" y="170" class="s1_1">3.05</text>
-<text x="219" y="66" class="s1_1">3.63</text>
-<text x="251" y="86" class="s1_1">3.21</text>
-<text x="282" y="120" class="s1_1">2.79</text>
-<text x="313" y="318" class="s1_1">1.05</text>
-<path d="M356,444.9H644.5V35.7H356V444.9Z" class="g1_1" />
-<path d="M356,377.8H644.5M356,280.8H644.5M356,183.8H644.5M356,86.8H644.5" class="g2_1" />
-<path d="M356,426.3H644.5M356,329.3H644.5M356,232.3H644.5M356,135.3H644.5M356,38.3H644.5M374.8,444.9V35.7m31.3,409.2V35.7m31.4,409.2V35.7m31.4,409.2V35.7m31.3,409.2V35.7m31.4,409.2V35.7m31.3,409.2V35.7m31.4,409.2V35.7m31.4,409.2V35.7" class="g3_1" />
-<path d="M374.8,426.3h14.1V355H374.8v71.3Z" class="g4_1" />
-<path d="M360.7,426.3h14.1V339.2H360.7v87.1Z" class="g5_1" />
-<path d="M406.1,426.3h14.2V354.2H406.1v72.1Z" class="g4_1" />
-<path d="M392,426.3h14.2V317.7H392V426.3Z" class="g5_1" />
-<path d="M437.5,426.3h14.1V352.7H437.5v73.6Z" class="g4_1" />
-<path d="M423.4,426.3h14.1V277.4H423.4V426.3Z" class="g5_1" />
-<path d="M468.9,426.3H483V350.6H468.9v75.7Z" class="g4_1" />
-<path d="M454.8,426.3h14.1V233.4H454.8V426.3Z" class="g5_1" />
-<path d="M500.2,426.3h14.1V347.6H500.2v78.7Z" class="g4_1" />
-<path d="M486.1,426.3h14.1V165.5H486.1V426.3Z" class="g5_1" />
-<path d="M531.6,426.3h14.1V342.5H531.6v83.8Z" class="g4_1" />
-<path d="M517.5,426.3h14.1V54.3H517.5v372Z" class="g5_1" />
-<path d="M562.9,426.3h14.2v-85H562.9v85Z" class="g4_1" />
-<path d="M548.8,426.3h14.1V70.6H548.8V426.3Z" class="g5_1" />
-<path d="M594.3,426.3h14.1v-85H594.3v85Z" class="g4_1" />
-<path d="M580.2,426.3h14.1V106.9H580.2V426.3Z" class="g5_1" />
-<path d="M625.7,426.3h14.1V362.5H625.7v63.8Z" class="g4_1" />
-<path d="M611.5,426.3h14.2V350.1H611.5v76.2Z" class="g5_1" />
-<text x="359" y="339" class="s1_1">1.22</text>
-<text x="391" y="317" class="s1_1">1.51</text>
-<text x="422" y="277" class="s1_1">2.02</text>
-<text x="453" y="244" class="s1_1">2.55</text>
-<text x="485" y="176" class="s1_1">3.31</text>
-<text x="516" y="65" class="s1_1">4.44</text>
-<text x="548" y="81" class="s1_1">4.19</text>
-<text x="579" y="117" class="s1_1">3.76</text>
-<text x="610" y="350" class="s1_1">1.19</text>
+<path d="M32.9,245H191.6V20H32.9V245Z" class="g1_1" />
+<path d="M32.9,208.1H191.6M32.9,154.8H191.6M32.9,101.4H191.6M32.9,48.1H191.6" class="g2_1" />
+<path d="M32.9,234.8H191.6M32.9,181.5H191.6M32.9,128.1H191.6M32.9,74.8H191.6M32.9,21.4H191.6M43.3,245V20M60.5,245V20M77.8,245V20M95,245V20m17.3,225V20m17.2,225V20m17.3,225V20M164,245V20m17.2,225V20" class="g3_1" />
+<path d="M43.3,234.8H51V195.4H43.3v39.4Z" class="g4_1" />
+<path d="M35.5,234.8h7.8v-47H35.5v47Z" class="g5_1" />
+<path d="M60.5,234.8h7.8V194.6H60.5v40.2Z" class="g4_1" />
+<path d="M52.8,234.8h7.7V175.2H52.8v59.6Z" class="g5_1" />
+<path d="M77.8,234.8h7.7V193.2H77.8v41.6Z" class="g4_1" />
+<path d="M70,234.8h7.8V151.7H70v83.1Z" class="g5_1" />
+<path d="M95,234.8h7.8V190.9H95v43.9Z" class="g4_1" />
+<path d="M87.3,234.8H95V127.6H87.3V234.8Z" class="g5_1" />
+<path d="M112.3,234.8H120V186.7h-7.7v48.1Z" class="g4_1" />
+<path d="M104.5,234.8h7.8V87.9h-7.8V234.8Z" class="g5_1" />
+<path d="M129.5,234.8h7.8V178.7h-7.8v56.1Z" class="g4_1" />
+<path d="M121.7,234.8h7.8V30.9h-7.8V234.8Z" class="g5_1" />
+<path d="M146.8,234.8h7.7V174.7h-7.7v60.1Z" class="g4_1" />
+<path d="M139,234.8h7.8V41.7H139V234.8Z" class="g5_1" />
+<path d="M164,234.8h7.8V172.2H164v62.6Z" class="g4_1" />
+<path d="M156.2,234.8H164V60.3h-7.8V234.8Z" class="g5_1" />
+<path d="M181.2,234.8H189V178h-7.8v56.8Z" class="g4_1" />
+<path d="M173.5,234.8h7.8V175.4h-7.8v59.4Z" class="g5_1" />
+<text x="35" y="187" class="s1_1">1.19</text>
+<text x="52" y="175" class="s1_1">1.48</text>
+<text x="69" y="151" class="s1_1">2.00</text>
+<text x="86" y="133" class="s1_1">2.44</text>
+<text x="104" y="93" class="s1_1">3.05</text>
+<text x="121" y="36" class="s1_1">3.63</text>
+<text x="138" y="47" class="s1_1">3.21</text>
+<text x="155" y="66" class="s1_1">2.79</text>
+<text x="173" y="175" class="s1_1">1.05</text>
+<path d="M196.2,245H354.9V20H196.2V245Z" class="g1_1" />
 <g clip-path="url(#c1_1)">
-<path d="M59.1,35.7H347.6V8.4H59.1V35.7Z" class="g6_1" />
+<path d="M196.2,208.1H354.9M196.2,154.8H354.9M196.2,101.4H354.9M196.2,48.1H354.9" class="g2_1" />
+<path d="M196.2,234.8H354.9M196.2,181.5H354.9M196.2,128.1H354.9M196.2,74.8H354.9M196.2,21.4H354.9M206.5,245V20m17.3,225V20M241,245V20m17.3,225V20m17.2,225V20m17.3,225V20M310,245V20m17.3,225V20m17.2,225V20" class="g3_1" />
 </g>
-<text x="147" y="26" class="s2_1">Int (32-bit integer)</text>
-<path d="M356,35.7H644.5V8.4H356V35.7Z" class="g6_1" />
-<text x="442" y="26" dx="0,0,-0.3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" class="s2_1">Raw (8-bit integer)</text>
-<path d="M77.9,449.1v-4.2m31.4,4.2v-4.2m31.3,4.2v-4.2m31.4,4.2v-4.2m31.4,4.2v-4.2m31.3,4.2v-4.2m31.4,4.2v-4.2m31.3,4.2v-4.2m31.4,4.2v-4.2" class="g7_1" />
-<text x="64" y="462" dx="0,0,0,0,0,0.8,0,0,0,0,0.8,0,0,0,0,4.6,0,0" class="s3_1">1/64 1/32 1/16 1/8</text>
-<text x="193" y="462" class="s3_1">1/4</text>
-<text x="225" y="462" class="s3_1">1/2</text>
-<text x="256" y="462" class="s3_1">2/3</text>
-<text x="287" y="462" dx="0,0,0,0,0.4,0,0,0" class="s3_1">3/4 100%</text>
-<path d="M374.8,449.1v-4.2m31.3,4.2v-4.2m31.4,4.2v-4.2m31.4,4.2v-4.2m31.3,4.2v-4.2m31.4,4.2v-4.2m31.3,4.2v-4.2m31.4,4.2v-4.2m31.4,4.2v-4.2" class="g7_1" />
-<text x="361" y="462" dx="0,0,0,0,0,0.8,0,0,0,0,0.8,0,0,0,0,4.6,0,0" class="s3_1">1/64 1/32 1/16 1/8</text>
-<text x="490" y="462" class="s3_1">1/4</text>
-<text x="522" y="462" class="s3_1">1/2</text>
-<text x="553" y="462" class="s3_1">2/3</text>
-<text x="584" y="462" dx="0,0,0,0,0.4,0,0,0" class="s3_1">3/4 100%</text>
-<text x="43" y="431" class="s3_1">0</text>
-<text x="36" y="334" class="s3_1">25</text>
-<text x="36" y="237" class="s3_1">50</text>
-<text x="36" y="140" class="s3_1">75</text>
-<text x="28" y="43" class="s3_1">100</text>
-<path d="M54.9,426.3h4.2m-4.2,-97h4.2m-4.2,-97h4.2m-4.2,-97h4.2m-4.2,-97h4.2" class="g7_1" />
-<text x="121" y="482" dx="0,0,-0.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-0.3,0,0" class="s4_1">Fraction of selected random samples on chromosome 22</text>
-<text transform="matrix(0, -1, 1, 0, 20, 317)" dx="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-0.2,0,0,0,0" class="s4_1">Runtime (in minutes)</text>
-<path d="M661.2,287.3H761.6v-94H661.2v94Z" class="g8_1" />
-<text x="669" y="215" class="s4_1">Bioconductor</text>
-<path d="M669.6,252.5H696V226.1H669.6v26.4Z" class="g9_1" />
-<path d="M670.7,251.4h24.2V227.2H670.7v24.2Z" class="g5_1" />
-<path d="M669.6,278.9H696V252.5H669.6v26.4Z" class="g9_1" />
-<path d="M670.7,277.8h24.2V253.6H670.7v24.2Z" class="g4_1" />
-<text x="704" y="244" class="s5_1">BioC3.4</text>
-<text x="704" y="270" class="s5_1">BioC3.8</text>
+<path d="M206.5,234.8h7.8V195.6h-7.8v39.2Z" class="g4_1" />
+<path d="M198.8,234.8h7.7V186.9h-7.7v47.9Z" class="g5_1" />
+<path d="M223.8,234.8h7.8V195.2h-7.8v39.6Z" class="g4_1" />
+<path d="M216,234.8h7.8V175.1H216v59.7Z" class="g5_1" />
+<path d="M241,234.8h7.8V194.3H241v40.5Z" class="g4_1" />
+<path d="M233.3,234.8H241V152.9h-7.7v81.9Z" class="g5_1" />
+<path d="M258.3,234.8H266V193.2h-7.7v41.6Z" class="g4_1" />
+<path d="M250.5,234.8h7.8V128.7h-7.8V234.8Z" class="g5_1" />
+<path d="M275.5,234.8h7.8V191.5h-7.8v43.3Z" class="g4_1" />
+<path d="M267.8,234.8h7.7V91.3h-7.7V234.8Z" class="g5_1" />
+<path d="M292.8,234.8h7.7V188.7h-7.7v46.1Z" class="g4_1" />
+<path d="M285,234.8h7.8V30.2H285V234.8Z" class="g5_1" />
+<path d="M310,234.8h7.8V188.1H310v46.7Z" class="g4_1" />
+<path d="M302.3,234.8H310V39.2h-7.7V234.8Z" class="g5_1" />
+<path d="M327.3,234.8H335V188h-7.7v46.8Z" class="g4_1" />
+<path d="M319.5,234.8h7.8V59.1h-7.8V234.8Z" class="g5_1" />
+<path d="M344.5,234.8h7.8V199.7h-7.8v35.1Z" class="g4_1" />
+<path d="M336.8,234.8h7.7V192.9h-7.7v41.9Z" class="g5_1" />
+<text x="198" y="186" class="s1_1">1.22</text>
+<text x="215" y="175" class="s1_1">1.51</text>
+<text x="232" y="152" class="s1_1">2.02</text>
+<text x="250" y="134" class="s1_1">2.55</text>
+<text x="267" y="97" class="s1_1">3.31</text>
+<text x="284" y="36" class="s1_1">4.44</text>
+<text x="301" y="45" class="s1_1">4.19</text>
+<text x="319" y="65" class="s1_1">3.76</text>
+<text x="336" y="192" class="s1_1">1.19</text>
+<path d="M32.9,20H191.6V4.9H32.9V20Z" class="g6_1" />
+<text x="81" y="15" class="s2_1">Int (32</text>
+<text x="102" y="15" class="s3_1">−</text>
+<text x="107" y="15" class="s2_1">bit integer)</text>
+<path d="M196.2,20H354.9V4.9H196.2V20Z" class="g6_1" />
+<text x="243" y="15" dx="0,0,-0.2,0,0,0" class="s2_1">Raw (8</text>
+<text x="267" y="15" class="s3_1">−</text>
+<text x="271" y="15" class="s2_1">bit integer)</text>
+<path d="M43.3,247.3V245m17.2,2.3V245m17.3,2.3V245M95,247.3V245m17.3,2.3V245m17.2,2.3V245m17.3,2.3V245m17.2,2.3V245m17.2,2.3V245" class="g7_1" />
+<text x="35" y="254" dx="0,0,0,0,0,0.4,0,0,0,0,0.4,0,0,0,0,2.5,0,0" class="s4_1">1/64 1/32 1/16 1/8</text>
+<text x="107" y="254" class="s4_1">1/4</text>
+<text x="124" y="254" class="s4_1">1/2</text>
+<text x="141" y="254" class="s4_1">2/3</text>
+<text x="158" y="254" dx="0,0,0,0,0.2,0,0,0" class="s4_1">3/4 100%</text>
+<path d="M206.5,247.3V245m17.3,2.3V245m17.2,2.3V245m17.3,2.3V245m17.2,2.3V245m17.3,2.3V245m17.2,2.3V245m17.3,2.3V245m17.2,2.3V245" class="g7_1" />
+<text x="199" y="254" dx="0,0,0,0,0,0.4,0,0,0,0,0.4,0,0,0,0,2.5,0,0" class="s4_1">1/64 1/32 1/16 1/8</text>
+<text x="270" y="254" class="s4_1">1/4</text>
+<text x="287" y="254" class="s4_1">1/2</text>
+<text x="304" y="254" class="s4_1">2/3</text>
+<text x="322" y="254" dx="0,0,0,0,0.2,0,0,0" class="s4_1">3/4 100%</text>
+<text x="24" y="237" class="s4_1">0</text>
+<text x="20" y="184" class="s4_1">25</text>
+<text x="20" y="130" class="s4_1">50</text>
+<text x="20" y="77" class="s4_1">75</text>
+<text x="16" y="24" class="s4_1">100</text>
+<path d="M30.6,234.8h2.3M30.6,181.5h2.3M30.6,128.1h2.3M30.6,74.8h2.3M30.6,21.4h2.3" class="g7_1" />
+<text x="67" y="265" dx="0,0,-0.1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-0.1,0,0" class="s5_1">Fraction of selected random samples on chromosome 22</text>
+<text transform="matrix(0, -1, 1, 0, 11, 175)" dx="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-0.1,0,0,0,0" class="s5_1">Runtime (in minutes)</text>
+<path d="M364.1,158.4h55.2V106.6H364.1v51.8Z" class="g8_1" />
+<text x="368" y="119" class="s5_1">Bioconductor</text>
+<path d="M368.7,139.2h14.5V124.7H368.7v14.5Z" class="g9_1" />
+<path d="M369.3,138.6h13.3V125.3H369.3v13.3Z" class="g5_1" />
+<path d="M368.7,153.8h14.5V139.2H368.7v14.6Z" class="g9_1" />
+<path d="M369.3,153.2h13.3V139.8H369.3v13.4Z" class="g4_1" />
+<text x="387" y="134" class="s6_1">BioC3.4</text>
+<text x="387" y="149" class="s6_1">BioC3.8</text>
+
+
+<!-- Any embedded fonts defined here -->
+<style type="text/css" ><![CDATA[
+
+@font-face {
+	font-family: Helvetica_a;
+	src: url("fonts/Helvetica_a.woff") format("woff");
+}
+
+@font-face {
+	font-family: Helvetica_8;
+	src: url("fonts/Helvetica_8.woff") format("woff");
+}
+
+]]></style>
 
 </svg>

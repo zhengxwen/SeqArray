@@ -156,6 +156,8 @@ seqClose(f)
 
 #### Reading genotypes in random sample subsets
 
+(the number of samples is ~100k)
+
 ![](vignettes/benchmark_rand_samp.svg)
 
 
