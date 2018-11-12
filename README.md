@@ -20,7 +20,7 @@ The SeqArray package is built on top of Genomic Data Structure (GDS) data format
 
 ## Bioconductor:
 
-Release Version: v1.22.0
+Release Version: v1.22.1
 
 [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 
@@ -154,7 +154,7 @@ seqClose(f)
 
 ## Benchmarks
 
-#### Reading genotypes in random sample subsets
+#### Reading genotypes in random sample subsets (BioC release 3.4 vs 3.8)
 
 (the number of samples is ~100k)
 
