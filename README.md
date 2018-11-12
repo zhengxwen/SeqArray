@@ -154,7 +154,7 @@ seqClose(f)
 
 ## Benchmarks
 
-#### Reading genotypes in random sample subsets (BioC release 3.4 vs 3.8)
+### Reading genotypes in random sample subsets (BioC release 3.4 vs 3.8)
 
 (the number of samples is ~100k)
 
