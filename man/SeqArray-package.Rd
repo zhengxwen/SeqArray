@@ -2,9 +2,9 @@
 \alias{SeqArray-package}
 \alias{SeqArray}
 \docType{package}
-\title{Big Data Management of Whole-Genome Sequence Variant Calls}
+\title{Data Management of Large-scale Whole-Genome Sequence Variant Calls}
 \description{
-    Big-data management of whole-genome sequencing variants.
+    Data management of large-scale whole-genome sequencing variants.
 }
 \details{
     As the cost of DNA sequencing rapidly decreases, whole-genome sequencing
