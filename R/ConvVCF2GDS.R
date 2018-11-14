@@ -3,7 +3,7 @@
 # Package Name: SeqArray
 #
 # Description:
-#     Big Data Management of Whole-Genome Sequence Variant Calls
+#     Data Management of Large-scale Whole-Genome Sequence Variant Calls
 #
 
 
@@ -1202,9 +1202,23 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         put.attr.gdsn(varFilter, "Description", dp)
     }
 
+    # RLE-coded chromosome
     .optim_chrom(gfile)
+
+    # if there is no genotype
+    node <- index.gdsn(gfile, "genotype/data")
+    if (prod(objdesp.gdsn(node)$dim) <= 0)
+    {
+        delete.gdsn(node)
+        delete.gdsn(index.gdsn(gfile, "genotype/@data"))
+        delete.gdsn(index.gdsn(gfile, "genotype/extra.index"))
+        delete.gdsn(index.gdsn(gfile, "genotype/extra"))
+    }
+
+    # create hash
     .DigestFile(gfile, digest, verbose)
 
+    # close the GDS file
     closefn.gds(gfile)
     gfile <- NULL
 

@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.22.1
+CHANGES IN VERSION 1.22.1-1.22.2
 -------------------------
 
 BUG FIXES
@@ -42,7 +42,7 @@ BUG FIXES
       files (i.e., VCF with no sample)
 
     o fix `seqVCF2GDS()` and `seqBCF2GDS()` since reading from connections in
-      text mode is buffered for R >= v3.5.0
+      text mode is buffered in R >= v3.5.0
 
 
 CHANGES IN VERSION 1.20.1

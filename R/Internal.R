@@ -658,7 +658,7 @@
 
     if (flag) cat("    genotype")
     .DigestCode(index.gdsn(gfile, "genotype/data", silent=TRUE), digest, verbose)
-    .DigestCode(index.gdsn(gfile, "genotype/@data"), digest, FALSE)
+    .DigestCode(index.gdsn(gfile, "genotype/@data", silent=TRUE), digest, FALSE)
 
     n <- index.gdsn(gfile, "phase/data", silent=TRUE)
     if (!is.null(n))

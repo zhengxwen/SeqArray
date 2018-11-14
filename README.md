@@ -170,3 +170,8 @@ Update ... (in progress)
 [PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variant data in Python
 
 [JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): data manipulation of whole-genome sequencing variant data in Julia
+
+
+## Bug Fixes
+
+* v1.22.0: fix `seqVCF2GDS()` and `seqBCF2GDS()` since reading from connections in text mode is buffered in R >= v3.5.0
