@@ -534,21 +534,21 @@ seqParApply <- function(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 # Delete data variables
 #
 
-seqDelete <- function(gdsfile, info.varname=character(),
-    format.varname=character(), samp.varname=character(), verbose=TRUE)
+seqDelete <- function(gdsfile, info.var=character(), fmt.var=character(),
+    samp.var=character(), verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     if (gdsfile$readonly)
         stop("The GDS file is read-only.")
 
-    stopifnot(is.character(info.varname))
-    stopifnot(is.character(format.varname))
-    stopifnot(is.character(samp.varname))
+    stopifnot(is.character(info.var))
+    stopifnot(is.character(fmt.var))
+    stopifnot(is.character(samp.var))
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose) cat("Delete INFO variable(s):")
-    for (nm in info.varname)
+    for (nm in info.var)
     {
         n <- index.gdsn(gdsfile, paste0("annotation/info/", nm))
         delete.gdsn(n, force=TRUE)
@@ -560,7 +560,7 @@ seqDelete <- function(gdsfile, info.varname=character(),
     if (verbose) cat("\n")
 
     if (verbose) cat("Delete FORMAT variable(s):")
-    for (nm in format.varname)
+    for (nm in fmt.var)
     {
         n <- index.gdsn(gdsfile, paste0("annotation/format/", nm))
         delete.gdsn(n, force=TRUE)
@@ -569,7 +569,7 @@ seqDelete <- function(gdsfile, info.varname=character(),
     if (verbose) cat("\n")
 
     if (verbose) cat("Delete Sample Annotation variable(s):")
-    for (nm in samp.varname)
+    for (nm in samp.var)
     {
         n <- index.gdsn(gdsfile, paste0("sample.annotation/", nm))
         delete.gdsn(n, force=TRUE)

@@ -194,16 +194,19 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## genotype
     node <- addfolder.gdsn(outfile, "genotype")
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "genotype"))
-    cp2(node, S$sample.sel, S$variant.sel, "genotype")
-
-    if (prod(objdesp.gdsn(index.gdsn(gdsfile, "genotype/extra.index"))$dim) <= 0)
+    if (!is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE)))
     {
-        copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra.index"))
-        copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra"))
-    } else  # TODO
-        stop("Not implemented in 'genotype/extra.index', please contact the author.")
-
-    sync.gds(outfile)
+        cp2(node, S$sample.sel, S$variant.sel, "genotype")
+        if (prod(objdesp.gdsn(index.gdsn(gdsfile, "genotype/extra.index"))$dim) <= 0)
+        {
+            copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra.index"))
+            copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra"))
+        } else  # TODO
+            stop("Not implemented in 'genotype/extra.index', please contact the author.")
+        sync.gds(outfile)
+    } else {
+        if (verbose) cat("    genotype\n")
+    }
 
     ## phase
     node <- addfolder.gdsn(outfile, "phase")
@@ -217,9 +220,10 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             copyto.gdsn(node, index.gdsn(gdsfile, "phase/extra"))
         } else  # TODO
             stop("Not implemented in 'phase/extra.index', please contact the author.")
+        sync.gds(outfile)
+    } else {
+        if (verbose) cat("    phase\n")
     }
-
-    sync.gds(outfile)
 
     ## annotation
     node <- addfolder.gdsn(outfile, "annotation")

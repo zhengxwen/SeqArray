@@ -10,7 +10,7 @@ LinkingTo: gdsfmt
 Suggests: Biobase, BiocGenerics, BiocParallel, RUnit, Rcpp, SNPRelate, digest,
         crayon, knitr, Rsamtools, VariantAnnotation
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
-        email="zhengx@u.washington.edu"),
+        email="zhengxwen@gmail.com"),
         person("Stephanie", "Gogarten", role="aut",
         email="sdmorris@u.washington.edu"),
         person("David", "Levine", role="ctb"),

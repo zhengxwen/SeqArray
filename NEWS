@@ -1,10 +1,18 @@
 CHANGES IN VERSION 1.22.1-1.22.2
 -------------------------
 
+UTILITIES
+
+    o more information in `seqDelete()`
+
 BUG FIXES
 
     o export a haploid VCF file using `seqGDS2VCF()` (see:
       https://github.com/zhengxwen/SeqArray/issues/39)
+
+    o export VCF without any FORMAT data in `seqGDS2VCF()`
+
+    o export GDS without genotypes in `seqExport()`
 
 
 CHANGES IN VERSION 1.22.0

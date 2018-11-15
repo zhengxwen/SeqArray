@@ -283,7 +283,7 @@ genofile <- seqOpen("tmp.gds", readonly=FALSE)
 genofile
 
 # delete "HM2", "HM3", "AA", "OR" and "DP"
-seqDelete(genofile, info.varname=c("HM2", "HM3", "AA", "OR"), format.varname="DP")
+seqDelete(genofile, info.var=c("HM2", "HM3", "AA", "OR"), fmt.var="DP")
 
 # display
 genofile

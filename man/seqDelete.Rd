@@ -5,16 +5,16 @@
     Deletes variables in the SeqArray GDS file.
 }
 \usage{
-seqDelete(gdsfile, info.varname=character(), format.varname=character(),
-    samp.varname=character(), verbose=TRUE)
+seqDelete(gdsfile, info.var=character(), fmt.var=character(),
+    samp.var=character(), verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{info.varname}{the variables in the INFO field, i.e.,
+    \item{info.var}{the variables in the INFO field, i.e.,
         "annotation/info/VARIABLE_NAME"}
-    \item{format.varname}{the variables in the FORMAT field, i.e.,
+    \item{fmt.var}{the variables in the FORMAT field, i.e.,
         "annotation/format/VARIABLE_NAME"}
-    \item{samp.varname}{the variables in the sample annotation field, i.e.,
+    \item{samp.var}{the variables in the sample annotation field, i.e.,
         "sample.annotation/VARIABLE_NAME"}
     \item{verbose}{if \code{TRUE}, show information}
 }
@@ -28,17 +28,14 @@ seqDelete(gdsfile, info.varname=character(), format.varname=character(),
 }
 
 \examples{
-# the file of VCF
-vcf.fn <- seqExampleFileName("vcf")
-# or vcf.fn <- "C:/YourFolder/Your_VCF_File.vcf"
-
-# convert
-seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
+# the file of GDS
+gds.fn <- seqExampleFileName("gds")
+file.copy(gds.fn, "tmp.gds")
 
 # display
 (f <- seqOpen("tmp.gds", FALSE))
 
-seqDelete(f, info.varname=c("HM2", "AA"), format.varname="DP")
+seqDelete(f, info.var=c("HM2", "AA"), fmt.var="DP")
 f
 
 # close the GDS file
