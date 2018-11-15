@@ -937,15 +937,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 
 		if ((vn=="genotype") || (vn=="phase"))
 		{
-			PdGDSObj vGeno = GDS_Node_Path(Root, "genotype/data", TRUE);
+			PdGDSObj vGeno = GDS_Node_Path(Root, "genotype/data", FALSE);
 			if (vGeno == NULL)
 			{
 				vGeno = GDS_Node_Path(Root, "genotype/~data", FALSE);
-				if (vGeno == NULL)
-				{
-					throw ErrSeqArray(
-						"There is no 'genotype/data' or 'genotype/~data'.");
-				}
 			}
 
 			PROTECT(rv_ans = NEW_LIST(2));
@@ -953,7 +948,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 				SEXP I32 = PROTECT(NEW_INTEGER(3));
 				SET_ELEMENT(rv_ans, 0, I32);
 				C_Int32 Buf[4];
-				GDS_Array_GetDim(vGeno, Buf, 3);
+				if (vGeno)
+					GDS_Array_GetDim(vGeno, Buf, 3);
+				else
+					Buf[2] = NA_INTEGER;
 				INTEGER(I32)[0] = Buf[2];
 				INTEGER(I32)[1] = File.SampleNum();
 				INTEGER(I32)[2] = File.VariantNum();

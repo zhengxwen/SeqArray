@@ -302,7 +302,11 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     names(nm) <- s
 
     # C function name
-    if (is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)))
+    if (is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE)))
+    {
+        nm <- nm[!(nm %in% c("genotype", "phase"))]
+        cfn <- "SEQ_ToVCF_NoGeno"
+    } else if (is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)))
     {
         nm <- nm[nm != "phase"]
         cfn <- "SEQ_ToVCF_Haploid"

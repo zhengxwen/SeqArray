@@ -431,17 +431,27 @@ inline static void ExportInfoFormat(SEXP X, size_t info_st)
 	//====  FORMAT  ====//
 
 	VCF_FORMAT_List.clear();
-	LineBuf_NeedSize(32);
-	pLine[0] = 'G', pLine[1] = 'T'; pLine += 2;
-
 	size_t cnt_fmt = VCF_FORMAT_Number.size();
+
+	LineBuf_NeedSize(32);
+	if (info_st > 6)
+	{
+		pLine[0] = 'G'; pLine[1] = 'T';
+		pLine += 2;
+	} else if (cnt_fmt <= 0)
+	{
+		pLine[0] = '.';
+		pLine ++;
+	}
+
 	for (size_t i=0; i < cnt_fmt; i++)
 	{
 		// name, "fmt.*"
 		SEXP D = VECTOR_ELT(X, i + cnt_info + info_st);
 		if (!isNull(D))
 		{
-			*pLine++ = ':';
+			if (i > 0 || info_st > 6)
+				*pLine++ = ':';
 			const char *nm = CHAR(STRING_ELT(VarNames, i + cnt_info + info_st));
 			LineBuf_Append(nm + 4);
 			VCF_FORMAT_List.push_back(D);
@@ -835,6 +845,52 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Haploid(SEXP X)
 		}
 	}
 
+	*pLine++ = '\n';
+
+	// output
+	if (VCF_File->text)
+	{
+		*pLine = 0;
+		put_text("%s", LineBegin);
+	} else {
+		size_t size = pLine - LineBegin;
+		size_t n = R_WriteConnection(VCF_File, LineBegin, size);
+		if (size != n)
+			throw ErrSeqArray("writing error.");
+	}
+
+	return R_NilValue;
+}
+
+
+
+// --------------------------------------------------------------
+
+/// convert to VCF4 without genotypes
+COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_NoGeno(SEXP X)
+{
+	// initialize line pointer
+	LineBuf_InitPtr();
+	// CHROM, POS, ID, REF, ALT, QUAL, FILTER
+	ExportHead(X);
+	// INFO, FORMAT
+	ExportInfoFormat(X, 6);
+
+	// for-loop of samples
+	for (size_t i=0; i < VCF_NumSample; i++)
+	{
+		// add '\t'
+		if (i > 0) *pLine++ = '\t';
+		// annotation
+		vector<SEXP>::iterator p;
+		vector<SEXP>::iterator st = VCF_FORMAT_List.begin();
+		for (p=st; p != VCF_FORMAT_List.end(); p++)
+		{
+			if (p != st) *pLine++ = ':';
+			size_t n = Rf_length(*p) / VCF_NumSample;
+			FORMAT_Write(*p, n, i, VCF_NumSample);
+		}
+	}
 	*pLine++ = '\n';
 
 	// output
