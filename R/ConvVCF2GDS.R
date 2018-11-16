@@ -1138,6 +1138,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             "phase/data", "phase/extra", "phase/extra.index",
             "annotation/id", "annotation/qual")
 
+        if (is.null(index.gdsn(gfile, "genotype/data", silent=TRUE)))
+        {
+            varnm <- setdiff(varnm,
+                c("genotype/data", "genotype/@data", "genotype/extra",
+                "genotype/extra.index"))
+        }
         if (is.null(index.gdsn(gfile, "phase/data", silent=TRUE)))
         {
             varnm <- setdiff(varnm,
@@ -1167,7 +1173,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             tmpgds <- seqOpen(fn)
             # merge variables
             for (nm in varnm)
-                append.gdsn(index.gdsn(gfile, nm), index.gdsn(tmpgds, nm))
+            {
+                n <- index.gdsn(tmpgds, nm, silent=TRUE)
+                if (!is.null(n))
+                    append.gdsn(index.gdsn(gfile, nm), n)
+            }
             # merge filter variable (a factor variable)
             filtervar <- c(filtervar, as.character(
                 read.gdsn(index.gdsn(tmpgds, "annotation/filter"))))
@@ -1206,13 +1216,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     .optim_chrom(gfile)
 
     # if there is no genotype
-    node <- index.gdsn(gfile, "genotype/data")
-    if (prod(objdesp.gdsn(node)$dim) <= 0)
+    n <- index.gdsn(gfile, "genotype/data", silent=TRUE)
+    if (is.null(n) || prod(objdesp.gdsn(n)$dim) <= 0)
     {
-        delete.gdsn(node)
-        delete.gdsn(index.gdsn(gfile, "genotype/@data"))
-        delete.gdsn(index.gdsn(gfile, "genotype/extra.index"))
-        delete.gdsn(index.gdsn(gfile, "genotype/extra"))
+        for (nm in c("genotype/data", "genotype/@data", "genotype/extra.index",
+            "genotype/extra", "phase/data", "phase/extra.index", "phase/extra"))
+        {
+            n <- index.gdsn(gfile, nm, silent=TRUE)
+            if (!is.null(n)) delete.gdsn(n)
+        }
     }
 
     # create hash
