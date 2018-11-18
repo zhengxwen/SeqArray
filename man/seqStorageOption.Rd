@@ -14,9 +14,9 @@ seqStorageOption(compression=c("ZIP_RA", "ZIP_RA.fast", "ZIP_RA.max",
 \arguments{
     \item{compression}{the default compression level ("ZIP_RA"), see
         \link{add.gdsn} for the description of compression methods}
-    \item{mode}{specify storage type for corresponding variable,
-        e.g., `annotation/info/HM`="int16",
-        `annotation/format/PL/data`="int"}
+    \item{mode}{a character vector, specifying storage type for corresponding
+        variable, e.g., c(`annotation/info/HM`="int16",
+        `annotation/format/PL`="int")}
     \item{float.mode}{specify the storage mode for read numbers, e.g.,
         "float32", "float64", "packedreal16"; the additional parameters can
         follow by colon, like "packedreal16:scale=0.0001"}

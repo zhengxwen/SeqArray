@@ -1,9 +1,11 @@
-CHANGES IN VERSION 1.22.1-1.22.2
+CHANGES IN VERSION 1.22.1-1.22.3
 -------------------------
 
 UTILITIES
 
     o more information in `seqDelete()`
+
+    o a new option 'scenario' in `seqVCF2GDS()` and `seqBCF2GDS()`
 
 BUG FIXES
 
@@ -13,6 +15,8 @@ BUG FIXES
     o export VCF without any FORMAT data in `seqGDS2VCF()`
 
     o export GDS without genotypes in `seqExport()`
+
+    o fix parallel file writing in seqVCF2GDS(), when no genotype
 
 
 CHANGES IN VERSION 1.22.0
