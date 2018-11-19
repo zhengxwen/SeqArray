@@ -52,7 +52,7 @@ of forking on Windows, without allocating clusters frequently.
 \code{SeqArray:::process_count} and \code{SeqArray:::process_index} to
 tell the total number of cluster nodes and which cluster node being used.
 
-    \code{seqParallel(, gdsfile=NULL, FUN=..., split="none")} might be used to
+    \code{seqParallel(, gdsfile=NULL, FUN=..., split="none")} could be used to
 setup multiple streams of pseudo-random numbers, and see
 \code{\link{nextRNGStream}} or \code{\link{nextRNGSubStream}} in the package
 \code{parallel}.

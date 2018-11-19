@@ -42,7 +42,7 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
         case-sensitive}
     \item{scenario}{"general": use float32 to store floating-point numbers
         (by default); "imputation": use packedreal16 to store DS and GP in the
-        FORMAT field}
+        FORMAT field with four decimal place accuracy}
     \item{reference}{genome reference, like "hg19", "GRCh37"; if the genome
         reference is not available in VCF files, users could specify the
         reference here}

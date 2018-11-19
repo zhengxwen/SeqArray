@@ -182,6 +182,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 
     # the selection
     S <- seqGetFilter(gdsfile)
+    nsamp <- sum(S$sample.sel)
 
     ## sample.id, etc
     cp(outfile, S$sample.sel, "sample.id")
@@ -194,7 +195,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## genotype
     node <- addfolder.gdsn(outfile, "genotype")
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "genotype"))
-    if (!is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE)))
+    if (!is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE)) && nsamp>0L)
     {
         cp2(node, S$sample.sel, S$variant.sel, "genotype")
         if (prod(objdesp.gdsn(index.gdsn(gdsfile, "genotype/extra.index"))$dim) <= 0)
@@ -211,7 +212,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## phase
     node <- addfolder.gdsn(outfile, "phase")
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "phase"))
-    if (!is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)))
+    if (!is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)) && nsamp>0L)
     {
         cp.phase(node, S$sample.sel, S$variant.sel)
         if (prod(objdesp.gdsn(index.gdsn(gdsfile, "phase/extra.index"))$dim) <= 0)
@@ -230,7 +231,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "annotation"))
     node.info <- NULL
     node.fmt <- NULL
-    lst <- ls.gdsn(index.gdsn(gdsfile, "annotation"))
+    lst <- ls.gdsn(index.gdsn(gdsfile, "annotation"), recursive=FALSE)
     for (nm in lst)
     {
         if (nm == "info")
@@ -262,13 +263,18 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
                 put.attr.gdsn(node.fmt,
                     val=index.gdsn(gdsfile, "annotation/format"))
             }
-            lst.fmt <- ls.gdsn(index.gdsn(gdsfile, "annotation/format"))
-            if (!is.null(fmt.var))
+            if (nsamp > 0L)
             {
-                s <- setdiff(fmt.var, lst.fmt)
-                if (length(s) > 0L)
-                    warning("No FORMAT variable: ", paste(s, collapse=","))
-                lst.fmt <- intersect(lst.fmt, fmt.var)
+                lst.fmt <- ls.gdsn(index.gdsn(gdsfile, "annotation/format"))
+                if (!is.null(fmt.var))
+                {
+                    s <- setdiff(fmt.var, lst.fmt)
+                    if (length(s) > 0L)
+                        warning("No FORMAT variable: ", paste(s, collapse=","))
+                    lst.fmt <- intersect(lst.fmt, fmt.var)
+                }
+            } else {
+                lst.fmt <- character()
             }
             for (nm2 in lst.fmt)
             {
@@ -287,7 +293,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## sample.annotation
     node <- addfolder.gdsn(outfile, "sample.annotation")
     n2 <- index.gdsn(gdsfile, "sample.annotation", silent=TRUE)
-    if (!is.null(n2))
+    if (!is.null(n2) && nsamp>0L)
     {
         put.attr.gdsn(node, val=n2)
         lst <- ls.gdsn(n2)
