@@ -141,6 +141,13 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
         src <- index.gdsn(gdsfile, name2)
         idx <- index.gdsn(gdsfile, .var_path(name2, "@"), silent=TRUE)
 
+        while (grepl("/", name, fixed=TRUE))
+        {
+            ss <- unlist(strsplit(name, "/", fixed=TRUE))
+            name <- paste(ss[-1L], sep="/")
+            folder <- addfolder.gdsn(folder, ss[1L])
+        }
+
         dst <- add.gdsn(folder, name, storage=src)
         put.attr.gdsn(dst, val=src)
 
@@ -242,7 +249,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
                 put.attr.gdsn(node.info,
                     val=index.gdsn(gdsfile, "annotation/info"))
             }
-            lst.info <- ls.gdsn(index.gdsn(gdsfile, "annotation/info"))
+            lst.info <- ls.gdsn(index.gdsn(gdsfile, "annotation/info"),
+                recursive=TRUE, include.dirs=FALSE)
             if (!is.null(info.var))
             {
                 s <- setdiff(info.var, lst.info)
