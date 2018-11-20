@@ -145,7 +145,10 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
         {
             ss <- unlist(strsplit(name, "/", fixed=TRUE))
             name <- paste(ss[-1L], sep="/")
-            folder <- addfolder.gdsn(folder, ss[1L])
+            if (is.null(index.gdsn(folder, ss[1L], silent=TRUE)))
+                folder <- addfolder.gdsn(folder, ss[1L])
+            else
+                folder <- index.gdsn(folder, ss[1L])
         }
 
         dst <- add.gdsn(folder, name, storage=src)
