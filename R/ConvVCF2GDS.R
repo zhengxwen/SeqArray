@@ -12,6 +12,12 @@
 # Format Conversion: VCF -> GDS
 #######################################################################
 
+.file_split <- function(count, pnum, start=1, avoid_odd=TRUE)
+{
+    .Call(SEQ_VCF_Split, start, count, pnum, avoid_odd)
+}
+
+
 #######################################################################
 # Parse the header of a VCF file
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
@@ -679,7 +685,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (count >= pnum)
         {
             fn <- basename(sub("^([^.]*).*", "\\1", out.fn))
-            psplit <- .Call(SEQ_VCF_Split, start, count, pnum)
+            psplit <- .file_split(count, pnum, start)
 
             # need unique temporary file names
             ptmpfn <- character()
@@ -736,7 +742,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         } else {
             pnum <- 1L
-            message("No parallel environment!")
+            message("No use of parallel environment!")
         }
     }
 

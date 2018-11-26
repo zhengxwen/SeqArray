@@ -687,7 +687,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
         varGeno <- addfolder.gdsn(n, "DS")
         put.attr.gdsn(varGeno, "Number", "1")
         put.attr.gdsn(varGeno, "Type", "Float")
-        put.attr.gdsn(varGeno, "Description", "Estimated Alternate Allele Dosage")
+        put.attr.gdsn(varGeno, "Description", "Estimated alternate allele dosage")
 
         nd_geno <- .AddVar(storage.option, varGeno, "data", storage=ds.type,
             valdim=c(nSamp, 0L))

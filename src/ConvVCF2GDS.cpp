@@ -1074,9 +1074,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead)
 // Split VCF files
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum)
+COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
+	SEXP avoid_odd)
 {
 	int num = Rf_asInteger(pnum);
+	bool no_odd = Rf_asLogical(avoid_odd)==TRUE;
 	SEXP ans = PROTECT(NEW_LIST(2));
 	SEXP start_array = PROTECT(NEW_NUMERIC(num));
 	SEXP count_array = PROTECT(NEW_NUMERIC(num));
@@ -1093,7 +1095,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum)
 		st += scale;
 
 		C_Int64 m = (C_Int64)(round(st) - REAL(start_array)[i]);
-		if (m & 0x01) // avoid odd number
+		if (m & 0x01 && no_odd) // avoid odd number
 			{ m ++; st ++; }
 		if ((st1 + m) > (cnt + 1))
 			m = round(cnt + 1 - st1);
