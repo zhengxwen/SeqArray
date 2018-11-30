@@ -5,12 +5,13 @@ UTILITIES
 
     o more information in `seqDelete()`
 
+NEW FEATURES
+
     o a new option 'scenario' in `seqVCF2GDS()` and `seqBCF2GDS()`
 
 BUG FIXES
 
-    o export a haploid VCF file using `seqGDS2VCF()` (see:
-      https://github.com/zhengxwen/SeqArray/issues/39)
+    o export a haploid VCF file using `seqGDS2VCF()`
 
     o export VCF without any FORMAT data in `seqGDS2VCF()`
 

@@ -31,7 +31,7 @@ scientists to develop custom R scripts for exploratory data analysis.
     Webpage: \url{http://github.com/zhengxwen/SeqArray},
         \url{http://www.bioconductor.org/packages/SeqArray/}
 }
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng \email{zhengxwen@gmail.com}}
 
 \examples{
 # the file of VCF

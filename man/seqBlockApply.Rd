@@ -46,15 +46,28 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
 \code{"annotation/info/VARIABLE_NAME"}, or
 \code{"annotation/format/VARIABLE_NAME"}.
 
+\code{"@genotype"}, \code{"annotation/info/@VARIABLE_NAME"} or
+\code{"annotation/format/@VARIABLE_NAME"} are used to obtain the index
+associated with these variables.
+
 \code{"$dosage"} is also allowed for the dosages of reference allele (integer:
 0, 1, 2 and NA for diploid genotypes).
+
+\code{"$dosage_alt"} returns a RAW/INTEGER matrix for the dosages of alternative
+allele without distinguishing different alternative alleles.
 
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
+\code{"$ref"} returns a character vector of reference alleles
+
+\code{"$alt"} returns a character vector of alternative alleles (delimited by
+comma)
+
 \code{"$chrom_pos"} returns characters with the combination of chromosome and
 position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
-the combination of chromosome, position and allele, e.g., "1:1272721_A_G".
+the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
+(i.e., chr:position_REF_ALT).
 
     The algorithm is highly optimized by blocking the computations to exploit
 the high-speed memory instead of disk.

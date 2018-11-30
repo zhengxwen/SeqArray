@@ -13,7 +13,7 @@ SeqArray: Data Management of Large-scale Whole-genome Sequence Variant Calls
 
 ## Features
 
-Data management of whole-genome sequence variant calls with thousands of individuals: genotypic data (e.g., SNVs, indels and structural variation calls) and annotations in SeqArray GDS files are stored in an array-oriented and compressed manner, with efficient data access using the R programming language.
+Data management of whole-genome sequence variant calls with hundreds of thousands of individuals: genotypic data (e.g., SNVs, indels and structural variation calls) and annotations in SeqArray GDS files are stored in an array-oriented and compressed manner, with efficient data access using the R programming language.
 
 The SeqArray package is built on top of [Genomic Data Structure (GDS)](https://github.com/zhengxwen/gdsfmt) data format, and defines required data structure for a SeqArray file. GDS is a flexible and portable data container with hierarchical structure to store multiple scalable array-oriented data sets. It is suited for large-scale datasets, especially for data which are much larger than the available random-access memory. It also offers the efficient operations specifically designed for integers of less than 8 bits, since a diploid genotype usually occupies fewer bits than a byte. Data compression and decompression are available with relatively efficient random access. A high-level R interface to GDS files is available in the package [gdsfmt](https://github.com/zhengxwen/gdsfmt).
 
@@ -170,6 +170,11 @@ Update ... (in progress)
 [PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variant data in Python
 
 [JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): data manipulation of whole-genome sequencing variant data in Julia
+
+
+## File Format Conversion
+
+[gds2bgen](https://github.com/zhengxwen/gds2bgen): Format Conversion Between GDS and BGEN
 
 
 ## Bug Fixes
