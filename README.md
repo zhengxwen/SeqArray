@@ -26,6 +26,7 @@ Release Version: v1.22.3
 
 * [Help Documents](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html), [Overview Slides](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
+* [News](http://www.bioconductor.org/packages/release/bioc/news/SeqArray/NEWS)
 
 Development Version: v1.23.1
 
@@ -33,6 +34,7 @@ Development Version: v1.23.1
 
 * [Help Documents](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [R Integration](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/R_Integration.html), [Overview Slides](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
+* [News](http://bioconductor.org/packages/devel/bioc/news/SeqArray/NEWS)
 
 
 ## Citation
