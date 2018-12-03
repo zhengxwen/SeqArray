@@ -79,21 +79,24 @@
         nsamp <- ans$dim[2L]
         nvar  <- ans$dim[3L]
 
-        n <- index.gdsn(gdsfile, "genotype/data")
-        dm <- .check_dim(n, 3L)
-        if (dm[2L] != nsamp)
-            message("Invalid sample dimension in 'genotype/data'.")
-        if (dm[3L] < nvar)
-            message("Invalid variant dimension in 'genotype/data'.")
-
-        n <- index.gdsn(gdsfile, "genotype/~data", silent=TRUE)
+        n <- index.gdsn(gdsfile, "genotype/data", silent=TRUE)
         if (!is.null(n))
         {
             dm <- .check_dim(n, 3L)
-            if (dm[2L] < nvar)
-                message("Invalid variant dimension in 'genotype/~data'.")
-            if (dm[3L] != nsamp)
-                message("Invalid sample dimension in 'genotype/~data'.")
+            if (dm[2L] != nsamp)
+                message("Invalid sample dimension in 'genotype/data'.")
+            if (dm[3L] < nvar)
+                message("Invalid variant dimension in 'genotype/data'.")
+
+            n <- index.gdsn(gdsfile, "genotype/~data", silent=TRUE)
+            if (!is.null(n))
+            {
+                dm <- .check_dim(n, 3L)
+                if (dm[2L] < nvar)
+                    message("Invalid variant dimension in 'genotype/~data'.")
+                if (dm[3L] != nsamp)
+                    message("Invalid sample dimension in 'genotype/~data'.")
+            }
         }
     }
     if (verbose)
