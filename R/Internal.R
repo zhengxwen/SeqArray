@@ -475,10 +475,12 @@
 
     # full variable name
     path <- name.gdsn(node, TRUE)
+    idx_flag <- substr(varname, 1L, 1L) == "@"
+    if (idx_flag && grepl("/", varname, fixed=TRUE))
+        varname <- .var_path(substring(varname, 2L), "@")
     fullvarname <- paste(path, varname, sep="/")
     info_flag <- substr(fullvarname, 1L, 16L) == "annotation/info/"
     fmt_flag  <- substr(fullvarname, 1L, 18L) == "annotation/format/"
-    idx_flag <- substr(varname, 1L, 1L) == "@"
     varname2 <- fullvarname
     if (substr(fullvarname, 1L, 12L) == "description/")
     {
@@ -559,6 +561,20 @@
                 storage.param <- s[2L]
             else
                 storage.param <- ""
+        }
+    }
+
+    # sub directory?
+    if (grepl("/", varname, fixed=TRUE))
+    {
+        nm <- unlist(strsplit(varname, "/", fixed=TRUE))
+        varname <- nm[length(nm)]
+        for (m in nm[-length(nm)])
+        {
+            v <- index.gdsn(node, m, silent=TRUE)
+            if (is.null(v))
+                v <- addfolder.gdsn(node, m)
+            node <- v
         }
     }
 

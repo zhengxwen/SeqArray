@@ -156,22 +156,13 @@ seqClose(f)
 
 ## Benchmarks
 
-### Reading genotypes in random sample subsets (BioC release 3.8 vs 3.4)
+### 1. Reading genotypes in random sample subsets (BioC release 3.8 vs 3.4)
 
 (the number of samples is ~100k)
 
 ![](vignettes/benchmark_rand_samp.svg)
 
-
-Update ... (in progress)
-
-
-
-## Also See
-
-[PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variant data in Python
-
-[JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): data manipulation of whole-genome sequencing variant data in Julia
+*Update ... (in progress)*
 
 
 ## File Format Conversion
@@ -182,3 +173,10 @@ Update ... (in progress)
 ## Bug Fixes
 
 * v1.22.0: fix `seqVCF2GDS()` and `seqBCF2GDS()` since reading from connections in text mode is buffered in R >= v3.5.0
+
+
+## Also See
+
+[PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variant data in Python
+
+[JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): data manipulation of whole-genome sequencing variant data in Julia

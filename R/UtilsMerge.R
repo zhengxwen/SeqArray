@@ -521,7 +521,10 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     {
         n <- index.gdsn(flist[[i]], "annotation/info", silent=TRUE)
         if (!is.null(n))
-            varnm <- unique(c(varnm, ls.gdsn(n)))
+        {
+            varnm <- unique(c(varnm, ls.gdsn(n, recursive=TRUE,
+                include.dirs=FALSE)))
+        }
     }
     if (!is.null(info.var))
     {
@@ -551,14 +554,14 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                 n <- index.gdsn(flist[[j]], "annotation/info", silent=TRUE)
                 if (!is.null(n))
                 {
-                    if (varnm[i] %in% ls.gdsn(n))
+                    if (varnm[i] %in% ls.gdsn(n, recursive=TRUE, include.dirs=FALSE))
                     {
                         idx <- j
                         break
                     }
                 }
             }
-            if (idx < 1L) stop("internal error, info field.")
+            if (is.na(idx) || (idx<1L)) stop("internal error, info field.")
 
             need <- FALSE
             for (j in seq_along(flist))
@@ -572,9 +575,9 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                 }
             }
 
-            n <- index.gdsn(flist[[idx]], paste0("annotation/info/", varnm[i]))
-            n1 <- index.gdsn(flist[[idx]],
-                paste0("annotation/info/@", varnm[i]), silent=TRUE)
+            s <- paste0("annotation/info/", varnm[i])
+            n <- index.gdsn(flist[[idx]], s)
+            n1 <- index.gdsn(flist[[idx]], .var_path(s, "@"), silent=TRUE)
 
             dp <- objdesp.gdsn(n)
             dp$dim[length(dp$dim)] <- 0L
@@ -585,18 +588,16 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
             n3 <- n1
             if (!is.null(n1) | need)
             {
-                n3 <- .AddVar(storage.option, varInfo,
-                    paste("@", varnm[i], sep=""), storage="int32",
-                    visible=FALSE)
+                n3 <- .AddVar(storage.option, varInfo, paste0("@", varnm[i]),
+                    storage="int32", visible=FALSE)
             }
 
             for (j in seq_along(flist))
             {
                 f <- flist[[j]]
-                n4 <- index.gdsn(f, paste0("annotation/info/", varnm[i]),
-                    silent=TRUE)
-                n5 <- index.gdsn(f, paste0("annotation/info/@", varnm[i]),
-                    silent=TRUE)
+                s <- paste0("annotation/info/", varnm[i])
+                n4 <- index.gdsn(f, s, silent=TRUE)
+                n5 <- index.gdsn(f, .var_path(s, "@"), silent=TRUE)
 
                 if (!is.null(n4))
                 {
@@ -613,7 +614,10 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                     }
                 } else {
                     if (is.null(n3))
-                        stop(paste0("annotation/info/@", varnm[i]), " error.")
+                    {
+                        stop(.var_path(paste0("annotation/info/", varnm[i]),
+                            "@"), " error.")
+                    }
                     cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
                     .repeat_gds(n3, 0L, cnt)
                 }
@@ -633,14 +637,14 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         ## merge different samples
         for (i in seq_along(varnm))
         {
-            vnm <- paste("annotation/info/", varnm[i], sep="")
+            vnm <- paste0("annotation/info/", varnm[i])
             idx <- 0L
             for (j in seq_along(flist))
             {
                 n <- index.gdsn(flist[[j]], "annotation/info", silent=TRUE)
                 if (!is.null(n))
                 {
-                    if (varnm[i] %in% ls.gdsn(n))
+                    if (varnm[i] %in% ls.gdsn(n, recursive=TRUE, include.dirs=FALSE))
                     {
                         idx <- j
                         break
@@ -684,9 +688,9 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
             if (verbose) cat("        ", varnm[i], sep="")
 
-            n <- index.gdsn(flist[[idx]], paste0("annotation/info/", varnm[i]))
-            n1 <- index.gdsn(flist[[idx]],
-                paste0("annotation/info/@", varnm[i]), silent=TRUE)
+            s <- paste0("annotation/info/", varnm[i])
+            n <- index.gdsn(flist[[idx]], s)
+            n1 <- index.gdsn(flist[[idx]], .var_path(s, "@"), silent=TRUE)
 
             dp <- objdesp.gdsn(n)
             dp$dim[length(dp$dim)] <- 0L
@@ -697,13 +701,12 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
             n3 <- n1
             if (!is.null(n1) | need)
             {
-                n3 <- .AddVar(storage.option, varInfo,
-                    paste("@", varnm[i], sep=""), storage="int32",
-                    visible=FALSE)
+                n3 <- .AddVar(storage.option, varInfo, paste0("@", varnm[i]),
+                    storage="int32", visible=FALSE)
             }
 
             .Call(SEQ_MergeInfo, nVariant, varidx, flist,
-                paste("annotation/info/", varnm[i], sep=""),
+                paste0("annotation/info/", varnm[i]),
                 gfile, list(verbose=verbose))
             readmode.gdsn(n2)
             .DigestCode(n2, digest, verbose)
