@@ -1706,7 +1706,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 						if (p < end)
 						{
-							C_Int8 v;
+							C_Int8 v = 0;
 							if (*p == '|')
 							{
 								v = 1; p ++;
