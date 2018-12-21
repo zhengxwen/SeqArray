@@ -31,10 +31,12 @@
 static const char *pkg_samtools = "Rsamtools";
 
 #define BGZF void
-#define PKG_LOAD(name)	\
-	*(DL_FUNC*)(&name) = R_FindSymbol(#name, pkg_samtools, NULL); \
-	if (!name) \
-		error("No function '%s' in the %s package", #name, pkg_samtools);
+#define PKG_LOAD(name)	{ \
+		DL_FUNC f = R_FindSymbol(#name, pkg_samtools, NULL); \
+		if (!f) \
+			error("No function '%s' in the %s package", #name, pkg_samtools); \
+		memcpy(&name, &f, sizeof(f)); \
+	}
 
 static BGZF* (*bgzf_open)(const char* path, const char *mode) = NULL;
 static int (*bgzf_close)(BGZF *fp) = NULL;
