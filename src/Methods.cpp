@@ -511,4 +511,121 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 }
 
 
+// ======================================================================
+
+/// store dosage in a 2-bit packed matrix
+COREARRAY_DLL_EXPORT SEXP FC_SetPackedGeno(SEXP index, SEXP dosage, SEXP rawmat)
+{
+	SEXP dm = Rf_getAttrib(rawmat, R_DimSymbol);
+	size_t NumPacked = INTEGER(dm)[0];
+	if (Rf_length(dosage) > (int)NumPacked*4)
+		error("Internal error: store genotype in packed raw format!");
+	int idx = Rf_asInteger(index) - 1;
+	int n = Rf_length(dosage);
+	Rbyte *p = RAW(rawmat) + NumPacked * idx;
+	unsigned char b0, b1, b2, b3;
+
+	if (TYPEOF(dosage) == RAWSXP)
+	{
+		Rbyte *s = RAW(dosage);
+		for (; n >= 4; n-=4)
+		{
+			b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+			b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+			b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
+			b3 = (0<=s[3] && s[3]<=2) ? s[3] : 3;
+			s += 4;
+			*p++ = b0 | (b1<<2) | (b2<<4) | (b3<<6);
+		}
+		switch (n)
+		{
+			case 3:
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+				b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
+				s += 3;
+				*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
+			case 2:
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+				s += 2;
+				*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
+			case 1:
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				s ++;
+				*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
+		}
+	} else if (TYPEOF(dosage) == INTSXP)
+	{
+		int *s = INTEGER(dosage);
+		for (; n >= 4; n-=4)
+		{
+			b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+			b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+			b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
+			b3 = (0<=s[3] && s[3]<=2) ? s[3] : 3;
+			s += 4;
+			*p++ = b0 | (b1<<2) | (b2<<4) | (b3<<6);
+		}
+		switch (n)
+		{
+			case 3:
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+				b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
+				s += 3;
+				*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
+			case 2:
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+				s += 2;
+				*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
+			case 1:
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				s ++;
+				*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
+		}
+	} else if (TYPEOF(dosage) == REALSXP)
+	{
+		double *ds = REAL(dosage);
+		int s[4];
+		for (; n >= 4; n-=4)
+		{
+			s[0] = (int)round(ds[0]); s[1] = (int)round(ds[1]);
+			s[2] = (int)round(ds[2]); s[3] = (int)round(ds[3]);
+			b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+			b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+			b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
+			b3 = (0<=s[3] && s[3]<=2) ? s[3] : 3;
+			ds += 4;
+			*p++ = b0 | (b1<<2) | (b2<<4) | (b3<<6);
+		}
+		switch (n)
+		{
+			case 3:
+				s[0] = (int)round(ds[0]); s[1] = (int)round(ds[1]);
+				s[2] = (int)round(ds[2]);
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+				b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
+				ds += 3;
+				*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
+			case 2:
+				s[0] = (int)round(ds[0]); s[1] = (int)round(ds[1]);
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
+				ds += 2;
+				*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
+			case 1:
+				s[0] = (int)round(ds[0]);
+				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
+				ds ++;
+				*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
+		}
+	} else {
+		error("Internal error: invalid data type of dosage!");
+	}
+	return R_NilValue;
+}
+
 } // extern "C"
