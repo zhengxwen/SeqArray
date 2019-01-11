@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2017    Xiuwen Zheng
+// Copyright (C) 2016-2019    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1575,7 +1575,7 @@ void vec_i32_shr_b2(int32_t *p, size_t n)
 
 
 /// bounds checking, excluding NA_INTEGER
-int vec_i32_bound_check(int32_t *p, size_t n, int bound)
+int vec_i32_bound_check(const int32_t *p, size_t n, int bound)
 {
 	#define NA_INTEGER  0x80000000
 

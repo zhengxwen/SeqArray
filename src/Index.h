@@ -286,6 +286,8 @@ public:
 	void Clear();
 	void AddRange(int start, int end);
 	bool IsIncluded(int point);
+	void GetRanges(int Start[], int End[]);
+	inline size_t Size() const { return _RangeSet.size(); }
 
 protected:
 	/// strict weak ordering for non-overlapping, == when overlapping

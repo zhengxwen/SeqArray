@@ -520,6 +520,16 @@ bool CRangeSet::IsIncluded(int point)
 	return (p != _RangeSet.end()) && (p->Start <= point) && (point <= p->End);
 }
 
+void CRangeSet::GetRanges(int Start[], int End[])
+{
+	set<TRange, less_range>::const_iterator it = _RangeSet.begin();
+	for (size_t n=_RangeSet.size(); n > 0; n--, it++)
+	{
+		*Start++ = it->Start;
+		*End++   = it->End;
+	}
+}
+
 
 
 // ===========================================================

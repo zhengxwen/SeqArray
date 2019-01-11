@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2017    Xiuwen Zheng
+// Copyright (C) 2016-2019    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -376,7 +376,7 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2(const int32_t *p,
 COREARRAY_DLL_DEFAULT void vec_i32_shr_b2(int32_t *p, size_t n);
 
 /// bounds checking, return 0 if fails
-COREARRAY_DLL_DEFAULT int vec_i32_bound_check(int32_t *p, size_t n, int bound);
+COREARRAY_DLL_DEFAULT int vec_i32_bound_check(const int32_t *p, size_t n, int bound);
 
 
 

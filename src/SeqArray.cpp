@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2017    Xiuwen Zheng
+// Copyright (C) 2013-2019    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -681,13 +681,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 				varPos = &File.Position();
 
 			CChromIndex &Chrom = File.Chromosome();
-			map<string, CRangeSet> RngSets;
+			map<string, CRangeSet> RngSets;  // Chromosome ==> CRangeSet
 
 			R_xlen_t n = XLENGTH(include);
 			for (R_xlen_t idx=0; idx < n; idx++)
 			{
 				string s = CHAR(STRING_ELT(include, idx));
-
 				if (IsNum == TRUE)
 				{
 					if (!is_numeric(s)) continue;
@@ -702,7 +701,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 				{
 					if (varPos)
 					{
-						// if from.bp and to.bp
+						// if specify from.bp and to.bp
 						int from = pFrom[idx], to = pTo[idx];
 						if (from == NA_INTEGER) from = 0;
 						if (to == NA_INTEGER) to = 2147483647;
@@ -721,6 +720,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 
 			if (varPos)
 			{
+				// Chromosome ==> CRangeSet
 				map<string, CRangeSet>::iterator it;
 				for (it=RngSets.begin(); it != RngSets.end(); it++)
 				{
@@ -729,19 +729,34 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 					vector<CChromIndex::TRange>::const_iterator p;
 					for (p=rng.begin(); p != rng.end(); p++)
 					{
-						size_t i = p->Start;
-						size_t n = p->Length;
+						size_t i=p->Start, n=p->Length;
 						C_Int32 *s = &((*varPos)[0]) + i;
-						if (!IsIntersect)
+						if (RngSet.Size() == 1)
 						{
-							for (; n > 0; n--, i++)
-								if (RngSet.IsIncluded(*s++)) array[i] = TRUE;
-						} else {
-							C_BOOL *b = &sel_array[i];
-							for (; n > 0; n--, i++, s++)
+							// there is only a range, optimized for this situation
+							int st, ed;
+							RngSet.GetRanges(&st, &ed);
+							if (!IsIntersect)
 							{
-								if (*b++)
-									if (RngSet.IsIncluded(*s)) array[i] = TRUE;
+								for (; n > 0; n--, i++, s++)
+									if (st<=*s && *s<=ed) array[i] = TRUE;
+							} else {
+								C_BOOL *b = &sel_array[i];
+								for (; n > 0; n--, i++, s++)
+									if (*b++ && st<=*s && *s<=ed) array[i] = TRUE;
+							}
+						} else {
+							if (!IsIntersect)
+							{
+								for (; n > 0; n--, i++)
+									if (RngSet.IsIncluded(*s++)) array[i] = TRUE;
+							} else {
+								C_BOOL *b = &sel_array[i];
+								for (; n > 0; n--, i++, s++)
+								{
+									if (*b++)
+										if (RngSet.IsIncluded(*s)) array[i] = TRUE;
+								}
 							}
 						}
 					}
@@ -756,13 +771,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 			for (size_t n=array_size; n > 0; n--)
 				(*p++) &= (*s++);
 		}
-
 		if (Rf_asLogical(verbose) == TRUE)
 		{
 			Rprintf("# of selected variants: %s\n", PrettyInt(
 				File.VariantSelNum()));
 		}
-
 		UNPROTECT(nProtected);
 
 	COREARRAY_CATCH
