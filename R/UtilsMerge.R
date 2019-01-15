@@ -198,7 +198,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     nSamp <- length(samp.id)
     nVariant <- length(variant.id)
 
-    if (length(samp2.id) > 0L)
+    if (length(samp2.id)>0L || length(samp.id)==0L)
     {
         ## merge different variants
 
@@ -227,105 +227,112 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
         sync.gds(gfile)
 
-        ## add a folder for genotypes
+        ## add a folder for genotypes and phasing info
         if (verbose) cat("    genotype, phase [")
         varGeno <- addfolder.gdsn(gfile, "genotype")
         .MergeNodeAttr(varGeno, flist, "genotype")
-
-        ploidy <- seqSummary(flist[[1L]], check="none", verbose=FALSE)$ploidy
-        for (i in seq_along(gds.fn))
-        {
-            if (!identical(ploidy, seqSummary(flist[[1L]], check="none",
-                    verbose=FALSE)$ploidy))
-                stop("ploidy should be the same!")
-        }
-        n1 <- .AddVar(storage.option, varGeno, "data", storage="bit2",
-            valdim=c(ploidy, nSamp, 0L))
-
-        ## add phase folder
         varPhase <- addfolder.gdsn(gfile, "phase")
-        if (ploidy > 2L)
-        {
-            n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
-                valdim=c(ploidy-1L, nSamp, 0L))
-        } else {
-            n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
-                valdim=c(nSamp, 0L))
-        }
 
-        geno_idx <- NULL
-        for (i in seq_along(flist))
+        if (length(samp.id) > 0L)
         {
-            if (verbose)
+            ploidy <- seqSummary(flist[[1L]], check="none", verbose=FALSE)$ploidy
+            for (i in seq_along(gds.fn))
             {
-                cat(ifelse(i > 1L, ",", ""), i, sep="")
-                flush.console()
+                if (!identical(ploidy, seqSummary(flist[[1L]], check="none",
+                        verbose=FALSE)$ploidy))
+                    stop("ploidy should be the same!")
             }
-            sid <- seqGetData(flist[[i]], "sample.id")
-            n3 <- index.gdsn(flist[[i]], "genotype/data")
-            n4 <- index.gdsn(flist[[i]], "phase/data")
-            if (identical(sid, samp.id))
+            n1 <- .AddVar(storage.option, varGeno, "data", storage="bit2",
+                valdim=c(ploidy, nSamp, 0L))
+
+            ## add phase folder
+            if (ploidy > 2L)
             {
-                append.gdsn(n1, n3)
-                append.gdsn(n2, n4)
+                n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
+                    valdim=c(ploidy-1L, nSamp, 0L))
             } else {
-                k <- match(samp.id, sid)
-                s <- vector("list", 3L)
-                s[2L] <- k
-                assign.gdsn(n1, n3, seldim=s, append=TRUE,
-                    .value=NA_integer_, .substitute=3L)
-                s <- vector("list", length(objdesp.gdsn(n4)$dim))
-                s[length(s)-1L] <- k
-                assign.gdsn(n2, n4, seldim=s, append=TRUE,
-                    .value=NA_integer_, .substitute=0)
+                n2 <- .AddVar(storage.option, varPhase, "data", storage="bit1",
+                    valdim=c(nSamp, 0L))
             }
-            geno_idx <- c(geno_idx, read.gdsn(index.gdsn(flist[[i]],
-                "genotype/@data")))
-            if (geno.pad && i<length(flist) && ploidy==2L)
+
+            geno_idx <- NULL
+            for (i in seq_along(flist))
             {
-                if (prod(objdesp.gdsn(n1)$dim) %% 4L)
+                if (verbose)
                 {
-                    f <- flist[[i]]
-                    seqSetFilter(f, variant.sel=.dim(f)[3L], verbose=FALSE)
-                    v <- seqGetData(f, "genotype")
-                    seqResetFilter(f, verbose=FALSE)
-                    dim(v) <- NULL
-                    vv <- rep(0L, ploidy*nSamp)
-                    vv[is.na(v)] <- -1L
-                    append.gdsn(n1, vv)
-                    k <- length(geno_idx)
-                    geno_idx[k] <- geno_idx[k] + 1L
-                    if (verbose) cat(".")
+                    cat(ifelse(i > 1L, ",", ""), i, sep="")
+                    flush.console()
+                }
+                sid <- seqGetData(flist[[i]], "sample.id")
+                n3 <- index.gdsn(flist[[i]], "genotype/data")
+                n4 <- index.gdsn(flist[[i]], "phase/data")
+                if (identical(sid, samp.id))
+                {
+                    append.gdsn(n1, n3)
+                    append.gdsn(n2, n4)
+                } else {
+                    k <- match(samp.id, sid)
+                    s <- vector("list", 3L)
+                    s[2L] <- k
+                    assign.gdsn(n1, n3, seldim=s, append=TRUE,
+                        .value=NA_integer_, .substitute=3L)
+                    s <- vector("list", length(objdesp.gdsn(n4)$dim))
+                    s[length(s)-1L] <- k
+                    assign.gdsn(n2, n4, seldim=s, append=TRUE,
+                        .value=NA_integer_, .substitute=0)
+                }
+                geno_idx <- c(geno_idx, read.gdsn(index.gdsn(flist[[i]],
+                    "genotype/@data")))
+                if (geno.pad && i<length(flist) && ploidy==2L)
+                {
+                    if (prod(objdesp.gdsn(n1)$dim) %% 4L)
+                    {
+                        f <- flist[[i]]
+                        seqSetFilter(f, variant.sel=.dim(f)[3L], verbose=FALSE)
+                        v <- seqGetData(f, "genotype")
+                        seqResetFilter(f, verbose=FALSE)
+                        dim(v) <- NULL
+                        vv <- rep(0L, ploidy*nSamp)
+                        vv[is.na(v)] <- -1L
+                        append.gdsn(n1, vv)
+                        k <- length(geno_idx)
+                        geno_idx[k] <- geno_idx[k] + 1L
+                        if (verbose) cat(".")
+                    }
                 }
             }
+
+            readmode.gdsn(n1)
+            readmode.gdsn(n2)
+
+            n <- .AddVar(storage.option, varGeno, "@data", geno_idx,
+                storage="uint8", visible=FALSE)
+            .DigestCode(n, digest, FALSE)
+
+            # TODO
+            n <- .AddVar(storage.option, varGeno, "extra.index",
+                storage="int32", valdim=c(3L,0L))
+            put.attr.gdsn(n, "R.colnames",
+                c("sample.index", "variant.index", "length"))
+            .AddVar(storage.option, varGeno, "extra", storage="int16",
+                closezip=TRUE)
+
+            n <- .AddVar(storage.option, varPhase, "extra.index",
+                storage="int32", valdim=c(3L,0L))
+            put.attr.gdsn(n, "R.colnames",
+                c("sample.index", "variant.index", "length"))
+            .AddVar(storage.option, varPhase, "extra", storage="bit1",
+                closezip=TRUE)
+
+            # sync file
+            sync.gds(gfile)
+            if (verbose) cat("]\n          ")
+            .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
+            if (verbose) cat("          ")
+            .DigestCode(index.gdsn(gfile, "phase/data"), digest, verbose)
+        } else {
+            if (verbose) cat("]\n")
         }
-
-        readmode.gdsn(n1)
-        readmode.gdsn(n2)
-
-        n <- .AddVar(storage.option, varGeno, "@data", geno_idx,
-            storage="uint8", visible=FALSE)
-        .DigestCode(n, digest, FALSE)
-
-        # TODO
-        n <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
-            valdim=c(3L,0L))
-        put.attr.gdsn(n, "R.colnames",
-            c("sample.index", "variant.index", "length"))
-        .AddVar(storage.option, varGeno, "extra", storage="int16", closezip=TRUE)
-
-        n <- .AddVar(storage.option, varPhase, "extra.index",
-            storage="int32", valdim=c(3L,0L))
-        put.attr.gdsn(n, "R.colnames",
-            c("sample.index", "variant.index", "length"))
-        .AddVar(storage.option, varPhase, "extra", storage="bit1", closezip=TRUE)
-
-        # sync file
-        sync.gds(gfile)
-        if (verbose) cat("]\n          ")
-        .DigestCode(index.gdsn(gfile, "genotype/data"), digest, verbose)
-        if (verbose) cat("          ")
-        .DigestCode(index.gdsn(gfile, "phase/data"), digest, verbose)
 
         sync.gds(gfile)
 
@@ -542,7 +549,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
             paste(varnm, collapse=","), ")\n", sep="")
     }
 
-    if (length(samp2.id) > 0L)
+    if (length(samp2.id)>0L || length(samp.id)==0L)
     {
         ## merge different variants
         for (i in seq_along(varnm))
@@ -781,7 +788,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         n5 <- .AddVar(storage.option, n3, "@data", storage="int32",
             visible=FALSE)
 
-        if (length(samp2.id) > 0L)
+        if (length(samp2.id)>0L || length(samp.id)==0L)
         {
             ## merge different variants
             for (j in seq_along(flist))
