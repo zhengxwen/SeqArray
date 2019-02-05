@@ -943,3 +943,44 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     # return
     invisible(normalizePath(out.fn))
 }
+
+
+
+#######################################################################
+# Reset the variant IDs in multiple GDS files
+#
+seqResetVariantID <- function(gds.fn, digest=TRUE, optimize=TRUE, verbose=TRUE)
+{
+    stopifnot(is.character(gds.fn), length(gds.fn)>0L)
+    stopifnot(is.logical(digest), length(digest)==1L)
+    stopifnot(is.logical(optimize), length(optimize)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    n <- 0L
+    i <- 1L
+    for (fn in gds.fn)
+    {
+        if (verbose)
+            cat(sprintf("[%02d] %s ...", i, fn))
+        i <- i + 1L
+        f <- seqOpen(fn, FALSE)
+        dp <- objdesp.gdsn(index.gdsn(f, "variant.id"))
+        len <- prod(dp$dim)
+        v <- seq_len(len) + n
+        nd <- add.gdsn(f, "variant.id", v, storage="int", compress=dp$compress,
+            replace=TRUE, closezip=TRUE)
+        n <- n + len
+        if (digest)
+            .DigestCode(nd, TRUE, verbose)
+        seqClose(f)
+        if (optimize)
+            cleanup.gds(fn, verbose=FALSE)
+        if (verbose)
+        {
+            cat("    new variant id: ", v[1L], " ... ", v[length(v)],
+                " [", length(v), "]\n", sep="")
+        }
+    }
+
+    invisible()
+}

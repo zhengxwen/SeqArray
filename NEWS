@@ -1,6 +1,9 @@
-CHANGES IN VERSION 1.23.1-1.23.3
+CHANGES IN VERSION 1.23.1-1.23.6
 -------------------------
 
+NEW FEATURES
+
+    o a new function `seqResetVariantID()`
 
 
 CHANGES IN VERSION 1.22.1-1.22.3
