@@ -9,9 +9,7 @@ seqResetVariantID(gds.fn, digest=TRUE, optimize=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{a list of file names of multiple GDS files}
-    \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
-        "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
-        if TRUE or a digest algorithm is specified}
+    \item{digest}{a logical value, if TRUE, add a md5 hash code}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}

@@ -5,7 +5,7 @@
     Recompress the SeqArray GDS file.
 }
 \usage{
-seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax"),
+seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax", "none"),
     exclude=character(), optimize=TRUE, verbose=TRUE)
 }
 \arguments{
@@ -38,7 +38,7 @@ a GDS node each time.
 gds.fn <- seqExampleFileName("gds")
 file.copy(gds.fn, "tmp.gds")
 
-seqRecompress(gds.fn, "LZMA")
+seqRecompress("tmp.gds", "LZMA")
 
 unlink("tmp.gds")
 }

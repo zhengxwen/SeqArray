@@ -344,7 +344,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 # Recompress the GDS file
 #
 seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
-    "UltraMax"), exclude=character(), optimize=TRUE, verbose=TRUE)
+    "UltraMax", "none"), exclude=character(), optimize=TRUE, verbose=TRUE)
 {
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
     stopifnot(is.character(exclude))
@@ -370,8 +370,12 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
         node_compress <- "LZMA_RA.ultra_max:8M"
         fmt_compress <- "LZMA_RA.ultra_max:8M"
         idx_compress <- "LZMA.max"
-    } else
+    } else if (compress == "none")
+    {
+        node_compress <- fmt_compress <- idx_compress <- ""
+    } else {
         stop("Not implemented.")
+    }
 
     # open the file
     f <- openfn.gds(gds.fn, readonly=FALSE)
