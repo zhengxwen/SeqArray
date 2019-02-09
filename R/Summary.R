@@ -817,7 +817,7 @@ seqSystem <- function()
     err <- ""
     dp <- objdesp.gdsn(index.gdsn(f, nm))
     if (isTRUE(dp$type != type))
-        err <- "Invalid data type."
+        err <- paste0("Invalid data type (should be ", type, ").")
     else if (dp$is.array && (length(dp$dim)!=1L || dp$dim[1L]!=cnt))
         err <- "Invalid dimension."
     rv <- data.frame(ok=(err==""), info=err, stringsAsFactors=FALSE)
