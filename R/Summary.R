@@ -800,6 +800,13 @@ seqSystem <- function()
 # Perform the checking for the GDS file
 #
 
+.crayon_inverse <- function(s)
+{
+    if (requireNamespace("crayon", quietly=TRUE))
+        s <- crayon::inverse(s)
+    s
+}
+
 .check_var_dim <- function(f, nm, type, cnt, verbose)
 {
     if (verbose)
@@ -807,17 +814,79 @@ seqSystem <- function()
         cat("    ", nm, sep="")
         flush.console()
     }
+    err <- ""
     dp <- objdesp.gdsn(index.gdsn(f, nm))
     if (isTRUE(dp$type != type))
-        s <- "Invalid data type."
+        err <- "Invalid data type."
     else if (dp$is.array && (length(dp$dim)!=1L || dp$dim[1L]!=cnt))
-        s <- "Invalid dimension."
-    else
-        s <- ""
-    rv <- data.frame(ok=(s==""), info=s, stringsAsFactors=FALSE)
+        err <- "Invalid dimension."
+    rv <- data.frame(ok=(err==""), info=err, stringsAsFactors=FALSE)
     rownames(rv) <- nm
     rv
 }
+
+.check_info_dim <- function(f, nm, cnt, verbose)
+{
+    nd <- index.gdsn(f, nm)
+    nm2 <- .var_path(nm, "@")
+    ix <- index.gdsn(f, nm2, silent=TRUE)
+    if (verbose)
+    {
+        cat("    ", nm, sep="")
+        flush.console()
+    }
+    err <- ""
+    if (is.null(ix))
+    {
+        dp <- objdesp.gdsn(nd)
+        if (dp$is.array)
+        {
+            if (length(dp$dim) == 1L)
+            {
+                if (dp$dim[1L] != cnt)
+                    err <- "Invalid dimension (vector)."
+            } else if (length(dp$dim) == 2L)
+            {
+                if (dp$dim[2L] != cnt)
+                    err <- "Invalid dimension (matrix)."
+            } else
+                err <- "Invalid dimension."
+        } else
+            err <- "It should be a vector or matrix."
+    } else {
+        ns <- read.gdsn(ix)
+        if (!is.vector(ns))
+            err <- paste(nm2, "should be a vector.")
+        else if (length(ns) != cnt)
+            err <- paste("Invalid length:", nm2)
+        else if (!is.integer(ns))
+            err <- paste("Invalid type:", nm2)
+        else if (any(is.na(ns)) || any(ns < 0L))
+            err <- paste("Invalid values:", nm2)
+        else {
+            L <- sum(ns)
+            dp <- objdesp.gdsn(nd)
+            if (dp$is.array)
+            {
+                if (length(dp$dim) == 1L)
+                {
+                    if (dp$dim[1L] != cnt)
+                        err <- "Invalid dimension (vector)."
+                } else if (length(dp$dim) == 2L)
+                {
+                    if (dp$dim[2L] != cnt)
+                        err <- "Invalid dimension (matrix)."
+                } else
+                    err <- "Invalid dimension."
+            } else
+                err <- "It should be a vector or matrix."
+        }
+    }
+    rv <- data.frame(ok=(err==""), info=err, stringsAsFactors=FALSE)
+    rownames(rv) <- nm
+    rv
+}
+
 
 seqCheck <- function(gdsfile, verbose=TRUE)
 {
@@ -835,7 +904,10 @@ seqCheck <- function(gdsfile, verbose=TRUE)
     # the output value
     ans <- list()
 
+
+    ################################################################
     # hash check
+
     if (verbose)
         cat("Hash check:\n")
     nm_lst <- ls.gdsn(gdsfile, include.hidden=TRUE, recursive=TRUE,
@@ -854,30 +926,55 @@ seqCheck <- function(gdsfile, verbose=TRUE)
             all(.check_digest(gdsfile, nm, verbose))),
         stringsAsFactors=FALSE)
 
+
+    ################################################################
     # dimension check
-    # gds_dm[1L] -- ploidy
-    # gds_dm[2L] -- # of total samples
-    # gds_dm[3L] -- # of total variants
+
+    # gds_dm -- ploidy, # of total samples, # of total variants
     gds_dm <- .dim(gdsfile)
+    nSamp <- gds_dm[2L]
+    nVariant <- gds_dm[3L]
     if (verbose)
         cat("Dimension check:\n")
 
     # add to the result
     addtab <- function(dat) {
         tab <<- rbind(tab, dat)
-        if (verbose) cat(ifelse(dat$ok, "\t[OK]\n", "\t[Error]\n"))
+        if (verbose)
+        {
+            if (dat$ok)
+                cat("\t[OK]\n")
+            else
+                cat("\t", .crayon_inverse(paste("[Error]", dat$info)), "\n", sep="")
+        }
         invisible()
     }
 
     tab <- NULL
     addtab(
-        .check_var_dim(gdsfile, "variant.id", NA, gds_dm[3L], verbose))
+        .check_var_dim(gdsfile, "variant.id", NA, nVariant, verbose))
     addtab(
-        .check_var_dim(gdsfile, "position", "Integer", gds_dm[3L], verbose))
+        .check_var_dim(gdsfile, "position", "Integer", nVariant, verbose))
     addtab(
-        .check_var_dim(gdsfile, "chromosome", "String", gds_dm[3L], verbose))
+        .check_var_dim(gdsfile, "chromosome", "String", nVariant, verbose))
     addtab(
-        .check_var_dim(gdsfile, "allele", "String", gds_dm[3L], verbose))
+        .check_var_dim(gdsfile, "allele", "String", nVariant, verbose))
+
+    addtab(
+        .check_var_dim(gdsfile, "annotation/id", "String", nVariant, verbose))
+    addtab(
+        .check_var_dim(gdsfile, "annotation/qual", "Real", nVariant, verbose))
+    addtab(
+        .check_var_dim(gdsfile, "annotation/filter", NA, nVariant, verbose))
+
+    lst.info <- ls.gdsn(index.gdsn(gdsfile, "annotation/info"), recursive=TRUE,
+        include.dirs=FALSE)
+    for (nm in lst.info)
+    {
+        addtab(.check_info_dim(gdsfile, paste0("annotation/info/", nm),
+            nVariant, verbose))
+    }
+
     ans$dimension <- tab
 
     invisible(ans)
