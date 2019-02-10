@@ -48,7 +48,7 @@ CIndex::CIndex()
 	AccIndex = AccOffset = 0;
 }
 
-void CIndex::Init(PdContainer Obj)
+void CIndex::Init(PdContainer Obj, const char *varname)
 {
 	Values.clear();
 	Lengths.clear();
@@ -62,6 +62,7 @@ void CIndex::Init(PdContainer Obj)
 	TotalLength = n;
 	int last = -1;
 	C_UInt32 repeat = 0;
+	bool if_neg_val = false;
 
 	while (n > 0)
 	{
@@ -71,7 +72,7 @@ void CIndex::Init(PdContainer Obj)
 		for (int *p = Buffer; m > 0; m--)
 		{
 			int v = *p++;
-			if (v < 0) v = 0;
+			if (v < 0) { v = 0; if_neg_val = true; }
 			if (v == last)
 			{
 				repeat ++;
@@ -85,7 +86,6 @@ void CIndex::Init(PdContainer Obj)
 			}
 		}
 	}
-
 	if (repeat > 0)
 	{
 		Values.push_back(last);
@@ -95,6 +95,11 @@ void CIndex::Init(PdContainer Obj)
 	Position = 0;
 	AccSum = 0;
 	AccIndex = AccOffset = 0;
+	if (if_neg_val && varname)
+	{
+		warning("'%s' should not contain negative values or NA (replaced by zero).",
+			varname);
+	}
 }
 
 void CIndex::InitOne(int num)
@@ -273,7 +278,7 @@ CGenoIndex::CGenoIndex()
 	AccIndex = AccOffset = 0;
 }
 
-void CGenoIndex::Init(PdContainer Obj)
+void CGenoIndex::Init(PdContainer Obj, const char *varname)
 {
 	Values.clear();
 	Lengths.clear();
@@ -287,6 +292,7 @@ void CGenoIndex::Init(PdContainer Obj)
 	TotalLength = n;
 	C_UInt16 last = 0xFFFF;
 	C_UInt32 repeat = 0;
+	bool if_neg_val = false;
 
 	while (n > 0)
 	{
@@ -296,7 +302,7 @@ void CGenoIndex::Init(PdContainer Obj)
 		for (C_UInt16 *p = Buffer; m > 0; m--)
 		{
 			C_UInt16 v = *p++;
-			if (v < 0) v = 0;
+			if (v < 0) { v = 0; if_neg_val = true; }
 			if (v == last)
 			{
 				repeat ++;
@@ -320,6 +326,11 @@ void CGenoIndex::Init(PdContainer Obj)
 	Position = 0;
 	AccSum = 0;
 	AccIndex = AccOffset = 0;
+	if (if_neg_val && varname)
+	{
+		warning("'%s' should not contain negative values or NA (replaced by zero).",
+			varname);
+	}
 }
 
 void CGenoIndex::GetInfo(size_t pos, C_Int64 &Sum, C_UInt8 &Value)
@@ -829,8 +840,9 @@ CGenoIndex &CFileInfo::GenoIndex()
 {
 	if (_GenoIndex.Empty())
 	{
-		PdAbstractArray I = GetObj("genotype/@data", TRUE);
-		_GenoIndex.Init(I);
+		static const char *geno_var = "genotype/@data";
+		PdAbstractArray I = GetObj(geno_var, TRUE);
+		_GenoIndex.Init(I, geno_var);
 	}
 	return _GenoIndex;
 }
@@ -844,7 +856,7 @@ CIndex &CFileInfo::VarIndex(const string &varname)
 		if (N == NULL)
 			I.InitOne(_VariantNum);
 		else
-			I.Init(N);
+			I.Init(N, varname.c_str());
 	}
 	return I;
 }

@@ -163,7 +163,7 @@ public:
 	CIndex();
 
 	/// load data and represent as run-length encoding
-	void Init(PdContainer Obj);
+	void Init(PdContainer Obj, const char *varname);
 	/// load data and represent as run-length encoding
 	void InitOne(int num);
 	/// return the accumulated sum of values and current value in Lengths and Values given by a position
@@ -203,7 +203,7 @@ public:
 	CGenoIndex();
 
 	/// load data and represent as run-length encoding
-	void Init(PdContainer Obj);
+	void Init(PdContainer Obj, const char *varname);
 	/// return the accumulated sum of values and current value in Lengths and Values given by a position
 	void GetInfo(size_t pos, C_Int64 &Sum, C_UInt8 &Value);
 	/// return true if empty
