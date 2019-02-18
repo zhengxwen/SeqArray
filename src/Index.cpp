@@ -2,7 +2,7 @@
 //
 // Index.cpp: Indexing Objects
 //
-// Copyright (C) 2016-2018    Xiuwen Zheng
+// Copyright (C) 2016-2019    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -36,6 +36,11 @@ COREARRAY_DLL_LOCAL Rconnection My_R_GetConnection(SEXP x)
 
 namespace SeqArray
 {
+
+static const char *ERR_INDEX_VALUE =
+	"'%s' should not contain negative values or NA (replaced by zero).";
+
+
 // ===========================================================
 // Indexing object
 // ===========================================================
@@ -96,10 +101,7 @@ void CIndex::Init(PdContainer Obj, const char *varname)
 	AccSum = 0;
 	AccIndex = AccOffset = 0;
 	if (if_neg_val && varname)
-	{
-		warning("'%s' should not contain negative values or NA (replaced by zero).",
-			varname);
-	}
+		warning(ERR_INDEX_VALUE, varname);
 }
 
 void CIndex::InitOne(int num)
@@ -327,10 +329,7 @@ void CGenoIndex::Init(PdContainer Obj, const char *varname)
 	AccSum = 0;
 	AccIndex = AccOffset = 0;
 	if (if_neg_val && varname)
-	{
-		warning("'%s' should not contain negative values or NA (replaced by zero).",
-			varname);
-	}
+		warning(ERR_INDEX_VALUE, varname);
 }
 
 void CGenoIndex::GetInfo(size_t pos, C_Int64 &Sum, C_UInt8 &Value)

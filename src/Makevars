@@ -3,4 +3,4 @@
 ###                                                            ###
 
 # additional preprocessor options
-PKG_CPPFLAGS = -I. -DUSING_R
+PKG_CPPFLAGS = -DUSING_R
