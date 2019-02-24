@@ -672,9 +672,13 @@
         .DigestCode(index.gdsn(gfile, nm), digest, verbose)
     }
 
-    if (flag) cat("    genotype")
-    .DigestCode(index.gdsn(gfile, "genotype/data", silent=TRUE), digest, verbose)
-    .DigestCode(index.gdsn(gfile, "genotype/@data", silent=TRUE), digest, FALSE)
+    n <- index.gdsn(gfile, "genotype/data", silent=TRUE)
+    if (!is.null(n))
+    {
+        if (flag) cat("    genotype")
+        .DigestCode(n, digest, verbose)
+        .DigestCode(index.gdsn(gfile, "genotype/@data", silent=TRUE), digest, FALSE)
+    }
 
     n <- index.gdsn(gfile, "phase/data", silent=TRUE)
     if (!is.null(n))

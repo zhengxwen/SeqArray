@@ -732,7 +732,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, .progress=FALSE,
 #######################################################################
 # get 2-bit packed genotypes in a raw matrix
 #
-.seqGet2bGeno <- function(gdsfile)
+.seqGet2bGeno <- function(gdsfile, verbose=TRUE)
 {
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     dm <- .seldim(gdsfile)
@@ -740,6 +740,6 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, .progress=FALSE,
     if (dm[2L] %% 4L) npack <- npack + 1L
 	rv <- matrix(as.raw(0), nrow=npack, ncol=dm[3L])
     seqApply(gdsfile, "$dosage_alt", FUN=.cfunction3("FC_SetPackedGeno"),
-        var.index="relative", .useraw=NA, z=rv)
+        var.index="relative", .useraw=NA, z=rv, .progress=verbose)
     rv
 }
