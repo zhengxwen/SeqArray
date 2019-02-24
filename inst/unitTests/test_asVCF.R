@@ -30,7 +30,11 @@ library(VariantAnnotation)
   ## tags with non-alphanumeric characters get ignored by scanBcfHeader
   meta.hdg <- meta(hdg)[grep("^[[:alnum:]]+$", row.names(meta(hdg))),,drop=FALSE]
   checkIdentical(meta(hdv)[rownames(meta.hdg),,drop=FALSE], meta.hdg)
-  checkIdentical(fixed(hdv), fixed(hdg))
+  ## VariantAnnotation now makes up a value for FILTER in the header even
+  ## if it was not present in original VCF header
+  for (i in intersect(names(fixed(hdv)), names(fixed(hdg)))) {
+      checkIdentical(fixed(hdv)[[i]], fixed(hdg)[[i]])
+  }
   checkIdentical(info(hdv), info(hdg))
   checkIdentical(geno(hdv), geno(hdg))
 }
@@ -164,7 +168,7 @@ test_filters <- function() {
   gdsobj <- seqOpen(gdsfile)
   samples <- seqGetData(gdsobj, "sample.id")[1:5]
   variants <- seqGetData(gdsobj, "variant.id")[1:10]
-  seqSetFilter(gdsobj, sample.id=samples, variant.id=variants)
+  seqSetFilter(gdsobj, sample.id=samples, variant.id=variants, verbose=FALSE)
 
   info <- c("AA", "AN")
   geno <- "GT"
