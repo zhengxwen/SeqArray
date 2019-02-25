@@ -557,6 +557,8 @@ extern SEXP R_Dosage_Name;
 extern SEXP R_Data_Name;
 extern SEXP R_Data_Dim2_Name;
 
+extern int* R_Process_Count;
+extern int* R_Process_Index;
 
 
 // ===========================================================

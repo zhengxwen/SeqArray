@@ -1018,19 +1018,21 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SelectFlag(SEXP select, SEXP len)
 
 
 // ===========================================================
-// get system configuration
+// Get system configuration
 // ===========================================================
 
 COREARRAY_DLL_EXPORT SEXP SEQ_IntAssign(SEXP Dst, SEXP Src)
 {
 	INTEGER(Dst)[0] = Rf_asInteger(Src);
+//	void *p = INTEGER(Dst);
+//	Rprintf("addr: %p, val: %d\n", p, Rf_asInteger(Src));
 	return R_NilValue;
 }
 
 
 
 // ===========================================================
-// get system configuration
+// Get system configuration
 // ===========================================================
 
 /// the number of alleles per site
@@ -1099,7 +1101,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 
 
 // ===========================================================
-// debug information
+// Debug information
 // ===========================================================
 
 /// the number of alleles per site
@@ -1131,16 +1133,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Debug(SEXP gdsfile)
 
 
 // ===========================================================
-// initialize R objects when the package is loaded
+// Initialize R objects when the package is loaded
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name)
+COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt, SEXP proc_idx)
 {
 	R_Geno_Dim2_Name = VECTOR_ELT(dim_name, 0);
 	R_Geno_Dim3_Name = VECTOR_ELT(dim_name, 1);
 	R_Dosage_Name = VECTOR_ELT(dim_name, 2);
 	R_Data_Name = VECTOR_ELT(dim_name, 3);
 	R_Data_Dim2_Name = VECTOR_ELT(dim_name, 4);
+	R_Process_Count = INTEGER(proc_cnt);
+	R_Process_Index = INTEGER(proc_idx);
 	return R_NilValue;
 }
 
@@ -1205,7 +1209,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
-		CALL(SEQ_Pkg_Init, 1),
+		CALL(SEQ_Pkg_Init, 3),
 		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
 		CALL(SEQ_ExternalName2, 2),         CALL(SEQ_ExternalName3, 3),
 		CALL(SEQ_ExternalName4, 4),         CALL(SEQ_ExternalName5, 5),

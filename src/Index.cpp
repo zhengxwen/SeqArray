@@ -1192,7 +1192,10 @@ void CProgressStdOut::ShowProgress()
 		if (Counter >= TotalCount)
 		{
 			s = difftime(_last_time, _start_time);
-			Rprintf("\r[%s] 100%%, completed in %s\n", bar, time_str(s));
+			Rprintf("\r[%s] 100%%, completed in %s", bar, time_str(s));
+			if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+				Rprintf(" (process %d)", *R_Process_Index);
+			Rprintf("\n");
 		} else if ((interval >= 5) || (Counter <= 0))
 		{
 			_last_time = now;
@@ -1213,6 +1216,8 @@ SEXP R_Dosage_Name    = R_NilValue;
 SEXP R_Data_Name      = R_NilValue;
 SEXP R_Data_Dim2_Name = R_NilValue;
 
+int* R_Process_Count = NULL;
+int* R_Process_Index = NULL;
 
 
 

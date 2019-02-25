@@ -26,7 +26,7 @@ process_count <- 1L
 
 .onLoad <- function(lib, pkg)
 {
-    .Call(SEQ_Pkg_Init, .dim_name)
+    .Call(SEQ_Pkg_Init, .dim_name, process_count, process_index)
     TRUE
 }
 
@@ -451,7 +451,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             {
                 # export to global variables
                 .Call(SEQ_IntAssign, process_index, i)
-                .Call(SEQ_IntAssign, process_count, cl)
+                .Call(SEQ_IntAssign, process_count, njobs)
 
                 if (is.null(gdsfile))
                 {
