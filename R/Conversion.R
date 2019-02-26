@@ -72,6 +72,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # create an output text file
 
+    bgzf <- FALSE
     if (!inherits(vcf.fn, "connection"))
     {
         ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
@@ -79,16 +80,15 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         {
             if (.Platform$OS.type == "windows")
                 use_Rsamtools <- FALSE
-            if (isTRUE(use_Rsamtools) & requireNamespace("Rsamtools"))
+            if (isTRUE(use_Rsamtools) && requireNamespace("Rsamtools"))
             {
                 ofile <- .Call(SEQ_bgzip_create, vcf.fn)
+                bgzf <- TRUE
             } else {
                 if (verbose)
                 {
                     if (.Platform$OS.type != "windows")
-                        cat("Hint: install Rsamtools to enable the bgzf output.\n")
-                    else
-                        cat("Hint: output to a general gzip file ...\n")
+                        message("Hint: install Rsamtools to enable the bgzf output.")
                 }
                 ofile <- gzfile(vcf.fn, "wb")
             }
@@ -121,6 +121,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         cat("    INFO Field: ", ifelse(s!="", s, "<none>"), "\n", sep="")
         s <- paste(z$format$ID, collapse=", ")
         cat("    FORMAT Field: ", ifelse(s!="", s, "<none>"), "\n", sep="")
+        cat(ifelse(bgzf,
+            "    output to BGZF format\n", "    output to a general gzip file\n"))
     }
 
 
