@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.23.1-1.23.6
+CHANGES IN VERSION 1.23.1-1.23.8
 -------------------------
 
 NEW FEATURES
@@ -6,6 +6,11 @@ NEW FEATURES
     o a new function `seqResetVariantID()`
 
     o a new option in `seqRecompress(, compress="none")` to uncompress all data
+
+BUG FIXES
+
+    o the bgzf VCF file is truncated in `seqGDS2VCF()` since the file is not closed
+      correctly
 
 
 CHANGES IN VERSION 1.22.1-1.22.3
