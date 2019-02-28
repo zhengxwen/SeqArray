@@ -1121,9 +1121,15 @@ void CProgress::ShowProgress()
 			// show
 			if (NewLine)
 			{
-				ConnPutText(File, "[%s] %2.0f%%, ETC: %s\n", bar, p, time_str(s));
+				ConnPutText(File, "[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+					ConnPutText(File, " (process %d)", *R_Process_Index);
+				ConnPutText(File, "\n");
 			} else {
-				ConnPutText(File, "\r[%s] %2.0f%%, ETC: %s    ", bar, p, time_str(s));
+				ConnPutText(File, "\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+					ConnPutText(File, " (process %d)", *R_Process_Index);
+				ConnPutText(File, "    ");
 				if (Counter >= TotalCount) ConnPutText(File, "\n");
 			}
 		} else {
@@ -1133,14 +1139,19 @@ void CProgress::ShowProgress()
 			if (NewLine)
 			{
 				if (Counter > 0)
-					ConnPutText(File, "[:%s (%dk lines)]\n", s.c_str(), Counter/1000);
+					ConnPutText(File, "[:%s (%dk lines)]", s.c_str(), Counter/1000);
 				else
-					ConnPutText(File, "[: (0 line)]\n");
+					ConnPutText(File, "[: (0 line)]");
+				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+					ConnPutText(File, " (process %d)", *R_Process_Index);
+				ConnPutText(File, "\n");
 			} else {
 				if (Counter > 0)
 					ConnPutText(File, "\r[:%s (%dk lines)]", s.c_str(), Counter/1000);
 				else
 					ConnPutText(File, "\r[: (0 line)]");
+				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+					ConnPutText(File, " (process %d)", *R_Process_Index);
 			}
 		}
 		(*File->fflush)(File);

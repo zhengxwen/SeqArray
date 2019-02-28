@@ -14,7 +14,7 @@ install:
 
 environment:
   matrix:
-  - R_VERSION: release
+  - R_VERSION: 3.5.1
     R_ARCH: x64
 
 build_script:
