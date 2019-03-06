@@ -626,7 +626,10 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 				// TRUE block: short, but far away from the next TRUE block
 				if (last.length > 0)
 				{
+					// merge with the last block
 					last.length = (pE - pSample) * numPloidy - last.offset;
+					if (!last.sel)
+						last.sel = pFlagGenoSel + last.offset;
 					pSampList.push_back(last);
 					last.length = 0;
 				} else {
@@ -639,6 +642,7 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 				// sparse
 				if (last.length > 0)
 				{
+					// merge with the last block
 					last.length = (pE - pSample) * numPloidy - last.offset;
 					if (!last.sel)
 						last.sel = pFlagGenoSel + last.offset;
@@ -657,6 +661,22 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 			pSampList.push_back(last);
 		ss.length = ss.offset = 0; ss.sel = NULL;
 		pSampList.push_back(ss);
+	}
+
+	{
+		// check
+		ssize_t num = 0;
+		TSampStruct *p = &pSampList[0];
+		for (; p->length > 0; p++)
+		{
+			if (p->sel)
+				num += GetNumOfTRUE(p->sel, p->length);
+			else
+				num += p->length;
+		}
+		ssize_t num_samp = GetNumOfTRUE(pSample, numSamp);
+		if (num_samp*numPloidy != num)
+			throw ErrSeqArray("Internal error when preparing structure for selected samples, please email to zhengxwen@gmail.com.");
 	}
 
 	return &pSampList[0];

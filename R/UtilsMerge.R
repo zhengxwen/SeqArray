@@ -961,7 +961,7 @@ seqResetVariantID <- function(gds.fn, digest=TRUE, optimize=TRUE, verbose=TRUE)
     for (fn in gds.fn)
     {
         if (verbose)
-            cat(sprintf("[%02d] %s ...", i, fn))
+            cat(sprintf("[%2d] %s ...", i, fn))
         i <- i + 1L
         f <- seqOpen(fn, FALSE)
         dp <- objdesp.gdsn(index.gdsn(f, "variant.id"))

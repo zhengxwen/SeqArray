@@ -13,6 +13,16 @@ BUG FIXES
       correctly
 
 
+CHANGES IN VERSION 1.22.4
+-------------------------
+
+BUG FIXES
+
+    o `seqSetFilter(, sample.id=)` fails to correctly select samples in rare cases
+      (since SeqArray>=v1.22.0 uses the distribution of selected samples to optimize
+      the data access of genotypes, see https://github.com/zhengxwen/SeqArray/issues/48)
+
+
 CHANGES IN VERSION 1.22.1-1.22.3
 -------------------------
 
