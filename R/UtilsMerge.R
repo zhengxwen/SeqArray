@@ -949,17 +949,21 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 #######################################################################
 # Reset the variant IDs in multiple GDS files
 #
-seqResetVariantID <- function(gds.fn, digest=TRUE, optimize=TRUE, verbose=TRUE)
+seqResetVariantID <- function(gds.fn, set=NULL, digest=TRUE, optimize=TRUE, verbose=TRUE)
 {
     stopifnot(is.character(gds.fn), length(gds.fn)>0L)
+    stopifnot(is.null(set) || is.logical(set))
+    if (is.logical(set))
+        stopifnot(length(gds.fn) == length(set))
     stopifnot(is.logical(digest), length(digest)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     n <- 0L
     i <- 1L
-    for (fn in gds.fn)
+    for (k in seq_along(gds.fn))
     {
+        fn <- gds.fn[k]
         if (verbose)
             cat(sprintf("[%2d] %s ...", i, fn))
         i <- i + 1L
@@ -967,18 +971,29 @@ seqResetVariantID <- function(gds.fn, digest=TRUE, optimize=TRUE, verbose=TRUE)
         dp <- objdesp.gdsn(index.gdsn(f, "variant.id"))
         len <- prod(dp$dim)
         v <- seq_len(len) + n
-        nd <- add.gdsn(f, "variant.id", v, storage="int", compress=dp$compress,
-            replace=TRUE, closezip=TRUE)
-        n <- n + len
-        if (digest)
-            .DigestCode(nd, TRUE, verbose)
-        seqClose(f)
-        if (optimize)
-            cleanup.gds(fn, verbose=FALSE)
-        if (verbose)
+        if (is.null(set) || isTRUE(set[k]))
         {
-            cat("    new variant id: ", v[1L], " ... ", v[length(v)],
-                " [", length(v), "]\n", sep="")
+            nd <- add.gdsn(f, "variant.id", v, storage="int", compress=dp$compress,
+                replace=TRUE, closezip=TRUE)
+            n <- n + len
+            if (digest)
+                .DigestCode(nd, TRUE, verbose)
+            seqClose(f)
+            if (optimize)
+                cleanup.gds(fn, verbose=FALSE)
+            if (verbose)
+            {
+                cat("    set new variant id: ", v[1L], " ... ", v[length(v)],
+                    " [", length(v), "]\n", sep="")
+            }
+        } else {
+            n <- n + len
+            seqClose(f)
+            if (verbose)
+            {
+                cat("\n    skip variant id: ", v[1L], " ... ", v[length(v)],
+                    " [", length(v), "]\n", sep="")
+            }
         }
     }
 

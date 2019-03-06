@@ -14,8 +14,9 @@ install:
 
 environment:
   matrix:
-  - R_VERSION: 3.5.1
+  - R_VERSION: stable
     R_ARCH: x64
+    BIOC_USE_DEVEL: FALSE
 
 build_script:
   - travis-tool.sh install_github zhengxwen/gdsfmt

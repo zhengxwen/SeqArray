@@ -5,10 +5,12 @@
     Resets the variant IDs in multiple SeqArray GDS files.
 }
 \usage{
-seqResetVariantID(gds.fn, digest=TRUE, optimize=TRUE, verbose=TRUE)
+seqResetVariantID(gds.fn, set=NULL, digest=TRUE, optimize=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{a list of file names of multiple GDS files}
+    \item{set}{NULL or a logical vector; NULL for resetting all files, or TRUE for
+        resetting variant.id for that GDS file}
     \item{digest}{a logical value, if TRUE, add a md5 hash code}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}

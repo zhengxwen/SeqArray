@@ -1230,7 +1230,10 @@ void CProgressStdOut::ShowProgress()
 		} else if ((interval >= 5) || (Counter <= 0))
 		{
 			_last_time = now;
-			Rprintf("\r[%s] %2.0f%%, ETC: %s    ", bar, p, time_str(s));
+			Rprintf("\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+			if (Counter>0 && R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+				Rprintf(" (process %d)", *R_Process_Index);
+			Rprintf("    ");
 		}
 	}
 }
