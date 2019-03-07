@@ -9,8 +9,8 @@ NEW FEATURES
 
 BUG FIXES
 
-    o the bgzf VCF file is truncated in `seqGDS2VCF()` since the file is not closed
-      correctly
+    o the bgzf VCF file is truncated in `seqGDS2VCF()` since the file is not
+      closed appropriately
 
 
 CHANGES IN VERSION 1.22.4
