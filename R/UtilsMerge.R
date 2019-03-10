@@ -381,7 +381,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
         ## merge different samples
 
-        v <- strsplit(variant.id, "_", fixed=TRUE)
+        v <- strsplit(variant.id, ":|_")
 
         ## add position, chromsome, allele
         # TODO: need to check whether position can be stored in 'int32'
