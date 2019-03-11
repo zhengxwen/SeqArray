@@ -7,13 +7,8 @@ NEW FEATURES
 
     o a new option in `seqRecompress(, compress="none")` to uncompress all data
 
-BUG FIXES
 
-    o the bgzf VCF file is truncated in `seqGDS2VCF()` since the file is not
-      closed appropriately
-
-
-CHANGES IN VERSION 1.22.4
+CHANGES IN VERSION 1.22.4-1.22.6
 -------------------------
 
 BUG FIXES
@@ -21,6 +16,12 @@ BUG FIXES
     o `seqSetFilter(, sample.id=)` fails to correctly select samples in rare cases
       (since SeqArray>=v1.22.0 uses the distribution of selected samples to optimize
       the data access of genotypes, see https://github.com/zhengxwen/SeqArray/issues/48)
+
+    o the bgzf VCF file is truncated in `seqGDS2VCF()` since the file is not
+      closed appropriately
+
+    o invalid chromosomes and position in the output of `seqMerge()` when merging
+      different samples but same variants
 
 
 CHANGES IN VERSION 1.22.1-1.22.3

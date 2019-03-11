@@ -331,6 +331,21 @@
 
 
 #######################################################################
+# forking implements or not
+#
+.IsForking <- function(cl)
+{
+    if (.Platform$OS.type == "windows")
+    {
+        FALSE
+    } else {
+        isTRUE(cl) || is.numeric(cl)
+    }
+}
+
+
+
+#######################################################################
 # Parallel functions
 #
 .DynamicClusterCall <- function(cl, .num, .fun, .combinefun,
