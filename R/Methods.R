@@ -383,9 +383,11 @@ seqGetFilter <- function(gdsfile, .useraw=FALSE)
 seqGetData <- function(gdsfile, var.name, .useraw=FALSE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(var.name), length(var.name)==1L)
-
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    }
     .Call(SEQ_GetData, gdsfile, var.name, .useraw)
 }
 

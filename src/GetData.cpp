@@ -557,17 +557,19 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 /// Get data from a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
 {
+	if (!Rf_inherits(gdsfile, "SeqVarGDSClass"))
+		error("'gdsfile' should be a 'SeqVarGDSClass' object.");
+	if (!Rf_isString(var_name) || RLength(var_name)!=1)
+		error("'var.name' should be a string of length one.");
 	int use_raw = Rf_asLogical(UseRaw);
 	if (use_raw == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
-
 		// File information
 		CFileInfo &File = GetFileInfo(gdsfile);
 		// Get data
 		rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw);
-
 	COREARRAY_CATCH
 }
 
