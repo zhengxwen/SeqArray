@@ -16,7 +16,7 @@ seqGetData(gdsfile, var.name, .useraw=FALSE)
         if RAW is used}
 }
 \value{
-    Return vectors or lists.
+    Return vectors, matrices or lists (with \code{length} and \code{data} components).
 }
 \details{
     The variable name should be \code{"sample.id"}, \code{"variant.id"},
@@ -38,10 +38,10 @@ allele without distinguishing different alternative alleles.
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
-\code{"$ref"} returns a character vector of reference alleles
+\code{"$ref"} returns a character vector of reference alleles.
 
 \code{"$alt"} returns a character vector of alternative alleles (delimited by
-comma)
+comma).
 
 \code{"$chrom_pos"} returns characters with the combination of chromosome and
 position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with

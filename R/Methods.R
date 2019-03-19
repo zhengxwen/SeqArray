@@ -387,6 +387,8 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE)
     {
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     }
     .Call(SEQ_GetData, gdsfile, var.name, .useraw)
 }
