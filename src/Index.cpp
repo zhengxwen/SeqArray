@@ -675,7 +675,7 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 				num += p->length;
 		}
 		ssize_t num_samp = GetNumOfTRUE(pSample, numSamp);
-		if (num_samp*numPloidy != num)
+		if (num_samp*int(numPloidy) != num)
 			throw ErrSeqArray("Internal error when preparing structure for selected samples, please email to zhengxwen@gmail.com.");
 	}
 
