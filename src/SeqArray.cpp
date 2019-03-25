@@ -1086,6 +1086,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 	#ifdef COREARRAY_SIMD_AVX512CD
 		ss.push_back("AVX512CD");
 	#endif
+	#ifdef COREARRAY_SIMD_AVX512DQ
+		ss.push_back("AVX512DQ");
+	#endif
+	#ifdef COREARRAY_SIMD_AVX512VL
+		ss.push_back("AVX512VL");
+	#endif
 	#ifdef COREARRAY_SIMD_FMA
 		ss.push_back("FMA");
 	#endif
