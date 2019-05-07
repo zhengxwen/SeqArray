@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.23.1-1.23.9
+CHANGES IN VERSION 1.24.0
 -------------------------
 
 NEW FEATURES
@@ -7,7 +7,7 @@ NEW FEATURES
 
     o a new option in `seqRecompress(, compress="none")` to uncompress all data
 
-    o `seqGetData()` allows a GDS file name as the first argument
+    o `seqGetData()` allows a GDS file name in the first argument
 
 
 CHANGES IN VERSION 1.22.4-1.22.6
