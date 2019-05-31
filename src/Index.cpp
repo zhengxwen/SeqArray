@@ -20,6 +20,8 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "Index.h"
+#include <stdio.h>
+#include <string.h>
 
 using namespace std;
 
@@ -1142,12 +1144,12 @@ void CProgress::ShowProgress()
 			if (NewLine)
 			{
 				ConnPutText(File, "[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
-				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "\n");
 			} else {
 				ConnPutText(File, "\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
-				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "    ");
 				if (Counter >= TotalCount) ConnPutText(File, "\n");
@@ -1162,7 +1164,7 @@ void CProgress::ShowProgress()
 					ConnPutText(File, "[:%s (%dk lines)]", s.c_str(), Counter/1000);
 				else
 					ConnPutText(File, "[: (0 line)]");
-				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "\n");
 			} else {
@@ -1170,7 +1172,7 @@ void CProgress::ShowProgress()
 					ConnPutText(File, "\r[:%s (%dk lines)]", s.c_str(), Counter/1000);
 				else
 					ConnPutText(File, "\r[: (0 line)]");
-				if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
+				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 			}
 		}
@@ -1222,18 +1224,21 @@ void CProgressStdOut::ShowProgress()
 		_last_time = now;
 		if (Counter >= TotalCount)
 		{
+			char buffer[512];
 			s = difftime(_last_time, _start_time);
-			Rprintf("\r[%s] 100%%, completed in %s", bar, time_str(s));
-			if (R_Process_Count && R_Process_Index && *R_Process_Count > 1)
-				Rprintf(" (process %d)", *R_Process_Index);
-			Rprintf("\n");
+			int n = sprintf(buffer, "\r[%s] 100%%, completed (%s)", bar, time_str(s));
+			if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+				sprintf(buffer+n, " (process %d)", *R_Process_Index);
+			Rprintf("%s\n", buffer);
 		} else if ((interval >= 5) || (Counter <= 0))
 		{
+			char buffer[512];
 			_last_time = now;
-			Rprintf("\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
-			if (Counter>0 && R_Process_Count && R_Process_Index && *R_Process_Count > 1)
-				Rprintf(" (process %d)", *R_Process_Index);
-			Rprintf("    ");
+			int n = sprintf(buffer, "\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+			if ((Counter>0) && R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+				n += sprintf(buffer+n, " (process %d)", *R_Process_Index);
+			strcpy(buffer+n, "    ");
+			Rprintf("%s", buffer);
 		}
 	}
 }
