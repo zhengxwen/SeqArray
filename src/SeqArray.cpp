@@ -1041,8 +1041,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 	COREARRAY_TRY
 
 		int nProtect = 0;
-		rv_ans = PROTECT(NEW_LIST(2));
-		SEXP nm = PROTECT(NEW_CHARACTER(2));
+		rv_ans = PROTECT(NEW_LIST(3));
+		SEXP nm = PROTECT(NEW_CHARACTER(3));
 		nProtect += 2;
 		SET_NAMES(rv_ans, nm);
 
@@ -1050,9 +1050,25 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 		SET_ELEMENT(rv_ans, 0, ScalarInteger(GDS_Mach_GetNumOfCores()));
 		SET_STRING_ELT(nm, 0, mkChar("num.logical.core"));
 
+		// compiler
+		SEXP Compiler = PROTECT(NEW_CHARACTER(2));
+		nProtect ++;
+		SET_ELEMENT(rv_ans, 1, Compiler);
+		SET_STRING_ELT(nm, 1, mkChar("compiler"));
+	#ifdef __VERSION__
+		SET_STRING_ELT(Compiler, 0, mkChar(__VERSION__));
+	#endif
+	#ifdef __GNUC__
+		char buf_compiler[128] = { 0 };
+		#ifndef __GNUC_PATCHLEVEL__
+			const int __GNUC_PATCHLEVEL__ = 0;
+		#endif
+		sprintf(buf_compiler, "GNUG_v%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+		SET_STRING_ELT(Compiler, 1, mkChar(buf_compiler));
+	#endif
+
 		// compiler flags
 		vector<string> ss;
-
 	#ifdef COREARRAY_SIMD_SSE
 		ss.push_back("SSE");
 	#endif
@@ -1103,8 +1119,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 	#endif
 		SEXP SIMD = PROTECT(NEW_CHARACTER(ss.size()));
 		nProtect ++;
-		SET_ELEMENT(rv_ans, 1, SIMD);
-		SET_STRING_ELT(nm, 1, mkChar("compiler.flag"));
+		SET_ELEMENT(rv_ans, 2, SIMD);
+		SET_STRING_ELT(nm, 2, mkChar("compiler.flag"));
 		for (int i=0; i < (int)ss.size(); i++)
 			SET_STRING_ELT(SIMD, i, mkChar(ss[i].c_str()));
 
