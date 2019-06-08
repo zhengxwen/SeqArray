@@ -7,6 +7,12 @@
 
 
 #######################################################################
+# Package-wide variable
+
+.packageEnv <- new.env()
+
+
+#######################################################################
 # Get the numbers of selected samples and variants
 #
 .seldim <- function(gdsfile)
@@ -347,12 +353,26 @@
 
 #######################################################################
 # Parallel functions
+#   cl -- a cluster object
+#   .num -- the total number of segments
+#   .fun -- a user-defined function
+#   .combinefun -- a user-defined function for combining the returned values
+#   .stopcluster -- TRUE/FALSE, if TRUE stop cluster nodes after running the jobs
+#   .updatefun -- a user-defined function for updating progress (could be NULL)
 #
-.DynamicClusterCall <- function(cl, .num, .fun, .combinefun,
-    .stopcluster, ...)
+.DynamicClusterCall <- function(cl, .num, .fun, .combinefun, .updatefun=NULL,
+    .stopcluster=FALSE, ...)
 {
     # in order to use the internal functions accessed by ':::'
     # the functions are all defined in 'parallel/R/snow.R'
+
+    # check
+    stopifnot(is.null(cl) | inherits(cl, "cluster"))
+    stopifnot(is.numeric(.num))
+    stopifnot(is.function(.fun))
+    stopifnot(is.character(.combinefun) | is.function(.combinefun))
+    stopifnot(is.logical(.stopcluster))
+    stopifnot(is.null(.updatefun) | is.function(.updatefun))
 
     .SendData <- parse(text=
         "parallel:::sendData(con, list(type=type,data=value,tag=tag))")
@@ -376,12 +396,6 @@
 
 
     #################################################################
-    # check
-    stopifnot(is.null(cl) | inherits(cl, "cluster"))
-    stopifnot(is.numeric(.num))
-    stopifnot(is.function(.fun))
-    stopifnot(is.character(.combinefun) | is.function(.combinefun))
-    stopifnot(is.logical(.stopcluster))
 
     if (!is.null(cl))
     {
@@ -438,6 +452,8 @@
                 {
                     ans[[d$tag]] <- dv
                 }
+
+                if (!is.null(.updatefun)) .updatefun(i)
 
                 if (stopflag)
                     message(sprintf("Stop \"job %d\".", d$node))
@@ -745,6 +761,27 @@
 .seqDebug <- function(gdsfile)
 {
     .Call("SEQ_Debug", gdsfile)
+    invisible()
+}
+
+
+
+#######################################################################
+# Convert to a VariantAnnotation object
+
+.seqProgress <- function(count)
+{
+    .Call(SEQ_Progress, count)
+}
+
+.seqProgForward <- function(progress, inc)
+{
+    if (!is.null(progress))
+    {
+        stopifnot(inherits(progress, "SeqClass_Progress"))
+        stopifnot(is.numeric(inc))
+        .Call(SEQ_ProgressAdd, progress, inc)
+    }
     invisible()
 }
 

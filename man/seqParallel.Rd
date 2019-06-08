@@ -8,7 +8,7 @@
 \usage{
 seqParallel(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
-    .selection.flag=FALSE, ...)
+    .selection.flag=FALSE, .balancing=FALSE, .bl_size=10000L, .bl_progress=FALSE, ...)
 seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 }
 \arguments{
@@ -32,6 +32,10 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         function, like "+".}
     \item{.selection.flag}{\code{TRUE} -- passes a logical vector of selection
         to the second argument of \code{FUN(gdsfile, selection, ...)}}
+    \item{.balancing}{load balancing if \code{TRUE}}
+    \item{.bl_size}{the increment for load balancing, 10000 for variants}
+    \item{.bl_progress}{if \code{TRUE} and \code{.balancing=TRUE}, show progress
+        information}
     \item{x}{a vector (atomic or list), passed to \code{FUN}}
     \item{load.balancing}{if \code{TRUE}, call \code{\link{clusterApplyLB}}
         instead of \code{\link{clusterApply}}}

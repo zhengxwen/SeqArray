@@ -1093,18 +1093,23 @@ CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 CProgress::~CProgress()
 { }
 
-void CProgress::Forward()
+void CProgress::Forward(C_Int64 Inc)
 {
-	Counter ++;
+	Counter += Inc;
+	if (TotalCount > 0 && Counter > TotalCount)
+		Counter = TotalCount;
 	if (Counter >= _hit)
 	{
 		if (TotalCount > 0)
 		{
-			_start += _step;
-			_hit = (C_Int64)(_start);
+			while (Counter >= _hit)
+			{
+				_start += _step;
+				_hit = (C_Int64)(_start);
+			}
 			if (_hit > TotalCount) _hit = TotalCount;
 		} else {
-			_hit += PROGRESS_LINE_NUM;
+			while (Counter >= _hit) _hit += PROGRESS_LINE_NUM;
 		}
 		ShowProgress();
 	}

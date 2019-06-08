@@ -520,7 +520,7 @@ public:
 	CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline);
 	virtual ~CProgress();
 
-	void Forward();
+	void Forward(C_Int64 Inc=1);
 	virtual void ShowProgress();
 
 protected:

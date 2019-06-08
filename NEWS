@@ -5,6 +5,9 @@ NEW FEATURES
 
     o add the compiler information in `seqSystem()`
 
+    o new arguments '.balancing', '.bl_size' and '.bl_progress' in `seqParallel()`
+      for load balancing
+
 
 CHANGES IN VERSION 1.24.0
 -------------------------

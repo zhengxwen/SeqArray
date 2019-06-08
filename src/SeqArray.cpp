@@ -1,6 +1,6 @@
 // ===========================================================
 //
-// SeqArray.cpp: the C/C++ codes for the SeqArray package
+// SeqArray.cpp: the C++ codes for the SeqArray package
 //
 // Copyright (C) 2013-2019    Xiuwen Zheng
 //
@@ -860,6 +860,7 @@ inline static C_BOOL *SKIP_SELECTION(size_t num, C_BOOL *p)
 	return p;
 }
 
+
 /// split the selected variants according to multiple processes
 COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
 	SEXP index, SEXP n_process, SEXP selection_flag)
@@ -930,6 +931,75 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
 			for (; ans_n > 0; ans_n--) *p++ = TRUE;
 		} else {
 			rv_ans = ScalarInteger(ans_n);
+		}
+
+	COREARRAY_CATCH
+}
+
+
+/// split the selected variants according to multiple processes
+COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectionX(SEXP gdsfile, SEXP index, SEXP split,
+	SEXP sel_idx, SEXP sel_variant, SEXP sel_sample, SEXP bl_size, SEXP selection_flag)
+{
+	int job_idx = Rf_asInteger(index) - 1;  // starting from 0
+	const bool split_by_variant = Rf_asLogical(split)==TRUE;
+	const bool sel_flag = Rf_asLogical(selection_flag)==TRUE;
+	const int *p_sel_idx = INTEGER(sel_idx);
+	const int blsize = Rf_asInteger(bl_size);
+
+	COREARRAY_TRY
+
+		// selection object
+		CFileInfo &File = GetFileInfo(gdsfile);
+		TSelection &s = File.Selection();
+
+		// clear and initialize
+		int ntot;
+		C_BOOL *base_sel, *p_sel;
+		if (split_by_variant)
+		{
+			ntot = File.VariantNum();
+			base_sel = (C_BOOL*)RAW(sel_variant);
+			p_sel = s.pVariant;
+			s.ClearSelectVariant();
+		} else {
+			ntot = File.SampleNum();
+			base_sel = (C_BOOL*)RAW(sel_sample);
+			p_sel = s.pSample;
+			memset(p_sel, 0, ntot);
+		}
+
+		// set selection
+		const int st = p_sel_idx[job_idx] - 1;
+		int n = 0, i = st;
+		for (; n<blsize && i<ntot; i++)
+		{
+			if (base_sel[i])
+				{ p_sel[i] = TRUE; n++; }
+		}
+
+		// finalize
+		if (split_by_variant)
+		{
+			s.varTrueNum = n;
+			s.varStart = st; s.varEnd = i;
+		} else {
+			s.ClearStructSample();
+		}
+
+		// ---------------------------------------------------
+		// output
+		if (sel_flag)
+		{
+/*			rv_ans = NEW_LOGICAL(SelectCount);
+			int *p = INTEGER(rv_ans);
+			memset((void*)p, 0, sizeof(int) * size_t(SelectCount));
+			if (Process_Index > 0)
+				p += split[Process_Index-1];
+			for (; ans_n > 0; ans_n--) *p++ = TRUE;
+*/
+		} else {
+			rv_ans = ScalarInteger(n);
 		}
 
 	COREARRAY_CATCH
@@ -1164,6 +1234,41 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Debug(SEXP gdsfile)
 
 
 // ===========================================================
+// Progress object
+// ===========================================================
+
+static void free_progress(SEXP ref)
+{
+    CProgressStdOut *obj = (CProgressStdOut*)R_ExternalPtrAddr(ref);
+    if (obj) delete obj;
+}
+
+/// Get a progress bar object
+COREARRAY_DLL_EXPORT SEXP SEQ_Progress(SEXP Count)
+{
+	COREARRAY_TRY
+		C_Int64 TotalCount = (C_Int64)Rf_asReal(Count);
+		CProgressStdOut *obj = new CProgressStdOut(TotalCount, true);
+		rv_ans = PROTECT(R_MakeExternalPtr(obj, R_NilValue, R_NilValue));
+		R_RegisterCFinalizerEx(rv_ans, free_progress, TRUE);
+		Rf_setAttrib(rv_ans, R_ClassSymbol, mkString("SeqClass_Progress"));
+		UNPROTECT(1);
+	COREARRAY_CATCH
+}
+
+/// Get a progress bar object
+COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
+{
+	COREARRAY_TRY
+		C_Int64 v = (C_Int64)Rf_asReal(inc);
+		CProgressStdOut *obj = (CProgressStdOut*)R_ExternalPtrAddr(ref);
+		if (obj) obj->Forward(v);
+	COREARRAY_CATCH
+}
+
+
+
+// ===========================================================
 // Initialize R objects when the package is loaded
 // ===========================================================
 
@@ -1257,7 +1362,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
 		CALL(SEQ_SetChrom, 7),
 
-		CALL(SEQ_SplitSelection, 5),
+		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 8),
 		CALL(SEQ_GetSpace, 2),
 
 		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
@@ -1272,6 +1377,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_IntAssign, 2),
 
 		CALL(SEQ_bgzip_create, 1),
+
+		CALL(SEQ_Progress, 1),              CALL(SEQ_ProgressAdd, 2),
 
 		{ NULL, NULL, 0 }
 	};
