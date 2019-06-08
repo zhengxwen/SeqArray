@@ -346,3 +346,47 @@ test.dosage_alt <- function()
 
 	invisible()
 }
+
+
+test.parallel_balancing <- function()
+{
+	# open the GDS file
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
+
+	# test 1
+	p0 <- seqGetData(f, "position")
+
+	p1 <- seqParallel(2, f, function(gds) seqGetData(gds, "position"))
+	checkEquals(p0, p1, "Parallel load balancing: test 1 (1)")
+	p2 <- seqParallel(2, f, function(gds) seqGetData(gds, "position"),
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE)
+	checkEquals(p0, p2, "Parallel load balancing: test 1 (2)")
+	p3 <- seqParallel(1, f, function(gds) seqGetData(gds, "position"),
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE)
+	checkEquals(p0, p3, "Parallel load balancing: test 1 (3)")
+	p4 <- seqParallel(2, f, function(gds, flag) p0[flag],
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE, .selection.flag=TRUE)
+	checkEquals(p0, p4, "Parallel load balancing: test 1 (4)")
+
+
+	# test 2
+	set.seed(1000)
+	sel <- sample(c(FALSE, TRUE), length(p0), replace=TRUE)
+	p0 <- p0[sel]
+	seqSetFilter(f, variant.sel=sel)
+
+	p1 <- seqParallel(2, f, function(gds) seqGetData(gds, "position"))
+	checkEquals(p0, p1, "Parallel load balancing: test 2 (1)")
+	p2 <- seqParallel(2, f, function(gds) seqGetData(gds, "position"),
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE)
+	checkEquals(p0, p2, "Parallel load balancing: test 2 (2)")
+	p3 <- seqParallel(1, f, function(gds) seqGetData(gds, "position"),
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE)
+	checkEquals(p0, p3, "Parallel load balancing: test 2 (3)")
+	p4 <- seqParallel(2, f, function(gds, flag) p0[flag],
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE, .selection.flag=TRUE)
+	checkEquals(p0, p4, "Parallel load balancing: test 2 (4)")
+
+	invisible()
+}

@@ -228,7 +228,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 #
 seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
-    .selection.flag=FALSE, .balancing=FALSE, .bl_size=10000L, .bl_progress=FALSE, ...)
+    .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
+    .balancing=FALSE, .bl_size=10000L, .bl_progress=FALSE, ...)
 {
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) |
@@ -237,6 +238,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     stopifnot(is.function(FUN))
     split <- match.arg(split)
     stopifnot(is.character(.combine) | is.function(.combine))
+    stopifnot(is.null(.initialize) | is.function(.initialize))
+    stopifnot(is.null(.finalize) | is.function(.finalize))
     stopifnot(is.logical(.selection.flag), length(.selection.flag)==1L)
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
     if (isTRUE(.balancing))
@@ -276,6 +279,11 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     njobs <- .NumParallel(cl)
     if (njobs <= 1L)
     {
+        if (is.function(.initialize)) .initialize(1L, .initparam)
+        on.exit({
+            if (is.function(.finalize)) .finalize(1L, .initparam)        
+        })
+
         ## a single process
         if (.selection.flag)
         {
@@ -297,6 +305,12 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     {
         ## multiple processes with a predefined cluster
 
+        if (is.function(.initialize))
+        {
+            clusterApply(cl, seq_len(njobs), function(i, param)
+                .initialize(i, param), param=.initparam)
+        }
+
         if (split %in% c("by.variant", "by.sample"))
         {
             if (split == "by.variant")
@@ -312,6 +326,14 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
         if (!isTRUE(.balancing) || split=="none")
         {
+            on.exit({
+                if (is.function(.finalize))
+                {
+                    clusterApply(cl, seq_len(njobs), function(i, param)
+                        .finalize(i, param), param=.initparam)
+                }
+            })
+
             ans <- .DynamicClusterCall(cl, length(cl), .fun =
                 function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample, .sel_variant,
                     FUN, .split, .selection.flag, ...)
@@ -368,13 +390,14 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 if (dm[2L] %% .bl_size) totnum <- totnum + 1L
                 sel_idx <- which(sel$sample.sel)
             }
-            progress <- if (.bl_progress) .seqProgress(length(sel_idx)) else NULL
+            proglen <- length(sel_idx)
+            progress <- if (.bl_progress) .seqProgress(proglen) else NULL
             sel_idx <- sel_idx[seq.int(1L, by=.bl_size, length.out=totnum)]
 
             updatefun <- function(i) .seqProgForward(progress, .bl_size)
 
             # initialize
-            clusterCall(cl, fun=function(gds, sel_sample, sel_variant, sel_idx)
+            clusterCall(cl, fun=function(gds, sel_sample, sel_variant, sel_idx, proglen)
             {
                 # export to global variables
                 .Call(SEQ_IntAssign, process_index, 0L)
@@ -388,6 +411,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .packageEnv$gfile <- gds
                 .packageEnv$sample.sel <- memDecompress(sel_sample, type="gzip")
                 .packageEnv$variant.sel <- memDecompress(sel_variant, type="gzip")
+                .packageEnv$proglen <- proglen
                 # set filter
                 seqSetFilter(.packageEnv$gfile,
                     sample.sel = .packageEnv$sample.sel,
@@ -397,7 +421,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             },  gds = if (is.null(attr(cl, "forking"))) gdsfile$filename else gdsfile,
                 sel_sample = memCompress(as.raw(sel$sample.sel), type="gzip"),
                 sel_variant = memCompress(as.raw(sel$variant.sel), type="gzip"),
-                sel_idx = sel_idx
+                sel_idx = sel_idx, proglen = proglen
             )
 
             # finalize
@@ -408,6 +432,11 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                         seqClose(.packageEnv$gfile)
                     .packageEnv$gfile <- NULL
                 })
+                if (is.function(.finalize))
+                {
+                    clusterApply(cl, seq_len(njobs), function(i, param)
+                        .finalize(i, param), param=.initparam)
+                }
             })
 
             # do parallel
@@ -417,7 +446,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 # set filter
                 .ss <- .Call(SEQ_SplitSelectionX, .packageEnv$gfile, .idx, .split,
                     .sel_idx, .packageEnv$variant.sel, .packageEnv$sample.sel,
-                    .bl_size, .selection.flag)
+                    .bl_size, .selection.flag, .packageEnv$proglen)
                 # call the user-defined function
                 if (.selection.flag)
                     FUN(.packageEnv$gfile, .ss, ...)
@@ -428,6 +457,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .split = (split=="by.variant"), .sel_idx = sel_idx, .bl_size = .bl_size,
                 .selection.flag = .selection.flag, ...
             )
+
+            remove(progress)
         }
 
         if (is.list(ans) & identical(.combine, "unlist"))
@@ -436,6 +467,19 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     } else if (inherits(cl, "BiocParallelParam"))
     {
         ## multiple processes with a predefined cluster from BiocParallel
+
+        if (is.function(.initialize))
+        {
+            BiocParallel::bplapply(seq_len(njobs), function(i) .initialize(i),
+                BPPARAM=cl)
+        }
+        on.exit({
+            if (is.function(.finalize))
+            {
+                BiocParallel::bplapply(seq_len(njobs), function(i) .finalize(i),
+                    BPPARAM=cl)
+            }
+        })
 
         if (split %in% c("by.variant", "by.sample"))
         {
@@ -512,7 +556,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
         on.exit(stopCluster(cl))
         return(seqParallel(cl, gdsfile, FUN, split, .combine, .selection.flag,
-            .balancing, .bl_size, .bl_progress, ...))
+            .initialize, .finalize, .initparam, .balancing, .bl_size, .bl_progress, ...))
     }
 
     # output

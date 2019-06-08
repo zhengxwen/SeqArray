@@ -23,10 +23,14 @@
  *	\file     vectorization.c
  *	\author   Xiuwen Zheng [zhengx@u.washington.edu]
  *	\version  1.0
- *	\date     2016
+ *	\date     2016-2019
  *	\brief    compiler optimization with vectorization
  *	\details
 **/
+
+#ifndef COREARRAY_COMPILER_OPTIMIZE_FLAG
+#   define COREARRAY_COMPILER_OPTIMIZE_FLAG  3
+#endif
 
 #include "vectorization.h"
 

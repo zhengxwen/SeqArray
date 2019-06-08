@@ -32,7 +32,7 @@
 #ifndef _HEADER_COREARRAY_VECTORIZATION_
 #define _HEADER_COREARRAY_VECTORIZATION_
 
-#include "CoreDEF.h"
+#include <CoreDEF.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>

@@ -939,13 +939,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
 
 /// split the selected variants according to multiple processes
 COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectionX(SEXP gdsfile, SEXP index, SEXP split,
-	SEXP sel_idx, SEXP sel_variant, SEXP sel_sample, SEXP bl_size, SEXP selection_flag)
+	SEXP sel_idx, SEXP sel_variant, SEXP sel_sample, SEXP bl_size, SEXP selection_flag,
+	SEXP totlen)
 {
 	int job_idx = Rf_asInteger(index) - 1;  // starting from 0
 	const bool split_by_variant = Rf_asLogical(split)==TRUE;
 	const bool sel_flag = Rf_asLogical(selection_flag)==TRUE;
 	const int *p_sel_idx = INTEGER(sel_idx);
 	const int blsize = Rf_asInteger(bl_size);
+	const int tlen = Rf_asInteger(totlen);
 
 	COREARRAY_TRY
 
@@ -991,13 +993,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectionX(SEXP gdsfile, SEXP index, SEXP spl
 		// output
 		if (sel_flag)
 		{
-/*			rv_ans = NEW_LOGICAL(SelectCount);
+			rv_ans = NEW_LOGICAL(tlen);
 			int *p = INTEGER(rv_ans);
-			memset((void*)p, 0, sizeof(int) * size_t(SelectCount));
-			if (Process_Index > 0)
-				p += split[Process_Index-1];
-			for (; ans_n > 0; ans_n--) *p++ = TRUE;
-*/
+			memset((void*)p, 0, sizeof(int) * size_t(tlen));
+			p += blsize * job_idx;
+			for (; n > 0; n--) *p++ = TRUE;
 		} else {
 			rv_ans = ScalarInteger(n);
 		}
@@ -1131,7 +1131,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 	#ifdef __GNUC__
 		char buf_compiler[128] = { 0 };
 		#ifndef __GNUC_PATCHLEVEL__
-			const int __GNUC_PATCHLEVEL__ = 0;
+		#   define __GNUC_PATCHLEVEL__    0
 		#endif
 		sprintf(buf_compiler, "GNUG_v%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 		SET_STRING_ELT(Compiler, 1, mkChar(buf_compiler));
@@ -1362,7 +1362,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
 		CALL(SEQ_SetChrom, 7),
 
-		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 8),
+		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 9),
 		CALL(SEQ_GetSpace, 2),
 
 		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
