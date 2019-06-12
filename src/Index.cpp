@@ -1231,7 +1231,7 @@ void CProgressStdOut::ShowProgress()
 		{
 			char buffer[512];
 			s = difftime(_last_time, _start_time);
-			int n = sprintf(buffer, "\r[%s] 100%%, completed (%s)", bar, time_str(s));
+			int n = sprintf(buffer, "\r[%s] 100%%, completed, %s", bar, time_str(s));
 			if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 				sprintf(buffer+n, " (process %d)", *R_Process_Index);
 			Rprintf("%s\n", buffer);
