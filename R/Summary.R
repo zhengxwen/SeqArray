@@ -136,7 +136,9 @@
         nsamp <- ans$dim[2L]
         nvar  <- ans$dim[3L]
 
-        n <- index.gdsn(gdsfile, "phase/data")
+        n <- index.gdsn(gdsfile, "phase/data", silent=TRUE)
+        if (is.null(n)) return(invisible(ans))
+
         dm <- objdesp.gdsn(n)$dim
         if (length(dm) > 2L)
             dm <- dm[-c(length(dm)-1L, length(dm))]

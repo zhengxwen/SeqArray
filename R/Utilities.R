@@ -547,10 +547,10 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         if (.Platform$OS.type == "windows")
         {
             # no forking on windows
-            cl <- makeCluster(njobs)
+            cl <- makeCluster(njobs, outfile="")
         } else {
             # forking
-            cl <- makeForkCluster(njobs)
+            cl <- makeForkCluster(njobs, outfile="")
             attr(cl, "forking") <- TRUE
         }
 
