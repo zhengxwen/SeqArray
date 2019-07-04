@@ -382,12 +382,27 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             sel <- seqGetFilter(gdsfile)
             if (split == "by.variant")
             {
-                totnum <- dm[3L] / .bl_size
+                totnum <- dm[3L] %/% .bl_size
                 if (dm[3L] %% .bl_size) totnum <- totnum + 1L
+                if (totnum < njobs)
+                {
+                    .bl_size <- dm[3L] %/% njobs
+                    if (dm[3L] %% njobs) .bl_size <- .bl_size + 1L
+                    totnum <- dm[3L] %/% .bl_size
+                    if (dm[3L] %% .bl_size) totnum <- totnum + 1L
+                    # cat("totnum: ", totnum, ", .bl_size: ", .bl_size, "\n", sep="")
+                }
                 sel_idx <- which(sel$variant.sel)
             } else {
-                totnum <- dm[2L] / .bl_size
+                totnum <- dm[2L] %/% .bl_size
                 if (dm[2L] %% .bl_size) totnum <- totnum + 1L
+                if (totnum < njobs)
+                {
+                    .bl_size <- dm[2L] %/% njobs
+                    if (dm[2L] %% njobs) .bl_size <- .bl_size + 1L
+                    totnum <- dm[2L] %/% .bl_size
+                    if (dm[2L] %% .bl_size) totnum <- totnum + 1L
+                }
                 sel_idx <- which(sel$sample.sel)
             }
             proglen <- length(sel_idx)

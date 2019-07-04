@@ -141,7 +141,6 @@
         else
             sprintf("%g bytes", x)
     }
-
     sapply(s, size)
 }
 
