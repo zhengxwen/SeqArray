@@ -556,22 +556,104 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         }
 
     } else {
-
-        ## multiple processes with a predefined number of cores
+        ## forking processes
 
         if (.Platform$OS.type == "windows")
         {
             # no forking on windows
             cl <- makeCluster(njobs, outfile="")
-        } else {
-            # forking
-            cl <- makeForkCluster(njobs, outfile="")
-            attr(cl, "forking") <- TRUE
+            on.exit(stopCluster(cl))
+            return(seqParallel(cl, gdsfile, FUN, split, .combine, .selection.flag,
+                .initialize, .finalize, .initparam,
+                .balancing, .bl_size, .bl_progress, ...))
         }
 
-        on.exit(stopCluster(cl))
-        return(seqParallel(cl, gdsfile, FUN, split, .combine, .selection.flag,
-            .initialize, .finalize, .initparam, .balancing, .bl_size, .bl_progress, ...))
+        if (is.function(.initialize))
+            .initialize(NA_integer_, .initparam)
+        if (is.function(.finalize))
+            on.exit(.finalize(NA_integer_, .initparam))
+
+        if (split %in% c("by.variant", "by.sample"))
+        {
+            if (split == "by.variant")
+            {
+                if (njobs > dm[3L]) njobs <- dm[3L]
+            } else {
+                if (njobs > dm[2L]) njobs <- dm[2L]
+            }
+        }
+
+        if (!isTRUE(.balancing) || split=="none")
+        {
+            ans <- .DynamicForkCall(njobs, njobs, .fun = function(.jobidx, ...)
+            {
+                # export to global variables
+                .Call(SEQ_IntAssign, process_index, .jobidx)
+                .Call(SEQ_IntAssign, process_count, njobs)
+                if (!is.null(gdsfile))
+                {
+                    # set filter
+                    .ss <- .Call(SEQ_SplitSelection, gdsfile, split, .jobidx, njobs,
+                        .selection.flag)
+                    # call the user-defined function
+                    if (.selection.flag) FUN(gdsfile, .ss, ...) else FUN(gdsfile, ...)
+                } else {
+                    FUN(...)
+                }
+            }, .combinefun=.combine, .updatefun=NULL, ...)
+        } else {
+            ## load balancing
+            # selection indexing
+            .sel <- seqGetFilter(gdsfile)
+            if (split == "by.variant")
+            {
+                totnum <- dm[3L] %/% .bl_size
+                if (dm[3L] %% .bl_size) totnum <- totnum + 1L
+                if (totnum < njobs)
+                {
+                    .bl_size <- dm[3L] %/% njobs
+                    if (dm[3L] %% njobs) .bl_size <- .bl_size + 1L
+                    totnum <- dm[3L] %/% .bl_size
+                    if (dm[3L] %% .bl_size) totnum <- totnum + 1L
+                    # cat("totnum: ", totnum, ", .bl_size: ", .bl_size, "\n", sep="")
+                }
+                .sel_idx <- which(.sel$variant.sel)
+            } else {
+                totnum <- dm[2L] %/% .bl_size
+                if (dm[2L] %% .bl_size) totnum <- totnum + 1L
+                if (totnum < njobs)
+                {
+                    .bl_size <- dm[2L] %/% njobs
+                    if (dm[2L] %% njobs) .bl_size <- .bl_size + 1L
+                    totnum <- dm[2L] %/% .bl_size
+                    if (dm[2L] %% .bl_size) totnum <- totnum + 1L
+                }
+                .sel_idx <- which(.sel$sample.sel)
+            }
+            .proglen <- length(.sel_idx)
+            progress <- if (.bl_progress) .seqProgress(.proglen) else NULL
+
+            .sel_idx <- .sel_idx[seq.int(1L, by=.bl_size, length.out=totnum)]
+            .sel <- seqGetFilter(gdsfile, .useraw=TRUE)
+            split <- split == "by.variant"
+
+            # do parallel
+            ans <- .DynamicForkCall(njobs, totnum, .fun = function(.jobidx, ...)
+            {
+                # set filter
+                .ss <- .Call(SEQ_SplitSelectionX, gdsfile, .jobidx, split,
+                    .sel_idx, .sel$variant.sel, .sel$sample.sel,
+                    .bl_size, .selection.flag, .proglen)
+                # call the user-defined function
+                if (.selection.flag) FUN(gdsfile, .ss, ...) else FUN(gdsfile, ...)
+            }, .combinefun=.combine,
+                .updatefun=function(i) .seqProgForward(progress, .bl_size), ...)
+
+            remove(progress)
+        }
+
+        if (is.list(ans) & identical(.combine, "unlist"))
+            ans <- unlist(ans, recursive=FALSE)
     }
 
     # output

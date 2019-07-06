@@ -552,7 +552,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
             }, pg=.progress)
     } else {
         dm <- .seldim(gdsfile)
-        sum <- seqParallel(parallel, gdsfile, split="by.variant",
+        sv <- seqParallel(parallel, gdsfile, split="by.variant",
             FUN = function(f, num, pg)
             {
                 tmpsum <- integer(num)
@@ -561,7 +561,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
                     y=tmpsum, .progress=pg & (process_index==1L))
                 tmpsum
             }, .combine="+", num=dm[2L], pg=.progress)
-        sum / (dm[1L] * dm[3L])
+        sv / (dm[1L] * dm[3L])
     }
 }
 

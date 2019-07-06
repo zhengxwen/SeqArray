@@ -5,6 +5,10 @@ BUG FIXES
 
     o fix `seqSummary()` when no phase data
 
+UTILITIES
+
+    o improve unix forking processes for load balancing in `seqParallel()`
+
 
 CHANGES IN VERSION 1.24.1
 -------------------------

@@ -369,6 +369,14 @@ test.parallel_balancing <- function()
 		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE, .selection.flag=TRUE)
 	checkEquals(p0, p4, "Parallel load balancing: test 1 (4)")
 
+	cl <- makeCluster(2)
+	p5 <- seqParallel(cl, f, function(gds) seqGetData(gds, "position"),
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE)
+	checkEquals(p0, p5, "Parallel load balancing: test 1 (5)")
+	p6 <- seqParallel(cl, f, function(gds, flag) p0[flag],
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE, .selection.flag=TRUE)
+	checkEquals(p0, p6, "Parallel load balancing: test 1 (6)")
+	stopCluster(cl)
 
 	# test 2
 	set.seed(1000)
@@ -387,6 +395,15 @@ test.parallel_balancing <- function()
 	p4 <- seqParallel(2, f, function(gds, flag) p0[flag],
 		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE, .selection.flag=TRUE)
 	checkEquals(p0, p4, "Parallel load balancing: test 2 (4)")
+
+	cl <- makeCluster(2)
+	p5 <- seqParallel(cl, f, function(gds) seqGetData(gds, "position"),
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE)
+	checkEquals(p0, p5, "Parallel load balancing: test 2 (5)")
+	p6 <- seqParallel(cl, f, function(gds, flag) p0[flag],
+		.balancing=TRUE, .bl_size=5, .bl_progress=TRUE, .selection.flag=TRUE)
+	checkEquals(p0, p6, "Parallel load balancing: test 2 (6)")
+	stopCluster(cl)
 
 	invisible()
 }
