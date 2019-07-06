@@ -524,6 +524,7 @@
     finish <- rep(FALSE, .num)
     nexti <- length(jobid) + 1L
     while (!all(finish))
+    {
         s <- parallel:::selectChildren(jobs[!is.na(jobsp)], -1)
         if (is.null(s)) break  # no children, should not happen
         if (is.integer(s))
