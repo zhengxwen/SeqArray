@@ -48,7 +48,7 @@ compression algorithm for each data type.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}, \code{\link{seqMerge}}
+    \code{\link{seqVCF2GDS}}, \code{\link{seqRecompress}}, \code{\link{seqMerge}}
 }
 
 \examples{

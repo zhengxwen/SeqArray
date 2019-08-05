@@ -866,6 +866,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     n <- add.gdsn(dstfile, "chromosome", bimD$chr, storage="string",
         compress=compress.annotation, closezip=TRUE)
     .DigestCode(n, digest, verbose)
+    # RLE-coded chromosome
+    .optim_chrom(dstfile)
 
     # add allele
     if (verbose) cat("    allele")
