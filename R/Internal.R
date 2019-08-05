@@ -505,7 +505,7 @@
     stopifnot(is.null(.updatefun) | is.function(.updatefun))
 
     # all processes created from now on will be terminated by cleanup
-    parallel:::mc.reset.stream()
+    parallel::mc.reset.stream()
     parallel:::prepareCleanup()
     on.exit(parallel:::cleanup(TRUE))
 
