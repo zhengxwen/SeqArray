@@ -20,19 +20,18 @@ The SeqArray package is built on top of [Genomic Data Structure (GDS)](https://g
 
 ## Bioconductor:
 
-Release Version: v1.24.1
+Release Version: v1.24.2
 
-[http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
+[http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/SeqArray)
 
-* [Help Documents](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)
+* [Help Documents](https://rdrr.io/bioc/SeqArray/man)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html), [Overview Slides](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
 * [News](http://www.bioconductor.org/packages/release/bioc/news/SeqArray/NEWS)
 
-Development Version: v1.25.1
+Development Version: v1.25.2
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
-* [Help Documents](http://zhengxwen.github.io/SeqArray/devel/help/00Index.html)
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [R Integration](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/R_Integration.html), [Overview Slides](http://www.bioconductor.org/packages/devel/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
 * [News](http://bioconductor.org/packages/devel/bioc/news/SeqArray/NEWS)
 
@@ -40,6 +39,8 @@ Development Version: v1.25.1
 ## Citation
 
 Zheng X, Gogarten S, Lawrence M, Stilp A, Conomos M, Weir BS, Laurie C, Levine D (2017). SeqArray -- A storage-efficient high-performance data format for WGS variant calls. *Bioinformatics*. [DOI: 10.1093/bioinformatics/btx145](http://dx.doi.org/10.1093/bioinformatics/btx145).
+
+Zheng X, Levine D, Shen J, Gogarten SM, Laurie C, Weir BS (2012). A High-performance Computing Toolset for Relatedness and Principal Component Analysis of SNP Data. *Bioinformatics*. [DOI: 10.1093/bioinformatics/bts606](http://dx.doi.org/10.1093/bioinformatics/bts606).
 
 
 ## Installation (requiring ≥ R_v3.5.0)
@@ -76,7 +77,7 @@ R CMD INSTALL SeqArray_latest.tar.gz
 
 
 
-## SeqArray File Download
+## SeqArray Genotype File Downloads
 
 * [1000 Genomes Project](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes)
 
@@ -177,6 +178,6 @@ seqClose(f)
 
 ## Also See
 
-[PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variant data in Python
-
 [JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): data manipulation of whole-genome sequencing variant data in Julia
+
+[PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variant data in Python
