@@ -68,10 +68,13 @@ test_allele_freq <- function()
 
 	for (p in 1L:num.cores)
 	{
+		# 'Rounding' was the default in versions prior to R_3.6.0
+		# it is used for reproduction of the results created by R (v3.5.2)
+		suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 		set.seed(1000)
-		# d <- seqAlleleFreq(f, sample(c(0L,1L), length(variant.id),
-		# 	replace=TRUE), parallel=p)
-		# checkEquals(Valid$fcAlleleFreq$d3, d, paste0("seqAlleleFreq 3:", p))
+		d <- seqAlleleFreq(f, sample(c(0L,1L), length(variant.id),
+			replace=TRUE), parallel=p)
+		checkEquals(Valid$fcAlleleFreq$d3, d, paste0("seqAlleleFreq 3:", p))
 	}
 
 	for (p in 1L:num.cores)

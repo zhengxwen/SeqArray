@@ -11,7 +11,7 @@ library(SeqArray)
 # test functions
 #
 
-test_examples <- function()
+notest_examples <- function()
 {
 	if (Sys.info()[['sysname']] == "Windows")
 		return(invisible())
