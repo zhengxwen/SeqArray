@@ -925,7 +925,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         compress=compress.annotation)
     .repeat_gds(n1, 0L, as.double(nrow(bimD))*nrow(famD))
     readmode.gdsn(n1)
-    .DigestCode(n1, digest, TRUE)
+    .DigestCode(n1, digest, verbose)
 
     n1 <- add.gdsn(n, "extra.index", storage="int32", valdim=c(3L,0L),
         compress=compress.annotation, closezip=TRUE)

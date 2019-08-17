@@ -1,9 +1,13 @@
-CHANGES IN VERSION 1.25.2
+CHANGES IN VERSION 1.25.3
 -------------------------
 
 UTILITIES
 
     o RLE chromosome coding in `seqBED2GDS()`
+
+BUG FIXES
+
+    o `seqBED2GDS(, verbose=FALSE)` should have no display
 
 
 CHANGES IN VERSION 1.24.2
