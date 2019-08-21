@@ -70,7 +70,8 @@ test_allele_freq <- function()
 	{
 		# 'Rounding' was the default in versions prior to R_3.6.0
 		# it is used for reproduction of the results created by R (v3.5.2)
-		suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+		tryCatch(suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding")),
+			error=function(e) FALSE)
 		set.seed(1000)
 		d <- seqAlleleFreq(f, sample(c(0L,1L), length(variant.id),
 			replace=TRUE), parallel=p)
