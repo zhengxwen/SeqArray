@@ -1087,6 +1087,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SelectFlag(SEXP select, SEXP len)
 }
 
 
+/// require reloading chromosom coding
+COREARRAY_DLL_EXPORT SEXP SEQ_ResetChrom(SEXP gdsfile)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		File.ResetChromosome();
+	COREARRAY_CATCH
+}
+
+
+
 // ===========================================================
 // Get system configuration
 // ===========================================================
@@ -1372,7 +1383,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_BApply_Variant, 7),
 
 		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),
-		CALL(SEQ_SelectFlag, 2),
+		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
 		CALL(SEQ_IntAssign, 2),
 

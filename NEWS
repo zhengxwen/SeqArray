@@ -1,6 +1,10 @@
 CHANGES IN VERSION 1.25.3
 -------------------------
 
+NEW FEATURES
+
+    o new function `seqAddValue()`
+
 UTILITIES
 
     o RLE chromosome coding in `seqBED2GDS()`

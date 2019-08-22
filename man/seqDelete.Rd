@@ -30,7 +30,7 @@ seqDelete(gdsfile, info.var=character(), fmt.var=character(),
 \examples{
 # the file of GDS
 gds.fn <- seqExampleFileName("gds")
-file.copy(gds.fn, "tmp.gds")
+file.copy(gds.fn, "tmp.gds", overwrite=TRUE)
 
 # display
 (f <- seqOpen("tmp.gds", FALSE))

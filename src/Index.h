@@ -374,6 +374,8 @@ public:
 
 	/// return _Chrom which has been initialized
 	CChromIndex &Chromosome();
+	/// reload chromosome coding when it is changed
+	void ResetChromosome();
 	/// return _Position which has been initialized
 	vector<C_Int32> &Position();
 

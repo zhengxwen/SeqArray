@@ -839,6 +839,13 @@ CChromIndex &CFileInfo::Chromosome()
 	return _Chrom;
 }
 
+void CFileInfo::ResetChromosome()
+{
+	if (!_Root)
+		throw ErrSeqArray(ERR_FILE_ROOT);
+	_Chrom.Clear();
+}
+
 vector<C_Int32> &CFileInfo::Position()
 {
 	if (!_Root)
