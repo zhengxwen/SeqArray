@@ -28,7 +28,9 @@ library(VariantAnnotation)
   checkIdentical(samples(hdv), samples(hdg))
   ## The meta(VCFHeader) getter now returns a DataFrameList, not DataFrame.
   ## tags with non-alphanumeric characters get ignored by scanBcfHeader
-  meta.hdg <- meta(hdg)[grep("^[[:alnum:]]+$", row.names(meta(hdg))),,drop=FALSE]
+  i <- grep("^[[:alnum:]]+$", row.names(meta(hdg)))
+  i <- i[lengths(i) > 0L]
+  meta.hdg <- meta(hdg)[i,,drop=FALSE]
   checkIdentical(meta(hdv)[rownames(meta.hdg),,drop=FALSE], meta.hdg)
   ## VariantAnnotation now makes up a value for FILTER in the header even
   ## if it was not present in original VCF header
