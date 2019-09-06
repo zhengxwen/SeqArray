@@ -27,6 +27,8 @@ seqAddValue(gdsfile, varnm, val, replace=FALSE, compress="LZMA_RA")
 }
 
 \examples{
+library(SeqArray)
+
 # the file of GDS
 gds.fn <- seqExampleFileName("gds")
 file.copy(gds.fn, "tmp.gds", overwrite=TRUE)
@@ -44,6 +46,9 @@ seqAddValue(f, "chromosome", paste0("chr", v), replace=TRUE)
 show(index.gdsn(f, "chromosome"))
 table(seqGetData(f, "chromosome"))
 
+# sample annotation
+seqAddValue(f, "sample.annotation", data.frame(ii=1:90, y=rep("A", 90)), replace=TRUE)
+seqAddValue(f, "sample.annotation/float", (1:90)/90)
 
 # close the GDS file
 seqClose(f)

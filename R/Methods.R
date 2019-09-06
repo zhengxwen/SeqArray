@@ -734,67 +734,6 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, .progress=FALSE,
 
 
 #######################################################################
-# Add or modify values in a GDS file
-#
-seqAddValue <- function(gdsfile, varnm, val, replace=FALSE, compress="LZMA_RA")
-{
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.character(varnm), length(varnm)==1L)
-    stopifnot(is.logical(replace), length(replace)==1L)
-
-    # dm[1] -- ploidy, dm[2] -- # of total samples, dm[3] -- # of total variants
-    dm <- .dim(gdsfile)
-    nsamp <- dm[2L]
-    nvar  <- dm[3L]
-
-    if (varnm == "sample.id")
-    {
-        stopifnot(replace)
-        stopifnot(is.vector(val), is.character(val) | is.numeric(val), length(val)==nsamp)
-        if (anyDuplicated(val))
-            stop("'val' should be unique.")
-        n <- add.gdsn(gdsfile, "sample.id", val, compress=compress, closezip=TRUE,
-            replace=TRUE)
-        .DigestCode(n, TRUE, FALSE)
-
-    } else if (varnm == "variant.id")
-    {
-        stopifnot(replace)
-        stopifnot(is.vector(val), is.character(val) | is.numeric(val), length(val)==nvar)
-        if (anyDuplicated(val))
-            stop("'val' should be unique.")
-        n <- add.gdsn(gdsfile, "variant.id", val, compress=compress, closezip=TRUE,
-            replace=TRUE)
-        .DigestCode(n, TRUE, FALSE)
-    
-    } else if (varnm == "position")
-    {
-        stopifnot(replace)
-        stopifnot(is.vector(val), is.numeric(val), length(val)==nvar)
-        n <- add.gdsn(gdsfile, "position", as.integer(val), compress=compress,
-            closezip=TRUE, replace=TRUE)
-        .DigestCode(n, TRUE, FALSE)
-    
-    } else if (varnm == "chromosome")
-    {
-        stopifnot(replace)
-        stopifnot(is.vector(val), is.character(val) | is.numeric(val), length(val)==nvar)
-        n <- add.gdsn(gdsfile, "chromosome", val, compress=compress, closezip=TRUE,
-            replace=TRUE)
-        .DigestCode(n, TRUE, FALSE)
-        .optim_chrom(gdsfile)  # RLE-coded chromosome
-        .Call(SEQ_ResetChrom, gdsfile)
-    
-    } else {
-        stop("Invalid `varnm`.")
-    }
-
-    invisible()
-}
-
-
-
-#######################################################################
 # get 2-bit packed genotypes in a raw matrix
 #
 .seqGet2bGeno <- function(gdsfile, verbose=TRUE)
