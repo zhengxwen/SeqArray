@@ -3,20 +3,20 @@ title: "SeqArray Data Format and Access"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
 date: "Sep 15, 2016"
 output:
-  html_document:
-    theme: spacelab
-    toc: true
-    number_sections: true
-  pdf_document:
-    toc: true
-    toc_depth: 3
+    html_document:
+        theme: spacelab
+        toc: true
+        number_sections: true
+    pdf_document:
+        toc: true
+        toc_depth: 3
 bibliography: seqarray_bib.bib
 vignette: >
-  %\VignetteIndexEntry{SeqArray Data Format and Access}
-  %\VignetteDepends{gdsfmt}
-  %\VignetteKeywords{GWAS, whole-genome, sequencing, SNV}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{SeqArray Data Format and Access}
+    %\VignetteDepends{gdsfmt}
+    %\VignetteKeywords{GWAS, whole-genome, sequencing, SNV}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
 ---
 
 .

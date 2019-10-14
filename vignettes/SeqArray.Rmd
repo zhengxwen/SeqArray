@@ -3,20 +3,20 @@ title: "Integration with R"
 author: "Xiuwen Zheng (Department of Biostatistics, University of Washington, Seattle)"
 date: "Aug 31, 2016"
 output:
-  html_document:
-    theme: spacelab
-    toc: true
-    number_sections: true
-  pdf_document:
-    toc: true
-    toc_depth: 3
+    html_document:
+        theme: spacelab
+        toc: true
+        number_sections: true
+    pdf_document:
+        toc: true
+        toc_depth: 3
 bibliography: seqarray_bib.bib
 vignette: >
-  %\VignetteIndexEntry{R Integration}
-  %\VignetteDepends{gdsfmt}
-  %\VignetteKeywords{whole-genome, sequencing, WGS, SNV}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{R Integration}
+    %\VignetteDepends{gdsfmt}
+    %\VignetteKeywords{whole-genome, sequencing, WGS, SNV}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
 ---
 
 .

@@ -4,10 +4,10 @@ author: "Dr. Xiuwen Zheng (Department of Biostatistics, University of Washington
 date: "Jun 25, 2016"
 output: slidy_presentation
 vignette: >
-  %\VignetteIndexEntry{SeqArray Overview}
-  %\VignetteDepends{gdsfmt}
-  %\VignetteKeywords{GWAS, Whole-genome, Sequencing, SNV}
-  %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteIndexEntry{SeqArray Overview}
+    %\VignetteDepends{gdsfmt}
+    %\VignetteKeywords{GWAS, Whole-genome, Sequencing, SNV}
+    %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ## Introduction
