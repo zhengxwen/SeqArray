@@ -406,7 +406,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 sel_idx <- which(sel$sample.sel)
             }
             proglen <- length(sel_idx)
-            progress <- if (.bl_progress) .seqProgress(proglen) else NULL
+            progress <- if (.bl_progress) .seqProgress(proglen, njobs) else NULL
             sel_idx <- sel_idx[seq.int(1L, by=.bl_size, length.out=totnum)]
 
             updatefun <- function(i) .seqProgForward(progress, .bl_size)
@@ -631,7 +631,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .sel_idx <- which(.sel$sample.sel)
             }
             .proglen <- length(.sel_idx)
-            progress <- if (.bl_progress) .seqProgress(.proglen) else NULL
+            progress <- if (.bl_progress) .seqProgress(.proglen, njobs) else NULL
 
             .sel_idx <- .sel_idx[seq.int(1L, by=.bl_size, length.out=totnum)]
             .sel <- seqGetFilter(gdsfile, .useraw=TRUE)

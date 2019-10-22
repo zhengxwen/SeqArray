@@ -1271,11 +1271,16 @@ static void free_progress(SEXP ref)
 }
 
 /// Get a progress bar object
-COREARRAY_DLL_EXPORT SEXP SEQ_Progress(SEXP Count)
+COREARRAY_DLL_EXPORT SEXP SEQ_Progress(SEXP Count, SEXP NProc)
 {
+	C_Int64 TotalCount = (C_Int64)Rf_asReal(Count);
+	if (TotalCount < 0)
+		error(".seqProgress(): the total number should be >= 0.");
+	int nproc = Rf_asInteger(NProc);
+	if (nproc <= 0)
+		error(".seqProgress(): the number of processes should be > 0.");
 	COREARRAY_TRY
-		C_Int64 TotalCount = (C_Int64)Rf_asReal(Count);
-		CProgressStdOut *obj = new CProgressStdOut(TotalCount, true);
+		CProgressStdOut *obj = new CProgressStdOut(TotalCount, nproc, true);
 		rv_ans = PROTECT(R_MakeExternalPtr(obj, R_NilValue, R_NilValue));
 		R_RegisterCFinalizerEx(rv_ans, free_progress, TRUE);
 		Rf_setAttrib(rv_ans, R_ClassSymbol, mkString("SeqClass_Progress"));
@@ -1405,7 +1410,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_bgzip_create, 1),
 
-		CALL(SEQ_Progress, 1),              CALL(SEQ_ProgressAdd, 2),
+		CALL(SEQ_Progress, 2),              CALL(SEQ_ProgressAdd, 2),
 
 		{ NULL, NULL, 0 }
 	};

@@ -1010,7 +1010,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// ===========================================================
 		// for-loop calling
 
-		CProgressStdOut progress(nVariant, prog_flag);
+		CProgressStdOut progress(nVariant, 1, prog_flag);
 
 		int ans_index = 0;
 		do {

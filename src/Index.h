@@ -529,6 +529,7 @@ protected:
 	C_Int64 TotalCount;  ///< the total number
 	C_Int64 Counter;     ///< the current counter
 	Rconnection File;    ///< R connection
+	C_Int64 FwdCnt;      ///< the number of calling Forward()
 	time_t _start_time;  ///< the starting time
 	bool NewLine;
 	double _start, _step;
@@ -539,11 +540,12 @@ protected:
 class COREARRAY_DLL_LOCAL CProgressStdOut: public CProgress
 {
 public:
-	CProgressStdOut(C_Int64 count, bool verbose);
+	CProgressStdOut(C_Int64 count, int nproc, bool verbose);
 	virtual void ShowProgress();
 
 protected:
 	time_t _last_time;
+	int NProcess;
 	bool Verbose;
 };
 

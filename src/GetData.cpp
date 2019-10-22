@@ -684,7 +684,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		pEnd = pBase + File.VariantNum();
 
 		// progress object
-		CProgressStdOut progress(NumBlock, prog_flag);
+		CProgressStdOut progress(NumBlock, 1, prog_flag);
 
 		// for-loop
 		for (int idx=0; idx < NumBlock; idx++)

@@ -859,9 +859,9 @@
 #######################################################################
 # Convert to a VariantAnnotation object
 
-.seqProgress <- function(count)
+.seqProgress <- function(count, nproc)
 {
-    .Call(SEQ_Progress, count)
+    .Call(SEQ_Progress, count, nproc)
 }
 
 .seqProgForward <- function(progress, inc)

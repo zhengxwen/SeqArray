@@ -1,13 +1,4 @@
-CHANGES IN VERSION 1.25.4
--------------------------
-
-UTILITIES
-
-    o change the file name "vignettes/R_Integration.Rmd" to "vignettes/SeqArray.Rmd",
-      so `vignette("SeqArray")` can work directly
-
-
-CHANGES IN VERSION 1.25.3
+CHANGES IN VERSION 1.26.0
 -------------------------
 
 NEW FEATURES
@@ -18,6 +9,12 @@ UTILITIES
 
     o RLE chromosome coding in `seqBED2GDS()`
 
+    o change the file name "vignettes/R_Integration.Rmd" to "vignettes/SeqArray.Rmd",
+      so `vignette("SeqArray")` can work directly
+
+    o correct Estimated remaining Time to Complete (ETC) for load balancing in
+      `seqParallel()`
+
 BUG FIXES
 
     o `seqBED2GDS(, verbose=FALSE)` should have no display
@@ -26,24 +23,20 @@ BUG FIXES
 CHANGES IN VERSION 1.24.2
 -------------------------
 
-BUG FIXES
-
-    o fix `seqSummary()` when no phase data
-
-UTILITIES
-
-    o improve unix forking processes for load balancing in `seqParallel()`
-
-
-CHANGES IN VERSION 1.24.1
--------------------------
-
 NEW FEATURES
 
     o add the compiler information in `seqSystem()`
 
     o new arguments '.balancing', '.bl_size' and '.bl_progress' in `seqParallel()`
       for load balancing
+
+UTILITIES
+
+    o improve unix forking processes for load balancing in `seqParallel()`
+
+BUG FIXES
+
+    o fix `seqSummary()` when no phase data
 
 
 CHANGES IN VERSION 1.24.0
@@ -58,7 +51,7 @@ NEW FEATURES
     o `seqGetData()` allows a GDS file name in the first argument
 
 
-CHANGES IN VERSION 1.22.4-1.22.6
+CHANGES IN VERSION 1.22.6
 -------------------------
 
 BUG FIXES
@@ -74,16 +67,16 @@ BUG FIXES
       different samples but same variants
 
 
-CHANGES IN VERSION 1.22.1-1.22.3
+CHANGES IN VERSION 1.22.3
 -------------------------
-
-UTILITIES
-
-    o more information in `seqDelete()`
 
 NEW FEATURES
 
     o a new option 'scenario' in `seqVCF2GDS()` and `seqBCF2GDS()`
+
+UTILITIES
+
+    o more information in `seqDelete()`
 
 BUG FIXES
 
@@ -99,19 +92,6 @@ BUG FIXES
 CHANGES IN VERSION 1.22.0
 -------------------------
 
-UTILITIES
-
-    o avoid duplicated meta-information lines in `seqVCF2GDS()` and
-      `seqVCF_Header()`
-
-    o require >= R_v3.5.0, since reading from connections in text mode is
-      buffered
-
-    o `seqDigest()` requires the digest package
-
-    o optimization in reading genotypes from a subset of samples (according to
-      gdsfmt_1.17.5)
-
 NEW FEATURES
 
     o `seqSNP2GDS()` imports dosage GDS files
@@ -124,6 +104,19 @@ NEW FEATURES
       GDS file
 
     o `seqGDS2SNP()` exports dosage GDS files
+
+UTILITIES
+
+    o avoid duplicated meta-information lines in `seqVCF2GDS()` and
+      `seqVCF_Header()`
+
+    o require >= R_v3.5.0, since reading from connections in text mode is
+      buffered
+
+    o `seqDigest()` requires the digest package
+
+    o optimization in reading genotypes from a subset of samples (according to
+      gdsfmt_1.17.5)
 
 BUG FIXES
 
@@ -147,18 +140,6 @@ BUG FIXES
 CHANGES IN VERSION 1.20.0
 -------------------------
 
-UTILITIES
-
-    o `seqDigest(f, "annotation/filter")` works on a factor variable
-
-    o improve the computational efficiency of `seqMerge()` to avoid genotype
-      recompression by padding the 2-bit genotype array in bytes
-
-    o significantly improve `seqBlockApply()` (its speed is close to
-      `seqApply()`)
-
-    o reduce the overhead in `seqSetFilter(, variant.sel=...)`
-
 NEW FEATURES
 
     o `seqGDS2VCF()` outputs a bgzip vcf file for tabix indexing
@@ -176,8 +157,20 @@ NEW FEATURES
 
     o import VCF files with no GT in `seqVCF2GDS()`
 
+UTILITIES
 
-CHANGES IN VERSION 1.18.1-1.18.2
+    o `seqDigest(f, "annotation/filter")` works on a factor variable
+
+    o improve the computational efficiency of `seqMerge()` to avoid genotype
+      recompression by padding the 2-bit genotype array in bytes
+
+    o significantly improve `seqBlockApply()` (its speed is close to
+      `seqApply()`)
+
+    o reduce the overhead in `seqSetFilter(, variant.sel=...)`
+
+
+CHANGES IN VERSION 1.18.2
 -------------------------
 
 BUG FIXES
@@ -264,7 +257,7 @@ CHANGES IN VERSION 1.14.1
       compression time
 
 
-CHANGES IN VERSION 1.12.0-1.12.9
+CHANGES IN VERSION 1.12.9
 -------------------------
 
     o the version number was bumped for the Bioconductor release version 3.3
@@ -286,7 +279,7 @@ CHANGES IN VERSION 1.12.0-1.12.9
     o v1.12.8: a new function `seqGetParallel()`
 
 
-CHANGES IN VERSION 1.11.19-1.11.22
+CHANGES IN VERSION 1.12.0
 -------------------------
 
     o utilizes the official C API `R_GetConnection()` to accelerate text
@@ -299,10 +292,6 @@ CHANGES IN VERSION 1.11.19-1.11.22
 
     o variables in "annotation/format/" should be two-dimensional as what
       mentioned in the vignette.
-
-
-CHANGES IN VERSION 1.11.0-1.11.18
--------------------------
 
     o rewrite `seqSummary()`
 
@@ -344,10 +333,8 @@ CHANGES IN VERSION 1.11.0-1.11.18
       2 integers
 
 
-CHANGES IN VERSION 1.10.0-1.10.6
+CHANGES IN VERSION 1.10.6
 -------------------------
-
-    o the version number was bumped for the Bioconductor release version 3.2
 
     o fix a memory issue in `seqAlleleFreq()` when 'ref.allele' is a vector
 
@@ -374,7 +361,7 @@ CHANGES IN VERSION 1.10.0-1.10.6
     o 'gdsfile' could be NULL in `seqParallel()`
 
 
-CHANGES IN VERSION 1.9.0-1.9.19
+CHANGES IN VERSION 1.10.0
 -------------------------
 
     o a new function `seqGDS2SNP()`
@@ -418,12 +405,6 @@ CHANGES IN VERSION 1.9.0-1.9.19
 CHANGES IN VERSION 1.8.0
 -------------------------
 
-    o The version number was bumped for the Bioconductor release version 3.1
-
-
-CHANGES IN VERSION 1.7.1-1.7.5
--------------------------
-
     o bug fix in getting genotypes if position > 2^31
 
     o add an option 'ignore.chr.prefix' to the function `seqVCF2GDS()`
@@ -439,12 +420,6 @@ CHANGES IN VERSION 1.7.1-1.7.5
 CHANGES IN VERSION 1.6.0
 -------------------------
 
-    o The version number was bumped for the Bioconductor release version 3.0
-
-
-CHANGES IN VERSION 1.5.1-1.5.2
--------------------------
-
     o fix a bug in `seqVCF2GDS()` when the values in the FILTER column are
       all missing
 
@@ -458,12 +433,6 @@ CHANGES IN VERSION 1.5.1-1.5.2
 CHANGES IN VERSION 1.4.0
 -------------------------
 
-    o The version number was bumped for the Bioconductor release version
-
-
-CHANGES IN VERSION 1.3.1-1.3.4
--------------------------
-
     o update according to the new version of VariantAnnotation
 
     o update test codes to avoid the conflict
@@ -474,12 +443,6 @@ CHANGES IN VERSION 1.3.1-1.3.4
 
 
 CHANGES IN VERSION 1.2.0
--------------------------
-
-    o The version number was bumped for the Bioconductor release version
-
-
-CHANGES IN VERSION 1.1.4-1.1.5
 -------------------------
 
     o add a new argument "action" to the function `seqSetFilter()`
@@ -499,10 +462,6 @@ CHANGES IN VERSION 1.1.4-1.1.5
     o revise the function 'seqTranspose' according to the update of
       gdsfmt (v1.0.0)
 
-
-CHANGES IN VERSION 1.1.1-1.1.3
--------------------------
-
     o revise the argument 'var.index' in the function `seqApply()`
 
     o basic supports of 'GRanges' and 'DNAStringSetList'
@@ -520,10 +479,10 @@ CHANGES IN VERSION 1.1.1-1.1.3
 CHANGES IN VERSION 1.0.0
 -------------------------
 
-    o The version number was bumped for the Bioconductor release version
+    o the version number was bumped for the Bioconductor release version
 
 
 CHANGES IN VERSION 0.99.0
 -------------------------
 
-    o initial submission
+    o initial Bioconductor package submission

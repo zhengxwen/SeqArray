@@ -1072,6 +1072,7 @@ CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 	File = NULL;
 	if (conn && !Rf_isNull(conn))
 		File = R_GetConnection(conn);
+	FwdCnt = 0;
 	NewLine = newline;
 
 	if (count > 0)
@@ -1102,6 +1103,7 @@ CProgress::~CProgress()
 
 void CProgress::Forward(C_Int64 Inc)
 {
+	FwdCnt++;
 	Counter += Inc;
 	if (TotalCount > 0 && Counter > TotalCount)
 		Counter = TotalCount;
@@ -1193,12 +1195,13 @@ void CProgress::ShowProgress()
 }
 
 
-CProgressStdOut::CProgressStdOut(C_Int64 count, bool verbose):
+CProgressStdOut::CProgressStdOut(C_Int64 count, int nproc, bool verbose):
 	CProgress(0, count, NULL, false)
 {
 	if (count < 0)
 		throw ErrSeqArray("%s, 'count' should be greater than zero.", __func__);
 	_last_time = _timer.back().second;
+	NProcess = (nproc > 0) ? nproc : 1;
 	Verbose = verbose;
 	ShowProgress();
 }
@@ -1227,8 +1230,14 @@ void CProgressStdOut::ShowProgress()
 		double s = difftime(now, _timer[n].second);
 		double diff = p - _timer[n].first;
 		if (diff > 0)
+		{
 			s = s / diff * (1 - p);
-		else
+			if ((NProcess > 1) && (FwdCnt > 0) && (FwdCnt <= NProcess))
+			{
+				// correction based on beta distribution beta(FwdCnt, NProcess+1-FwdCnt)
+				s = s / (NProcess + 1) * FwdCnt * 2;
+			}			
+		} else
 			s = R_NaN;
 		p *= 100;
 
