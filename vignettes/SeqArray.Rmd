@@ -27,7 +27,7 @@ vignette: >
 
 The SeqArray package is designed for R programming environment, and enables high-performance computing in the multi-core symmetric multiprocessing and loosely coupled computer cluster framework. The features of SeqArray are extended with other existing R packages for WGS data analyses, and the R codes for demonstration are available in the package vignette [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html).
 
-![](seqarray_workflow.png)
+![](seqarray_workflow.svg)
 
 **Figure 1**: SeqArray framework and flowchart. The SeqArray format is built on top of the Genomic Data Structure (GDS) format, and GDS is a generic data container with hierarchical structure for storing multiple array-oriented data sets. A high-level R interface to GDS files is provided in the gdsfmt package with a C++ library, and the SeqArray package offers functionalities specific to sequencing data. At a minimum a SeqArray file contains sample and variant identifiers, position, chromosome, reference and alternate alleles for each variant. Parallel computing environments, like multi-core computer clusters, are enabled with SeqArray. The functionality of SeqArray is extended by SeqVarTools, SNPRelate, GENESIS and other R/Bioconductor packages for WGS analyses.
 

@@ -19,6 +19,10 @@ BUG FIXES
 
     o `seqBED2GDS(, verbose=FALSE)` should have no display
 
+CHANGES
+
+    o use a svg file instead of png in vignettes
+
 
 CHANGES IN VERSION 1.24.2
 -------------------------
