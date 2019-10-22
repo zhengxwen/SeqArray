@@ -20,7 +20,7 @@ The SeqArray package is built on top of [Genomic Data Structure (GDS)](https://g
 
 ## Bioconductor:
 
-Release Version: v1.24.2
+Release Version: v1.26.0
 
 [http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/SeqArray)
 
@@ -28,7 +28,7 @@ Release Version: v1.24.2
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html), [Overview Slides](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
 * [News](http://www.bioconductor.org/packages/release/bioc/news/SeqArray/NEWS)
 
-Development Version: v1.25.2
+Development Version: v1.27.0
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 
@@ -52,7 +52,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
 BiocManager::install("SeqArray")
 ```
 
-* Development version from Github:
+* Development version from Github (for developers/testers only):
 ```R
 library("devtools")
 install_github("zhengxwen/gdsfmt")
@@ -152,7 +152,7 @@ seqClose(f)
 | seqApply      | Apply a user-defined function over array margins [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html) |
 | seqBlockApply | Apply a user-defined function over array margins via blocking [»](https://rdrr.io/bioc/SeqArray/man/seqBlockApply.html) |
 | seqParallel   | Apply functions in parallel [»](https://rdrr.io/bioc/SeqArray/man/seqParallel.html) |
-| ...  | [»](https://rdrr.io/bioc/SeqArray/man/) |
+| [......](https://rdrr.io/bioc/SeqArray/man/) |   |
 
 
 ## Benchmarks

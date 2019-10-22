@@ -43,7 +43,6 @@ importFrom(Biostrings, DNAStringSet, DNAStringSetList)
 # Export all names
 exportPattern("^seq*")
 export(.onAttach, .Last.lib)
-
 exportClasses(SeqVarGDSClass)
 exportMethods(granges, ref, alt, qual, filt, header, fixed, info, geno,
     colData, rowRanges)
