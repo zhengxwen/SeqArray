@@ -207,15 +207,16 @@ system.time(
 
 ## Resource
 
-1000 Genomes Project: [http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes)
+[https://gds-stat.s3.amazonaws.com/download/1000g/index.html](https://gds-stat.s3.amazonaws.com/download/1000g/index.html)
 
-1. Phase 1:
-	- [1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes/1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds) [1.5G]
-	- 1,092 individuals and 38,219,238 variants
+1000 Genomes Project Phase 3:
 
-2. Phase 3:
-	- [1KG_autosomes_phase3_shapeit2_mvncall_integrated_v5_20130502_lzma.seq.gds](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes/1KG_autosomes_phase3_shapeit2_mvncall_integrated_v5_20130502_lzma.seq.gds) [2.4G]
-	- 2,504 individuals and 81,271,745 variants
+- Autosomes (2.60GB, 2,504 individuals and 81,271,745 variants):
+  1KG_ALL.autosome.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.gds
+- Chromosome X (94.1MB, 2,504 individuals and 3,468,093 variants):
+  1KG_ALL.chrX.phase3_shapeit2_mvncall_integrated_v1b.20130502.genotypes.gds
+- Chromosome Y (2.70MB, 1,233 males and 62,042 variants):
+  1KG_ALL.chrY.phase3_integrated_v2a.20130502.genotypes.gds
 
 
 ## Acknowledgements
