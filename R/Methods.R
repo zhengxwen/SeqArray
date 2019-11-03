@@ -476,7 +476,6 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(var.name), length(var.name)>0L)
-
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
     var.index <- match.arg(var.index)

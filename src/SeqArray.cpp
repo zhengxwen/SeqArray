@@ -1372,6 +1372,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_MergeFormat(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_BApply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_Unit_SlidingWindows(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_bgzip_create(SEXP);
 
