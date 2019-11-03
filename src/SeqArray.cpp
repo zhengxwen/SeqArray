@@ -552,18 +552,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				// clear
 				Sel.ClearSelectVariant();
 				// set values
-				ssize_t num = 0, st=Count, ed=0;
+				ssize_t num=0, st=Count, ed=0;
 				int *pI = INTEGER(var_sel);
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
-					if (I != NA_INTEGER)
+					if (I!=NA_INTEGER && !pArray[I-1])
 					{
-						num ++;
 						if (I > ed) ed = I;
 						ssize_t ii = I - 1;
 						if (ii < st) st = ii;
 						pArray[ii] = TRUE;
+						num ++;
 					}
 				}
 				// set the structure of selected variants
