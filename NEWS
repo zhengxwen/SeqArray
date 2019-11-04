@@ -5,6 +5,10 @@ NEW FEATURES
 
     o new function `seqUnitSlidingWindows()`
 
+
+CHANGES IN VERSION 1.26.1
+-------------------------
+
 BUG FIXES
 
     o Fails to correctly select duplicate indices in `seqSetFilter(f, variant.sel=)`

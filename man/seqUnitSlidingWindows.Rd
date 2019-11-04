@@ -10,9 +10,9 @@ seqUnitSlidingWindows(gdsfile, win.size=5000L, win.shift=2500L, win.start=0L,
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{win.size}{x}
-    \item{win.shift}{x}
-    \item{win.start}{x}
+    \item{win.size}{window size in basepair}
+    \item{win.shift}{the shift of sliding window in basepair}
+    \item{win.start}{the start position in basepair}
     \item{verbose}{if \code{TRUE}, display information}
 }
 \value{
