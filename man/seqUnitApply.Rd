@@ -6,7 +6,7 @@
 }
 \usage{
 seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
-    parallel=FALSE, .useraw=FALSE, .progress=FALSE, ...)
+    parallel=FALSE, .useraw=FALSE, .bl_size=256L, .progress=FALSE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -26,6 +26,7 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible; for genotypes, 0xFF is missing value
         if RAW is used}
+    \item{.bl_size}{chuck size, the increment for load balancing, 256 for units}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{...}{optional arguments to \code{FUN}}
 }

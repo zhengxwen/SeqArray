@@ -390,7 +390,6 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     if (dm[3L] %% njobs) .bl_size <- .bl_size + 1L
                     totnum <- dm[3L] %/% .bl_size
                     if (dm[3L] %% .bl_size) totnum <- totnum + 1L
-                    # cat("totnum: ", totnum, ", .bl_size: ", .bl_size, "\n", sep="")
                 }
                 sel_idx <- which(sel$variant.sel)
             } else {

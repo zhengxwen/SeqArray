@@ -64,7 +64,7 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L, win.
 # Get a list of units of selected variants via sliding windows based on basepairs
 #
 seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
-    parallel=FALSE, .useraw=FALSE, .progress=FALSE, ...)
+    parallel=FALSE, .useraw=FALSE, .bl_size=256L, .progress=FALSE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -74,6 +74,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
     stopifnot(length(units) > 0L)
     as.is <- match.arg(as.is)
     stopifnot(is.logical(.useraw), length(.useraw)==1L)
+    stopifnot(is.numeric(.bl_size), length(.bl_size)==1L, .bl_size>0L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
 
     # initialize internally
@@ -111,15 +112,27 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
         remove(progress)
 
     } else {
+
+        # parameters for load balancing
+        .bl_size <- as.integer(.bl_size)
+        if (.bl_size * njobs > length(units))
+        {
+            .bl_size <- length(units) %/% njobs
+            if (.bl_size <= 0L) .bl_size <- 1L
+        }
+        totnum <- length(units) %/% .bl_size
+        if (length(units) %% .bl_size) totnum <- totnum + 1L
+
         # multiple processes
         if (.IsForking(parallel))
         {
             # forking
             .packageEnv$gdsfile <- gdsfile
             .packageEnv$units <- units
+            .packageEnv$var.name <- var.name
             parallel <- parallel::makeForkCluster(njobs)
             on.exit({
-                .packageEnv$gdsfile <- .packageEnv$units <- NULL
+                with(.packageEnv, gdsfile <- units <- var.name <- NULL)
                 stopCluster(parallel)
             })
         } else {
@@ -127,33 +140,58 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
             clusterCall(parallel, function(gdsfn, units) {
                 .packageEnv$gdsfile <- SeqArray::seqOpen(gdsfn, allow.duplicate=TRUE)
                 .packageEnv$units <- units
+                .packageEnv$var.name <- var.name
             }, gdsfn=gdsfile$filename, units=units)
             # finalize
             on.exit({
                 clusterCall(parallel, function(gdsfn, units) {
                     SeqArray::seqClose(.packageEnv$gdsfile)
-                    .packageEnv$units <- NULL
+                    with(.packageEnv, gdsfile <- units <- var.name <- NULL)
                 })
             })
         }
+        # initialize internally
+        clusterApply(parallel, 1:njobs, function(i, njobs) {
+            .Call(SEQ_IntAssign, process_index, i)
+            .Call(SEQ_IntAssign, process_count, njobs)
+        }, njobs=njobs)
+
         # progress information
         progress <- if (.progress) .seqProgress(length(units), njobs) else NULL
         # distributed for-loop
-        ans <- .DynamicClusterCall(parallel, length(units), .fun=function(i, ...)
+        ans <- .DynamicClusterCall(parallel, totnum,
+            .fun = function(i, FUN, .useraw, .bl_size, ...)
+        {
+            # chuck size
+            n <- .bl_size
+            k <- (i - 1L) * n
+            if (k + n > length(.packageEnv$units))
+                n <- length(.packageEnv$units) - k
+            # temporary
+            varname <- .packageEnv$var.name
+            var1L <- length(varname) == 1L
+            rv <- vector("list", n)
+            # set variant filter for each sub unit
+            for (j in seq_len(n))
             {
-                seqSetFilter(.packageEnv$gdsfile, variant.sel=.packageEnv$units[[i]],
+                seqSetFilter(.packageEnv$gdsfile, variant.sel=.packageEnv$units[[j+k]],
                     verbose=FALSE)
-                if (length(var.name)==1L)
+                if (var1L)
                 {
-                    x <- seqGetData(.packageEnv$gdsfile, var.name, .useraw=.useraw)
+                    x <- seqGetData(.packageEnv$gdsfile, varname, .useraw=.useraw)
                 } else {
-                    x <- lapply(var.name, function(nm)
+                    x <- lapply(varname, function(nm)
                         seqGetData(.packageEnv$gdsfile, nm, .useraw=.useraw))
-                    names(x) <- names(var.name)
+                    names(x) <- names(varname)
                 }
-                FUN(x, ...)
-            }, .combinefun=as.is,
-            .updatefun=function(i) .seqProgForward(progress, 1L), ...)
+                rv[[j]] <- FUN(x, ...)
+            }
+            # return
+            rv
+        }, .combinefun="list",
+            .updatefun=function(i) .seqProgForward(progress, .bl_size),
+            FUN=FUN, .useraw=.useraw, .bl_size=.bl_size, ...)
+        ans <- unlist(ans, recursive=FALSE)
         # finalize
         remove(progress)
     }
