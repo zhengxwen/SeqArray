@@ -91,31 +91,28 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
         progress <- if (.progress) .seqProgress(length(units), njobs) else NULL
         # for-loop
         ans <- vector("list", length(units))
-        if (length(var.name) == 1L)
+        var1L <- length(var.name) == 1L
+        for (i in seq_along(units))
         {
-            for (i in seq_along(units))
+            ut <- units[[i]]
+            seqSetFilter(gdsfile, variant.sel=ut, verbose=FALSE)
+            if (var1L)
             {
-                seqSetFilter(gdsfile, variant.sel=units[[i]], verbose=FALSE)
                 x <- seqGetData(gdsfile, var.name, .useraw=.useraw)
-                ans[[i]] <- FUN(x, ...)
-                .seqProgForward(progress, 1L)
-            }
-        } else {
-            for (i in seq_along(units))
-            {
-                seqSetFilter(gdsfile, variant.sel=units[[i]], verbose=FALSE)
-                x <- lapply(var.name, function(nm) seqGetData(gdsfile, nm, .useraw=.useraw))
+            } else {
+                x <- lapply(var.name, function(nm)
+                    seqGetData(gdsfile, nm, .useraw=.useraw))
                 names(x) <- names(var.name)
-                ans[[i]] <- FUN(x, ...)
-                .seqProgForward(progress, 1L)
             }
+            ans[[i]] <- FUN(x, ...)
+            .seqProgForward(progress, 1L)
         }
         # finalize
         remove(progress)
 
     } else {
-        fork <- .IsForking(parallel)
-        if (fork)
+        # multiple processes
+        if (.IsForking(parallel))
         {
             # forking
             .packageEnv$gdsfile <- gdsfile

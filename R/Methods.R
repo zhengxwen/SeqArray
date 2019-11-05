@@ -390,7 +390,7 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE)
     } else {
         stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     }
-    .Call(SEQ_GetData, gdsfile, var.name, .useraw)
+    .Call(SEQ_GetData, gdsfile, var.name, .useraw, NULL)
 }
 
 

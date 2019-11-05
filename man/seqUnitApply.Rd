@@ -10,7 +10,7 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{units}{a list of units of selected variants, with class "SeqUnitListClass"}
+    \item{units}{a list of units of selected variants, with S3 class "SeqUnitListClass"}
     \item{var.name}{the variable name(s), see details}
     \item{FUN}{the function to be applied}
     \item{as.is}{returned value: a list, a vector or none;
@@ -28,6 +28,38 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
         if RAW is used}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{...}{optional arguments to \code{FUN}}
+}
+\details{
+    The variable name should be \code{"sample.id"}, \code{"variant.id"},
+\code{"position"}, \code{"chromosome"}, \code{"allele"}, \code{"genotype"},
+\code{"annotation/id"}, \code{"annotation/qual"}, \code{"annotation/filter"},
+\code{"annotation/info/VARIABLE_NAME"}, or
+\code{"annotation/format/VARIABLE_NAME"}.
+
+\code{"@genotype"}, \code{"annotation/info/@VARIABLE_NAME"} or
+\code{"annotation/format/@VARIABLE_NAME"} are used to obtain the index
+associated with these variables.
+
+\code{"$dosage"} is also allowed for the dosages of reference allele (integer:
+0, 1, 2 and NA for diploid genotypes).
+
+\code{"$dosage_alt"} returns a RAW/INTEGER matrix for the dosages of alternative
+allele without distinguishing different alternative alleles.
+
+\code{"$num_allele"} returns an integer vector with the numbers of distinct
+alleles.
+
+\code{"$ref"} returns a character vector of reference alleles
+
+\code{"$alt"} returns a character vector of alternative alleles (delimited by
+comma)
+
+\code{"$chrom_pos"} returns characters with the combination of chromosome and
+position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
+the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
+(i.e., chr:position_REF_ALT).
+
+\code{"$variant_index"} returns the indices of selected variants starting from 1.
 }
 \value{
     A vector, a list of values or none.

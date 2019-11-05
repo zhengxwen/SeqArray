@@ -47,6 +47,8 @@ comma).
 position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
 the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 (i.e., chr:position_REF_ALT).
+
+\code{"$variant_index"} returns the indices of selected variants starting from 1.
 }
 
 \author{Xiuwen Zheng}
@@ -86,9 +88,12 @@ head(seqGetData(f, "$num_allele"))
 
 
 # set sample and variant filters
-seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)])
 set.seed(100)
+seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)])
 seqSetFilter(f, variant.id=sample(variant.id, 10))
+
+# get the indices of selected variants
+seqGetData(f, "$variant_index")
 
 # get genotypic data
 seqGetData(f, "genotype")

@@ -1361,7 +1361,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	extern void Register_SNPRelate_Functions();
 
-	extern SEXP SEQ_GetData(SEXP, SEXP);
+	extern SEXP SEQ_GetData(SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_ConvBEDFlag(SEXP, SEXP, SEXP);
 	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP);
 
@@ -1400,7 +1400,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
 
-		CALL(SEQ_GetData, 3),
+		CALL(SEQ_GetData, 4),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
 		CALL(SEQ_BApply_Variant, 7),
 

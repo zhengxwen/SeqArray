@@ -2,7 +2,7 @@
 //
 // GetData.cpp: Get data from the GDS file
 //
-// Copyright (C) 2015-2018    Xiuwen Zheng
+// Copyright (C) 2015-2019    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -48,6 +48,7 @@ static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 
 
 // get data
+// static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw, SEXP Env)
 static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 {
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
@@ -393,6 +394,18 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			ss[1] = NeedArrayTRUEs(dim[1]);
 		rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
 
+	} else if (strcmp(name, "$variant_index") == 0)
+	{
+		// ===========================================================
+		// the indices of selected variants
+		ssize_t nVariant = File.VariantSelNum();
+		rv_ans = PROTECT(NEW_INTEGER(nVariant));
+		int *p = INTEGER(rv_ans), i = Sel.varStart;
+		C_BOOL *s = Sel.pVariant;
+		for (ssize_t n=0; n < nVariant; )
+			if (s[i++]) { *p++ = i; n++; }
+		UNPROTECT(1);
+
 	} else if (strcmp(name, "$num_allele") == 0)
 	{
 		// ===========================================================
@@ -555,7 +568,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 
 
 /// Get data from a working space
-COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw)
+COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw, SEXP Env)
 {
 	if (!Rf_isString(var_name) || RLength(var_name)!=1)
 		error("'var.name' should be a string of length one.");
