@@ -60,6 +60,7 @@ the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 (i.e., chr:position_REF_ALT).
 
 \code{"$variant_index"} returns the indices of selected variants starting from 1.
+\code{"$sample_index"} returns the indices of selected samples starting from 1.
 }
 \value{
     A vector, a list of values or none.

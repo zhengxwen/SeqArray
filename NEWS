@@ -7,8 +7,8 @@ NEW FEATURES
 
     o new function `seqUnitApply()`
 
-    o new variable "$variant_index" in `SeqGetData()`, `seqBlockApply() and
-      `seqUnitApply()` to get the indices of selected variants
+    o new variable "$variant_index", "$sample_index" in `SeqGetData()`, `seqBlockApply()`
+      and `seqUnitApply()` to get the indices of selected variants
 
 
 CHANGES IN VERSION 1.26.1

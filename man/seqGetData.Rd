@@ -49,6 +49,7 @@ the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 (i.e., chr:position_REF_ALT).
 
 \code{"$variant_index"} returns the indices of selected variants starting from 1.
+\code{"$sample_index"} returns the indices of selected samples starting from 1.
 }
 
 \author{Xiuwen Zheng}
@@ -92,8 +93,9 @@ set.seed(100)
 seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)])
 seqSetFilter(f, variant.id=sample(variant.id, 10))
 
-# get the indices of selected variants
+# get the indices of selected variants/samples
 seqGetData(f, "$variant_index")
+seqGetData(f, "$sample_index")
 
 # get genotypic data
 seqGetData(f, "genotype")

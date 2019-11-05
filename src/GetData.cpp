@@ -406,6 +406,18 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 			if (s[i++]) { *p++ = i; n++; }
 		UNPROTECT(1);
 
+	} else if (strcmp(name, "$sample_index") == 0)
+	{
+		// ===========================================================
+		// the indices of selected variants
+		ssize_t nSamp = File.SampleSelNum();
+		rv_ans = PROTECT(NEW_INTEGER(nSamp));
+		int *p = INTEGER(rv_ans), i = 0;
+		C_BOOL *s = Sel.pSample;
+		for (ssize_t n=0; n < nSamp; )
+			if (s[i++]) { *p++ = i; n++; }
+		UNPROTECT(1);
+
 	} else if (strcmp(name, "$num_allele") == 0)
 	{
 		// ===========================================================
