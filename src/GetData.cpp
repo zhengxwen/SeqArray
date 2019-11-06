@@ -652,8 +652,11 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw, SEXP Env
 /// Get data from a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw, SEXP Env)
 {
-	if (!Rf_isString(var_name) || RLength(var_name)!=1)
-		error("'var.name' should be a string of length one.");
+	if (!Rf_isString(var_name))
+		error("'var.name' should be character.");
+	const int nlen = RLength(var_name);
+	if (nlen <= 0)
+		error("'length(var.name)' should be > 0.");
 	int use_raw = Rf_asLogical(UseRaw);
 	if (use_raw == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
@@ -667,7 +670,19 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw, 
 		// File information
 		CFileInfo &File = GetFileInfo(gdsfile);
 		// Get data
-		rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw, Env);
+		if (nlen == 1)
+		{
+			rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw, Env);
+		} else {
+			rv_ans = PROTECT(NEW_LIST(nlen));
+			for (int i=0; i < nlen; i++)
+			{
+				SET_VECTOR_ELT(rv_ans, i,
+					VarGetData(File, CHAR(STRING_ELT(var_name, i)), use_raw, Env));
+			}
+			setAttrib(rv_ans, R_NamesSymbol, getAttrib(var_name, R_NamesSymbol));
+			UNPROTECT(1);
+		}
 	COREARRAY_CATCH
 }
 

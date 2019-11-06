@@ -3,6 +3,8 @@ CHANGES IN VERSION 1.27.0
 
 NEW FEATURES
 
+    o multiple variable names are allowed in `seqGetData(, var.name=)`
+
     o new function `seqUnitSlidingWindows()`
 
     o new function `seqUnitApply()`

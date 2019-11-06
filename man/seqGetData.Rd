@@ -9,7 +9,7 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .envir=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{var.name}{the variable name, see details}
+    \item{var.name}{a variable name or a character vector, see details}
     \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         for small numbers instead of INTEGER if possible; 0xFF is missing value
@@ -96,6 +96,9 @@ set.seed(100)
 seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)])
 seqSetFilter(f, variant.id=sample(variant.id, 10))
 
+# get a list
+seqGetData(f, c(chr="chromosome", pos="position", allele="allele"))
+
 # get the indices of selected variants/samples
 seqGetData(f, "$variant_index")
 seqGetData(f, "$sample_index")
@@ -123,10 +126,12 @@ seqGetData(f, "annotation/format/DP")
 #  [1,]   25   25   22    3    4   17  ...
 
 
+# get values from R environment
 env <- new.env()
 env$x <- 1:1348 / 10
 env$x[seqGetData(f, "$variant_index")]
 seqGetData(f, "$:x", .envir=env)
+
 
 # close the GDS file
 seqClose(f)

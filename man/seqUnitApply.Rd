@@ -71,8 +71,6 @@ the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 \author{Xiuwen Zheng}
 
 \examples{
-library(SeqArray)
-
 # open the GDS file
 gdsfile <- seqOpen(seqExampleFileName("gds"))
 
