@@ -6,13 +6,14 @@
 }
 \usage{
 seqUnitSlidingWindows(gdsfile, win.size=5000L, win.shift=2500L, win.start=0L,
-    verbose=TRUE)
+    dup.rm=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{win.size}{window size in basepair}
     \item{win.shift}{the shift of sliding window in basepair}
     \item{win.start}{the start position in basepair}
+    \item{dup.rm}{if \code{TRUE}, remove duplicate and zero-length windows}
     \item{verbose}{if \code{TRUE}, display information}
 }
 \value{
@@ -26,6 +27,9 @@ seqUnitSlidingWindows(gdsfile, win.size=5000L, win.shift=2500L, win.start=0L,
 gdsfile <- seqOpen(seqExampleFileName("gds"))
 
 v <- seqUnitSlidingWindows(gdsfile)
+names(v) # "desp"  "index"
+
+head(v$desp)
 
 # close the GDS file
 seqClose(gdsfile)

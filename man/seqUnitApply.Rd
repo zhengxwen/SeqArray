@@ -82,17 +82,19 @@ v1 <- seqUnitApply(gdsfile, units, "genotype", function(x) dim(x)[3L],
 v2 <- seqUnitApply(gdsfile, units, "genotype", function(x) dim(x)[3L],
     as.is="unlist", parallel=2, .progress=TRUE)
 
-all(v1 == lengths(units))
+all(v1 == lengths(units$index))
 all(v1 == v2)
 
 
+# call with an external R variable
 ext <- list(x=1:1348/10)
 v3 <- seqUnitApply(gdsfile, units, "$:x", function(x) x,
     as.is="list", .progress=TRUE, .envir=ext)
-head(units)
+head(units$index)
 head(v3)
 
-table(sapply(seq_along(units), function(i) all(units[[i]] == v3[[i]]*10)))
+table(sapply(seq_along(units$index), function(i) all(units$index[[i]] == v3[[i]]*10)))
+# all TRUE
 
 
 # close the GDS file

@@ -34,29 +34,54 @@ using namespace SeqArray;
 
 /// 
 COREARRAY_DLL_EXPORT SEXP SEQ_Unit_SlidingWindows(SEXP Pos, SEXP Idx,
-	SEXP WinSize, SEXP WinShift, SEXP WinStart, SEXP Tmp)
+	SEXP WinSize, SEXP WinShift, SEXP WinStart, SEXP DupFlag, SEXP Tmp)
 {
 	int n = Rf_length(Pos);
 	int *pos = INTEGER(Pos), *idx = INTEGER(Idx);
 	int winsize  = Rf_asInteger(WinSize);
 	int winshift = Rf_asInteger(WinShift);
 	int winstart = Rf_asInteger(WinStart);
+	int duprmflag = Rf_asLogical(DupFlag);
+	if (duprmflag == NA_LOGICAL)
+		error("'dup.rm' must be TRUE or FALSE.");
 	int *tmp = INTEGER(Tmp);
-	// get # of windows
+
+	// get the total number of windows
 	int i=0, num=0, w_start=winstart;
+	int old_i=i, old_i2=i;
 	while (i < n)
 	{
 		while (i<n && pos[i]<w_start) i++;
 		int wend = w_start + winsize;
 		int i2 = i;
 		while (i<n && pos[i]<wend) i++;
-		if (i > i2) num++;
+		if (duprmflag)
+		{
+			if (i > i2)
+			{
+				if (i!=old_i || i2!=old_i2)
+				{
+					old_i = i; old_i2 = i2;
+					num++;
+				}
+			}
+		} else {
+			num++;
+		}
 		w_start += winshift;
 		if (winshift < winsize) i = i2;
 	}
+
+	// save the results
+	SEXP rv_ans = PROTECT(NEW_LIST(2));
+	SEXP rv_st  = PROTECT(NEW_INTEGER(num));
+	SEXP rv_lst = PROTECT(NEW_LIST(num));
+	SET_VECTOR_ELT(rv_ans, 0, rv_st);
+	SET_VECTOR_ELT(rv_ans, 1, rv_lst);
+
 	// get list
-	SEXP rv = PROTECT(NEW_LIST(num));
 	i=0; num=0; w_start=winstart;
+	old_i = old_i2 = i;
 	while (i < n)
 	{
 		while (i<n && pos[i]<w_start) i++;
@@ -67,18 +92,31 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Unit_SlidingWindows(SEXP Pos, SEXP Idx,
 			tmp[i - i2] = idx[i];
 			i++;
 		}
-		if (i > i2)
+		if (duprmflag)
 		{
-			SEXP v = NEW_INTEGER(i - i2);
-			memcpy(INTEGER(v), tmp, sizeof(int)*(i - i2));
-			SET_ELEMENT(rv, num, v);
+			if (i > i2)
+			{
+				if (i!=old_i || i2!=old_i2)
+				{
+					old_i = i; old_i2 = i2;
+					INTEGER(rv_st)[num] = w_start;
+					SEXP v = NEW_INTEGER(i - i2);
+					memcpy(INTEGER(v), tmp, sizeof(int)*(i - i2));
+					SET_ELEMENT(rv_lst, num, v);
+					num++;
+				}
+			}
+		} else {
+			INTEGER(rv_st)[num] = w_start;
+			SET_ELEMENT(rv_lst, num, NEW_INTEGER(0));
 			num++;
 		}
 		w_start += winshift;
 		if (winshift < winsize) i = i2;
 	}
-	UNPROTECT(1);
-	return rv;
+
+	UNPROTECT(3);
+	return rv_ans;
 }
 
 
