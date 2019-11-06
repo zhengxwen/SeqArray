@@ -48,8 +48,7 @@ static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 
 
 // get data
-// static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw, SEXP Env)
-static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
+static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw, SEXP Env)
 {
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
@@ -567,12 +566,83 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw)
 		UNPROTECT(1);
 
 	} else {
-		throw ErrSeqArray(
-			"'%s' is not a standard variable name, and the standard format:\n"
-			"    sample.id, variant.id, position, chromosome, allele, genotype\n"
-			"    annotation/id, annotation/qual, annotation/filter\n"
-			"    annotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME\n"
-			"    sample.annotation/VARIABLE_NAME, etc", name);
+		// R variables in the environment or list
+		if (name[0]=='$' && name[1]==':')
+		{
+			const char *varnm = name + 2;
+			SEXP x = R_NilValue;
+			if (!Rf_isNull(Env))
+			{
+				if (Rf_isEnvironment(Env))
+				{
+					SEXP v = Rf_findVarInFrame(Env, Rf_install(varnm));
+					if (v != R_UnboundValue) x = v;
+				} else if (Rf_isVectorList(Env))
+					x = RGetListElement(Env, varnm);
+			}
+			if (Rf_isNull(x))
+				throw ErrSeqArray("No variable '%s' in the enviroment or list.", varnm);
+			if (!Rf_isVector(x))
+				throw ErrSeqArray("'%s' should be a vector.", varnm);
+			if (Rf_length(x) != File.VariantNum())
+				throw ErrSeqArray("'length(%s)' should be the same as the number of variants.", varnm);
+			int n = File.VariantSelNum();
+			if (n != File.VariantNum())
+			{
+				int nprot = 1;
+				PROTECT(x);
+				if (Rf_isInteger(x))
+				{
+					rv_ans = PROTECT(NEW_INTEGER(n)); nprot++;
+					int *b = INTEGER(x), *p = INTEGER(rv_ans);
+					size_t i = Sel.varStart;
+					C_BOOL *s = Sel.pVariant;
+					for (; n > 0; i++)
+						if (s[i]) { *p++ = b[i]; n--; }
+				} else if (Rf_isLogical(x))
+				{
+					rv_ans = PROTECT(NEW_LOGICAL(n)); nprot++;
+					int *b = INTEGER(x), *p = INTEGER(rv_ans);
+					size_t i = Sel.varStart;
+					C_BOOL *s = Sel.pVariant;
+					for (; n > 0; i++)
+						if (s[i]) { *p++ = b[i]; n--; }
+				} else if (Rf_isReal(x))
+				{
+					rv_ans = PROTECT(NEW_NUMERIC(n)); nprot++;
+					double *b = REAL(x), *p = REAL(rv_ans);
+					size_t i = Sel.varStart;
+					C_BOOL *s = Sel.pVariant;
+					for (; n > 0; i++)
+						if (s[i]) { *p++ = b[i]; n--; }
+				} else if (Rf_isString(x))
+				{
+					rv_ans = PROTECT(NEW_CHARACTER(n)); nprot++;
+					size_t p=0, i=Sel.varStart;
+					C_BOOL *s = Sel.pVariant;
+					for (; n > 0; i++)
+					{
+						if (s[i])
+						{
+							SET_STRING_ELT(rv_ans, p++, STRING_ELT(x, i));
+							n--;
+						}
+					}
+				} else {
+					throw ErrSeqArray("No implementation, ask the package maintainer.");
+				}
+				UNPROTECT(nprot);
+			} else {
+				rv_ans = x;
+			}
+		} else {
+			throw ErrSeqArray(
+				"'%s' is not a standard variable name, and the standard format:\n"
+				"    sample.id, variant.id, position, chromosome, allele, genotype\n"
+				"    annotation/id, annotation/qual, annotation/filter\n"
+				"    annotation/info/VARIABLE_NAME, annotation/format/VARIABLE_NAME\n"
+				"    sample.annotation/VARIABLE_NAME, etc", name);
+		}
 	}
 
 	return rv_ans;
@@ -587,12 +657,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw, 
 	int use_raw = Rf_asLogical(UseRaw);
 	if (use_raw == NA_LOGICAL)
 		error("'.useraw' must be TRUE or FALSE.");
+	if (!Rf_isNull(Env))
+	{
+		if (!Rf_isEnvironment(Env) && !Rf_isVectorList(Env))
+			error("'envir' should be an environment and list object.");
+	}
 
 	COREARRAY_TRY
 		// File information
 		CFileInfo &File = GetFileInfo(gdsfile);
 		// Get data
-		rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw);
+		rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw, Env);
 	COREARRAY_CATCH
 }
 
@@ -757,14 +832,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 				{
 					SET_ELEMENT(R_call_param, i,
 						VarGetData(File, CHAR(STRING_ELT(var_name, i)),
-						use_raw_flag));
+						use_raw_flag, rho));
 				}
 				// call R function
 				call_val = eval(R_fcall, rho);
 
 			} else {
 				R_call_param = VarGetData(File, CHAR(STRING_ELT(var_name, 0)),
-					use_raw_flag);
+					use_raw_flag, rho);
 				// make a call function
 				if (VarIdx > 0)
 				{

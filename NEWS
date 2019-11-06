@@ -10,6 +10,8 @@ NEW FEATURES
     o new variable "$variant_index", "$sample_index" in `SeqGetData()`, `seqBlockApply()`
       and `seqUnitApply()` to get the indices of selected variants
 
+    o new argument '.envir' in `seqGetData()`
+
 
 CHANGES IN VERSION 1.26.1
 -------------------------

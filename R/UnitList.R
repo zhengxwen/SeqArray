@@ -64,7 +64,7 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L, win.
 # Get a list of units of selected variants via sliding windows based on basepairs
 #
 seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
-    parallel=FALSE, .useraw=FALSE, .bl_size=256L, .progress=FALSE, ...)
+    parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE, .envir=NULL)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -73,9 +73,10 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
     FUN <- match.fun(FUN)
     stopifnot(length(units) > 0L)
     as.is <- match.arg(as.is)
-    stopifnot(is.logical(.useraw), length(.useraw)==1L)
     stopifnot(is.numeric(.bl_size), length(.bl_size)==1L, .bl_size>0L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
+    stopifnot(is.logical(.useraw), length(.useraw)==1L)
+    stopifnot(is.null(.envir) || is.environment(.envir) || is.list(.envir))
 
     # initialize internally
     .Call(SEQ_IntAssign, process_index, 1L)
@@ -99,10 +100,10 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
             seqSetFilter(gdsfile, variant.sel=ut, verbose=FALSE)
             if (var1L)
             {
-                x <- seqGetData(gdsfile, var.name, .useraw=.useraw)
+                x <- seqGetData(gdsfile, var.name, .useraw=.useraw, .envir=.envir)
             } else {
                 x <- lapply(var.name, function(nm)
-                    seqGetData(gdsfile, nm, .useraw=.useraw))
+                    seqGetData(gdsfile, nm, .useraw=.useraw, .envir=.envir))
                 names(x) <- names(var.name)
             }
             ans[[i]] <- FUN(x, ...)

@@ -6,7 +6,7 @@
 }
 \usage{
 seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
-    parallel=FALSE, .useraw=FALSE, .bl_size=256L, .progress=FALSE, ...)
+    parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE, .envir=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -22,12 +22,13 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}
+    \item{.bl_size}{chuck size, the increment for load balancing, 256 for units}
+    \item{.progress}{if \code{TRUE}, show progress information}
     \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible; for genotypes, 0xFF is missing value
         if RAW is used}
-    \item{.bl_size}{chuck size, the increment for load balancing, 256 for units}
-    \item{.progress}{if \code{TRUE}, show progress information}
+    \item{.envir}{NULL, an environment object, or a list/data.frame}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{
@@ -85,6 +86,16 @@ v2 <- seqUnitApply(gdsfile, units, "genotype", function(x) dim(x)[3L],
 
 all(v1 == lengths(units))
 all(v1 == v2)
+
+
+ext <- list(x=1:1348/10)
+v3 <- seqUnitApply(gdsfile, units, "$:x", function(x) x,
+    as.is="list", .progress=TRUE, .envir=ext)
+head(units)
+head(v3)
+
+table(sapply(seq_along(units), function(i) all(units[[i]] == v3[[i]]*10)))
+
 
 # close the GDS file
 seqClose(gdsfile)

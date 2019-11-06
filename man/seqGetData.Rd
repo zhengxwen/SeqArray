@@ -5,7 +5,7 @@
     Gets data from a SeqArray GDS file.
 }
 \usage{
-seqGetData(gdsfile, var.name, .useraw=FALSE)
+seqGetData(gdsfile, var.name, .useraw=FALSE, .envir=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -14,6 +14,7 @@ seqGetData(gdsfile, var.name, .useraw=FALSE)
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         for small numbers instead of INTEGER if possible; 0xFF is missing value
         if RAW is used}
+    \item{.envir}{NULL, an environment object, or a list/data.frame}
 }
 \value{
     Return vectors, matrices or lists (with \code{length} and \code{data} components).
@@ -39,7 +40,6 @@ allele without distinguishing different alternative alleles.
 alleles.
 
 \code{"$ref"} returns a character vector of reference alleles.
-
 \code{"$alt"} returns a character vector of alternative alleles (delimited by
 comma).
 
@@ -50,6 +50,9 @@ the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 
 \code{"$variant_index"} returns the indices of selected variants starting from 1.
 \code{"$sample_index"} returns the indices of selected samples starting from 1.
+
+\code{"$:VAR"} return the variable "VAR" from \code{.envir} according to the
+selected variants.
 }
 
 \author{Xiuwen Zheng}
@@ -118,6 +121,12 @@ seqGetData(f, "annotation/format/DP")
 #      variant
 # sample [,1] [,2] [,3] [,4] [,5] [,6] ...
 #  [1,]   25   25   22    3    4   17  ...
+
+
+env <- new.env()
+env$x <- 1:1348 / 10
+env$x[seqGetData(f, "$variant_index")]
+seqGetData(f, "$:x", .envir=env)
 
 # close the GDS file
 seqClose(f)
