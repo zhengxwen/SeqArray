@@ -33,7 +33,7 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L, win.
     {
         if (verbose)
             cat("Chromosome ", chr, ", ", sep="")
-        seqSetFilterChrom(gdsfile, include=chr, verbose=FALSE)
+        seqSetFilterChrom(gdsfile, include=chr, intersect=TRUE, verbose=FALSE)
         idx <- which(seqGetFilter(gdsfile)$variant.sel)
         pos <- seqGetData(gdsfile, "position")
         if (!is.unsorted(pos) || pos[1L]>pos[length(pos)])
@@ -51,7 +51,7 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L, win.
             chr=rep(chr, length(v)), start=v, end=as.integer(v+win.size-1L),
             stringsAsFactors=FALSE))
         if (verbose)
-            cat("# of units: ", length(v[[2L]]), "\n", sep="")
+            cat("# of units: ", length(v), "\n", sep="")
         # reset
         seqSetFilter(gdsfile, action="pop", verbose=FALSE)
         seqSetFilter(gdsfile, action="push", verbose=FALSE)
