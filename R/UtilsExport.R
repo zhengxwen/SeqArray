@@ -412,7 +412,7 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
             if (!is.null(get.attr.gdsn(n)$md5))
             {
                 digest.gdsn(n, algo="md5", action="add")
-                cat("  ", get.attr.gdsn(n)$md5, "\n", sep="")
+                cat("  MD5:", get.attr.gdsn(n)$md5, "\n", sep="")
             } else {
                 cat("\n")
             }
