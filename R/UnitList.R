@@ -143,6 +143,12 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
                 stopCluster(parallel)
             })
         } else {
+            need_cluster <- is.numeric(parallel) || is.logical(parallel)
+            if (need_cluster)
+            {
+                # no forking on windows
+                parallel <- makeCluster(njobs)
+            }
             # distribute the parameters to each node
             clusterCall(parallel, function(fn, ut, vn, env) {
                 .packageEnv$gdsfile <- SeqArray::seqOpen(fn, allow.duplicate=TRUE)
@@ -157,6 +163,8 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
                     with(.packageEnv, gdsfile <- units <- var.name <- envir <- NULL)
                 })
             })
+            if (need_cluster)
+                on.exit(stopCluster(parallel), add=TRUE)
         }
         # initialize internally
         clusterApply(parallel, 1:njobs, function(i, njobs) {
