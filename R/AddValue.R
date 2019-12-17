@@ -10,19 +10,28 @@
 # Add or modify values in a GDS file
 #
 seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
-    packed=FALSE)
+    packed=FALSE, verbose=TRUE)
 {
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(varnm), length(varnm)==1L)
     stopifnot(is.character(desp), length(desp)==1L, !is.na(desp))
     stopifnot(is.logical(replace), length(replace)==1L)
     stopifnot(is.character(compress))
     stopifnot(is.logical(packed), length(packed)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (is.character(gdsfile))
+    {
+        stopifnot(length(gdsfile) == 1L)
+        if (verbose)
+            cat("Open '", gdsfile, "' ...\n", sep="")
+        gdsfile <- seqOpen(gdsfile, readonly=FALSE)
+        on.exit(seqClose(gdsfile))
+    }
 
     # dm[1] -- ploidy, dm[2] -- # of total samples, dm[3] -- # of total variants
     dm <- .dim(gdsfile)
-    nsamp <- dm[2L]
-    nvar  <- dm[3L]
+    nsamp <- dm[2L]; nvar  <- dm[3L]
 
     if (varnm == "sample.id")
     {
@@ -33,6 +42,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
         n <- add.gdsn(gdsfile, "sample.id", val, compress=compress, closezip=TRUE,
             replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
+        if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
 
     } else if (varnm == "variant.id")
     {

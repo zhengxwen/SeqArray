@@ -6,10 +6,10 @@
 }
 \usage{
 seqAddValue(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
-    packed=FALSE)
+    packed=FALSE, verbose=TRUE)
 }
 \arguments{
-    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{gdsfile}{character for file name, or a \code{\link{SeqVarGDSClass}} object}
     \item{varnm}{the variable name, e.g., "sample.id", "variant.id", "chromosome",
         "annotation/info/NEW_VARIABLE"}
     \item{val}{the R value can be integers, real numbers, characters,
@@ -19,6 +19,7 @@ seqAddValue(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
     \item{compress}{the compression method can be "" (no compression), see
         \code{\link{add.gdsn}}}
     \item{packed}{FALSE}
+    \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
     Return none.
@@ -30,8 +31,6 @@ seqAddValue(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
 }
 
 \examples{
-library(SeqArray)
-
 # the file of GDS
 gds.fn <- seqExampleFileName("gds")
 file.copy(gds.fn, "tmp.gds", overwrite=TRUE)

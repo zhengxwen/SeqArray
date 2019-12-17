@@ -271,7 +271,7 @@ seqSetFilterPos <- function(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
     stopifnot(inherits(object, "SeqVarGDSClass"))
     stopifnot(is.vector(chr))
     stopifnot(is.vector(pos))
-    stopifnot(length(chr) == length(pos))
+    stopifnot(length(chr)==1L || length(chr)==length(pos))
     stopifnot(is.logical(intersect), length(intersect)==1L)
     stopifnot(is.logical(multi.pos), length(multi.pos)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)

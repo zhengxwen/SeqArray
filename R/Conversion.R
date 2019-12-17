@@ -361,9 +361,9 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     {
         cat(date(), "\n", sep="")
         if (isTRUE(dosage) | is.character(dosage))
-            cat("SeqArray GDS to SNP GDS Dosage Format:\n")
+            cat("SeqArray GDS to SNP GDS dosage format:\n")
         else
-            cat("SeqArray GDS to SNP GDS Format:\n")
+            cat("SeqArray GDS to SNP GDS format:\n")
     }
 
     # if it is a file name
