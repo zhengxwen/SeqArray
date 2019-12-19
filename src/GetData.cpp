@@ -48,7 +48,7 @@ static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 
 
 // get data
-static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw, SEXP Env)
+static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, SEXP Env)
 {
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
@@ -146,6 +146,8 @@ static SEXP VarGetData(CFileInfo &File, const char *name, bool use_raw, SEXP Env
 			CApply_Variant_Geno NodeVar(File, use_raw);
 			// size to be allocated
 			ssize_t SIZE = (ssize_t)nSample * File.Ploidy();
+
+
 			if (use_raw)
 			{
 				rv_ans = PROTECT(NEW_RAW(nVariant * SIZE));

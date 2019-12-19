@@ -283,10 +283,16 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 
 void CApply_Variant_Geno::ReadData(SEXP val)
 {
-	if (TYPEOF(val) != RAWSXP)
-		ReadGenoData(INTEGER(val));
-	else
-		ReadGenoData(RAW(val));
+	switch (TYPEOF(val))
+	{
+		case INTSXP:
+			ReadGenoData(INTEGER(val)); break;
+		case RAWSXP:
+			ReadGenoData(RAW(val)); break;
+		default:
+			throw ErrSeqArray("Invalid type (%d) in CApply_Variant_Geno::ReadData()",
+				(int)TYPEOF(val));
+	}
 }
 
 SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
@@ -351,17 +357,17 @@ CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw, bool 
 
 void CApply_Variant_Dosage::ReadData(SEXP val)
 {
-	if (TYPEOF(val) != RAWSXP)
+	switch (TYPEOF(val))
 	{
-		if (IsAlt)
-			ReadDosageAlt(INTEGER(val));
-		else
-			ReadDosage(INTEGER(val));
-	} else {
-		if (IsAlt)
-			ReadDosageAlt(RAW(val));
-		else
-			ReadDosage(RAW(val));
+		case INTSXP:
+			if (IsAlt) ReadDosageAlt(INTEGER(val)); else ReadDosage(INTEGER(val));
+			break;
+		case RAWSXP:
+			if (IsAlt) ReadDosageAlt(RAW(val)); else ReadDosage(RAW(val));
+			break;
+		default:
+			throw ErrSeqArray("Invalid type (%d) in CApply_Variant_Dosage::ReadData()",
+				(int)TYPEOF(val));
 	}
 }
 
