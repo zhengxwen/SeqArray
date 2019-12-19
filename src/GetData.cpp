@@ -146,8 +146,6 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, SEXP Env)
 			CApply_Variant_Geno NodeVar(File, use_raw);
 			// size to be allocated
 			ssize_t SIZE = (ssize_t)nSample * File.Ploidy();
-
-
 			if (use_raw)
 			{
 				rv_ans = PROTECT(NEW_RAW(nVariant * SIZE));
@@ -659,9 +657,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw, 
 	const int nlen = RLength(var_name);
 	if (nlen <= 0)
 		error("'length(var.name)' should be > 0.");
+	if (TYPEOF(UseRaw) != LGLSXP)
+		error("'.useraw' must be logical.");
 	int use_raw = Rf_asLogical(UseRaw);
-	if (use_raw == NA_LOGICAL)
-		error("'.useraw' must be TRUE or FALSE.");
 	if (!Rf_isNull(Env))
 	{
 		if (!Rf_isEnvironment(Env) && !Rf_isVectorList(Env))
