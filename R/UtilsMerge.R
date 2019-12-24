@@ -661,13 +661,13 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
             if (idx < 1L) stop("internal error, info field.")
 
             warnflag <- TRUE
-            s <- seqGetData(flist[[idx]], vnm)
+            s <- seqGetData(flist[[idx]], vnm, .padNA=FALSE)
             for (f in flist[-idx])
             {
                 n <- index.gdsn(f, vnm, silent=TRUE)
                 if (!is.null(n))
                 {
-                    s1 <- seqGetData(f, vnm)
+                    s1 <- seqGetData(f, vnm, .padNA=FALSE)
                     if (!identical(s, s1))
                     {
                         if (warnflag)

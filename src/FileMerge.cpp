@@ -2,7 +2,7 @@
 //
 // FileMerge.cpp: GDS file merging
 //
-// Copyright (C) 2016-2017    Xiuwen Zheng
+// Copyright (C) 2016-2019    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -335,10 +335,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 					SEXP RD = FILE.NeedRData(nProtected);
 					FILE.ReadData(RD);
 					FILE.Next();
-					GDS_R_Append(info_var, RD);
+					if (!Rf_isNull(RD))
+						GDS_R_Append(info_var, RD);
 					if (info_idx)
 					{
-						C_Int32 I32 = XLENGTH(RD);
+						C_Int32 I32 = RLength(RD);
 						GDS_Array_AppendData(info_idx, 1, &I32, svInt32);
 					}
 					has = true;

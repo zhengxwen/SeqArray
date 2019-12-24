@@ -801,12 +801,14 @@ seqDelete <- function(gdsfile, info.var=character(), fmt.var=character(),
 }
 
 
-seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
+seqTranspose <- function(gdsfile, var.name, compress=NULL, digest=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(var.name) & is.vector(var.name))
     stopifnot(length(var.name) == 1L)
+    stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     node <- index.gdsn(gdsfile, var.name)
     desp <- objdesp.gdsn(node)
@@ -828,6 +830,7 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
         name <- paste("~", index[length(index)], sep="")
         newnode <- add.gdsn(folder, name, val=NULL, storage=desp$storage,
             valdim=dm, compress=compress)
+        moveto.gdsn(newnode, node, relpos="after")
 
         # write data
         apply.gdsn(node, margin=length(dm)-1L, as.is="none", FUN=function(g) {
@@ -835,6 +838,9 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, verbose=TRUE)
         }, .useraw=TRUE)
 
         readmode.gdsn(newnode)
+        .DigestCode(newnode, digest, FALSE)
+        if (verbose)
+            print(newnode, attribute=TRUE, attribute.trim=TRUE)
     } else
         warning("It is a vector.")
 

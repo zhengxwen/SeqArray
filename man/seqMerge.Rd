@@ -78,21 +78,18 @@ for (i in 1:split.cnt)
         start=start[i], count=count[i])
 }
 
-# merge
+# merge different variants
 seqMerge(fn, "tmp.gds", storage.option="ZIP_RA")
 seqSummary("tmp.gds")
 
 
-####
+####  merging different samples  ####
 
 vcf.fn <- seqExampleFileName("gds")
 file.copy(vcf.fn, "test.gds", overwrite=TRUE)
 
 # modify 'sample.id'
-f <- openfn.gds("test.gds", FALSE)
-sid <- read.gdsn(index.gdsn(f, "sample.id"))
-add.gdsn(f, "sample.id", paste("S", 1:length(sid)), replace=TRUE)
-closefn.gds(f)
+seqAddValue("test.gds", "sample.id", paste0("S", 1:90), replace=TRUE)
 
 # merging
 seqMerge(c(vcf.fn, "test.gds"), "output.gds", storage.option="ZIP_RA")

@@ -50,7 +50,7 @@ head(seqAlleleFreq(f, NULL, .progress=TRUE))
 summary(seqAlleleFreq(f, 0L, .progress=TRUE))
 
 # return a numeric vector, AA is ancestral allele
-AA <- toupper(seqGetData(f, "annotation/info/AA")$data)
+AA <- seqGetData(f, "annotation/info/AA", .padNA=TRUE)
 head(seqAlleleFreq(f, AA))
 
 # allele counts

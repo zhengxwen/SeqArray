@@ -136,7 +136,7 @@ setMethod("info", "SeqVarGDSClass", function(x, infovar=NULL)
     {
         for (i in seq_len(nrow(des)))
         {
-            v <- seqGetData(x, paste0("annotation/info/", des$ID[i]))
+            v <- seqGetData(x, paste0("annotation/info/", des$ID[i]), .padNA=FALSE)
             ## deal with variable length fields
             if (!is.null(names(v)))
             {
@@ -228,7 +228,7 @@ setMethod("geno", "SeqVarGDSClass", function(x, genovar=NULL)
                 }
                 v <- vm
             } else {
-                v <- seqGetData(x, var.name)
+                v <- seqGetData(x, var.name, .padNA=FALSE)
                 if (!is.null(names(v)))
                 {
                     if (all(v$length == 1L) && !is.na(number) && number == 1L)
@@ -276,7 +276,7 @@ setMethod("colData", "SeqVarGDSClass", function(x)
     if (length(vars) > 0)
     {
         annot <- lapply(vars, function(v) {
-            seqGetData(x, paste0("sample.annotation/", v))
+            seqGetData(x, paste0("sample.annotation/", v), .padNA=FALSE)
         })
         names(annot) <- vars
         DataFrame(Samples=seq_along(sample.id), annot, row.names=sample.id)

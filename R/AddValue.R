@@ -53,6 +53,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
         n <- add.gdsn(gdsfile, "variant.id", val, compress=compress, closezip=TRUE,
             replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
+        if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
 
     } else if (varnm == "position")
     {
@@ -61,6 +62,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
         n <- add.gdsn(gdsfile, "position", as.integer(val), compress=compress,
             closezip=TRUE, replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
+        if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
 
     } else if (varnm == "chromosome")
     {
@@ -71,6 +73,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
         .DigestCode(n, TRUE, FALSE)
         .optim_chrom(gdsfile)  # RLE-coded chromosome
         .Call(SEQ_ResetChrom, gdsfile)
+        if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
 
     } else if (varnm == "allele")
     {
@@ -79,6 +82,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
         n <- add.gdsn(gdsfile, "allele", val, compress=compress, closezip=TRUE,
             replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
+        if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
 
     } else if (varnm == "sample.annotation")
     {

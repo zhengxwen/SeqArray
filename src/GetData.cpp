@@ -295,7 +295,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, int padNA
 
 		string name2 = GDS_PATH_PREFIX(name, '@');
 		CIndex &V = File.VarIndex(name2);
-		if (!V.HasIndex())
+		if (!V.HasIndex() || (padNA==TRUE && V.IsFixedOne()))
 		{
 			// no index
 			C_Int32 dim[4];
@@ -310,6 +310,7 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, int padNA
 			// with index
 			int var_start, var_count;
 			vector<C_BOOL> var_sel;
+			// get var_start, var_count, var_sel
 			SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count, var_sel));
 
 			C_BOOL *ss[2] = { &var_sel[0], NULL };
@@ -320,14 +321,63 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, int padNA
 				GDS_Array_GetDim(N, dimcnt, 2);
 				dimcnt[0] = var_count;
 			}
+			SEXP val = PROTECT(VAR_LOGICAL(N, GDS_R_Array_Read(N, dimst, dimcnt, ss, UseMode)));
 
-			PROTECT(rv_ans = NEW_LIST(2));
-				SET_ELEMENT(rv_ans, 0, I32);
-				SET_ELEMENT(rv_ans, 1,
-					VAR_LOGICAL(N, GDS_R_Array_Read(N, dimst, dimcnt, ss,
-					UseMode)));
-			SET_NAMES(rv_ans, R_Data_Name);
-			UNPROTECT(2);
+			if (padNA==TRUE && V.ValLenMax()==1 && ndim==1)
+			{
+				int *psel = INTEGER(I32);
+				size_t n = Rf_length(I32);
+				rv_ans = PROTECT(Rf_allocVector(TYPEOF(val), n));
+				switch (TYPEOF(val))
+				{
+				case INTSXP:
+					{
+						int *p = INTEGER(rv_ans), *s = INTEGER(val);
+						for (size_t i=0; i < n; i++)
+							p[i] = (psel[i]) ? (*s++) : NA_INTEGER;
+						break;
+					}
+				case REALSXP:
+					{
+						double *p = REAL(rv_ans), *s = REAL(val);
+						for (size_t i=0; i < n; i++)
+							p[i] = (psel[i]) ? (*s++) : R_NaN;
+						break;
+					}
+				case LGLSXP:
+					{
+						int *p = LOGICAL(rv_ans), *s = LOGICAL(val);
+						for (size_t i=0; i < n; i++)
+							p[i] = (psel[i]) ? (*s++) : NA_LOGICAL;
+						break;
+					}
+				case STRSXP:
+					{
+						size_t s = 0;
+						for (size_t i=0; i < n; i++)
+						{
+							SET_STRING_ELT(rv_ans, i,
+								(psel[i]) ? STRING_ELT(val, s++) : NA_STRING);
+						}
+						break;
+					}
+				case RAWSXP:
+					{
+						Rbyte *p = RAW(rv_ans), *s = RAW(val);
+						for (size_t i=0; i < n; i++)
+							p[i] = (psel[i]) ? (*s++) : 0xFF;
+						break;
+					}
+				default:
+					throw ErrSeqArray("Not support data type (.padNA=TRUE).");
+				}
+			} else {
+				PROTECT(rv_ans = NEW_LIST(2));
+					SET_ELEMENT(rv_ans, 0, I32);
+					SET_ELEMENT(rv_ans, 1, val);
+				SET_NAMES(rv_ans, R_Data_Name);
+			}
+			UNPROTECT(3);
 		}
 
 	} else if (strncmp(name, "annotation/format/@", 19) == 0)

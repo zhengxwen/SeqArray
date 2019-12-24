@@ -177,6 +177,10 @@ public:
 	inline bool Empty() const { return (TotalLength <= 0); }
 	/// return true if there is an index stored in GDS
 	inline bool HasIndex() const { return has_index; }
+	/// return true if fixed length is one
+	inline bool IsFixedOne() const { return Values.size()==1 && Values[0]==1; }
+	/// the maximum value in Values
+	inline int ValLenMax() const { return val_max; }
 
 protected:
 	/// total number, = sum(Lengths)
@@ -191,6 +195,8 @@ protected:
 	size_t AccOffset;
 	/// true if there is an index stored in GDS
 	bool has_index;
+	/// the maximum value in Values
+	int val_max;
 };
 
 

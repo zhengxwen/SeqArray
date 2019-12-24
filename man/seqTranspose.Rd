@@ -5,7 +5,7 @@
     Transpose data array or matrix for possibly higher-speed access.
 }
 \usage{
-seqTranspose(gdsfile, var.name, compress=NULL, verbose=TRUE)
+seqTranspose(gdsfile, var.name, compress=NULL, digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -13,6 +13,9 @@ seqTranspose(gdsfile, var.name, compress=NULL, verbose=TRUE)
     \item{compress}{the compression option used in
         \code{\link{add.gdsn}}; or determine automatically
         if \code{NULL}}
+    \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
+        "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
+        if TRUE or a digest algorithm is specified}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
