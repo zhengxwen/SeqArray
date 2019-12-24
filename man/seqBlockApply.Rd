@@ -8,7 +8,7 @@ margins of genotypes and annotations via blocking.
 \usage{
 seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
     as.is=c("none", "list", "unlist"), var.index=c("none", "relative", "absolute"),
-    bsize=1024L, parallel=FALSE, .useraw=FALSE, .progress=FALSE, ...)
+    bsize=1024L, parallel=FALSE, .useraw=FALSE, .padNA=TRUE, .progress=FALSE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -36,6 +36,8 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible; for genotypes, 0xFF is missing value
         if RAW is used}
+    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the number of data
+        points for each variant is not greater than 1}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{...}{optional arguments to \code{FUN}}
 }

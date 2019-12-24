@@ -175,6 +175,8 @@ public:
 		vector<C_BOOL> &out_var_sel);
 	/// return true if empty
 	inline bool Empty() const { return (TotalLength <= 0); }
+	/// return true if there is an index stored in GDS
+	inline bool HasIndex() const { return has_index; }
 
 protected:
 	/// total number, = sum(Lengths)
@@ -187,6 +189,8 @@ protected:
 	size_t AccIndex;
 	/// the offset according the value of Lengths[AccIndex]
 	size_t AccOffset;
+	/// true if there is an index stored in GDS
+	bool has_index;
 };
 
 

@@ -5,7 +5,7 @@
     Gets data from a SeqArray GDS file.
 }
 \usage{
-seqGetData(gdsfile, var.name, .useraw=FALSE, .envir=NULL)
+seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .envir=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -14,7 +14,9 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .envir=NULL)
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         for small numbers instead of INTEGER if possible; 0xFF is missing value
         if RAW is used}
-    \item{.envir}{NULL, an environment object, or a list/data.frame}
+    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the number of data
+        points for each variant is not greater than 1}
+    \item{.envir}{\code{NULL}, an environment object, a list or a \code{data.frame}}
 }
 \value{
     Return vectors, matrices or lists (with \code{length} and \code{data} components).

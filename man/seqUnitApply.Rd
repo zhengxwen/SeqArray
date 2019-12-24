@@ -6,7 +6,8 @@
 }
 \usage{
 seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
-    parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE, .envir=NULL)
+    parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE, .padNA=TRUE,
+    .envir=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -28,6 +29,8 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible; for genotypes, 0xFF is missing value
         if RAW is used}
+    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the number of data
+        points for each variant is not greater than 1}
     \item{.envir}{NULL, an environment object, or a list/data.frame}
     \item{...}{optional arguments to \code{FUN}}
 }

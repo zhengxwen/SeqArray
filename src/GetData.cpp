@@ -48,7 +48,7 @@ static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
 
 
 // get data
-static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, SEXP Env)
+static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, int padNA, SEXP Env)
 {
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
@@ -294,8 +294,8 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, SEXP Env)
 			throw ErrSeqArray(ERR_DIM, name);
 
 		string name2 = GDS_PATH_PREFIX(name, '@');
-		PdAbstractArray N_idx = File.GetObj(name2.c_str(), FALSE);
-		if (N_idx == NULL)
+		CIndex &V = File.VarIndex(name2);
+		if (!V.HasIndex())
 		{
 			// no index
 			C_Int32 dim[4];
@@ -308,7 +308,6 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, SEXP Env)
 
 		} else {
 			// with index
-			CIndex &V = File.VarIndex(name2);
 			int var_start, var_count;
 			vector<C_BOOL> var_sel;
 			SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count, var_sel));
@@ -650,16 +649,24 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, SEXP Env)
 
 
 /// Get data from a working space
-COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw, SEXP Env)
+COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
+	SEXP PadNA, SEXP Env)
 {
+	// var.name
 	if (!Rf_isString(var_name))
 		error("'var.name' should be character.");
 	const int nlen = RLength(var_name);
 	if (nlen <= 0)
 		error("'length(var.name)' should be > 0.");
+	// .useraw
 	if (TYPEOF(UseRaw) != LGLSXP)
 		error("'.useraw' must be logical.");
 	int use_raw = Rf_asLogical(UseRaw);
+	// .padNA
+	int padNA = Rf_asLogical(PadNA);
+	if (padNA == NA_LOGICAL)
+		error("'.padNA' must be TRUE or FALSE.");
+	// .envir
 	if (!Rf_isNull(Env))
 	{
 		if (!Rf_isEnvironment(Env) && !Rf_isVectorList(Env))
@@ -672,13 +679,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw, 
 		// Get data
 		if (nlen == 1)
 		{
-			rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw, Env);
+			rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw, padNA, Env);
 		} else {
 			rv_ans = PROTECT(NEW_LIST(nlen));
 			for (int i=0; i < nlen; i++)
 			{
 				SET_VECTOR_ELT(rv_ans, i,
-					VarGetData(File, CHAR(STRING_ELT(var_name, i)), use_raw, Env));
+					VarGetData(File, CHAR(STRING_ELT(var_name, i)), use_raw, padNA, Env));
 			}
 			setAttrib(rv_ans, R_NamesSymbol, getAttrib(var_name, R_NamesSymbol));
 			UNPROTECT(1);
@@ -695,15 +702,20 @@ COREARRAY_DLL_LOCAL extern const char *Txt_Apply_VarIdx[];
 COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho)
 {
+	// bsize
 	int bsize = Rf_asInteger(RGetListElement(param, "bsize"));
 	if (bsize < 1)
 		error("'bsize' must be >= 1.");
-
+	// .useraw
 	SEXP pam_use_raw = RGetListElement(param, "useraw");
 	if (!Rf_isLogical(pam_use_raw))
 		error("'.useraw' must be TRUE, FALSE or NA.");
 	int use_raw_flag = Rf_asLogical(pam_use_raw);
-
+	// .padNA
+	int padNA = Rf_asLogical(RGetListElement(param, "padNA"));
+	if (padNA == NA_LOGICAL)
+		error("'.padNA' must be TRUE or FALSE.");
+	// .progress
 	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
 	if (prog_flag == NA_LOGICAL)
 		error("'.progress' must be TRUE or FALSE.");
@@ -847,14 +859,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 				{
 					SET_ELEMENT(R_call_param, i,
 						VarGetData(File, CHAR(STRING_ELT(var_name, i)),
-						use_raw_flag, rho));
+						use_raw_flag, padNA, rho));
 				}
 				// call R function
 				call_val = eval(R_fcall, rho);
 
 			} else {
 				R_call_param = VarGetData(File, CHAR(STRING_ELT(var_name, 0)),
-					use_raw_flag, rho);
+					use_raw_flag, padNA, rho);
 				// make a call function
 				if (VarIdx > 0)
 				{
