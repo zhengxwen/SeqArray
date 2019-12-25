@@ -6,7 +6,7 @@
 }
 \usage{
 seqAddValue(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
-    packed=FALSE, verbose=TRUE)
+    packed=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{character for file name, or a \code{\link{SeqVarGDSClass}} object}
@@ -18,7 +18,7 @@ seqAddValue(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
     \item{replace}{if \code{TRUE}, replace the existing variable silently if possible}
     \item{compress}{the compression method can be "" (no compression), see
         \code{\link{add.gdsn}}}
-    \item{packed}{FALSE}
+    \item{packed}{\code{TRUE}, pack data if there is any missing value}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
@@ -47,6 +47,13 @@ v <- seqGetData(f, "chromosome")
 seqAddValue(f, "chromosome", paste0("chr", v), replace=TRUE)
 show(index.gdsn(f, "chromosome"))
 table(seqGetData(f, "chromosome"))
+
+# annotation info
+seqAddValue(f, "annotation/info/folder", NULL)  # add a new folder
+seqAddValue(f, "annotation/info/folder/val", 1:1348)
+seqAddValue(f, "annotation/info/folder/packed", c(rep(2L, 1000), rep(NA, 348)))
+seqAddValue(f, "annotation/info/newff",
+    data.frame(x=1:1348, y=rep("s", 1348), stringsAsFactors=FALSE))
 
 # sample annotation
 seqAddValue(f, "sample.annotation", data.frame(ii=1:90, y=rep("A", 90)), replace=TRUE)

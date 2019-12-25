@@ -10,13 +10,13 @@
 # Add or modify values in a GDS file
 #
 seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
-    packed=FALSE, verbose=TRUE)
+    packed=TRUE, verbose=TRUE)
 {
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(varnm), length(varnm)==1L)
     stopifnot(is.character(desp), length(desp)==1L, !is.na(desp))
     stopifnot(is.logical(replace), length(replace)==1L)
-    stopifnot(is.character(compress))
+    stopifnot(is.character(compress), length(compress)==1L)
     stopifnot(is.logical(packed), length(packed)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
@@ -103,6 +103,62 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
         varnm <- substring(varnm, 19L)
         n <- add.gdsn(n, varnm, val, compress=compress, closezip=TRUE, replace=replace)
         .DigestCode(n, TRUE, FALSE)
+        if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
+
+    } else if (substr(varnm, 1L, 16L) == "annotation/info/")
+    {
+        if (nchar(varnm) <= 16L) stop("Invalid 'varnm'.")
+        n <- index.gdsn(gdsfile, varnm, silent=TRUE)
+        if (!is.null(n)) stopifnot(replace)
+        node <- index.gdsn(gdsfile, dirname(varnm))
+        nm <- basename(varnm)
+        if (is.data.frame(val))
+        {
+            stopifnot(nrow(val) == nvar)
+            n <- addfolder.gdsn(node, nm, replace=TRUE)
+            if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
+            for (i in seq_len(ncol(val)))
+            {
+                seqAddValue(gdsfile, paste0(varnm, "/", names(val)[i]), val[[i]],
+                    replace=replace, compress=compress, packed=packed, verbose=verbose)
+            }
+            
+        } else if (is.null(val))
+        {
+            n <- addfolder.gdsn(node, nm, replace=TRUE)
+            if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
+        } else if ((is.vector(val) || is.matrix(val)) && !is.list(val))
+        {
+            if (is.vector(val) || is.factor(val))
+                stopifnot(length(val) == nvar)
+            else if (is.matrix(val))
+                stopifnot(ncol(val) == nvar)
+            if (packed && is.vector(val) && any(is.na(val)))
+            {
+                x <- !is.na(val)
+                n <- add.gdsn(node, nm, val[x], compress=compress, closezip=TRUE,
+                    replace=TRUE)
+                nidx <- add.gdsn(node, paste0("@", nm), x, storage="bit1",
+                    compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
+                num <- "."
+            } else {
+                n <- add.gdsn(node, nm, val, compress=compress, closezip=TRUE,
+                    replace=TRUE)
+                nidx <- NULL
+                num <- as.character(ifelse(is.vector(val), 1L, nrow(val)))
+            }
+            put.attr.gdsn(n, "Number", num)
+            put.attr.gdsn(n, "Type", .vcf_type(n))
+            put.attr.gdsn(n, "Description", desp)
+            .DigestCode(n, TRUE, FALSE)
+            if (!is.null(nidx)) .DigestCode(nidx, TRUE, FALSE)
+            if (verbose) print(n, attribute=TRUE, attribute.trim=TRUE)
+        } else if (is.factor(val))
+        {
+            stop("factor is not allowed, convert it to character.")
+        } else {
+            stop("Invalid type of 'val': ", typeof(val))
+        }
 
     } else {
         stop("Invalid `varnm`.")

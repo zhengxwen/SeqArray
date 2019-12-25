@@ -198,17 +198,11 @@
     a <- get.attr.gdsn(node)
     if (is.null(a$Type))
     {
-        i <- objdesp.gdsn(node)$type
-        if (i %in% c("Raw", "Integer", "Logical"))
-            v <- "Integer"
-        else if (i %in% "Real")
-            v <- "Float"
-        else if (i %in% c("Factor", "String"))
-            v <- "String"
-        else
-            v <- "."
+        v <- switch(as.character(objdesp.gdsn(node)$type[1L]),
+            Raw="Integer", Integer="Integer", Real="Float", Factor="String",
+            String="String", Logical="Flag", ".")
     } else
-        v <- a$Type
+        v <- as.character(a$Type[1L])
     v
 }
 
