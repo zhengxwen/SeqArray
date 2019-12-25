@@ -246,14 +246,15 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_SetAllele(SEXP RefAllele)
 /// Get allele frequency
 COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 {
-	SEXP Geno = VECTOR_ELT(List, 0);
-	int A = GetIndexOfAllele(
-		CHAR(STRING_ELT(AlleleFreq_Allele, AlleleFreq_Index++)),
-		CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
+	SEXP Ref = STRING_ELT(AlleleFreq_Allele, AlleleFreq_Index++);
+	int A = -1;
+	if (Ref != NA_STRING)
+		A = GetIndexOfAllele(CHAR(Ref), CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
 
 	size_t n = 0, m = 0;
 	if (A >= 0)
 	{
+		SEXP Geno = VECTOR_ELT(List, 0);
 		const size_t N = XLENGTH(Geno);
 		if (TYPEOF(Geno) == RAWSXP)
 		{

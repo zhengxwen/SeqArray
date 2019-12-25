@@ -80,9 +80,8 @@ test_allele_freq <- function()
 
 	for (p in 1L:num.cores)
 	{
-		# d <- seqAlleleFreq(f, toupper(seqGetData(f, "annotation/info/AA")$data),
-		#	parallel=p)
-		# checkEquals(Valid$fcAlleleFreq$d4, d, paste0("seqAlleleFreq 4:", p))
+		d <- seqAlleleFreq(f, seqGetData(f, "annotation/info/AA"), parallel=p)
+		checkEquals(Valid$fcAlleleFreq$d4, d, paste0("seqAlleleFreq 4:", p))
 	}
 
 	invisible()
@@ -226,7 +225,7 @@ test_random_info <- function()
 		if (is.list(dat)) dat <- dat$data
 		dimnames(dat) <- NULL
 
-		for (i in 1:10)
+		for (i in 1:5)
 		{
 			idx <- sample.int(num, num)
 			rv <- vector("list", length(idx))
