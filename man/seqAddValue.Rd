@@ -6,7 +6,7 @@
 }
 \usage{
 seqAddValue(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
-    packed=TRUE, verbose=TRUE)
+    packed=TRUE, verbose=TRUE, verbose.attr=TRUE)
 }
 \arguments{
     \item{gdsfile}{character for file name, or a \code{\link{SeqVarGDSClass}} object}
@@ -20,6 +20,7 @@ seqAddValue(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
         \code{\link{add.gdsn}}}
     \item{packed}{\code{TRUE}, pack data if there is any missing value}
     \item{verbose}{if \code{TRUE}, show information}
+    \item{verbose.attr}{if \code{TRUE}, show attribute information in a GDS node}
 }
 \value{
     Return none.
