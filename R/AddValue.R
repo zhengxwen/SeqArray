@@ -9,12 +9,12 @@
 #######################################################################
 # Add or modify values in a GDS file
 #
-seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="LZMA_RA",
-    packed=TRUE, verbose=TRUE, verbose.attr=TRUE)
+seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
+    compress="LZMA_RA", packed=TRUE, verbose=TRUE, verbose.attr=TRUE)
 {
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(varnm), length(varnm)==1L)
-    stopifnot(is.character(desp), length(desp)==1L, !is.na(desp))
+    stopifnot(is.character(desp))
     stopifnot(is.logical(replace), length(replace)==1L)
     stopifnot(is.character(compress), length(compress)==1L)
     stopifnot(is.logical(packed), length(packed)==1L)
@@ -38,8 +38,8 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
     {
         stopifnot(replace)
         stopifnot(is.vector(val), is.character(val) | is.numeric(val), length(val)==nsamp)
-        if (anyDuplicated(val))
-            stop("'val' should be unique.")
+        if (anyDuplicated(val)) stop("'val' should be unique.")
+        if (length(desp)) warning("'desp' is not used.")
         n <- add.gdsn(gdsfile, "sample.id", val, compress=compress, closezip=TRUE,
             replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
@@ -49,8 +49,8 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
     {
         stopifnot(replace)
         stopifnot(is.vector(val), is.character(val) | is.numeric(val), length(val)==nvar)
-        if (anyDuplicated(val))
-            stop("'val' should be unique.")
+        if (anyDuplicated(val)) stop("'val' should be unique.")
+        if (length(desp)) warning("'desp' is not used.")
         n <- add.gdsn(gdsfile, "variant.id", val, compress=compress, closezip=TRUE,
             replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
@@ -60,6 +60,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
     {
         stopifnot(replace)
         stopifnot(is.vector(val), is.numeric(val), length(val)==nvar)
+        if (length(desp)) warning("'desp' is not used.")
         n <- add.gdsn(gdsfile, "position", as.integer(val), compress=compress,
             closezip=TRUE, replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
@@ -69,6 +70,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
     {
         stopifnot(replace)
         stopifnot(is.vector(val), is.character(val) | is.numeric(val), length(val)==nvar)
+        if (length(desp)) warning("'desp' is not used.")
         n <- add.gdsn(gdsfile, "chromosome", val, compress=compress, closezip=TRUE,
             replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
@@ -80,6 +82,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
     {
         stopifnot(replace)
         stopifnot(is.vector(val), is.character(val), length(val)==nvar)
+        if (length(desp)) warning("'desp' is not used.")
         n <- add.gdsn(gdsfile, "allele", val, compress=compress, closezip=TRUE,
             replace=TRUE)
         .DigestCode(n, TRUE, FALSE)
@@ -116,17 +119,21 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
         if (is.data.frame(val))
         {
             stopifnot(nrow(val) == nvar)
+            if (length(desp)) stopifnot(ncol(val) == length(desp))
             n <- addfolder.gdsn(node, nm, replace=TRUE)
             if (verbose) print(n, attribute=verbose.attr)
             for (i in seq_len(ncol(val)))
             {
                 seqAddValue(gdsfile, paste0(varnm, "/", names(val)[i]), val[[i]],
+                    desp=if (length(desp)) desp[i] else desp,
                     replace=replace, compress=compress, packed=packed,
                     verbose=verbose, verbose.attr=verbose.attr)
             }
         } else if (is.null(val))
         {
             n <- addfolder.gdsn(node, nm, replace=TRUE)
+            if (length(desp))
+                put.attr.gdsn(n, "Description", desp[1L])
             if (verbose) print(n, attribute=verbose.attr)
         } else if ((is.vector(val) || is.factor(val) || is.matrix(val)) && !is.list(val))
         {
@@ -151,7 +158,8 @@ seqAddValue <- function(gdsfile, varnm, val, desp="", replace=FALSE, compress="L
             }
             put.attr.gdsn(n, "Number", num)
             put.attr.gdsn(n, "Type", .vcf_type(n))
-            put.attr.gdsn(n, "Description", desp)
+            if (!length(desp)) desp <- ""
+            put.attr.gdsn(n, "Description", desp[1L])
             .DigestCode(n, TRUE, FALSE)
             if (!is.null(nidx)) .DigestCode(nidx, TRUE, FALSE)
             if (verbose) print(n, attribute=verbose.attr)
