@@ -298,12 +298,15 @@ static SEXP VarGetData(CFileInfo &File, const char *name, int use_raw, int padNA
 		if (!V.HasIndex() || (padNA==TRUE && V.IsFixedOne()))
 		{
 			// no index
+			Sel.GetStructVariant();
 			C_Int32 dim[4];
 			GDS_Array_GetDim(N, dim, 2);
-			C_BOOL *ss[2] = { Sel.pVariant, NULL };
+			C_BOOL *ss[2] = { Sel.pVariant+Sel.varStart, NULL };
 			if (ndim == 2)
 				ss[1] = NeedArrayTRUEs(dim[1]);
-			rv_ans = GDS_R_Array_Read(N, NULL, NULL, ss, UseMode);
+			C_Int32 dimst[2]  = { C_Int32(Sel.varStart), 0 };
+			C_Int32 dimcnt[2] = { C_Int32(Sel.varEnd-Sel.varStart), dim[1] };
+			rv_ans = GDS_R_Array_Read(N, dimst, dimcnt, ss, UseMode);
 			rv_ans = VAR_LOGICAL(N, rv_ans);
 
 		} else {
