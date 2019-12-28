@@ -760,12 +760,18 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 # Convert a PLINK BED file to a SeqArray GDS file
 #
 
-seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
-    compress.geno="LZMA_RA", compress.annotation="LZMA_RA",
-    optimize=TRUE, digest=TRUE, verbose=TRUE)
+seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
+    compress.annotation="LZMA_RA", optimize=TRUE, digest=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(bed.fn), length(bed.fn)==1L)
+    if (missing(fam.fn) && missing(bim.fn))
+    {
+        bed.fn <- gsub("\\.bed$", "", bed.fn, ignore.case=TRUE)
+        fam.fn <- paste0(bed.fn, ".fam")
+        bim.fn <- paste0(bed.fn, ".bim")
+        bed.fn <- paste0(bed.fn, ".bed")
+    }
     stopifnot(is.character(fam.fn), length(fam.fn)==1L)
     stopifnot(is.character(bim.fn), length(bim.fn)==1L)
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
@@ -785,11 +791,14 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 
     bedfile <- .open_bin(bed.fn)
     on.exit({ .close_conn(bedfile) })
-    bed_flag <- .Call(SEQ_ConvBEDFlag, bedfile$con, readBin, new.env())
+    b <- as.integer(readBin(bedfile$con, raw(), 3L))
+    if ((b[1L] != 0x6C) || (b[2L] != 0x1B))
+        stop(sprintf("Invalid magic number (0x%02X,0x%02X).", b[1L], b[2L]))
+    bed_flag <- b[3L] == 0L
     if (verbose)
     {
         cat("    BED file: '", bed.fn, "'", sep="")
-        if (bed_flag == 0)
+        if (bed_flag)
             cat(" in the individual-major mode (SNP X Sample)\n")
         else
             cat(" in the SNP-major mode (Sample X SNP)\n")
@@ -883,15 +892,15 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 
     # add genotypes to genotype/data
     vg <- add.gdsn(n, "data", storage="bit2",
-        valdim=c(2L, ifelse(bed_flag==0L, nrow(bimD), nrow(famD)), 0L),
+        valdim=c(2L, ifelse(bed_flag, nrow(bimD), nrow(famD)), 0L),
         compress=compress.geno)
     # convert
-    .Call(SEQ_ConvBED2GDS, vg, ifelse(bed_flag==0L, nrow(famD), nrow(bimD)),
+    .Call(SEQ_ConvBED2GDS, vg, ifelse(bed_flag, nrow(famD), nrow(bimD)),
         bedfile$con, readBin, new.env())
     readmode.gdsn(vg)
 
     n1 <- add.gdsn(n, "@data", storage="uint8",
-        compress=ifelse(bed_flag==0L, "", compress.annotation),
+        compress=ifelse(bed_flag, "", compress.annotation),
         visible=FALSE)
     .repeat_gds(n1, 1L, nrow(bimD))
     readmode.gdsn(n1)
@@ -910,7 +919,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     on.exit({ closefn.gds(dstfile) })
     .close_conn(bedfile)
 
-    if (bed_flag == 0L)
+    if (bed_flag)
     {
         cat(" (transposed)")
         permdim.gdsn(vg, c(2L,1L))

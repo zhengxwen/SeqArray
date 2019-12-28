@@ -7,6 +7,7 @@
 \alias{seqResetFilter}
 \alias{seqSetFilterChrom}
 \alias{seqSetFilterPos}
+\alias{seqSetFilterAnnotID}
 \title{Set a Filter to Sample or Variant}
 \description{
     Sets a filter to sample and/or variant.
@@ -27,6 +28,7 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
     intersect=FALSE, verbose=TRUE)
 seqSetFilterPos(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
     verbose=TRUE)
+seqSetFilterAnnotID(object, id, verbose=TRUE)
 }
 \arguments{
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
@@ -73,6 +75,7 @@ seqSetFilterPos(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
         defined via the previous call}
     \item{multi.pos}{\code{FALSE}, use the first matched position;
         \code{TRUE}, allow multiple variants at the same position}
+    \item{id}{a character vector for RS IDs (stored in \code{"annotation/id"})}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{

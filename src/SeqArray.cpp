@@ -40,6 +40,10 @@
 extern "C"
 {
 
+static const char *INFO_SEL_NUM_SAMPLE  = "# of selected samples: %s\n";
+static const char *INFO_SEL_NUM_VARIANT = "# of selected variants: %s\n";
+
+
 using namespace SeqArray;
 
 // ===========================================================
@@ -219,9 +223,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_id,
 		} else
 			throw ErrSeqArray("Invalid type of 'sample.id'.");
 
-		int n = File.SampleSelNum();
 		if (Rf_asLogical(verbose) == TRUE)
-			Rprintf("# of selected samples: %s\n", PrettyInt(n));
+			Rprintf(INFO_SEL_NUM_SAMPLE, PrettyInt(File.SampleSelNum()));
 		if (nProtected > 0) UNPROTECT(nProtected);
 
 	COREARRAY_CATCH
@@ -344,9 +347,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 		} else
 			throw ErrSeqArray("Invalid type of 'sample.sel'.");
 
-		int n = File.SampleSelNum();
 		if (Rf_asLogical(verbose) == TRUE)
-			Rprintf("# of selected samples: %s\n", PrettyInt(n));
+			Rprintf(INFO_SEL_NUM_SAMPLE, PrettyInt(File.SampleSelNum()));
 
 	COREARRAY_CATCH
 }
@@ -449,9 +451,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_id,
 		} else
 			throw ErrSeqArray("Invalid type of 'variant.id'.");
 
-		int n = File.VariantSelNum();
 		if (Rf_asLogical(verbose) == TRUE)
-			Rprintf("# of selected variants: %s\n", PrettyInt(n));
+			Rprintf(INFO_SEL_NUM_VARIANT, PrettyInt(File.VariantSelNum()));
 		if (nProtected > 0) UNPROTECT(nProtected);
 
 	COREARRAY_CATCH
@@ -601,9 +602,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 		} else
 			throw ErrSeqArray("Invalid type of 'variant.sel'.");
 
-		int n = File.VariantSelNum();
 		if (Rf_asLogical(verbose) == TRUE)
-			Rprintf("# of selected variants: %s\n", PrettyInt(n));
+			Rprintf(INFO_SEL_NUM_VARIANT, PrettyInt(File.VariantSelNum()));
 
 	COREARRAY_CATCH
 }
@@ -619,7 +619,7 @@ static bool is_numeric(const string &txt)
 }
 
 /// set a working space flag with selected chromosome(s)
-COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
+COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceChrom(SEXP gdsfile, SEXP include,
 	SEXP is_num, SEXP frombp, SEXP tobp, SEXP intersect, SEXP verbose)
 {
 	int nProtected = 0;
@@ -788,11 +788,65 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetChrom(SEXP gdsfile, SEXP include,
 				(*p++) &= (*s++);
 		}
 		if (Rf_asLogical(verbose) == TRUE)
-		{
-			Rprintf("# of selected variants: %s\n", PrettyInt(
-				File.VariantSelNum()));
-		}
+			Rprintf(INFO_SEL_NUM_VARIANT, PrettyInt(File.VariantSelNum()));
+
 		UNPROTECT(nProtected);
+
+	COREARRAY_CATCH
+}
+
+
+// ================================================================
+
+/// set a working space flag with selected annotation id
+COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbose)
+{
+	static const char *ERR_DIM = "Invalid dimension of '%s'.";
+	static const char *VarName = "annotation/id";
+
+	int verbose = Rf_asLogical(Verbose);
+	if (verbose == NA_LOGICAL)
+		error("'verbose' must be TRUE or FALSE.");
+
+	COREARRAY_TRY
+
+		CFileInfo &File = GetFileInfo(gdsfile);
+
+		// check
+		PdAbstractArray N = File.GetObj(VarName, TRUE);
+		int ndim = GDS_Array_DimCnt(N);
+		if (ndim != 1)
+			throw ErrSeqArray(ERR_DIM, VarName);
+		C_Int32 len;
+		GDS_Array_GetDim(N, &len, 1);
+		if (len != File.VariantNum())
+			throw ErrSeqArray(ERR_DIM, VarName);
+
+		TSelection &Sel = File.Selection();
+		set<string> id_set;
+		const size_t n = XLENGTH(ID);
+		for (size_t i=0; i < n; i++)
+		{
+			SEXP s = STRING_ELT(ID, i);
+			if ((s != NA_STRING) && (CHAR(s) != 0))
+				id_set.insert(CHAR(s));
+		}
+
+		const int SIZE = 65536;
+		C_BOOL *p = Sel.pVariant;
+		vector<string> buffer(SIZE);
+		for (C_Int32 st=0; len > 0; )
+		{
+			C_Int32 m = (len <= SIZE) ? len : SIZE;
+			GDS_Array_ReadData(N, &st, &m, &buffer[0], svStrUTF8);
+			for (C_Int32 i=0; i < m; i++)
+				*p++ = (id_set.find(buffer[i]) != id_set.end());
+			st += m; len -= m;
+		}
+
+		Sel.varTrueNum = -1;
+		if (verbose)
+			Rprintf(INFO_SEL_NUM_VARIANT, PrettyInt(File.VariantSelNum()));
 
 	COREARRAY_CATCH
 }
@@ -1362,7 +1416,6 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern void Register_SNPRelate_Functions();
 
 	extern SEXP SEQ_GetData(SEXP, SEXP, SEXP, SEXP);
-	extern SEXP SEQ_ConvBEDFlag(SEXP, SEXP, SEXP);
 	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_MergeAllele(SEXP, SEXP, SEXP, SEXP);
@@ -1393,7 +1446,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 4),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 4),
-		CALL(SEQ_SetChrom, 7),
+		CALL(SEQ_SetSpaceChrom, 7),         CALL(SEQ_SetSpaceAnnotID, 3),
 
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 9),
 		CALL(SEQ_GetSpace, 2),
@@ -1404,7 +1457,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
 		CALL(SEQ_BApply_Variant, 7),        CALL(SEQ_Unit_SlidingWindows, 7),
 
-		CALL(SEQ_ConvBEDFlag, 3),           CALL(SEQ_ConvBED2GDS, 5),
+		CALL(SEQ_ConvBED2GDS, 5),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
 		CALL(SEQ_IntAssign, 2),

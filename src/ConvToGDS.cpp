@@ -32,26 +32,6 @@ extern "C"
 // PLINK BED --> SeqArray GDS
 // ======================================================================
 
-/// to detect PLINK BED
-COREARRAY_DLL_EXPORT SEXP SEQ_ConvBEDFlag(SEXP File, SEXP ReadBinFun, SEXP Rho)
-{
-	// 'readBin(File, raw(), 3)'
-	SEXP R_Read_Call = PROTECT(
-		LCONS(ReadBinFun, LCONS(File,
-		LCONS(NEW_RAW(0), LCONS(ScalarInteger(3), R_NilValue)))));
-
-	// call ...
-	SEXP val = PROTECT(eval(R_Read_Call, Rho));
-	unsigned char *prefix = RAW(val);
-
-	if ((prefix[0] != 0x6C) || (prefix[1] != 0x1B))
-		error("Invalid prefix in the bed file.");
-
-	UNPROTECT(2);
-	return ScalarInteger((C_UInt8)prefix[2]);
-}
-
-
 /// to convert from PLINK BED to GDS
 COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 	SEXP ReadBinFun, SEXP Rho)
@@ -63,7 +43,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 		int DLen[3];
 		GDS_Array_GetDim(Mat, DLen, 3);
 
-		int nGeno = DLen[1]*2;
+		int nGeno = DLen[1] * 2;
 		int nRe = DLen[1] % 4;
 		int nRe4 = DLen[1] / 4;
 		int nPack = (nRe > 0) ? (nRe4 + 1) : nRe4;

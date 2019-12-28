@@ -253,7 +253,7 @@ seqSetFilterChrom <- function(object, include=NULL, is.num=NA,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # call C function
-    .Call(SEQ_SetChrom, object, include, is.num, from.bp, to.bp, intersect,
+    .Call(SEQ_SetSpaceChrom, object, include, is.num, from.bp, to.bp, intersect,
         verbose)
 
     invisible()
@@ -303,8 +303,8 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.numeric(maf), length(maf) %in% 1L:2L)
-    stopifnot(is.numeric(mac), length(mac) %in% 1L:2L)
+    stopifnot(is.numeric(maf), length(maf) %in% 1:2)
+    stopifnot(is.numeric(mac), length(mac) %in% 1:2)
     stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
@@ -352,15 +352,19 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
 
 
 #######################################################################
-# To set a working space with selected variants
+# Set a filter with RS ID (stored in annotation/id)
 #
-# seqSetFilterVariant <- function(gdsfile, autosome.only=TRUE,
-#     remove.monosnp=TRUE, maf=NaN, missing.rate=NaN, verbose=TRUE)
-# {
-#    # check
-#    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-#    stopifnot(is.logical(verbose))
-# }
+seqSetFilterAnnotID <- function(object, id, verbose=TRUE)
+{
+    # check
+    stopifnot(inherits(object, "SeqVarGDSClass"))
+    stopifnot(is.character(id))
+
+    # call C function
+    .Call(SEQ_SetSpaceAnnotID, object, id, verbose)
+
+    invisible()
+}
 
 
 
