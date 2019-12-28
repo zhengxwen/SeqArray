@@ -34,8 +34,10 @@ extern "C"
 
 /// to convert from PLINK BED to GDS
 COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
-	SEXP ReadBinFun, SEXP Rho)
+	SEXP ReadBinFun, SEXP Rho, SEXP Verbose)
 {
+	int verbose = Rf_asLogical(Verbose);
+
 	COREARRAY_TRY
 
 		PdAbstractArray Mat = GDS_R_SEXP2Obj(GenoNode, FALSE);
@@ -54,14 +56,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 			LCONS(NEW_RAW(0), LCONS(ScalarInteger(nPack), R_NilValue)))));
 
 		vector<C_UInt8> dstgeno(nGeno);
-		static const C_UInt8 cvt1[4] = { 0, 3, 1, 1 };
-		static const C_UInt8 cvt2[4] = { 0, 3, 0, 1 };
+		static const C_UInt8 cvt1[4] = { 1, 3, 1, 0 };
+		static const C_UInt8 cvt2[4] = { 1, 3, 0, 0 };
+
+		// progress object
+		CProgressStdOut progress(n, 1, verbose==TRUE);
 
 		for (int i=0; i < n; i++)
 		{
 			// read genotypes
 			SEXP val = eval(R_Read_Call, Rho);
-			unsigned char *srcgeno = RAW(val);
+			unsigned char *srcgeno = (unsigned char *)RAW(val);
 
 			// unpacked
 			C_UInt8 *p = &dstgeno[0];
@@ -89,6 +94,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 
 			// append
 			GDS_Array_AppendData(Mat, nGeno, &dstgeno[0], svUInt8);
+			progress.Forward();
 		}
 
 		UNPROTECT(1);

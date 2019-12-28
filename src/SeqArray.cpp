@@ -832,7 +832,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbos
 				id_set.insert(CHAR(s));
 		}
 
-		const int SIZE = 65536;
+		const int SIZE = 4096;
 		C_BOOL *p = Sel.pVariant;
 		vector<string> buffer(SIZE);
 		for (C_Int32 st=0; len > 0; )
@@ -1416,7 +1416,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern void Register_SNPRelate_Functions();
 
 	extern SEXP SEQ_GetData(SEXP, SEXP, SEXP, SEXP);
-	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_MergeAllele(SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergeGeno(SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -1457,7 +1457,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
 		CALL(SEQ_BApply_Variant, 7),        CALL(SEQ_Unit_SlidingWindows, 7),
 
-		CALL(SEQ_ConvBED2GDS, 5),
+		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
 		CALL(SEQ_IntAssign, 2),

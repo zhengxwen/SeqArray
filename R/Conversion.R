@@ -797,11 +797,11 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     bed_flag <- b[3L] == 0L
     if (verbose)
     {
-        cat("    BED file: '", bed.fn, "'", sep="")
-        if (bed_flag)
-            cat(" in the individual-major mode (SNP X Sample)\n")
-        else
-            cat(" in the SNP-major mode (Sample X SNP)\n")
+        cat("    bed file: '", bed.fn, "'", sep="")
+        s <- ifelse(bed_flag, " (sample-major mode: [SNP, sample])",
+            " (SNP-major mode: [sample, SNP])")
+        if (.crayon()) s <- crayon::blurred(s)
+        cat(s, "\n", sep="")
     }
 
     ##  read fam.fn  ##
@@ -822,7 +822,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(famD)
-        cat("    FAM file: '", fam.fn, "' (", .pretty(n), " sample",
+        cat("    fam file: '", fam.fn, "' (", .pretty(n), " sample",
             .plural(n), ")\n", sep="")
     }
 
@@ -835,7 +835,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(bimD)
-        cat("    BIM file: '", bim.fn, "' (", .pretty(n), " variant",
+        cat("    bim file: '", bim.fn, "' (", .pretty(n), " variant",
             .plural(n), ")\n", sep="")
     }
 
@@ -880,12 +880,13 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     # add allele
     if (verbose) cat("    allele")
-    n <- add.gdsn(dstfile, "allele", paste(bimD$allele1, bimD$allele2, sep=","),
+    n <- add.gdsn(dstfile, "allele", paste(bimD$allele2, bimD$allele1, sep=","),
         storage="string", compress=compress.annotation, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
     # add a folder for genotypes
-    if (verbose) cat("    genotype")
+    if (verbose)
+        cat("    genotype", ifelse(verbose, ":\n", ""), sep="")
     n <- addfolder.gdsn(dstfile, "genotype")
     put.attr.gdsn(n, "VariableName", "GT")
     put.attr.gdsn(n, "Description", "Genotype")
@@ -896,7 +897,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         compress=compress.geno)
     # convert
     .Call(SEQ_ConvBED2GDS, vg, ifelse(bed_flag, nrow(famD), nrow(bimD)),
-        bedfile$con, readBin, new.env())
+        bedfile$con, readBin, new.env(), verbose)
     readmode.gdsn(vg)
 
     n1 <- add.gdsn(n, "@data", storage="uint8",
@@ -924,6 +925,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         cat(" (transposed)")
         permdim.gdsn(vg, c(2L,1L))
     }
+    if (verbose) cat("  ")
     .DigestCode(vg, digest, verbose)
 
     # add a folder for phase information

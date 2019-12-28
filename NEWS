@@ -5,6 +5,13 @@ NEW FEATURES
 
     o new function `seqSetFilterAnnotID()`
 
+UTILITIES
+
+    o `seqBED2GDS()` allows a single file name without the extended file names
+      (.bed, .fam, .bim)
+
+    o allele flip in `seqBED2GDS()` to allow major allele to be reference
+
 
 CHANGES IN VERSION 1.27.3
 -------------------------
