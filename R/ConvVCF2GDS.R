@@ -12,9 +12,24 @@
 # Format Conversion: VCF -> GDS
 #######################################################################
 
+# get split from the total count
 .file_split <- function(count, pnum, start=1, avoid_odd=TRUE)
 {
     .Call(SEQ_VCF_Split, start, count, pnum, avoid_odd)
+}
+
+# need unique temporary file names
+.get_temp_fn <- function(pnum, fn, tmpdir)
+{
+    ptmpfn <- character()
+    while (length(ptmpfn) < pnum)
+    {
+        s <- tempfile(pattern=sprintf("%s_tmp%02d_", fn, length(ptmpfn)+1L),
+            tmpdir=tmpdir)
+        file.create(s)
+        if (!(s %in% ptmpfn)) ptmpfn <- c(ptmpfn, s)
+    }
+    ptmpfn
 }
 
 

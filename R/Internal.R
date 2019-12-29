@@ -221,6 +221,7 @@
 {
     stopifnot(is.character(filename))
     con2 <- NULL
+    fmt <- ""
 
     if ((substr(filename, 1L, 6L) == "ftp://") |
         (substr(filename, 1L, 7L) == "http://"))
@@ -228,21 +229,24 @@
         if (.last_str(filename, 3L) == ".gz")
         {
             con <- gzcon(url(filename, "rb"))
+            fmt <- "gz"
         } else
             con <- url(filename, "rb")
     } else {
         if (.last_str(filename, 3L) == ".gz")
         {
             con <- gzfile(filename, "rb")
+            fmt <- "gz"
         } else if (.last_str(filename, 3L) == ".xz")
         {
             con <- xzfile(filename, "rb")
+            fmt <- "xz"
         } else 
             con <- file(filename, "rb")
     }
 
     # open(con)
-    list(filename=filename, con=con, con2=con2)
+    list(filename=filename, con=con, con2=con2, fmt=fmt)
 }
 
 .open_text <- function(filename, require.txtmode=FALSE)

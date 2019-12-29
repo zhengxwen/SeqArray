@@ -5,6 +5,8 @@ NEW FEATURES
 
     o new function `seqSetFilterAnnotID()`
 
+    o multicore function in `seqBED2GDS()`
+
 UTILITIES
 
     o `seqBED2GDS()` allows a single file name without the extended file names

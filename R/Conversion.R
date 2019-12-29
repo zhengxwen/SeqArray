@@ -761,7 +761,8 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 #
 
 seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
-    compress.annotation="LZMA_RA", optimize=TRUE, digest=TRUE, verbose=TRUE)
+    compress.annotation="LZMA_RA", optimize=TRUE, digest=TRUE, parallel=FALSE,
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(bed.fn), length(bed.fn)==1L)
@@ -780,6 +781,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    pnum <- .NumParallel(parallel)
 
     if (verbose)
     {
@@ -891,17 +893,87 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     put.attr.gdsn(n, "VariableName", "GT")
     put.attr.gdsn(n, "Description", "Genotype")
 
-    # add genotypes to genotype/data
-    vg <- add.gdsn(n, "data", storage="bit2",
-        valdim=c(2L, ifelse(bed_flag, nrow(bimD), nrow(famD)), 0L),
-        compress=compress.geno)
-    # convert
-    .Call(SEQ_ConvBED2GDS, vg, ifelse(bed_flag, nrow(famD), nrow(bimD)),
-        bedfile$con, readBin, new.env(), verbose)
-    readmode.gdsn(vg)
+    # sync file
+    sync.gds(dstfile)
 
-    n1 <- add.gdsn(n, "@data", storage="uint8",
-        compress=ifelse(bed_flag, "", compress.annotation),
+    # add genotypes to genotype/data
+    num4 <- ifelse(bed_flag, nrow(bimD), nrow(famD))
+    cnt4 <- ifelse(bed_flag, nrow(famD), nrow(bimD))
+    vg <- add.gdsn(n, "data", storage="bit2", valdim=c(2L, num4, 0L),
+        compress=ifelse(bed_flag, "", compress.geno))
+
+    if (pnum <= 1L)
+    {
+        # convert
+        .Call(SEQ_ConvBED2GDS, vg, cnt4, bedfile$con, readBin, new.env(), verbose)
+        readmode.gdsn(vg)
+
+    } else {
+        # close bed file
+        on.exit()
+        .close_conn(bedfile)
+        bedfile <- NULL
+        # split to multiple files
+        psplit <- .file_split(cnt4, pnum)
+        # need unique temporary file names
+        ptmpfn <- .get_temp_fn(pnum, basename(sub("^([^.]*).*", "\\1", out.gdsfn)),
+            dirname(out.gdsfn))
+        if (verbose)
+        {
+            cat(sprintf("    Writing to %d files:\n", pnum))
+            cat(sprintf("        %s [%s..%s]\n", basename(ptmpfn),
+                .pretty(psplit[[1L]]),
+                .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
+            flush.console()
+        }
+
+        # conversion in parallel
+        seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
+        {
+            library("SeqArray")
+            # the process id, starting from one
+            i <- process_index
+            # open the bed file
+            bedfile <- .open_bin(bed.fn)
+            on.exit({ .close_conn(bedfile) })
+            # create gds file
+            f <- createfn.gds(tmp.fn[i])
+            on.exit({ closefn.gds(f) }, add=TRUE)
+            # new a gds node
+            vg <- add.gdsn(f, "data", storage="bit2", valdim=c(2L, num4, 0L), compress=cp)
+            # re-position the file
+            if (isSeekable(bedfile$con))
+            {
+                if (psplit[[2L]][i] > 0L)
+                {
+                    n4 <- (num4 %/% 4L) + (num4 %% 4L > 0L)
+                    seek(bedfile$con, 3L + n4*(psplit[[1L]][i]-1L))
+                }
+            } else
+                stop("the connection is not seekable!")
+            # convert
+            .Call(SEQ_ConvBED2GDS, vg, psplit[[2L]][i], bedfile$con, readBin, new.env(),
+                FALSE)
+            readmode.gdsn(vg)
+            invisible()
+        }, split="none", bed.fn=bed.fn, tmp.fn=ptmpfn, num4=num4, psplit=psplit,
+            cp=ifelse(bed_flag, "", compress.geno))
+
+        if (verbose) cat("        merging files ...")
+        for (i in seq_along(ptmpfn))
+        {
+            if (psplit[[2L]][i] > 0L)
+            {
+                f <- openfn.gds(ptmpfn[i])
+                append.gdsn(vg, index.gdsn(f, "data"))
+                closefn.gds(f)
+            }
+            unlink(ptmpfn[i], force=TRUE)
+        }
+        if (verbose) cat(" [Done]\n    ")
+    }
+
+    n1 <- add.gdsn(n, "@data", storage="uint8", compress=compress.annotation,
         visible=FALSE)
     .repeat_gds(n1, 1L, nrow(bimD))
     readmode.gdsn(n1)
@@ -918,7 +990,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     # close the BED file
     on.exit({ closefn.gds(dstfile) })
-    .close_conn(bedfile)
+    if (!is.null(bedfile)) .close_conn(bedfile)
 
     if (bed_flag)
     {
@@ -1002,18 +1074,11 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         closezip=TRUE)
     .DigestCode(n1, digest, FALSE)
 
-    # sync file
-    sync.gds(dstfile)
-
-
     ##################################################
     # optimize access efficiency
 
     if (verbose)
-    {
-        cat("Done.\n")
-        cat(date(), "\n", sep="")
-    }
+        cat("Done.\n", date(), "\n", sep="")
     on.exit()
     closefn.gds(dstfile)
     if (optimize)

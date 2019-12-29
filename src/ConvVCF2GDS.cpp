@@ -2,7 +2,7 @@
 //
 // ConvVCF2GDS.cpp: format conversion from VCF to GDS
 //
-// Copyright (C) 2013-2018    Xiuwen Zheng
+// Copyright (C) 2013-2019    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1100,7 +1100,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
 		if ((st1 + m) > (cnt + 1))
 			m = round(cnt + 1 - st1);
 
-		REAL(count_array)[i] = m;
+		REAL(count_array)[i] = (m >= 0) ? m : 0;
 	}
 
 	UNPROTECT(3);

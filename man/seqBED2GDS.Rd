@@ -5,9 +5,9 @@
     Converts a PLINK BED file to a SeqArray GDS file.
 }
 \usage{
-seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,
-    compress.geno="LZMA_RA", compress.annotation="LZMA_RA",
-    optimize=TRUE, digest=TRUE, verbose=TRUE)
+seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
+    compress.annotation="LZMA_RA", optimize=TRUE, digest=TRUE, parallel=FALSE,
+    verbose=TRUE)
 }
 \arguments{
     \item{bed.fn}{the file name of binary file, genotype information}
@@ -25,6 +25,11 @@ seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn,
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
         or a digest algorithm is specified}
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
+        processing), a numeric value indicating the number of cores, or a
+        cluster object for parallel processing; \code{parallel} is passed to
+        the argument \code{cl} in \code{\link{seqParallel}}, see
+        \code{\link{seqParallel}} for more details}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
