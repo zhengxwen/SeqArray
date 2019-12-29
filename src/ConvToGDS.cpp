@@ -34,9 +34,9 @@ extern "C"
 
 /// to convert from PLINK BED to GDS
 COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
-	SEXP ReadBinFun, SEXP Rho, SEXP Verbose)
+	SEXP ReadBinFun, SEXP Rho, SEXP ProgConn)
 {
-	int verbose = Rf_asLogical(Verbose);
+	bool newline = Rf_asInteger(ProgConn) > 2;
 
 	COREARRAY_TRY
 
@@ -60,7 +60,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 		static const C_UInt8 cvt2[4] = { 1, 3, 0, 0 };
 
 		// progress object
-		CProgressStdOut progress(n, 1, verbose==TRUE);
+		CProgress progress(0, n, ProgConn, newline);
 
 		for (int i=0; i < n; i++)
 		{

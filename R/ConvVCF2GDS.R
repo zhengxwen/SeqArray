@@ -1090,7 +1090,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (!inherits(vcf.fn, "connection"))
         {
             progfile <- file(paste0(out.fn, ".progress"), "wt")
-            cat(out.fn, "\n", file=progfile, sep="")
+            cat(out.fn, ":\n", file=progfile, sep="")
 
             infile <- NULL
             on.exit({

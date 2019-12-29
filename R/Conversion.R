@@ -905,7 +905,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (pnum <= 1L)
     {
         # convert
-        .Call(SEQ_ConvBED2GDS, vg, cnt4, bedfile$con, readBin, new.env(), verbose)
+        .Call(SEQ_ConvBED2GDS, vg, cnt4, bedfile$con, readBin, new.env(),
+            if (verbose) stdout() else NULL)
         readmode.gdsn(vg)
 
     } else {
@@ -939,6 +940,10 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
             # create gds file
             f <- createfn.gds(tmp.fn[i])
             on.exit({ closefn.gds(f) }, add=TRUE)
+            # progress file
+            progfile <- file(paste0(tmp.fn[i], ".progress"), "wt")
+            cat(tmp.fn[i], ":\n", file=progfile, sep="")
+            on.exit({ close(progfile) }, add=TRUE)
             # new a gds node
             vg <- add.gdsn(f, "data", storage="bit2", valdim=c(2L, num4, 0L), compress=cp)
             # re-position the file
@@ -961,7 +966,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
                 }
                 # convert
                 .Call(SEQ_ConvBED2GDS, vg, cnt, bedfile$con, readBin, new.env(),
-                    FALSE)
+                    progfile)
             }
             readmode.gdsn(vg)
             invisible()
@@ -978,6 +983,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
                 closefn.gds(f)
             }
             unlink(ptmpfn[i], force=TRUE)
+            unlink(paste0(ptmpfn[i], ".progress"), force=TRUE)
         }
         if (verbose) cat(" [Done]\n    ")
     }
