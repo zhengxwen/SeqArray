@@ -699,18 +699,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         if (count >= pnum)
         {
-            fn <- basename(sub("^([^.]*).*", "\\1", out.fn))
-            psplit <- .file_split(count, pnum, start)
-
             # need unique temporary file names
-            ptmpfn <- character()
-            while (length(ptmpfn) < pnum)
-            {
-                s <- tempfile(pattern=sprintf("%s_tmp%02d_",
-                    fn, length(ptmpfn)+1L), tmpdir=dirname(out.fn))
-                file.create(s)
-                if (!(s %in% ptmpfn)) ptmpfn <- c(ptmpfn, s)
-            }
+            ptmpfn <- .get_temp_fn(pnum, basename(sub("^([^.]*).*", "\\1", out.fn)),
+                dirname(out.fn))
+            psplit <- .file_split(count, pnum, start)
 
             if (verbose)
             {

@@ -536,7 +536,10 @@
                 {
                     child.res <- unserialize(r)
                     if (inherits(child.res, "try-error"))
+                    {
                         has.errors <- has.errors + 1L
+                        stop(child.res)
+                    }
                     if (is.function(.combinefun))
                     {
                         if (inherits(child.res, "try-error"))

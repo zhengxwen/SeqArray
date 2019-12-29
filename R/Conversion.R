@@ -942,18 +942,27 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
             # new a gds node
             vg <- add.gdsn(f, "data", storage="bit2", valdim=c(2L, num4, 0L), compress=cp)
             # re-position the file
-            if (isSeekable(bedfile$con))
+            cnt <- psplit[[2L]][i]
+            if (cnt > 0L)
             {
-                if (psplit[[2L]][i] > 0L)
+                n4 <- (num4 %/% 4L) + (num4 %% 4L > 0L)
+                n4 <- 3L + n4 * (psplit[[1L]][i] - 1L)
+                if (bedfile$fmt == "")
                 {
-                    n4 <- (num4 %/% 4L) + (num4 %% 4L > 0L)
-                    seek(bedfile$con, 3L + n4*(psplit[[1L]][i]-1L))
+                    seek(bedfile$con, n4)
+                } else {
+                    # gz or xz
+                    while (n4 > 0L)
+                    {
+                        m <- if (n4 <= 65536L) n4 else 65536L
+                        readBin(bedfile$con, raw(), m)
+                        n4 <- n4 - m
+                    }
                 }
-            } else
-                stop("the connection is not seekable!")
-            # convert
-            .Call(SEQ_ConvBED2GDS, vg, psplit[[2L]][i], bedfile$con, readBin, new.env(),
-                FALSE)
+                # convert
+                .Call(SEQ_ConvBED2GDS, vg, cnt, bedfile$con, readBin, new.env(),
+                    FALSE)
+            }
             readmode.gdsn(vg)
             invisible()
         }, split="none", bed.fn=bed.fn, tmp.fn=ptmpfn, num4=num4, psplit=psplit,
