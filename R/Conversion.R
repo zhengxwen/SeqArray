@@ -1114,14 +1114,17 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 # Convert a SeqArray GDS file to a PLINK BED file
 #
 
-seqGDS2BED <- function(gdsfile, out.fn, verbose=TRUE)
+seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     if (is.character(gdsfile))
         stopifnot(length(gdsfile)==1L)
     stopifnot(is.character(out.fn), length(out.fn)==1L, !is.na(out.fn))
+    stopifnot(is.logical(multi.row), length(multi.row)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (multi.row) stop("'multi.row=TRUE' is not implemented yet.")
 
     if (verbose)
     {
@@ -1154,12 +1157,14 @@ seqGDS2BED <- function(gdsfile, out.fn, verbose=TRUE)
 
     # bim file
     n <- .seldim(gdsfile)[3L]
+    s <- seqGetData(gdsfile, "$alt")
+    s[s == ""] <- "0"
     bim <- data.frame(
         chr = seqGetData(gdsfile, "chromosome"),
         var = seqGetData(gdsfile, "annotation/id"),
         mrg = rep(0L, n),
         pos = seqGetData(gdsfile, "position"),
-        alt1 = gsub(",", "/", seqGetData(gdsfile, "$alt"), fixed=TRUE),
+        alt1 = gsub(",", "/", s, fixed=TRUE),
         alt2 = seqGetData(gdsfile, "$ref"),
         stringsAsFactors=FALSE)
     bimfn <- paste0(out.fn, ".bim")
