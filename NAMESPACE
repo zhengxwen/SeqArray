@@ -29,7 +29,7 @@ import(methods)
 import(gdsfmt)
 importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
     makeCluster, makeForkCluster, mclapply, stopCluster)
-importFrom(utils, read.table, flush.console)
+importFrom(utils, read.table, flush.console, write.table)
 
 importFrom(S4Vectors, DataFrame, SimpleList)
 importClassesFrom(IRanges, IRanges)

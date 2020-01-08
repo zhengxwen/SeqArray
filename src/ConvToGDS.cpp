@@ -29,7 +29,7 @@ using namespace SeqArray;
 extern "C"
 {
 // ======================================================================
-// PLINK BED --> SeqArray GDS
+// PLINK BED <--> SeqArray GDS
 // ======================================================================
 
 /// to convert from PLINK BED to GDS
@@ -100,6 +100,40 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 		UNPROTECT(1);
 
 	COREARRAY_CATCH
+}
+
+
+COREARRAY_DLL_EXPORT SEXP FC_GDS2BED(SEXP ds)
+{
+	size_t n  = XLENGTH(ds);
+	size_t n4 = n/4, n4r = n%4;
+	SEXP rv_ans = PROTECT(NEW_RAW(n4 + (n4r>0 ? 1 : 0)));
+	C_UInt8 *p = (C_UInt8*)RAW(rv_ans);
+	C_UInt8 *s = (C_UInt8*)RAW(ds);
+	// convert
+	static const C_UInt8 cvt[4] = { 0, 2, 3, 1 };
+	for (; n4 > 0; n4--)
+	{
+		C_UInt8 b = 0;
+		b |= ((*s < 3) ? cvt[*s] : 1);      s++;
+		b |= ((*s < 3) ? cvt[*s] : 1) << 2; s++;
+		b |= ((*s < 3) ? cvt[*s] : 1) << 4; s++;
+		b |= ((*s < 3) ? cvt[*s] : 1) << 6; s++;
+		*p++ = b;
+	}
+	if (n4r > 0)
+	{
+		C_UInt8 b = 0;
+		for (size_t i=0; i < n4r; i++)
+		{
+			b |= ((*s < 3) ? cvt[*s] : 1) << (2*i);
+			s++;
+		}
+		*p++ = b;
+	}
+	// output
+	UNPROTECT(1);
+	return rv_ans;
 }
 
 

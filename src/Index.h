@@ -2,7 +2,7 @@
 //
 // Index.h: Indexing Objects
 //
-// Copyright (C) 2016-2019    Xiuwen Zheng
+// Copyright (C) 2016-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //

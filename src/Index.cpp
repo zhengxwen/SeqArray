@@ -2,7 +2,7 @@
 //
 // Index.cpp: Indexing Objects
 //
-// Copyright (C) 2016-2019    Xiuwen Zheng
+// Copyright (C) 2016-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -381,10 +381,10 @@ CChromIndex::CChromIndex() { }
 
 void CChromIndex::AddChrom(PdGDSFolder Root)
 {
-	static const char *warn_msg =
+	static const char *WARN_MSG =
 		"Warning: @chrom_rle_val and @chrom_rle_len are not correct, "
 		"please call 'seqOptimize(..., target='chromosome') to update "
-		"the chromosome indexing.\n";
+		"the chromosome indexing.";
 
 	PdAbstractArray varVariant = GDS_Node_Path(Root, "variant.id", TRUE);
 	C_Int32 NumVariant = GDS_Array_GetTotalCount(varVariant);
@@ -401,19 +401,22 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 	RleChr.Clear();
 
 	// check whether RLE representation of chromosome
-	PdAbstractArray varChrVal = GDS_Node_Path(Root, "@chrom_rle_val", FALSE);
-	PdAbstractArray varChrLen = GDS_Node_Path(Root, "@chrom_rle_len", FALSE);
-	if (varChrVal && varChrLen)
+	PdAbstractArray rle_val = GDS_Node_Path(Root, "@chrom_rle_val", FALSE);
+	PdAbstractArray rle_len = GDS_Node_Path(Root, "@chrom_rle_len", FALSE);
+	if (rle_val && rle_len)
 	{
-		int n1 = GDS_Array_GetTotalCount(varChrVal);
-		int n2 = GDS_Array_GetTotalCount(varChrLen);
-		if (GDS_Array_DimCnt(varChrVal)==1 && GDS_Array_DimCnt(varChrLen)==1 &&
-			n1 == n2)
+		C_Int32 n1 = GDS_Array_GetTotalCount(rle_val);
+		C_Int32 n2 = GDS_Array_GetTotalCount(rle_len);
+		if (GDS_Array_DimCnt(rle_val)==1 && GDS_Array_DimCnt(rle_len)==1 &&
+			(n1 == n2))
 		{
-			string val[n1];
-			C_Int32 len[n1], idx=0;
-			GDS_Array_ReadData(varChrVal, &idx, &n1, &val[0], svStrUTF8);
-			GDS_Array_ReadData(varChrLen, &idx, &n1, &len[0], svInt32);
+			vector<string> val(n1);
+			vector<C_Int32> len(n1);
+			C_Int32 idx = 0;
+			GDS_Array_ReadData(rle_val, &idx, &n1, &val[0], svStrUTF8);
+			GDS_Array_ReadData(rle_len, &idx, &n1, &len[0], svInt32);
+			// GDS_Node_Unload(rle_val);
+			// GDS_Node_Unload(rle_len);
 
 			int ntot = 0;
 			for (int i=0; i < n1; i++) ntot += len[i];
@@ -431,14 +434,20 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 				RleChr.Init();
 				return;
 			} else
-				REprintf(warn_msg);
-
-		} else
-			REprintf(warn_msg);
-	} else if (varChrVal || varChrLen)
+				throw ErrSeqArray(WARN_MSG);
+		} else {
+			// GDS_Node_Unload(rle_val);
+			// GDS_Node_Unload(rle_len);
+			throw ErrSeqArray(WARN_MSG);
+		}
+	} else if (rle_val || rle_len)
 	{
-		REprintf(warn_msg);
+		// if (rle_val) GDS_Node_Unload(rle_val);
+		// if (rle_len) GDS_Node_Unload(rle_len);
+		throw ErrSeqArray(WARN_MSG);
 	}
+
+	// no stored RLE representation
 
 	C_Int32 idx=0, len=1;
 	string last;
@@ -447,7 +456,6 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 
 	TRange rng;
 	rng.Start = 0; rng.Length = 1;
-
 	const C_Int32 NMAX = 65536;
 	string txt[NMAX];
 
@@ -876,9 +884,10 @@ CGenoIndex &CFileInfo::GenoIndex()
 {
 	if (_GenoIndex.Empty())
 	{
-		static const char *geno_var = "genotype/@data";
-		PdAbstractArray I = GetObj(geno_var, TRUE);
-		_GenoIndex.Init(I, geno_var);
+		const char *varname = "genotype/@data";
+		PdAbstractArray N = GDS_Node_Path(_Root, varname, TRUE);
+		_GenoIndex.Init(N, varname);
+		// GDS_Node_Unload(N);
 	}
 	return _GenoIndex;
 }
@@ -889,10 +898,12 @@ CIndex &CFileInfo::VarIndex(const string &varname)
 	if (I.Empty())
 	{
 		PdAbstractArray N = GDS_Node_Path(_Root, varname.c_str(), FALSE);
-		if (N == NULL)
-			I.InitOne(_VariantNum);
-		else
+		if (N)
+		{
 			I.Init(N, varname.c_str());
+			// GDS_Node_Unload(N);
+		} else
+			I.InitOne(_VariantNum);
 	}
 	return I;
 }

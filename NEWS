@@ -1,11 +1,11 @@
-CHANGES IN VERSION 1.27.5
+CHANGES IN VERSION 1.27.6
 -------------------------
 
 NEW FEATURES
 
-    o new function `seqSetFilterAnnotID()`
+    o new functions `seqSetFilterAnnotID()` and `seqGDS2BED()`
 
-    o multicore function in `seqBED2GDS()`
+    o multicore function in `seqBED2GDS(, parallel=)`
 
 UTILITIES
 
@@ -24,18 +24,15 @@ NEW FEATURES
 
     o new function `seqUnitApply()`
 
-    o new variable "$variant_index", "$sample_index" in `SeqGetData()`, `seqBlockApply()`
-      and `seqUnitApply()` to get the indices of selected variants
+    o new variable "$variant_index", "$sample_index" in `SeqGetData()`,
+      `seqBlockApply()` and `seqUnitApply()` to get the indices of selected
+      variants
 
     o new arguments '.padNA' and '.envir' in `seqGetData()`
 
 UTILITIES
 
     o `seqAddValue()` adds vectors, matrices and data frame to "annotation/info"
-
-BUG FIXES
-
-    o fix `seqGetData(, "genotype", .useraw=NA)`
 
 
 CHANGES IN VERSION 1.26.2
@@ -56,7 +53,8 @@ CHANGES IN VERSION 1.26.1
 
 BUG FIXES
 
-    o Fails to correctly select duplicate indices in `seqSetFilter(f, variant.sel=)`
+    o fails to correctly select duplicate indices in
+      `seqSetFilter(f, variant.sel=)`
 
 
 CHANGES IN VERSION 1.26.0
@@ -70,8 +68,8 @@ UTILITIES
 
     o RLE chromosome coding in `seqBED2GDS()`
 
-    o change the file name "vignettes/R_Integration.Rmd" to "vignettes/SeqArray.Rmd",
-      so `vignette("SeqArray")` can work directly
+    o change the file name "vignettes/R_Integration.Rmd" to
+      "vignettes/SeqArray.Rmd", so `vignette("SeqArray")` can work directly
 
     o correct Estimated remaining Time to Complete (ETC) for load balancing in
       `seqParallel()`
@@ -92,8 +90,8 @@ NEW FEATURES
 
     o add the compiler information in `seqSystem()`
 
-    o new arguments '.balancing', '.bl_size' and '.bl_progress' in `seqParallel()`
-      for load balancing
+    o new arguments '.balancing', '.bl_size' and '.bl_progress' in
+      `seqParallel()` for load balancing
 
 UTILITIES
 
@@ -121,15 +119,16 @@ CHANGES IN VERSION 1.22.6
 
 BUG FIXES
 
-    o `seqSetFilter(, sample.id=)` fails to correctly select samples in rare cases
-      (since SeqArray>=v1.22.0 uses the distribution of selected samples to optimize
-      the data access of genotypes, see https://github.com/zhengxwen/SeqArray/issues/48)
+    o `seqSetFilter(, sample.id=)` fails to correctly select samples in a few
+      cases (since SeqArray>=v1.22.0 uses the distribution of selected samples
+      to optimize the data access of genotypes, see
+      https://github.com/zhengxwen/SeqArray/issues/48)
 
     o the bgzf VCF file is truncated in `seqGDS2VCF()` since the file is not
       closed appropriately
 
-    o invalid chromosomes and position in the output of `seqMerge()` when merging
-      different samples but same variants
+    o invalid chromosomes and position in the output of `seqMerge()` when
+      merging different samples but same variants
 
 
 CHANGES IN VERSION 1.22.3

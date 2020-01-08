@@ -1,20 +1,25 @@
 \name{seqBED2GDS}
 \alias{seqBED2GDS}
-\title{Convert PLINK BED Format to SeqArray Format}
+\alias{seqGDS2BED}
+\title{Conversion between PLINK BED and SeqArray GDS}
 \description{
-    Converts a PLINK BED file to a SeqArray GDS file.
+    Conversion between PLINK BED format and SeqArray GDS format.
 }
 \usage{
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
     compress.annotation="LZMA_RA", optimize=TRUE, digest=TRUE, parallel=FALSE,
     verbose=TRUE)
+seqGDS2BED(gdsfile, out.fn, verbose=TRUE)
 }
 \arguments{
     \item{bed.fn}{the file name of binary file, genotype information}
     \item{fam.fn}{the file name of first six columns of \code{".ped"}}
     \item{bim.fn}{the file name of extended MAP file:
         two extra columns = allele names}
+    \item{gdsfile}{character (a GDS file name), or
+        a \code{\link{SeqVarGDSClass}} object}
     \item{out.gdsfn}{the file name, output a file of SeqArray format}
+    \item{out.fn}{the file name of PLINK binary format without extended names}
     \item{compress.geno}{the compression method for "genotype"; optional
         values are defined in the function \code{add.gdsn}}
     \item{compress.annotation}{the compression method for the GDS variables,
@@ -49,13 +54,19 @@ bed.fn <- system.file("extdata", "plinkhapmap.bed.gz", package="SNPRelate")
 fam.fn <- system.file("extdata", "plinkhapmap.fam.gz", package="SNPRelate")
 bim.fn <- system.file("extdata", "plinkhapmap.bim.gz", package="SNPRelate")
 
-# convert
+# convert bed to gds
 seqBED2GDS(bed.fn, fam.fn, bim.fn, "tmp.gds")
 
 seqSummary("tmp.gds")
 
+
+# convert gds to bed
+gdsfn <- seqExampleFileName("gds")
+seqGDS2BED(gdsfn, "plink")
+
+
 # remove the temporary file
-unlink("tmp.gds", force=TRUE)
+unlink(c("tmp.gds", "plink.fam", "plink.bim", "plink.bed"), force=TRUE)
 }
 
 \keyword{gds}

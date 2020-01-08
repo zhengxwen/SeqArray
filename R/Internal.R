@@ -116,15 +116,9 @@
 #######################################################################
 # get pretty number with big mark
 #
-.pretty <- function(x)
-{
-    prettyNum(x, big.mark=",", scientific=FALSE)
-}
+.pretty <- function(x) prettyNum(x, big.mark=",", scientific=FALSE)
 
-.plural <- function(num)
-{
-    if (num > 1L) "s" else ""
-}
+.plural <- function(num) if (num > 1L) "s" else ""
 
 .pretty_size <- function(s)
 {

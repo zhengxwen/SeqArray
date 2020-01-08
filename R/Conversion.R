@@ -786,7 +786,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         cat(date(), "\n", sep="")
-        cat("PLINK BED to SeqArray GDS Format:\n")
+        cat("PLINK BED to SeqArray GDS:\n")
     }
 
     ##  open and detect bed.fn  ##
@@ -1106,4 +1106,80 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     # output
     invisible(normalizePath(out.gdsfn))
+}
+
+
+
+#######################################################################
+# Convert a SeqArray GDS file to a PLINK BED file
+#
+
+seqGDS2BED <- function(gdsfile, out.fn, verbose=TRUE)
+{
+    # check
+    stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
+    if (is.character(gdsfile))
+        stopifnot(length(gdsfile)==1L)
+    stopifnot(is.character(out.fn), length(out.fn)==1L, !is.na(out.fn))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (verbose)
+    {
+        cat(date(), "\n", sep="")
+        cat("SeqArray GDS to PLINK BED:\n")
+    }
+    if (is.character(gdsfile))
+    {
+        if (verbose) cat("    open ", shQuote(gdsfile), "\n", sep="")
+        gdsfile <- seqOpen(gdsfile)
+        on.exit(seqClose(gdsfile))
+    }
+    if (verbose)
+    {
+        dm <- .seldim(gdsfile)
+        cat("    # of samples: ", .pretty(dm[2L]), "\n", sep="")
+        cat("    # of variants: ", .pretty(dm[3L]), "\n", sep="")
+    }
+
+    # fam file
+    s <- seqGetData(gdsfile, "sample.id")
+    n <- length(s)
+    fam <- data.frame(FID=s, IID=s, FAT=rep(0L, n), MOT=rep(0L, n),
+        sex=rep(0L, n), pheno=rep(-9L, n), stringsAsFactors=FALSE)
+    famfn <- paste0(out.fn, ".fam")
+    if (verbose) cat("    fam file: ", shQuote(famfn), "\n", sep="")
+    write.table(fam, file=famfn, quote=FALSE, sep="\t", row.names=FALSE,
+        col.names=FALSE)
+    remove(fam)
+
+    # bim file
+    n <- .seldim(gdsfile)[3L]
+    bim <- data.frame(
+        chr = seqGetData(gdsfile, "chromosome"),
+        var = seqGetData(gdsfile, "annotation/id"),
+        mrg = rep(0L, n),
+        pos = seqGetData(gdsfile, "position"),
+        alt1 = gsub(",", "/", seqGetData(gdsfile, "$alt"), fixed=TRUE),
+        alt2 = seqGetData(gdsfile, "$ref"),
+        stringsAsFactors=FALSE)
+    bimfn <- paste0(out.fn, ".bim")
+    if (verbose) cat("    bim file: ", shQuote(bimfn), "\n", sep="")
+    write.table(bim, file=bimfn, quote=FALSE, sep="\t", row.names=FALSE,
+        col.names=FALSE)
+    remove(bim)
+    
+    # bed file
+    bedfn <- paste0(out.fn, ".bed")
+    if (verbose) cat("    bed file: ", shQuote(bedfn), "\n", sep="")
+    outf <- file(bedfn, "w+b")
+    on.exit(close(outf), add=TRUE)
+    writeBin(as.raw(c(0x6C, 0x1B, 0x01)), outf)
+    seqApply(gdsfile, "$dosage", .cfunction("FC_GDS2BED"), as.is=outf,
+        .useraw=TRUE, .progress=verbose)
+
+    if (verbose)
+        cat("Done.\n", date(), "\n", sep="")
+
+    # output
+    invisible(normalizePath(c(famfn, bimfn, bedfn)))
 }

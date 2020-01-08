@@ -10,7 +10,7 @@ seqGDS2SNP(gdsfile, out.gdsfn, dosage=FALSE, compress.geno="LZMA_RA",
     optimize=TRUE, verbose=TRUE)
 }
 \arguments{
-    \item{gdsfile}{character (GDS file name), or
+    \item{gdsfile}{character (a GDS file name), or
         a \code{\link{SeqVarGDSClass}} object}
     \item{out.gdsfn}{the file name, output a file of VCF format}
     \item{dosage}{a logical value, or characters for the variable name of
