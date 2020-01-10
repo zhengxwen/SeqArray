@@ -163,14 +163,7 @@
 #
 .repeat_gds <- function(node, elm, count)
 {
-    val <- rep(elm, 65536L)
-    while (count > 0L)
-    {
-        size <- ifelse(count <= 65536L, count, 65536L)
-        append.gdsn(node, val[seq_len(size)], check=FALSE)
-        count <- count - size
-    }
-    invisible()
+    .Call(SEQ_AppendFill, node, elm, count)
 }
 
 .append_gds <- function(target.node, gdslist, varname)

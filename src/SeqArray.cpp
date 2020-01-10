@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2019    Xiuwen Zheng
+// Copyright (C) 2013-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1186,6 +1186,57 @@ COREARRAY_DLL_EXPORT SEXP SEQ_IntAssign(SEXP Dst, SEXP Src)
 // Get system configuration
 // ===========================================================
 
+COREARRAY_DLL_EXPORT SEXP SEQ_AppendFill(SEXP gdsnode, SEXP val, SEXP cnt)
+{
+	COREARRAY_TRY
+		PdGDSObj obj = GDS_R_SEXP2Obj(gdsnode, FALSE);
+		C_Int64 n = (C_Int64)Rf_asReal(cnt);
+		const ssize_t SIZE = 65536;
+		switch(TYPEOF(val))
+		{
+		case RAWSXP:
+			{
+				vector<C_Int8> buf(SIZE, C_Int8(RAW(val)[0]));
+				for (ssize_t m; n > 0; n -= m)
+				{
+					m = (n <= SIZE) ? n : SIZE;
+					GDS_Array_AppendData(obj, m, &buf[0], svInt8);
+				}
+				break;
+			}
+		case INTSXP:
+			{
+				vector<C_Int32> buf(SIZE, Rf_asInteger(val));
+				for (ssize_t m; n > 0; n -= m)
+				{
+					m = (n <= SIZE) ? n : SIZE;
+					GDS_Array_AppendData(obj, m, &buf[0], svInt32);
+				}
+				break;
+			}
+		case REALSXP:
+			{
+				vector<double> buf(SIZE, Rf_asReal(val));
+				for (ssize_t m; n > 0; n -= m)
+				{
+					m = (n <= SIZE) ? n : SIZE;
+					GDS_Array_AppendData(obj, m, &buf[0], svFloat64);
+				}
+				break;
+			}
+		default:
+			throw ErrSeqArray(
+				"Invalid type of 'elm', it should be raw, int or real");
+		}
+	COREARRAY_CATCH
+}
+
+
+
+// ===========================================================
+// Get system configuration
+// ===========================================================
+
 /// the number of alleles per site
 COREARRAY_DLL_EXPORT SEXP SEQ_System()
 {
@@ -1460,7 +1511,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
-		CALL(SEQ_IntAssign, 2),
+		CALL(SEQ_IntAssign, 2),             CALL(SEQ_AppendFill, 3),
 
 		CALL(SEQ_bgzip_create, 1),
 

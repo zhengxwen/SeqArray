@@ -707,7 +707,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (verbose)
             {
                 cat(sprintf("    Writing to %d files:\n", pnum))
-                cat(sprintf("        %s [%s..%s]\n", basename(ptmpfn),
+                cat(sprintf("        %s [%s .. %s]\n", basename(ptmpfn),
                     .pretty(psplit[[1L]]),
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
                 flush.console()
