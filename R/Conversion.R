@@ -607,7 +607,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
         readmode.gdsn(nd_allele)
         .DigestCode(nd_allele, digest, verbose)
 
-        .repeat_gds(nd_geno_idx, as.raw(1L), nSNP)
+        .append_rep_gds(nd_geno_idx, as.raw(1L), nSNP)
         readmode.gdsn(nd_geno_idx)
         .DigestCode(nd_geno_idx, digest, FALSE)
 
@@ -625,7 +625,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
     n <- .AddVar(storage.option, varPhase, "data", storage="bit1",
         valdim=c(nSamp, 0L))
     if (geno_type == "Integer")
-        .repeat_gds(n, as.raw(0L), as.double(nSNP)*nSamp)
+        .append_rep_gds(n, as.raw(0L), as.double(nSNP)*nSamp)
     readmode.gdsn(n)
     .DigestCode(n, digest, verbose)
 
@@ -653,13 +653,13 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 
     # add annotation/qual
     n <- .AddVar(storage.option, varAnnot, "qual", storage="float")
-    .repeat_gds(n, 100.0, nSNP)
+    .append_rep_gds(n, 100.0, nSNP)
     readmode.gdsn(n)
     .DigestCode(n, digest, FALSE)
 
     # add filter
     n <- .AddVar(storage.option, varAnnot, "filter", storage="int32")
-    .repeat_gds(n, as.raw(1L), nSNP)
+    .append_rep_gds(n, as.raw(1L), nSNP)
     readmode.gdsn(n)
     put.attr.gdsn(n, "R.class", "factor")
     put.attr.gdsn(n, "R.levels", c("PASS"))
@@ -709,7 +709,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 
         nd_geno_idx <- .AddVar(storage.option, varGeno, "@data",
             storage="uint8", visible=FALSE)
-        .repeat_gds(nd_geno_idx, as.raw(1L), nSNP)
+        .append_rep_gds(nd_geno_idx, as.raw(1L), nSNP)
         readmode.gdsn(nd_geno_idx)
         .DigestCode(nd_geno_idx, digest, FALSE)
 
@@ -931,7 +931,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         # conversion in parallel
         seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
         {
-            library("SeqArray")
+            library("gdsfmt")
             # the process id, starting from one
             i <- process_index
             # open the bed file
@@ -990,7 +990,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     n1 <- add.gdsn(n, "@data", storage="uint8", compress=compress.annotation,
         visible=FALSE)
-    .repeat_gds(n1, as.raw(1L), nrow(bimD))
+    .append_rep_gds(n1, as.raw(1L), nrow(bimD))
     readmode.gdsn(n1)
     .DigestCode(n1, digest, FALSE)
 
@@ -1021,7 +1021,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     n1 <- add.gdsn(n, "data", storage="bit1", valdim=c(nrow(famD), 0L),
         compress=compress.annotation)
-    .repeat_gds(n1, as.raw(0L), as.double(nrow(bimD))*nrow(famD))
+    .append_rep_gds(n1, as.raw(0L), as.double(nrow(bimD))*nrow(famD))
     readmode.gdsn(n1)
     .DigestCode(n1, digest, verbose)
 
@@ -1044,14 +1044,14 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     # add annotation/qual
     n1 <- add.gdsn(n, "qual", storage="float", compress=compress.annotation)
-    .repeat_gds(n1, 100.0, nrow(bimD))
+    .append_rep_gds(n1, 100.0, nrow(bimD))
     readmode.gdsn(n1)
     if (verbose) cat("    annotation/qual")
     .DigestCode(n1, digest, verbose)
 
     # add filter
     n1 <- add.gdsn(n, "filter", storage="int32", compress=compress.annotation)
-    .repeat_gds(n1, as.raw(1L), nrow(bimD))
+    .append_rep_gds(n1, as.raw(1L), nrow(bimD))
     readmode.gdsn(n1)
     put.attr.gdsn(n1, "R.class", "factor")
     put.attr.gdsn(n1, "R.levels", c("PASS"))
