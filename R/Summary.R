@@ -246,7 +246,7 @@
 
         if (verbose)
         {
-            s <- format(paste("Chr", format(names(ans)), ": ", ans, sep=""))
+            s <- format(paste("chr", format(names(ans)), ": ", ans, sep=""))
             i <- 1L
             while (i <= length(s))
             {

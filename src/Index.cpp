@@ -415,8 +415,8 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 			C_Int32 idx = 0;
 			GDS_Array_ReadData(rle_val, &idx, &n1, &val[0], svStrUTF8);
 			GDS_Array_ReadData(rle_len, &idx, &n1, &len[0], svInt32);
-			// GDS_Node_Unload(rle_val);
-			// GDS_Node_Unload(rle_len);
+			GDS_Node_Unload(rle_val);
+			GDS_Node_Unload(rle_len);
 
 			int ntot = 0;
 			for (int i=0; i < n1; i++) ntot += len[i];
@@ -887,7 +887,7 @@ CGenoIndex &CFileInfo::GenoIndex()
 		const char *varname = "genotype/@data";
 		PdAbstractArray N = GDS_Node_Path(_Root, varname, TRUE);
 		_GenoIndex.Init(N, varname);
-		// GDS_Node_Unload(N);
+		GDS_Node_Unload(N);
 	}
 	return _GenoIndex;
 }
@@ -901,7 +901,7 @@ CIndex &CFileInfo::VarIndex(const string &varname)
 		if (N)
 		{
 			I.Init(N, varname.c_str());
-			// GDS_Node_Unload(N);
+			GDS_Node_Unload(N);
 		} else
 			I.InitOne(_VariantNum);
 	}

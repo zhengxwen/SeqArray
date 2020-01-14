@@ -79,7 +79,7 @@ R CMD INSTALL SeqArray_latest.tar.gz
 
 ## SeqArray Genotype File Downloads
 
-* [1000 Genomes Project](http://bochet.gcc.biostat.washington.edu/seqarray/1000genomes)
+* [1000 Genomes Project](https://gds-stat.s3.amazonaws.com/download/1000g/index.html)
 
 
 
