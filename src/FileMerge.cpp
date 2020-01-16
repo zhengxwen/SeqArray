@@ -2,7 +2,7 @@
 //
 // FileMerge.cpp: GDS file merging
 //
-// Copyright (C) 2016-2019    Xiuwen Zheng
+// Copyright (C) 2016-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -373,13 +373,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeFormat(SEXP num, SEXP varidx, SEXP files,
 
 		int nProtected = 0;
 		string VarName  = CHAR(STRING_ELT(varname, 0));
+		VarName.append("/data");
 		string VarName2 = GDS_PATH_PREFIX(VarName, '@');
 
 		vector<CApply_Variant_Format> Files(FileCnt);
 		for (int i=0; i < FileCnt; i++)
 		{
 			SEXP file = VECTOR_ELT(files, i);
-			Files[i].Init(GetFileInfo(file), VarName.c_str());
+			Files[i].Init(GetFileInfo(file), CHAR(STRING_ELT(varname, 0)));
 		}
 
 		PdGDSFolder Root = GDS_R_SEXP2FileRoot(export_file);

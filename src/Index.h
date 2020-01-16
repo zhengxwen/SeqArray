@@ -313,7 +313,6 @@ protected:
 
 
 
-
 // ===========================================================
 // SeqArray GDS file information
 // ===========================================================
@@ -363,10 +362,38 @@ private:
 };
 
 
+/// GDS variable structure used in SeqArray::seqGetData()
+struct COREARRAY_DLL_LOCAL TVarMap
+{
+public:
+	/// function call according to a GDS node
+	typedef SEXP (*TFunction)(CFileInfo &File, TVarMap &Var, void *param);
+
+	string Name;     ///< the variable name
+	PdGDSObj Obj;    ///< GDS node
+	int ObjID;       ///< GDS node ID stored in gdsfmt
+	int NDim;        ///< the number of dimensions
+	C_Int32 Dim[4];  ///< the size of each dimension
+	TFunction Func;  ///< function pointer to get an R object
+	CIndex Index;    ///< indexing
+
+	TVarMap();       ///< constructor
+	/// initialize assuming no indexing
+	void Init(CFileInfo &file, const string &varnm, TFunction fc);
+	/// initialize with possible indexing
+	void InitWtIndex(CFileInfo &file, const string &varnm, TFunction fc);
+
+private:
+	void get_obj(CFileInfo &file, const string &varnm);
+};
+
+
 /// GDS file object
 class COREARRAY_DLL_LOCAL CFileInfo
 {
 public:
+	friend struct COREARRAY_DLL_LOCAL TVarMap;
+
 	/// constructor
 	CFileInfo(PdGDSFolder root=NULL);
 	/// destructor
@@ -392,12 +419,14 @@ public:
 	/// return _GenoIndex which has been initialized
 	CGenoIndex &GenoIndex();
 
-	/// return the indexing object according to variable name
-	CIndex &VarIndex(const string &varname);
+	/// return variable structure with possible indexing
+	map<string, TVarMap> &VarMap() { return _VarMap; }
 
 	/// get gds object
 	PdAbstractArray GetObj(const char *name, C_BOOL MustExist);
 
+	/// the gds file
+	inline PdGDSFile File() { return _File; }
 	/// the root of gds file
 	inline PdGDSFolder Root() { return _Root; }
 	/// the total number of samples
@@ -413,6 +442,7 @@ public:
 	int VariantSelNum();
 
 protected:
+	PdGDSFile _File;       ///< the GDS file
 	PdGDSFolder _Root;     ///< the root of GDS file
 	TSelection *_SelList;  ///< the pointer to the sample and variant selections
 	int _SampleNum;   ///< the total number of samples
@@ -422,7 +452,7 @@ protected:
 	CChromIndex _Chrom;  ///< chromosome indexing
 	vector<C_Int32> _Position;  ///< position
 	CGenoIndex _GenoIndex;  ///< the indexing object for genotypes
-	map<string, CIndex> _VarIndex;  ///< the indexing objects for INFO/FORMAT variables
+	map<string, TVarMap> _VarMap;  ///< the indexing objects for seqGetData()
 
 private:
 	inline void clear_selection();
@@ -434,6 +464,8 @@ extern std::map<int, CFileInfo> COREARRAY_DLL_LOCAL GDSFile_ID_Info;
 /// get the associated CFileInfo
 COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile);
 
+/// get TVarMap from a variable name
+COREARRAY_DLL_LOCAL TVarMap &VarGetStruct(CFileInfo &File, const string &name);
 
 
 

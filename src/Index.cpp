@@ -743,15 +743,63 @@ void TSelection::ClearStructVariant()
 	varStart = varEnd = 0;
 }
 
-
-//
+// TVarMap
 
 static const char *ERR_DIM = "Invalid dimension of '%s'.";
 static const char *ERR_FILE_ROOT = "CFileInfo::FileRoot should be initialized.";
 
+TVarMap::TVarMap()
+{
+	Obj = NULL; ObjID = 0;
+	NDim = 0;
+	memset(Dim, 0, sizeof(Dim));
+	Func = NULL;
+}
+
+void TVarMap::Init(CFileInfo &file, const string &varnm, TFunction fc)
+{
+	Name = varnm;
+	get_obj(file, varnm);
+	NDim = GDS_Array_DimCnt(Obj);
+	if (NDim > 4)
+		throw ErrSeqArray(ERR_DIM, varnm.c_str());
+	GDS_Array_GetDim(Obj, Dim, 4);
+	Func = fc;
+}
+
+void TVarMap::InitWtIndex(CFileInfo &file, const string &varnm, TFunction fc)
+{
+	Name = varnm;
+	get_obj(file, varnm);
+	NDim = GDS_Array_DimCnt(Obj);
+	if (NDim > 4)
+		throw ErrSeqArray(ERR_DIM, varnm.c_str());
+	GDS_Array_GetDim(Obj, Dim, 4);
+	Func = fc;
+	// indexing if possible
+	string idx_name = GDS_PATH_PREFIX(varnm, '@');
+	PdAbstractArray N = file.GetObj(idx_name.c_str(), FALSE);
+	if (N)
+	{
+		Index.Init(N, idx_name.c_str());
+		GDS_Node_Unload(N);
+	} else
+		Index.InitOne(file._VariantNum);
+}
+
+void TVarMap::get_obj(CFileInfo &file, const string &varnm)
+{
+	PdGDSObj node;
+	int node_id;
+	GDS_Node_Load(NULL, -1, varnm.c_str(), file._File, &node, &node_id);
+	Obj = node; ObjID = node_id;
+}
+
+// CFileInfo
+
 CFileInfo::CFileInfo(PdGDSFolder root)
 {
-	_Root = NULL;
+	_File = NULL; _Root = NULL;
 	_SelList = NULL;
 	_SampleNum = _VariantNum = 0;
 	ResetRoot(root);
@@ -759,7 +807,7 @@ CFileInfo::CFileInfo(PdGDSFolder root)
 
 CFileInfo::~CFileInfo()
 {
-	_Root = NULL;
+	_File = NULL; _Root = NULL;
 	_SampleNum = _VariantNum = 0;
 	clear_selection();
 }
@@ -780,6 +828,7 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 	if (_Root != root)
 	{
 		// initialize
+		_File = GDS_Node_File(root);
 		_Root = root;
 		_Chrom.Clear();
 		_Position.clear();
@@ -890,22 +939,6 @@ CGenoIndex &CFileInfo::GenoIndex()
 		GDS_Node_Unload(N);
 	}
 	return _GenoIndex;
-}
-
-CIndex &CFileInfo::VarIndex(const string &varname)
-{
-	CIndex &I = _VarIndex[varname];
-	if (I.Empty())
-	{
-		PdAbstractArray N = GDS_Node_Path(_Root, varname.c_str(), FALSE);
-		if (N)
-		{
-			I.Init(N, varname.c_str());
-			GDS_Node_Unload(N);
-		} else
-			I.InitOne(_VariantNum);
-	}
-	return I;
 }
 
 PdAbstractArray CFileInfo::GetObj(const char *name, C_BOOL MustExist)

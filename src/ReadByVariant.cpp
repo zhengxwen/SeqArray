@@ -604,7 +604,7 @@ CApply_Variant_Info::CApply_Variant_Info(CFileInfo &File,
 	C_Int32 DLen[2];
 	GDS_Array_GetDim(Node, DLen, 2);
 	BaseNum = (DimCnt == 2) ? DLen[1] : 1;
-	VarIndex = &File.VarIndex(GDS_PATH_PREFIX(var_name, '@'));
+	VarIndex = &VarGetStruct(File, var_name).Index;
 	SVType = GDS_Array_GetSVType(Node);
 
 	Reset();
@@ -682,7 +682,7 @@ CApply_Variant_Format::CApply_Variant_Format(CFileInfo &File,
 void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name)
 {
 	// initialize
-	Node = File.GetObj(var_name, TRUE);
+	Node = File.GetObj((string(var_name)+"/data").c_str(), TRUE);
 
 	// check
 	int DimCnt = GDS_Array_DimCnt(Node);
@@ -702,7 +702,7 @@ void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name)
 	// initialize
 	InitMarginal(File);
 	SVType = GDS_Array_GetSVType(Node);
-	VarIndex = &File.VarIndex(GDS_PATH_PREFIX(var_name, '@'));
+	VarIndex = &VarGetStruct(File, var_name).Index;
 	SampNum = File.SampleSelNum();
 	_TotalSampNum = File.SampleNum();
 
@@ -899,7 +899,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 					new CApply_Variant_Info(File, s.c_str()));
 			} else if (strncmp(s.c_str(), "annotation/format/", 18) == 0)
 			{
-				s.append("/data");
 				NodeList.push_back(
 					new CApply_Variant_Format(File, s.c_str()));
 			} else if (s == "$dosage")

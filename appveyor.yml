@@ -14,7 +14,7 @@ install:
 
 environment:
   matrix:
-  - R_VERSION: devel
+  - R_VERSION: stable
     R_ARCH: x64
     BIOC_USE_DEVEL: TRUE
     PKGTYPE: both

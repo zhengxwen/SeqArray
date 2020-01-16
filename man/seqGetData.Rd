@@ -112,11 +112,14 @@ seqGetData(f, "genotype")
 seqGetData(f, "annotation/info/DP")
 
 # get annotation/info/AA, a variable-length dataset
-seqGetData(f, "annotation/info/AA")
+seqGetData(f, "annotation/info/AA", .padNA=FALSE)
 # $length              <- indicating the length of each variable-length data
 # [1] 1 1 1 1 1 1 ...
 # $data                <- the data according to $length
 # [1] "T" "C" "T" "C" "G" "C" ...
+
+# or return a simplified vector
+seqGetData(f, "annotation/info/AA", .padNA=TRUE)
 
 # get annotation/format/DP, a variable-length dataset
 seqGetData(f, "annotation/format/DP")

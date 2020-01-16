@@ -826,7 +826,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         } else {
             ## merge different samples
             .Call(SEQ_MergeFormat, nVariant, varidx, flist,
-                paste("annotation/format/", varnm[i], "/data", sep=""),
+                paste("annotation/format/", varnm[i], sep=""),
                 gfile, list(verbose=verbose, na=rep(NA_integer_, nSamp)))
         }
 
