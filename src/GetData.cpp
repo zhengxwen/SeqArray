@@ -60,6 +60,7 @@ static const string VAR_NUM_ALLELE("$num_allele");
 static const string VAR_REF_ALLELE("$ref");
 static const string VAR_ALT_ALLELE("$alt");
 static const string VAR_CHROM_POS("$chrom_pos");
+static const string VAR_CHROM_POS2("$chrom_pos");
 static const string VAR_CHROM_POS_ALLELE("$chrom_pos_allele");
 static const string VAR_SAMPLE_INDEX("$sample_index");
 static const string VAR_VARIANT_INDEX("$variant_index");
@@ -71,31 +72,15 @@ struct COREARRAY_DLL_LOCAL TParam
 	int use_raw;
 	int padNA;
 	SEXP Env;
-	TParam(int _useraw, int _padNA, SEXP _Env) {
-		use_raw = _useraw; padNA = _padNA; Env = _Env;
-	}
+	/// constructor
+	TParam(int _useraw, int _padNA, SEXP _Env)
+		{ use_raw = _useraw; padNA = _padNA; Env = _Env; }
 };
 
 
 // ===========================================================
 // Get data from a working space
 // ===========================================================
-
-static SEXP VAR_LOGICAL(PdGDSObj Node, SEXP Array)
-{
-	char classname[32];
-	classname[0] = 0;
-	GDS_Node_GetClassName(Node, classname, sizeof(classname));
-	if (strcmp(classname, "dBit1") == 0)
-	{
-		PROTECT(Array);
-		Array = AS_LOGICAL(Array);
-		UNPROTECT(1);
-	}
-	return Array;
-}
-
-
 
 /// get sample id from 'sample.id'
 static SEXP get_sample_1d(CFileInfo &File, TVarMap &Var, void *param)
@@ -106,62 +91,64 @@ static SEXP get_sample_1d(CFileInfo &File, TVarMap &Var, void *param)
 		GDS_R_READ_DEFAULT_MODE | (P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0));
 }
 
-/// get position from 'position', TODO: optimize
+/// get position from 'position'
 static SEXP get_position(CFileInfo &File, TVarMap &Var, void *param)
 {
-	SEXP rv_ans;
 	int n = File.VariantSelNum();
+	SEXP rv_ans = NEW_INTEGER(n);
 	if (n > 0)
 	{
-		const int *base = &File.Position()[0];
-		rv_ans = NEW_INTEGER(n);
-		int *p = INTEGER(rv_ans);
-		C_BOOL *s = File.Selection().pVariant;
-		for (size_t m=File.VariantNum(); m > 0; m--)
-		{
-			if (*s++) *p++ = *base;
-			base ++;
-		}
-	} else
-		rv_ans = NEW_INTEGER(0);
+		TSelection &Sel = File.Selection();
+		const int *base = &File.Position()[0] + Sel.varStart;
+		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		for (int *p=INTEGER(rv_ans); n > 0; base++)
+			if (*s++) { *p++ = *base; n--; }
+	}
 	return rv_ans;
 }
 
-/// get chromosome from 'chromosome', TODO: optimize
+/// get chromosome from 'chromosome'
 static SEXP get_chrom(CFileInfo &File, TVarMap &Var, void *param)
 {
-	SEXP rv_ans;
 	int n = File.VariantSelNum();
+	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
 	if (n > 0)
 	{
 		CChromIndex &Chrom = File.Chromosome();
-		rv_ans = PROTECT(NEW_CHARACTER(n));
-		C_BOOL *s = File.Selection().pVariant;
-		size_t m = File.VariantNum();
-		size_t p = 0;
-		SEXP last = mkChar("");
-		for (size_t i=0; i < m; i++)
+		TSelection &Sel = File.Selection();
+		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		size_t p = 0, i = Sel.varStart;
+		SEXP lastR = mkChar("");
+		string lastS;
+		for (; n > 0; i++)
 		{
 			if (*s++)
 			{
 				const string &ss = Chrom[i];
-				if (ss != CHAR(last))
-					last = mkChar(ss.c_str());
-				SET_STRING_ELT(rv_ans, p++, last);
+				if (ss != lastS)
+				{
+					lastS = ss;
+					lastR = mkChar(ss.c_str());
+				}
+				SET_STRING_ELT(rv_ans, p++, lastR);
+				n--;
 			}
 		}
-		UNPROTECT(1);
-	} else
-		rv_ans = NEW_CHARACTER(0);
+	}
+	UNPROTECT(1);
 	return rv_ans;
 }
 
-/// get data from node without indexing (e.g., variant.id), TODO: optimize
+/// get variant-specific data from node without indexing (e.g., variant.id)
 static SEXP get_data_1d(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
-	C_BOOL *ss = File.Selection().pVariant;
-	return GDS_R_Array_Read(Var.Obj, NULL, NULL, &ss,
+	TSelection &Sel = File.Selection();
+	Sel.GetStructVariant();
+	C_BOOL *ss = Sel.pVariant + Sel.varStart;
+	C_Int32 dimst  = Sel.varStart;
+	C_Int32 dimcnt = Sel.varEnd - Sel.varStart;
+	return GDS_R_Array_Read(Var.Obj, &dimst, &dimcnt, &ss,
 		GDS_R_READ_DEFAULT_MODE | (P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0));
 }
 
@@ -206,7 +193,7 @@ static SEXP get_genotype(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
-/// get phasing status from 'phase/data'
+/// get phasing status from 'phase/data', TODO: optimize
 static SEXP get_phase(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
@@ -342,45 +329,48 @@ static SEXP get_alt_allele(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
-/// get the combination of chromosome and position, TODO
-static SEXP get_chrom_pos(CFileInfo &File, TVarMap &Var, void *param)
+/// get the combination of chromosome and position ($chrom_pos)
+static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 {
-	PdAbstractArray N1 = File.GetObj("chromosome", TRUE);
-	PdAbstractArray N2 = File.GetObj("position", TRUE);
 	int n = File.VariantSelNum();
-	vector<string> chr(n);
-	vector<C_Int32> pos(n);
-
-	C_BOOL *ss = File.Selection().pVariant;
-	GDS_Array_ReadDataEx(N1, NULL, NULL, &ss, &chr[0], svStrUTF8);
-	GDS_Array_ReadDataEx(N2, NULL, NULL, &ss, &pos[0], svInt32);
-
-	char buf1[1024] = { 0 };
-	char buf2[1024] = { 0 };
-	char *p1 = buf1, *p2 = buf2;
-	int dup = 0;
 	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
-	for (size_t i=0; i < (size_t)n; i++)
+	if (n > 0)
 	{
-		snprintf(p1, sizeof(buf1), "%s:%d", chr[i].c_str(), pos[i]);
-		if (strcmp(p1, p2) == 0)
+		CChromIndex &Chrom = File.Chromosome();
+		TSelection &Sel = File.Selection();
+		const int *pos = &File.Position()[0];
+		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		size_t p = 0, i = Sel.varStart;
+		char buf1[1024] = { 0 };
+		char buf2[1024] = { 0 };
+		char *p1 = buf1, *p2 = buf2;
+		int dup = 0;
+		for (; n > 0; i++)
 		{
-			dup ++;
-			snprintf(p1, sizeof(buf1), "%s:%d_%d", chr[i].c_str(),
-				pos[i], dup);
-			SET_STRING_ELT(rv_ans, i, mkChar(p1));
-		} else {
-			char *tmp;
-			tmp = p1; p1 = p2; p2 = tmp;
-			SET_STRING_ELT(rv_ans, i, mkChar(p2));
-			dup = 0;
+			if (*s++)
+			{
+				const char *chr = Chrom[i].c_str();
+				snprintf(p1, sizeof(buf1), "%s:%d", chr, pos[i]);
+				if (strcmp(p1, p2) == 0)
+				{
+					dup ++;
+					snprintf(p1, sizeof(buf1), "%s:%d_%d", chr, pos[i], dup);
+					SET_STRING_ELT(rv_ans, p++, mkChar(p1));
+				} else {
+					char *tmp;
+					tmp = p1; p1 = p2; p2 = tmp;
+					SET_STRING_ELT(rv_ans, p++, mkChar(p2));
+					dup = 0;
+				}
+				n--;
+			}
 		}
 	}
 	UNPROTECT(1);
 	return rv_ans;
 }
 
-/// get the combination of chromosome, position and allele, TODO
+/// get the combination of chromosome, position and allele ($chrom_pos_allele), TODO
 static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 {
 	PdAbstractArray N1 = File.GetObj("chromosome", TRUE);
@@ -410,35 +400,32 @@ static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
-/// get the indices of selected samples
+/// get the indices of selected samples ($sample_index)
 static SEXP get_sample_index(CFileInfo &File, TVarMap &Var, void *param)
 {
-	TSelection &Sel = File.Selection();
 	ssize_t num = File.SampleSelNum();
-	SEXP rv_ans = PROTECT(NEW_INTEGER(num));
+	SEXP rv_ans = NEW_INTEGER(num);
 	int *p = INTEGER(rv_ans), i = 0;
-	C_BOOL *s = Sel.pSample;
-	for (ssize_t n=0; n < num; )
-		if (s[i++]) { *p++ = i; n++; }
-	UNPROTECT(1);
+	const C_BOOL *s = File.Selection().pSample;
+	for (; num > 0; )
+		if (s[i++]) { *p++ = i; num--; }
 	return rv_ans;
 }
 
-/// get the indices of selected variants
+/// get the indices of selected variants ($variant_index)
 static SEXP get_variant_index(CFileInfo &File, TVarMap &Var, void *param)
 {
 	TSelection &Sel = File.Selection();
 	ssize_t num = File.VariantSelNum();
-	SEXP rv_ans = PROTECT(NEW_INTEGER(num));
+	SEXP rv_ans = NEW_INTEGER(num);
 	int *p = INTEGER(rv_ans), i = Sel.varStart;
-	C_BOOL *s = Sel.pVariant;
-	for (ssize_t n=0; n < num; )
-		if (s[i++]) { *p++ = i; n++; }
-	UNPROTECT(1);
+	const C_BOOL *s = Sel.pVariant;
+	for (; num > 0; )
+		if (s[i++]) { *p++ = i; num--; }
 	return rv_ans;
 }
 
-/// get data from annotation/info
+/// get data from annotation/info/VARIABLE
 static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
@@ -450,7 +437,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 	CIndex &V = Var.Index;
 	if (!V.HasIndex() || (P->padNA==TRUE && V.IsFixedOne()))
 	{
-		// no index
+		// no index or fixed-one
 		Sel.GetStructVariant();
 		C_BOOL *ss[2] = { Sel.pVariant+Sel.varStart, NULL };
 		if (Var.NDim == 2)
@@ -458,7 +445,12 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 		C_Int32 dimst[2]  = { C_Int32(Sel.varStart), 0 };
 		C_Int32 dimcnt[2] = { C_Int32(Sel.varEnd-Sel.varStart), Var.Dim[1] };
 		rv_ans = GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode);
-		rv_ans = VAR_LOGICAL(Var.Obj, rv_ans);
+		if (Var.IsBit1)
+		{
+			PROTECT(rv_ans);
+			rv_ans = AS_LOGICAL(rv_ans);
+			UNPROTECT(1);
+		}
 
 	} else {
 		// with index
@@ -475,8 +467,13 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 			GDS_Array_GetDim(Var.Obj, dimcnt, 2);
 			dimcnt[0] = var_count;
 		}
-		SEXP val = PROTECT(VAR_LOGICAL(Var.Obj,
-			GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode)));
+		SEXP val = PROTECT(GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode));
+		if (Var.IsBit1)
+		{
+			UNPROTECT(1);
+			val = AS_LOGICAL(val);
+			PROTECT(val);
+		}
 
 		if (P->padNA==TRUE && V.ValLenMax()==1 && Var.NDim==1)
 		{
@@ -538,7 +535,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
-/// get data from annotation/format
+/// get data from annotation/format/VARIABLE
 static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
@@ -708,13 +705,13 @@ COREARRAY_DLL_LOCAL TVarMap &VarGetStruct(CFileInfo &File, const string &name)
 		{
 			vm.Init(File, VAR_ALLELE, get_alt_allele);
 			CHECK_VARIANT_ONE_DIMENSION
-		} else if (name == VAR_CHROM_POS)
+		} else if (name == VAR_CHROM_POS2)
 		{
-			vm.Init(File, VAR_CHROM, get_chrom_pos);
+			vm.Init(File, VAR_CHROM, get_chrom_pos2);
 			CHECK_VARIANT_ONE_DIMENSION
 		} else if (name == VAR_CHROM_POS_ALLELE)
 		{
-			vm.Init(File, VAR_CHROM, get_chrom_pos_allele);
+			vm.Init(File, VAR_ALLELE, get_chrom_pos_allele);
 			CHECK_VARIANT_ONE_DIMENSION
 		} else if (name == VAR_SAMPLE_INDEX)
 		{
@@ -788,6 +785,17 @@ static SEXP VarGetData(CFileInfo &File, const string &name, int use_raw,
 	int padNA, SEXP Env)
 {
 	TVarMap &vm = VarGetStruct(File, name);
+	if (vm.Obj)
+	{
+		PdGDSObj node;
+		int node_id;
+		if (GDS_Node_Load(vm.Obj, vm.ObjID, name.c_str(), File.File(),
+			&node, &node_id))
+		{
+			vm.Obj = node;
+			vm.ObjID = node_id;
+		}
+	}
 	TParam param(use_raw, padNA, Env);
 	return (*vm.Func)(File, vm, &param);
 }

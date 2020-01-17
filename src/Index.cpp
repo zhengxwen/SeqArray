@@ -754,6 +754,7 @@ TVarMap::TVarMap()
 	NDim = 0;
 	memset(Dim, 0, sizeof(Dim));
 	Func = NULL;
+	IsBit1 = false;
 }
 
 void TVarMap::Init(CFileInfo &file, const string &varnm, TFunction fc)
@@ -793,6 +794,10 @@ void TVarMap::get_obj(CFileInfo &file, const string &varnm)
 	int node_id;
 	GDS_Node_Load(NULL, -1, varnm.c_str(), file._File, &node, &node_id);
 	Obj = node; ObjID = node_id;
+	// set IsBool
+	char classname[32] = { 0 };
+	GDS_Node_GetClassName(Obj, classname, sizeof(classname));
+	IsBit1 = (strcmp(classname, "dBit1") == 0);
 }
 
 // CFileInfo

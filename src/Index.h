@@ -375,6 +375,7 @@ public:
 	int NDim;        ///< the number of dimensions
 	C_Int32 Dim[4];  ///< the size of each dimension
 	TFunction Func;  ///< function pointer to get an R object
+	bool IsBit1;     ///< ture if it is dBit1
 	CIndex Index;    ///< indexing
 
 	TVarMap();       ///< constructor
