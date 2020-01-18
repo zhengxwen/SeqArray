@@ -840,7 +840,12 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         cat("    bim file: '", bim.fn, "' (", .pretty(n), " variant",
             .plural(n), ")\n", sep="")
     }
-
+    x <- bimD$chr
+    x[x == 23] <- "X"
+    x[x == 24] <- "Y"
+    x[x == 25] <- "XY"
+    x[x == 26] <- "MT"
+    bimD$chr <- x
 
     ##  create GDS file  ##
 
