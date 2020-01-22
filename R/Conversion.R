@@ -761,8 +761,8 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 #
 
 seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
-    compress.annotation="LZMA_RA", optimize=TRUE, digest=TRUE, parallel=FALSE,
-    verbose=TRUE)
+    compress.annotation="LZMA_RA", chr.conv=TRUE, optimize=TRUE, digest=TRUE,
+    parallel=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(bed.fn), length(bed.fn)==1L)
@@ -778,6 +778,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
     stopifnot(is.character(compress.geno), length(compress.geno)==1L)
     stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
+    stopifnot(is.logical(chr.conv), length(chr.conv)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
@@ -799,7 +800,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     bed_flag <- b[3L] == 0L
     if (verbose)
     {
-        cat("    bed file: '", bed.fn, "'", sep="")
+        cat("    bed file: ", sQuote(bed.fn), sep="")
         s <- ifelse(bed_flag, " (sample-major mode: [SNP, sample])",
             " (SNP-major mode: [sample, SNP])")
         if (.crayon()) s <- crayon::blurred(s)
@@ -824,7 +825,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(famD)
-        cat("    fam file: '", fam.fn, "' (", .pretty(n), " sample",
+        cat("    fam file: ", sQuote(fam.fn), " (", .pretty(n), " sample",
             .plural(n), ")\n", sep="")
     }
 
@@ -837,15 +838,30 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(bimD)
-        cat("    bim file: '", bim.fn, "' (", .pretty(n), " variant",
+        cat("    bim file: ", sQuote(bim.fn), " (", .pretty(n), " variant",
             .plural(n), ")\n", sep="")
     }
-    x <- bimD$chr
-    x[x == 23] <- "X"
-    x[x == 24] <- "Y"
-    x[x == 25] <- "XY"
-    x[x == 26] <- "MT"
-    bimD$chr <- x
+    if (chr.conv)
+    {
+        x <- bimD$chr
+        x23 <- sum(x==23L, na.rm=TRUE)
+        x24 <- sum(x==24L, na.rm=TRUE)
+        x25 <- sum(x==25L, na.rm=TRUE)
+        x26 <- sum(x==26L, na.rm=TRUE)
+        if (x23 && verbose)
+            cat("        chromosome code 23 => X (", .pretty(x23), ")\n", sep="")
+        if (x23) x[x == 23L] <- "X"
+        if (x24 && verbose)
+            cat("        chromosome code 24 => Y (", .pretty(x24), ")\n", sep="")
+        if (x24) x[x == 24L] <- "Y"
+        if (x25 && verbose)
+            cat("        chromosome code 25 => XY (", .pretty(x25), ")\n", sep="")
+        if (x25) x[x == 25L] <- "XY"
+        if (x26 && verbose)
+            cat("        chromosome code 26 => MT (", .pretty(x26), ")\n", sep="")
+        if (x26) x[x == 26L] <- "MT"
+        bimD$chr <- x
+    }
 
     ##  create GDS file  ##
 
@@ -936,7 +952,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         # conversion in parallel
         seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
         {
-            library("gdsfmt")
+            eval(parse(text="library(SeqArray)"))
             # the process id, starting from one
             i <- process_index
             # open the bed file
@@ -1138,7 +1154,7 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     }
     if (is.character(gdsfile))
     {
-        if (verbose) cat("    open ", shQuote(gdsfile), "\n", sep="")
+        if (verbose) cat("    open ", sQuote(gdsfile), "\n", sep="")
         gdsfile <- seqOpen(gdsfile)
         on.exit(seqClose(gdsfile))
     }
@@ -1155,7 +1171,7 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     fam <- data.frame(FID=s, IID=s, FAT=rep(0L, n), MOT=rep(0L, n),
         sex=rep(0L, n), pheno=rep(-9L, n), stringsAsFactors=FALSE)
     famfn <- paste0(out.fn, ".fam")
-    if (verbose) cat("    fam file: ", shQuote(famfn), "\n", sep="")
+    if (verbose) cat("    fam file: ", sQuote(famfn), "\n", sep="")
     write.table(fam, file=famfn, quote=FALSE, sep="\t", row.names=FALSE,
         col.names=FALSE)
     remove(fam)
@@ -1173,14 +1189,14 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
         alt2 = seqGetData(gdsfile, "$ref"),
         stringsAsFactors=FALSE)
     bimfn <- paste0(out.fn, ".bim")
-    if (verbose) cat("    bim file: ", shQuote(bimfn), "\n", sep="")
+    if (verbose) cat("    bim file: ", sQuote(bimfn), "\n", sep="")
     write.table(bim, file=bimfn, quote=FALSE, sep="\t", row.names=FALSE,
         col.names=FALSE)
     remove(bim)
     
     # bed file
     bedfn <- paste0(out.fn, ".bed")
-    if (verbose) cat("    bed file: ", shQuote(bedfn), "\n", sep="")
+    if (verbose) cat("    bed file: ", sQuote(bedfn), "\n", sep="")
     outf <- file(bedfn, "w+b")
     on.exit(close(outf), add=TRUE)
     writeBin(as.raw(c(0x6C, 0x1B, 0x01)), outf)

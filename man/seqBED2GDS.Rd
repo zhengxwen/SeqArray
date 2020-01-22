@@ -7,8 +7,8 @@
 }
 \usage{
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
-    compress.annotation="LZMA_RA", optimize=TRUE, digest=TRUE, parallel=FALSE,
-    verbose=TRUE)
+    compress.annotation="LZMA_RA", chr.conv=TRUE, optimize=TRUE, digest=TRUE,
+    parallel=FALSE, verbose=TRUE)
 seqGDS2BED(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
 }
 \arguments{
@@ -25,6 +25,8 @@ seqGDS2BED(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     \item{compress.annotation}{the compression method for the GDS variables,
         except "genotype"; optional values are defined in the function
         \code{add.gdsn}}
+    \item{chr.conv}{if \code{TRUE}, convert numeric chromosome codes 23 to X,
+        24 to Y, 25 to XY, and 26 to MT}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
