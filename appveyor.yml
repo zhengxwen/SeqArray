@@ -16,7 +16,7 @@ environment:
   matrix:
   - R_VERSION: stable
     R_ARCH: x64
-    BIOC_USE_DEVEL: TRUE
+    BIOC_USE_DEVEL: FALSE
     PKGTYPE: both
 
 build_script:

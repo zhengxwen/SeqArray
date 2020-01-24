@@ -273,57 +273,65 @@ static SEXP get_dosage_alt(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
-/// get the number of alleles for each variant, TODO
+/// get the number of alleles for each variant
 static SEXP get_num_allele(CFileInfo &File, TVarMap &Var, void *param)
 {
+	TSelection &Sel = File.Selection();
 	ssize_t num = File.VariantSelNum();
 	SEXP rv_ans = PROTECT(NEW_INTEGER(num));
-	int *p = INTEGER(rv_ans);
-	CApply_Variant_NumAllele NodeVar(File);
-	for (ssize_t i=0; i < num; i++)
+	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
+	vector<string> buffer(1024);
+	int n, *p = INTEGER(rv_ans);
+	while ((n = D.Read(&buffer[0], 1024)) > 0)
 	{
-		p[i] = NodeVar.GetNumAllele();
-		NodeVar.Next();
+		for (int i=0; i < n; i++)
+			*p++ = GetNumOfAllele(buffer[i].c_str());
 	}
 	UNPROTECT(1);
 	return rv_ans;
 }
 
-/// get the reference allele for each variant, TODO
+/// get the reference allele for each variant
 static SEXP get_ref_allele(CFileInfo &File, TVarMap &Var, void *param)
 {
-	size_t n = File.VariantSelNum();
-	vector<string> buffer(n);
-	C_BOOL *ss = File.Selection().pVariant;
-	GDS_Array_ReadDataEx(Var.Obj, NULL, NULL, &ss, &buffer[0], svStrUTF8);
-	// output
-	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
-	for (size_t i=0; i < n; i++)
+	TSelection &Sel = File.Selection();
+	ssize_t num = File.VariantSelNum();
+	SEXP rv_ans = PROTECT(NEW_CHARACTER(num));
+	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
+	vector<string> buffer(1024);
+	int n, k = 0;
+	while ((n = D.Read(&buffer[0], 1024)) > 0)
 	{
-		const char *p = buffer[i].c_str();
-		size_t m = 0;
-		for (const char *s=p; *s!=',' && *s!=0; s++) m++;
-		SET_STRING_ELT(rv_ans, i, mkCharLen(p, m));
+		for (int i=0; i < n; i++)
+		{
+			const char *p = buffer[i].c_str();
+			size_t m = 0;
+			for (const char *s=p; *s!=',' && *s!=0; s++) m++;
+			SET_STRING_ELT(rv_ans, k++, mkCharLen(p, m));
+		}
 	}
 	UNPROTECT(1);
 	return rv_ans;
 }
 
-/// get the alternative allele for each variant, TODO
+/// get the alternative allele for each variant
 static SEXP get_alt_allele(CFileInfo &File, TVarMap &Var, void *param)
 {
-	size_t n = File.VariantSelNum();
-	vector<string> buffer(n);
-	C_BOOL *ss = File.Selection().pVariant;
-	GDS_Array_ReadDataEx(Var.Obj, NULL, NULL, &ss, &buffer[0], svStrUTF8);
-	// output
-	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
-	for (size_t i=0; i < n; i++)
+	TSelection &Sel = File.Selection();
+	ssize_t num = File.VariantSelNum();
+	SEXP rv_ans = PROTECT(NEW_CHARACTER(num));
+	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
+	vector<string> buffer(1024);
+	int n, k = 0;
+	while ((n = D.Read(&buffer[0], 1024)) > 0)
 	{
-		const char *p = buffer[i].c_str();
-		for (; *p!=',' && *p!=0; p++);
-		if (*p == ',') p++;
-		SET_STRING_ELT(rv_ans, i, mkChar(p));
+		for (int i=0; i < n; i++)
+		{
+			const char *p = buffer[i].c_str();
+			for (; *p!=',' && *p!=0;) p++;
+			if (*p == ',') p++;
+			SET_STRING_ELT(rv_ans, k++, mkChar(p));
+		}
 	}
 	UNPROTECT(1);
 	return rv_ans;
@@ -370,31 +378,33 @@ static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
-/// get the combination of chromosome, position and allele ($chrom_pos_allele), TODO
+/// get the combination of chromosome, position and allele ($chrom_pos_allele)
 static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 {
-	PdAbstractArray N1 = File.GetObj("chromosome", TRUE);
-	PdAbstractArray N2 = File.GetObj("position", TRUE);
-	PdAbstractArray N3 = File.GetObj("allele", TRUE);
-	int n = File.VariantSelNum();
-	vector<string> chr(n);
-	vector<C_Int32> pos(n);
-	vector<string> allele(n);
-
-	C_BOOL *ss = File.Selection().pVariant;
-	GDS_Array_ReadDataEx(N1, NULL, NULL, &ss, &chr[0], svStrUTF8);
-	GDS_Array_ReadDataEx(N2, NULL, NULL, &ss, &pos[0], svInt32);
-	GDS_Array_ReadDataEx(N3, NULL, NULL, &ss, &allele[0], svStrUTF8);
-
-	char buf[65536] = { 0 };
-	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
-	for (size_t i=0; i < (size_t)n; i++)
+	TSelection &Sel = File.Selection();
+	CChromIndex &Chrom = File.Chromosome();
+	const int *PosBase = &File.Position()[0];
+	ssize_t num = File.VariantSelNum();
+	SEXP rv_ans = PROTECT(NEW_CHARACTER(num));
+	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
+	C_BOOL *psel = Sel.pVariant + Sel.varStart;
+	vector<string> buffer(1024);
+	char strbuf[8192] = { 0 };
+	int n, k = 0;
+	while ((n = D.Read(&buffer[0], 1024)) > 0)
 	{
-		const char *s = allele[i].c_str();
-		for (char *p=(char*)s; *p != 0; p++)
-			if (*p == ',') *p = '_';
-		snprintf(buf, sizeof(buf), "%s:%d_%s", chr[i].c_str(), pos[i], s);
-		SET_STRING_ELT(rv_ans, i, mkChar(buf));
+		for (int i=0; i < n; i++)
+		{
+			while (!*psel) psel++;
+			size_t j = (psel++) - Sel.pVariant;
+			const int pos = PosBase[j];
+			const char *chr = Chrom[j].c_str();
+			const char *allele = buffer[i].c_str();
+			for (char *p=(char*)allele; *p; p++)
+				if (*p == ',') *p = '_';
+			snprintf(strbuf, sizeof(strbuf), "%s:%d_%s", chr, pos, allele);
+			SET_STRING_ELT(rv_ans, k++, mkChar(strbuf));
+		}
 	}
 	UNPROTECT(1);
 	return rv_ans;
@@ -407,7 +417,7 @@ static SEXP get_sample_index(CFileInfo &File, TVarMap &Var, void *param)
 	SEXP rv_ans = NEW_INTEGER(num);
 	int *p = INTEGER(rv_ans), i = 0;
 	const C_BOOL *s = File.Selection().pSample;
-	for (; num > 0; )
+	while (num > 0)
 		if (s[i++]) { *p++ = i; num--; }
 	return rv_ans;
 }
@@ -420,12 +430,12 @@ static SEXP get_variant_index(CFileInfo &File, TVarMap &Var, void *param)
 	SEXP rv_ans = NEW_INTEGER(num);
 	int *p = INTEGER(rv_ans), i = Sel.varStart;
 	const C_BOOL *s = Sel.pVariant;
-	for (; num > 0; )
+	while (num > 0)
 		if (s[i++]) { *p++ = i; num--; }
 	return rv_ans;
 }
 
-/// get data from annotation/info/VARIABLE
+/// get data from annotation/info/VARIABLE, TODO
 static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
@@ -535,7 +545,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
-/// get data from annotation/format/VARIABLE
+/// get data from annotation/format/VARIABLE, TODO
 static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;

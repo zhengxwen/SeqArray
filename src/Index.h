@@ -459,7 +459,7 @@ private:
 	inline void clear_selection();
 };
 
-
+/// GDS files with specified IDs
 extern std::map<int, CFileInfo> COREARRAY_DLL_LOCAL GDSFile_ID_Info;
 
 /// get the associated CFileInfo
@@ -467,6 +467,40 @@ COREARRAY_DLL_LOCAL CFileInfo &GetFileInfo(SEXP gdsfile);
 
 /// get TVarMap from a variable name
 COREARRAY_DLL_LOCAL TVarMap &VarGetStruct(CFileInfo &File, const string &name);
+
+
+/// Vector read from a GDS node
+template<typename TYPE> class COREARRAY_DLL_LOCAL CVectorRead
+{
+public:
+	/// constructor
+	CVectorRead(PdContainer obj, C_BOOL *selbase, C_Int32 st, C_Int32 nTRUE)
+	{
+		Obj = obj; SelBase = selbase;
+		Start = st; NumTRUE = nTRUE;
+	}
+	/// read
+	template<typename OUTTYPE> int Read(OUTTYPE out[], int nmax)
+	{
+		if (nmax > NumTRUE) nmax = NumTRUE;
+		if (nmax > 0)
+		{
+			C_BOOL *ss = SelBase + Start, *p = ss;
+			for (int m=nmax; m > 0;) if (*p++) m--;
+			C_Int32 Len = p - ss;
+			GDS_Array_ReadDataEx(Obj, &Start, &Len, &ss, out, TdTraits<OUTTYPE>::SVType);
+			Start += Len;
+			NumTRUE -= nmax;
+		}
+		return nmax;
+	}
+
+private:
+	PdContainer Obj;    ///< a GDS node
+	C_BOOL *SelBase;    ///< the pointer to the start of selection
+	C_Int32 Start;      ///< the start position of selection
+	C_Int32 NumTRUE;    ///< the total number of selected variants after Start
+};
 
 
 
