@@ -196,6 +196,18 @@
 
 
 #######################################################################
+# Clear the internal variable map for better performance in seqGetData()
+# if only a few variable accessed in the following steps (e.g.,
+# seqBlockApply(), seqUnitApply())
+#
+.clear_varmap <- function(gdsfile)
+{
+    .Call(SEQ_ClearVarMap, gdsfile)
+}
+
+
+
+#######################################################################
 # Open and close a connection,
 # Please always call '.close_conn' after '.open_bin' and '.open_text'
 

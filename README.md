@@ -163,21 +163,18 @@ seqClose(f)
 
 ![](vignettes/benchmark_rand_samp.svg)
 
+(BioC3.8: gdsfmt_v1.18.1, SeqArray_v1.22.6; BioC3.4: gdsfmt_v1.10.1, SeqArray_v1.14.1)
+
 *Update ... (in progress)*
 
 
 ## File Format Conversion
 
-[gds2bgen](https://github.com/zhengxwen/gds2bgen): Format Conversion Between GDS and BGEN
-
-
-## Bug Fixes
-
-* v1.22.0: fix `seqVCF2GDS()` and `seqBCF2GDS()` since reading from connections in text mode is buffered in R >= v3.5.0
+[gds2bgen](https://github.com/zhengxwen/gds2bgen): Format conversion between GDS and BGEN
 
 
 ## Also See
 
-[JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): data manipulation of whole-genome sequencing variant data in Julia
+[JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): Data manipulation of whole-genome sequencing variant data in Julia
 
-[PySeqArray](https://github.com/CoreArray/PySeqArray): data manipulation of whole-genome sequencing variant data in Python
+[PySeqArray](https://github.com/CoreArray/PySeqArray): Data manipulation of whole-genome sequencing variant data in Python

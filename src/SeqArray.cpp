@@ -1234,6 +1234,20 @@ COREARRAY_DLL_EXPORT SEXP SEQ_AppendFill(SEXP gdsnode, SEXP val, SEXP cnt)
 
 
 // ===========================================================
+// Clear VarMap in a GDS file
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP SEQ_ClearVarMap(SEXP gdsfile)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		File.VarMap().clear();
+	COREARRAY_CATCH
+}
+
+
+
+// ===========================================================
 // Get system configuration
 // ===========================================================
 
@@ -1512,6 +1526,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
 		CALL(SEQ_IntAssign, 2),             CALL(SEQ_AppendFill, 3),
+		CALL(SEQ_ClearVarMap, 1),
 
 		CALL(SEQ_bgzip_create, 1),
 

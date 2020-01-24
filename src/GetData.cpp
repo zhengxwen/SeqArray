@@ -885,6 +885,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 
 		// File information
 		CFileInfo &File = GetFileInfo(gdsfile);
+		File.VarMap().clear();
+
 		// Selection
 		TSelection &Selection = File.Selection();
 

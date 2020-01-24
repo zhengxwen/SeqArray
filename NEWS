@@ -1,3 +1,14 @@
+CHANGES IN VERSION 1.27.8
+-------------------------
+
+UTILITIES
+
+    o rewrite `seqGetData()` for faster loading
+
+    o significantly improve `seqBlockApply()` on 'annotation/info/VARIABLE'
+      (https://github.com/zhengxwen/SeqArray/issues/59)
+
+
 CHANGES IN VERSION 1.27.7
 -------------------------
 

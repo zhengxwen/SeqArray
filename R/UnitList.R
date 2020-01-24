@@ -9,8 +9,8 @@
 #######################################################################
 # Get a list of units of selected variants via sliding windows based on basepairs
 #
-seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L, win.start=0L,
-    dup.rm=TRUE, verbose=TRUE)
+seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L,
+    win.start=0L, dup.rm=TRUE, verbose=TRUE)
 {
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.numeric(win.size), is.finite(win.size), length(win.size)==1L,
@@ -69,9 +69,9 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L, win.
 #######################################################################
 # Get a list of units of selected variants via sliding windows based on basepairs
 #
-seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
-    parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE, .padNA=TRUE,
-    .envir=NULL)
+seqUnitApply <- function(gdsfile, units, var.name, FUN,
+    as.is=c("none", "list", "unlist"), parallel=FALSE, ...,
+    .bl_size=256L, .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .envir=NULL)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -93,6 +93,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN, as.is=c("none", "list", 
     stopifnot(all(sapply(units$index, is.integer)))
 
     # initialize internally
+    .clear_varmap(gdsfile)
     .Call(SEQ_IntAssign, process_index, 1L)
     .Call(SEQ_IntAssign, process_count, 1L)
 
