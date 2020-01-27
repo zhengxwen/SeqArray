@@ -393,7 +393,7 @@ private:
 class COREARRAY_DLL_LOCAL CFileInfo
 {
 public:
-	friend struct COREARRAY_DLL_LOCAL TVarMap;
+	friend struct TVarMap;
 
 	/// constructor
 	CFileInfo(PdGDSFolder root=NULL);
