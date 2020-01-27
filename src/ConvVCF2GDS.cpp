@@ -631,10 +631,12 @@ inline static void getStringArray(char *p, char *end, vector<string> &UTF8s)
 
 static string BlankString;
 
-const static int FIELD_TYPE_INT      = 1;
-const static int FIELD_TYPE_FLOAT    = 2;
-const static int FIELD_TYPE_FLAG     = 3;
-const static int FIELD_TYPE_STRING   = 4;
+static const int FIELD_TYPE_INT    = 1;
+static const int FIELD_TYPE_FLOAT  = 2;
+static const int FIELD_TYPE_FLAG   = 3;
+static const int FIELD_TYPE_STRING = 4;
+
+static const char *ERR_NUMBER = "please consider revising it to 'Number=.'";
 
 
 /// the structure of INFO field
@@ -674,8 +676,8 @@ struct COREARRAY_DLL_LOCAL TVCF_Info
 			if (I32 > N)
 			{
 				throw ErrSeqArray(
-					"INFO ID '%s' (Number=A) should have %d value(s), but receives %d.",
-					name.c_str(), N, I32);
+					"INFO ID '%s' (Number=A) should have %d value(s) but receives %d, %s.",
+					name.c_str(), N, I32, ERR_NUMBER);
 			} else if (I32 < N)
 				array.resize(N, missing);
 			GDS_Array_AppendData(len_obj, 1, &N, svInt32);
@@ -686,8 +688,8 @@ struct COREARRAY_DLL_LOCAL TVCF_Info
 			if (I32 > N)
 			{
 				throw ErrSeqArray(
-					"INFO ID '%s' (Number=G) should have %d value(s), but receives %d.",
-					name.c_str(), N, I32);
+					"INFO ID '%s' (Number=G) should have %d value(s) but receives %d, %s.",
+					name.c_str(), N, I32, ERR_NUMBER);
 			} else if (I32 < N)
 				array.resize(N, missing);
 			GDS_Array_AppendData(len_obj, 1, &N, svInt32);
@@ -698,8 +700,8 @@ struct COREARRAY_DLL_LOCAL TVCF_Info
 			if (I32 > N)
 			{
 				throw ErrSeqArray(
-					"INFO ID '%s' (Number=R) should have %d value(s), but receives %d.",
-					name.c_str(), N, I32);
+					"INFO ID '%s' (Number=R) should have %d value(s) but receives %d, %s.",
+					name.c_str(), N, I32, ERR_NUMBER);
 			} else if (I32 < N)
 				array.resize(N, missing);
 			GDS_Array_AppendData(len_obj, 1, &N, svInt32);
@@ -712,8 +714,8 @@ struct COREARRAY_DLL_LOCAL TVCF_Info
 				if (N > number)
 				{
 					throw ErrSeqArray(
-						"INFO ID '%s' should have %d value(s), but receives %d.",
-						name.c_str(), number, N);
+						"INFO ID '%s' should have %d value(s) but receives %d, %s.",
+						name.c_str(), number, N, ERR_NUMBER);
 				} else if (N < number)
 					array.resize(number, missing);
 			} else
@@ -957,8 +959,8 @@ public:
 			if (CellNum > num_allele)
 			{
 				throw ErrSeqArray(
-					"FORMAT ID '%s' (Number=A) should have %d value(s), but receives %d.",
-					name.c_str(), (int)num_allele, (int)CellNum);
+					"FORMAT ID '%s' (Number=A) should have %d value(s) but receives %d, %s.",
+					name.c_str(), (int)num_allele, (int)CellNum, ERR_NUMBER);
 			}
 			break;
 		case -3:
@@ -967,8 +969,8 @@ public:
 			if (CellNum > num_allele)
 			{
 				throw ErrSeqArray(
-					"FORMAT ID '%s' (Number=G) should have %d value(s), but receives %d.",
-					name.c_str(), (int)num_allele, (int)CellNum);
+					"FORMAT ID '%s' (Number=G) should have %d value(s) but receives %d, %s.",
+					name.c_str(), (int)num_allele, (int)CellNum, ERR_NUMBER);
 			}
 			break;
 		case -4:
@@ -976,8 +978,8 @@ public:
 			if (CellNum > num_allele)
 			{
 				throw ErrSeqArray(
-					"FORMAT ID '%s' (Number=R) should have %d value(s), but receives %d.",
-					name.c_str(), (int)num_allele, (int)CellNum);
+					"FORMAT ID '%s' (Number=R) should have %d value(s) but receives %d, %s.",
+					name.c_str(), (int)num_allele, (int)CellNum, ERR_NUMBER);
 			}
 			break;
 		default:
@@ -986,8 +988,8 @@ public:
 				if (CellNum > (size_t)number)
 				{
 					throw ErrSeqArray(
-						"FORMAT ID '%s' should have %d value(s), but receives %d.",
-						name.c_str(), number, (int)CellNum);
+						"FORMAT ID '%s' should have %d value(s) but receives %d, %s.",
+						name.c_str(), number, (int)CellNum, ERR_NUMBER);
 				}
 			} else
 				throw ErrSeqArray("Invalid value 'number' in TVCF_Format.");
