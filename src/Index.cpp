@@ -1214,12 +1214,14 @@ void CProgress::ShowProgress()
 			// show
 			if (NewLine)
 			{
-				ConnPutText(File, "[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+				ConnPutText(File, "[%s] %2.0f%%, %s %s", bar, p,
+					Counter < TotalCount ? "ETC:" : "completed,", time_str(s));
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "\n");
 			} else {
-				ConnPutText(File, "\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+				ConnPutText(File, "\r[%s] %2.0f%%, %s %s", bar, p,
+					Counter < TotalCount ? "ETC:" : "completed,", time_str(s));
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "    ");
