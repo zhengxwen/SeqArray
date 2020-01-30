@@ -407,7 +407,13 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
             }
             sz2 <- objdesp.gdsn(n)$size
             if (verbose)
-                cat(sprintf("\t(deflated %.1f%%)", (1-sz2/sz)*100))
+            {
+                v <- (1 - sz2/sz) * 100
+                if (v >= 0)
+                    cat(sprintf("\t(deflated %.1f%%)", v))
+                else
+                    cat(sprintf("\t(inflated %.1f%%)", -v))
+            }
             # digest
             if (!is.null(get.attr.gdsn(n)$md5))
             {
