@@ -936,7 +936,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
             sub("^([^.]*).*", "\\1", basename(out.gdsfn)), dirname(out.gdsfn))
         if (verbose)
         {
-            cat(sprintf("    Writing to %d files:\n", pnum))
+            cat(sprintf("    >>> writing to %d files: <<<\n", pnum))
             cat(sprintf("        %s [%s .. %s]\n", basename(ptmpfn),
                 .pretty(psplit[[1L]]),
                 .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
@@ -946,9 +946,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         # conversion in parallel
         seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
         {
-            eval(parse(text="library(SeqArray)"))
             # the process id, starting from one
-            i <- process_index
+            i <- SeqArray:::process_index
             # open the bed file
             bedfile <- .open_bin(bed.fn)
             on.exit({ .close_conn(bedfile) })
@@ -1034,9 +1033,44 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose) cat("    phase")
     n <- addfolder.gdsn(dstfile, "phase")
 
+    # add phase data
     n1 <- add.gdsn(n, "data", storage="bit1", valdim=c(nrow(famD), 0L),
         compress=compress.annotation)
-    .append_rep_gds(n1, as.raw(0L), as.double(nrow(bimD))*nrow(famD))
+    if (pnum <= 1L)
+    {
+        .append_rep_gds(n1, as.raw(0L), as.double(nrow(bimD))*nrow(famD))
+    } else {
+        # split to multiple files
+        psplit <- .file_split(nrow(bimD), pnum)
+        if (verbose)
+            cat(sprintf(":\n    >>> writing to %d files: <<<\n", pnum))
+        # conversion in parallel
+        seqParallel(parallel, NULL, FUN = function(tmp.fn, nsamp, psplit, cp)
+        {
+            # the process id, starting from one
+            i <- SeqArray:::process_index
+            # create gds file
+            f <- createfn.gds(tmp.fn[i])
+            on.exit(closefn.gds(f))
+            # new a gds node
+            vg <- add.gdsn(f, "data", storage="bit1", valdim=c(nsamp, 0L), compress=cp)
+            # re-position the file
+            cnt <- psplit[[2L]][i]
+            if (cnt > 0L)
+                .append_rep_gds(vg, as.raw(0L), as.double(cnt)*nsamp)
+            readmode.gdsn(vg)
+            invisible()
+        }, split="none", tmp.fn=ptmpfn, nsamp=nrow(famD), psplit=psplit,
+            cp=compress.annotation)
+
+        if (verbose) cat("        merging files ...")
+        lapply(ptmpfn, function(fn) {
+            f <- openfn.gds(fn)
+            on.exit({ closefn.gds(f); unlink(fn, force=TRUE) })
+            append.gdsn(n1, index.gdsn(f, "data"))
+        })
+        if (verbose) cat(" [Done]\n      ")
+    }
     readmode.gdsn(n1)
     .DigestCode(n1, digest, verbose)
 
