@@ -791,7 +791,6 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     }
 
     ##  open and detect bed.fn  ##
-
     bedfile <- .open_bin(bed.fn)
     on.exit({ .close_conn(bedfile) })
     b <- as.integer(readBin(bedfile$con, raw(), 3L))
@@ -800,19 +799,15 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     bed_flag <- b[3L] == 0L
     if (verbose)
     {
-        cat("    bed file: ", sQuote(bed.fn), sep="")
-        s <- ifelse(bed_flag, " (sample-major mode: [SNP, sample])",
-            " (SNP-major mode: [sample, SNP])")
-        if (.crayon()) s <- crayon::blurred(s)
-        cat(s, "\n", sep="")
+        cat("    bed file: ", sQuote(bed.fn), "\n", sep="")
+        cat("        ", ifelse(bed_flag, "sample-major mode: [SNP, sample]",
+            "SNP-major mode: [sample, SNP]"), "\n", sep="")
     }
 
     ##  read fam.fn  ##
-
     f <- .open_text(fam.fn, TRUE)
     famD <- read.table(f$con, header=FALSE, stringsAsFactors=FALSE)
     .close_conn(f)
-
     names(famD) <- c("FamilyID", "InvID", "PatID", "MatID", "Sex", "Pheno")
     if (anyDuplicated(famD$InvID) == 0L)
     {
@@ -825,12 +820,11 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(famD)
-        cat("    fam file: ", sQuote(fam.fn), " (", .pretty(n), " sample",
-            .plural(n), ")\n", sep="")
+        cat("    fam file: ", sQuote(fam.fn), "\n        ", .pretty(n),
+            " sample", .plural(n), "\n", sep="")
     }
 
     ##  read bim.fn  ##
-
     f <- .open_text(bim.fn, TRUE)
     bimD <- read.table(f$con, header=FALSE, stringsAsFactors=FALSE)
     .close_conn(f)
@@ -838,8 +832,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(bimD)
-        cat("    bim file: ", sQuote(bim.fn), " (", .pretty(n), " variant",
-            .plural(n), ")\n", sep="")
+        cat("    bim file: ", sQuote(bim.fn), "\n        ", .pretty(n),
+            " variant", .plural(n), "\n", sep="")
     }
     if (chr.conv)
     {
@@ -938,8 +932,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         # split to multiple files
         psplit <- .file_split(cnt4, pnum)
         # need unique temporary file names
-        ptmpfn <- .get_temp_fn(pnum, basename(sub("^([^.]*).*", "\\1", out.gdsfn)),
-            dirname(out.gdsfn))
+        ptmpfn <- .get_temp_fn(pnum,
+            sub("^([^.]*).*", "\\1", basename(out.gdsfn)), dirname(out.gdsfn))
         if (verbose)
         {
             cat(sprintf("    Writing to %d files:\n", pnum))

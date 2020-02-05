@@ -2,7 +2,7 @@
 //
 // ConvVCF2GDS.cpp: format conversion from VCF to GDS
 //
-// Copyright (C) 2013-2019    Xiuwen Zheng
+// Copyright (C) 2013-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1077,10 +1077,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead)
 // ===========================================================
 
 COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
-	SEXP avoid_odd)
+	SEXP multiple)
 {
 	int num = Rf_asInteger(pnum);
-	bool no_odd = Rf_asLogical(avoid_odd)==TRUE;
+	if (num <= 0) error("'pnum' should be > 0.");
+	int multi = Rf_asInteger(multiple);
+	if (multi <= 0) error("'multiple' should be > 0.");
 	SEXP ans = PROTECT(NEW_LIST(2));
 	SEXP start_array = PROTECT(NEW_NUMERIC(num));
 	SEXP count_array = PROTECT(NEW_NUMERIC(num));
@@ -1092,17 +1094,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
 	double st = Rf_asReal(start);
 	for (int i=0; i < num; i++)
 	{
-		double st1 = round(st);
-		REAL(start_array)[i] = st1;
+		double old_st = REAL(start_array)[i] = round(st);
 		st += scale;
-
-		C_Int64 m = (C_Int64)(round(st) - REAL(start_array)[i]);
-		if (m & 0x01 && no_odd) // avoid odd number
-			{ m ++; st ++; }
-		if ((st1 + m) > (cnt + 1))
-			m = round(cnt + 1 - st1);
-
-		REAL(count_array)[i] = (m >= 0) ? m : 0;
+		C_Int64 n = (C_Int64)(round(st) - old_st);
+		if (n % multi)  // should be a multiple of 'multi'
+		{
+			int m = ((n / multi) + 1) * multi;
+			st += m - n;
+			n = m;
+		}
+		if ((old_st + n) > (cnt + 1))
+			n = round(cnt + 1 - old_st);
+		REAL(count_array)[i] = (n >= 0) ? n : 0;
 	}
 
 	UNPROTECT(3);
