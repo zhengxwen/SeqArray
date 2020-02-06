@@ -80,24 +80,26 @@ to switch to 64-bit floating point format. Or packed real numbers can be
 adopted by setting
 \code{storage.option=seqStorageOption(float.mode="packedreal16:scale=0.0001")}.
 
-    By default, the compression method is "LZMA_RA" (\url{http://tukaani.org/xz/},
-LZMA algorithm with default compression level + independent data blocks for fine-level
-random access). Users can maximize the compression ratio by
+    By default, the compression method is "LZMA_RA" (\url{http://tukaani.org/xz},
+LZMA algorithm with default compression level + independent data blocks for
+fine-level random access). Users can maximize the compression ratio by
 \code{storage.option="LZMA_RA.max"} or
 \code{storage.option=seqStorageOption("LZMA_RA.max")}. LZMA is known to have
-higher compression ratio than the zlib algorithm. LZ4 (\url{https://github.com/lz4/lz4})
-is an option via \code{storage.option="LZ4_RA"} or
+higher compression ratio than the zlib algorithm. LZ4
+(\url{https://github.com/lz4/lz4}) is an option via
+\code{storage.option="LZ4_RA"} or
 \code{storage.option=seqStorageOption("LZ4_RA")}.
 
     If multiple cores/processes are specified in \code{parallel}, all VCF files
-are scanned to calculate the total number of variants before format conversion, and then
-split by the number of cores/processes.
+are scanned to calculate the total number of variants before format conversion,
+and then split by the number of cores/processes.
 
     \code{storage.option="Ultra"} and \code{storage.option="UltraMax"} need much
 larger memory than other compression methods. Users may consider using
-\code{\link{seqRecompress}} to recompress the GDS file after calling \code{seqVCF2GDS()}
-with \code{storage.option="ZIP_RA"}, since \code{seqRecompress()} compresses data nodes
-one by one, taking much less memory when \code{"Ultra"} or \code{"UltraMax"} is used.
+\code{\link{seqRecompress}} to recompress the GDS file after calling
+\code{seqVCF2GDS()} with \code{storage.option="ZIP_RA"}, since
+\code{seqRecompress()} compresses data nodes one by one, taking much less memory
+when \code{"Ultra"} or \code{"UltraMax"} is used.
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,

@@ -8,9 +8,9 @@
 seqResetVariantID(gds.fn, set=NULL, digest=TRUE, optimize=TRUE, verbose=TRUE)
 }
 \arguments{
-    \item{gds.fn}{a list of file names of multiple GDS files}
-    \item{set}{NULL or a logical vector; NULL for resetting all files, or TRUE for
-        resetting variant.id for that GDS file}
+    \item{gds.fn}{a character vector of multiple GDS file names}
+    \item{set}{\code{NULL} or a logical vector; \code{NULL} for resetting all
+        files, or \code{TRUE} for resetting variant.id for that GDS file}
     \item{digest}{a logical value, if TRUE, add a md5 hash code}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
@@ -20,8 +20,8 @@ seqResetVariantID(gds.fn, set=NULL, digest=TRUE, optimize=TRUE, verbose=TRUE)
     None.
 }
 \details{
-    The variant IDs will be replaced by the numbers in sequential order and adjacent to
-each file. The variant ID starts from 1 in the first GDS file.
+    The variant IDs will be replaced by the numbers in sequential order and
+adjacent to each file. The variant ID starts from 1 in the first GDS file.
 }
 
 \author{Xiuwen Zheng}

@@ -58,9 +58,9 @@ Description for describing the alternative alleles.
     ---
     \code{seqSummary(gdsfile, "annotation/filter")} or
 \code{seqSummary(gdsfile, "$filter")} returns a data.frame with ID and
-description (\code{check="none"}), or a list with components:
-    \item{value}{a data.frame with ID and Description}
-    \item{table}{cross tabulation for the variable 'filter'}
+description (\code{check="none"}), or a list with components: value (a
+\code{data.frame} with ID and Description), table (cross tabulation for the
+variable 'filter').
 
     ---
     \code{seqSummary(gdsfile, "annotation/info")} or

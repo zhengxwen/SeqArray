@@ -77,15 +77,20 @@ to create a \code{SeqVarGDSClass} object.
 		}
 		\item{}{
 			\code{colData(x)}:
-			Returns a \code{DataFrame} with sample identifiers and any information in the 'sample.annotation' node.
+			Returns a \code{DataFrame} with sample identifiers and any
+			information in the 'sample.annotation' node.
 		}
 		\item{}{
 			\code{info(x, info=NULL)}:
-			Returns the info fields as a \code{DataFrame}. \code{info} is a character vector with the names of fields to return (default is to return all).
+			Returns the info fields as a \code{DataFrame}. \code{info} is a
+			character vector with the names of fields to return (default is to
+			return all).
 		}
 		\item{}{
 			\code{geno(x, geno=NULL)}:
-			Returns the geno (format) fields as a \code{SimpleList}. \code{geno} is a character vector with the names of fields to return (default is to return all).
+			Returns the geno (format) fields as a \code{SimpleList}. \code{geno}
+			is a character vector with the names of fields to return (default
+			is to return all).
 		}
 	}
 

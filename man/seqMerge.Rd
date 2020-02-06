@@ -95,7 +95,6 @@ seqAddValue("test.gds", "sample.id", paste0("S", 1:90), replace=TRUE)
 seqMerge(c(vcf.fn, "test.gds"), "output.gds", storage.option="ZIP_RA")
 
 
-
 # delete the temporary files
 unlink(c("tmp.gds", "test.gds", "output.gds"), force=TRUE)
 unlink(fn, force=TRUE)

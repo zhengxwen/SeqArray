@@ -5,9 +5,9 @@
     Storage and compression options for GDS import and merging.
 }
 \usage{
-seqStorageOption(compression=c("ZIP_RA", "ZIP_RA.fast", "ZIP_RA.max",
-    "LZ4_RA", "LZ4_RA.fast", "LZ4_RA.max", "LZMA_RA", "LZMA_RA.fast",
-    "LZMA_RA.max", "Ultra", "UltraMax", "none"), mode=NULL, float.mode="float32",
+seqStorageOption(compression=c("ZIP_RA", "ZIP_RA.fast", "ZIP_RA.max", "LZ4_RA",
+    "LZ4_RA.fast", "LZ4_RA.max", "LZMA_RA", "LZMA_RA.fast", "LZMA_RA.max",
+    "Ultra", "UltraMax", "none"), mode=NULL, float.mode="float32",
     geno.compress=NULL, info.compress=NULL, format.compress=NULL,
     index.compress=NULL, ...)
 }
@@ -48,7 +48,8 @@ compression algorithm for each data type.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}, \code{\link{seqRecompress}}, \code{\link{seqMerge}}
+    \code{\link{seqVCF2GDS}}, \code{\link{seqRecompress}},
+    \code{\link{seqMerge}}
 }
 
 \examples{

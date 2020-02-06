@@ -17,9 +17,10 @@ seqUnitSlidingWindows(gdsfile, win.size=5000L, win.shift=2500L, win.start=0L,
     \item{verbose}{if \code{TRUE}, display information}
 }
 \value{
-    A S3 object with the class name "SeqUnitListClass" and two components (\code{desp}
-and \code{index}): the first is a data.frame with columns "chr", "start" and "end", and
-the second is list of integer vectors (the variant indices).
+    A S3 object with the class name "SeqUnitListClass" and two components
+(\code{desp} and \code{index}): the first is a data.frame with columns "chr",
+"start" and "end", and the second is list of integer vectors (the variant
+indices).
 }
 
 \author{Xiuwen Zheng}

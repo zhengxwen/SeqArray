@@ -28,6 +28,9 @@ first alternative allele, etc). If \code{ref.allele} is a numeric vector,
 \code{ref.allele} specifies each allele per site. If \code{ref.allele} is a
 character vector, \code{ref.allele} specifies the desired allele for each site
 (e.g, ancestral allele for the derived allele frequency/count).
+
+    The minor allele frequency (MAF) can be obtained using
+\code{af <- seqAlleleFreq(gdsfile); maf <- pmin(af, 1-af)}.
 }
 
 \author{Xiuwen Zheng}

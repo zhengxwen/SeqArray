@@ -14,12 +14,14 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .envir=NULL)
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         for small numbers instead of INTEGER if possible; 0xFF is missing value
         if RAW is used}
-    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the number of data
-        points for each variant is not greater than 1}
-    \item{.envir}{\code{NULL}, an environment object, a list or a \code{data.frame}}
+    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the
+        number of data points for each variant is not greater than 1}
+    \item{.envir}{\code{NULL}, an environment object, a list or a
+        \code{data.frame}}
 }
 \value{
-    Return vectors, matrices or lists (with \code{length} and \code{data} components).
+    Return vectors, matrices or lists (with \code{length} and \code{data}
+components).
 }
 \details{
     The variable name should be \code{"sample.id"}, \code{"variant.id"},
@@ -50,8 +52,9 @@ position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
 the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 (i.e., chr:position_REF_ALT).
 
-\code{"$variant_index"} returns the indices of selected variants starting from 1.
-\code{"$sample_index"} returns the indices of selected samples starting from 1.
+\code{"$variant_index"} returns the indices of selected variants starting
+from 1, and \code{"$sample_index"} returns the indices of selected samples
+starting from 1.
 
 \code{"$:VAR"} return the variable "VAR" from \code{.envir} according to the
 selected variants.

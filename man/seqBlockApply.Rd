@@ -36,8 +36,8 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible; for genotypes, 0xFF is missing value
         if RAW is used}
-    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the number of data
-        points for each variant is not greater than 1}
+    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the
+        number of data points for each variant is not greater than 1}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{...}{optional arguments to \code{FUN}}
 }
@@ -71,8 +71,9 @@ position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
 the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 (i.e., chr:position_REF_ALT).
 
-\code{"$variant_index"} returns the indices of selected variants starting from 1.
-\code{"$sample_index"} returns the indices of selected samples starting from 1.
+\code{"$variant_index"} returns the indices of selected variants starting
+from 1, and \code{"$sample_index"} returns the indices of selected samples
+starting from 1.
 
     The algorithm is highly optimized by blocking the computations to exploit
 the high-speed memory instead of disk.

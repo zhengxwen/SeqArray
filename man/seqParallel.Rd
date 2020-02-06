@@ -33,13 +33,15 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         function, like "+".}
     \item{.selection.flag}{\code{TRUE} -- passes a logical vector of selection
         to the second argument of \code{FUN(gdsfile, selection, ...)}}
-    \item{.initialize}{a user-defined function for initializing workers, should have
-        two arguments (process_id, param)}
+    \item{.initialize}{a user-defined function for initializing workers, should
+        have two arguments (process_id, param)}
     \item{.finalize}{a user-defined function for finalizing workers, should have
         two arguments (process_id, param)}
-    \item{.initparam}{parameters passed to \code{.initialize} and \code{.initialize}}
+    \item{.initparam}{parameters passed to \code{.initialize} and
+        \code{.initialize}}
     \item{.balancing}{load balancing if \code{TRUE}}
-    \item{.bl_size}{chuck size, the increment for load balancing, 10000 for variants}
+    \item{.bl_size}{chuck size, the increment for load balancing, 10000 for
+        variants}
     \item{.bl_progress}{if \code{TRUE} and \code{.balancing=TRUE}, show progress
         information}
     \item{x}{a vector (atomic or list), passed to \code{FUN}}

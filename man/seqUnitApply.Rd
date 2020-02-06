@@ -6,12 +6,13 @@
 }
 \usage{
 seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
-    parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE, .padNA=TRUE,
-    .envir=NULL)
+    parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE,
+    .padNA=TRUE, .envir=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{units}{a list of units of selected variants, with S3 class "SeqUnitListClass"}
+    \item{units}{a list of units of selected variants, with S3 class
+        \code{SeqUnitListClass}}
     \item{var.name}{the variable name(s), see details}
     \item{FUN}{the function to be applied}
     \item{as.is}{returned value: a list, a vector or none;
@@ -29,8 +30,8 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         instead of INTEGER if possible; for genotypes, 0xFF is missing value
         if RAW is used}
-    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the number of data
-        points for each variant is not greater than 1}
+    \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the
+        number of data points for each variant is not greater than 1}
     \item{.envir}{NULL, an environment object, or a list/data.frame}
     \item{...}{optional arguments to \code{FUN}}
 }
@@ -64,8 +65,9 @@ position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
 the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
 (i.e., chr:position_REF_ALT).
 
-\code{"$variant_index"} returns the indices of selected variants starting from 1.
-\code{"$sample_index"} returns the indices of selected samples starting from 1.
+\code{"$variant_index"} returns the indices of selected variants starting
+from 1, and \code{"$sample_index"} returns the indices of selected samples
+starting from 1.
 }
 \value{
     A vector, a list of values or none.
