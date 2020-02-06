@@ -165,6 +165,11 @@ seqClose(f)
 
 (BioC3.8: gdsfmt_v1.18.1, SeqArray_v1.22.6; BioC3.4: gdsfmt_v1.10.1, SeqArray_v1.14.1)
 
+### 2. Reading annotation data via blocking
+
+`seqBlockApply()` was unexpectedly slow (SeqArray_1.26.2). See: [https://github.com/zhengxwen/SeqArray/issues/59](https://github.com/zhengxwen/SeqArray/issues/59)
+
+
 *Update ... (in progress)*
 
 
