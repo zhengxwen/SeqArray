@@ -16,9 +16,9 @@ Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         person("Cathy", "Laurie", role="ctb"))
 Description: Data management of large-scale whole-genome sequencing variant
         calls with thousands of individuals: genotypic data (e.g., SNVs, indels
-        and structural variation calls) and annotations in SeqArray GDS files are
-        stored in an array-oriented and compressed manner, with efficient data
-        access using the R programming language.
+        and structural variation calls) and annotations in SeqArray GDS files
+        are stored in an array-oriented and compressed manner, with efficient
+        data access using the R programming language.
 License: GPL-3
 VignetteBuilder: knitr
 ByteCompile: TRUE
