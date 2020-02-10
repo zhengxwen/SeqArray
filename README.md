@@ -167,7 +167,9 @@ seqClose(f)
 
 ### 2. Reading annotation data via blocking
 
-`seqBlockApply()` was unexpectedly slow (SeqArray_1.26.2). See: [https://github.com/zhengxwen/SeqArray/issues/59](https://github.com/zhengxwen/SeqArray/issues/59).
+`seqBlockApply()` was unexpectedly slow using version ≤ v1.26.2.
+
+See: [https://github.com/zhengxwen/SeqArray/issues/59](https://github.com/zhengxwen/SeqArray/issues/59).
 
 
 *(update in progress ...)*

@@ -799,8 +799,9 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     bed_flag <- b[3L] == 0L
     if (verbose)
     {
-        cat("    bed file: ", sQuote(bed.fn), "\n", sep="")
-        cat("        ", ifelse(bed_flag, "sample-major mode: [SNP, sample]",
+        cat("    bed file: ", sQuote(bed.fn), "\n        ",
+            .pretty_size(file.size(bed.fn)), ", ",
+            ifelse(bed_flag, "sample-major mode: [SNP, sample]",
             "SNP-major mode: [sample, SNP]"), "\n", sep="")
     }
 
@@ -820,8 +821,9 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(famD)
-        cat("    fam file: ", sQuote(fam.fn), "\n        ", .pretty(n),
-            " sample", .plural(n), "\n", sep="")
+        cat("    fam file: ", sQuote(fam.fn), "\n        ",
+            .pretty_size(file.size(fam.fn)), ", ",
+            .pretty(n), " sample", .plural(n), "\n", sep="")
     }
 
     ##  read bim.fn  ##
@@ -832,8 +834,9 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     if (verbose)
     {
         n <- nrow(bimD)
-        cat("    bim file: ", sQuote(bim.fn), "\n        ", .pretty(n),
-            " variant", .plural(n), "\n", sep="")
+        cat("    bim file: ", sQuote(bim.fn), "\n        ",
+            .pretty_size(file.size(bim.fn)), ", ",
+            .pretty(n), " variant", .plural(n), "\n", sep="")
     }
     if (chr.conv)
     {

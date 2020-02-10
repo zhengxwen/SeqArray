@@ -133,7 +133,7 @@
         else if (x >= 1024)
             sprintf("%.1fK", x / 1024)
         else
-            sprintf("%g bytes", x)
+            sprintf("%gB", x)
     }
     sapply(s, size)
 }
