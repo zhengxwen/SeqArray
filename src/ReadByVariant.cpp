@@ -28,7 +28,6 @@ namespace SeqArray
 using namespace Vectorization;
 
 static const char *ERR_DIM = "Invalid dimension of '%s'.";
-static const char *ERR_DIM_EX = "Invalid dimension of '%s': %s.";
 
 
 // =====================================================================
@@ -687,13 +686,7 @@ void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name)
 	// check
 	int DimCnt = GDS_Array_DimCnt(Node);
 	if (DimCnt != 2)
-	{
-		if (DimCnt == 3)
-			throw ErrSeqArray(ERR_DIM_EX, var_name,
-				"3-dim format variable is not a formal variable, please rerun 'seqVCF2GDs()'");
-		else
-			throw ErrSeqArray(ERR_DIM, var_name);
-	}
+		throw ErrSeqArray(ERR_DIM, var_name);
 	C_Int32 DLen[2];
 	GDS_Array_GetDim(Node, DLen, 2);
 	if (DLen[1] != File.SampleNum())

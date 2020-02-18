@@ -1199,8 +1199,14 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     # fam file
     s <- seqGetData(gdsfile, "sample.id")
     n <- length(s)
-    fam <- data.frame(FID=s, IID=s, FAT=rep(0L, n), MOT=rep(0L, n),
+    fam <- data.frame(FID=rep(0L, n), IID=s, FAT=rep(0L, n), MOT=rep(0L, n),
         sex=rep(0L, n), pheno=rep(-9L, n), stringsAsFactors=FALSE)
+    nm <- "sample.annotation/sex"
+    if (!is.null(index.gdsn(gdsfile, nm, silent=TRUE)))
+        fam$sex <- read.gdsn(index.gdsn(gdsfile, nm))
+    nm <- "sample.annotation/phenotype"
+    if (!is.null(index.gdsn(gdsfile, nm, silent=TRUE)))
+        fam$pheno <- read.gdsn(index.gdsn(gdsfile, nm))
     famfn <- paste0(out.fn, ".fam")
     if (verbose) cat("    fam file: ", sQuote(famfn), "\n", sep="")
     write.table(fam, file=famfn, quote=FALSE, sep="\t", row.names=FALSE,
