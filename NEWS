@@ -1,6 +1,9 @@
-CHANGES IN VERSION 1.27.11
+CHANGES IN VERSION 1.27.12
 -------------------------
 
+UTILITIES
+
+    o add a S3 method `print.SeqVCFHeaderClass()` for `seqVCF_Header()`
 
 
 CHANGES IN VERSION 1.27.8

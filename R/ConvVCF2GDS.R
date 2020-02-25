@@ -405,6 +405,8 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     rv
 }
 
+print.SeqVCFHeaderClass <- function(x, ...) str(x)
+
 
 
 #######################################################################

@@ -43,6 +43,10 @@ importFrom(GenomeInfoDb, renameSeqlevels)
 importFrom(Biostrings, DNAStringSet, DNAStringSetList)
 
 
+# Registering S3 methods
+S3method(print, SeqVCFHeaderClass)
+
+
 # Export all names
 exportPattern("^seq*")
 export(.onAttach, .Last.lib)
