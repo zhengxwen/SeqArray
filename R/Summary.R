@@ -141,7 +141,7 @@
 
         dm <- objdesp.gdsn(n)$dim
         if (length(dm) > 2L)
-            dm <- dm[-c(length(dm)-1L, length(dm))]
+            dm <- tail(dm, 2L)
         if (dm[1L] != nsamp)
             message("Invalid sample dimension in 'phase/data'.")
         if (dm[2L] != nvar)
@@ -152,7 +152,7 @@
         {
             dm <- objdesp.gdsn(n)$dim
             if (length(dm) > 2L)
-                dm <- dm[-c(length(dm)-1L, length(dm))]
+                dm <- tail(dm, 2L)
             if (dm[1L] != nvar)
                 message("Invalid variant dimension in 'phase/~data'.")
             if (dm[2L] != nsamp)
