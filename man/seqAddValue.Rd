@@ -14,7 +14,8 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE,
     \item{varnm}{the variable name, e.g., "sample.id", "variant.id",
         "chromosome", "annotation/info/NEW_VARIABLE"}
     \item{val}{the R value can be integers, real numbers, characters,
-        factor, logical or raw variable, \code{data.frame}}
+        factor, logical, raw variable, \code{data.frame} or a list; a list of
+        vectors is used for variable-length annotation data}
     \item{desp}{variable description}
     \item{replace}{if \code{TRUE}, replace the existing variable silently if
         possible}
@@ -59,6 +60,11 @@ seqAddValue(f, "annotation/info/folder/packed", c(rep(2L, 1000), rep(NA, 348)))
 seqAddValue(f, "annotation/info/newff",
     data.frame(x=1:1348, y=rep("s", 1348), stringsAsFactors=FALSE),
     desp=c("integer numbers", "character"))
+
+# variable-length annotation info data
+v <- lapply(1:1348, function(x) x)
+v[[1]] <- 1:10
+seqAddValue(f, "annotation/info/folder/val1", v)
 
 # sample annotation
 seqAddValue(f, "sample.annotation", data.frame(ii=1:90, y=rep("A", 90)),

@@ -163,6 +163,22 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
             .DigestCode(n, TRUE, FALSE)
             if (!is.null(nidx)) .DigestCode(nidx, TRUE, FALSE)
             if (verbose) print(n, attribute=verbose.attr)
+        } else if (is.list(val))
+        {
+            stopifnot(length(val) == nvar)
+            val <- lapply(val, function(x) unlist(x, use.names=FALSE))
+            ns <- lengths(val)
+            n <- add.gdsn(node, nm, unlist(val, use.names=FALSE),
+                compress=compress, closezip=TRUE, replace=TRUE)
+            nidx <- add.gdsn(node, paste0("@", nm), lengths(val),
+                compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
+            put.attr.gdsn(n, "Number", ".")
+            put.attr.gdsn(n, "Type", .vcf_type(n))
+            if (!length(desp)) desp <- ""
+            put.attr.gdsn(n, "Description", desp[1L])
+            .DigestCode(n, TRUE, FALSE)
+            .DigestCode(nidx, TRUE, FALSE)
+            if (verbose) print(n, attribute=verbose.attr)
         } else {
             stop("Invalid type of 'val': ", typeof(val))
         }
