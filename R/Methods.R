@@ -384,7 +384,8 @@ seqGetFilter <- function(gdsfile, .useraw=FALSE)
 #######################################################################
 # Get data from a working space with selected samples and variants
 #
-seqGetData <- function(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .envir=NULL)
+seqGetData <- function(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE,
+    .tolist=FALSE, .envir=NULL)
 {
     # check
     if (is.character(gdsfile))
@@ -394,7 +395,7 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .envir=NUL
     } else {
         stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     }
-    .Call(SEQ_GetData, gdsfile, var.name, .useraw, .padNA, .envir)
+    .Call(SEQ_GetData, gdsfile, var.name, .useraw, .padNA, .tolist, .envir)
 }
 
 
@@ -475,7 +476,7 @@ seqApply <- function(gdsfile, var.name, FUN,
 seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     as.is=c("none", "list", "unlist"),
     var.index=c("none", "relative", "absolute"), bsize=1024L, parallel=FALSE,
-    .useraw=FALSE, .padNA=TRUE, .progress=FALSE, ...)
+    .useraw=FALSE, .padNA=TRUE, .tolist=FALSE, .progress=FALSE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -485,7 +486,8 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     var.index <- match.arg(var.index)
     stopifnot(is.numeric(bsize), length(bsize)==1L)
     njobs <- .NumParallel(parallel)
-    param <- list(bsize=bsize, useraw=.useraw, padNA=.padNA, progress=.progress)
+    param <- list(bsize=bsize, useraw=.useraw, padNA=.padNA, tolist=.tolist,
+        progress=.progress)
 
     if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
     {

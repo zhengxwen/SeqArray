@@ -71,10 +71,16 @@ struct COREARRAY_DLL_LOCAL TParam
 {
 	int use_raw;
 	int padNA;
+	int tolist;
 	SEXP Env;
 	/// constructor
-	TParam(int _useraw, int _padNA, SEXP _Env)
-		{ use_raw = _useraw; padNA = _padNA; Env = _Env; }
+	TParam(int _useraw, int _padNA, int _tolist, SEXP _Env)
+	{
+		use_raw = _useraw;
+		padNA = _padNA;
+		tolist = _tolist;
+		Env = _Env;
+	}
 };
 
 
@@ -487,6 +493,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 
 		if (P->padNA==TRUE && V.ValLenMax()==1 && Var.NDim==1)
 		{
+			// can be flatten
 			int *psel = INTEGER(I32);
 			size_t n = Rf_length(I32);
 			rv_ans = PROTECT(Rf_allocVector(TYPEOF(val), n));
@@ -531,10 +538,49 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 					break;
 				}
 			default:
-				throw ErrSeqArray("Not support data type (.padNA=TRUE).");
+				throw ErrSeqArray("Not support data type for .padNA=TRUE.");
+			}
+		} else if (P->tolist)
+		{
+			// convert to a list
+			const int n = Rf_length(I32);
+			rv_ans = PROTECT(NEW_LIST(n));
+			int *psel = INTEGER(I32);
+			size_t d2 = (Var.NDim < 2) ? 1 : dimcnt[1], pt = 0;
+			for (int i=0; i < n; i++)
+			{
+				size_t nn = psel[i] * d2;
+				SEXP vv = Rf_allocVector(TYPEOF(val), nn);
+				SET_ELEMENT(rv_ans, i, vv);
+				if (psel[i] > 0)
+				{
+					switch (TYPEOF(val))
+					{
+					case INTSXP:
+						memcpy(INTEGER(vv), &INTEGER(val)[pt], sizeof(int)*nn);
+						break;
+					case REALSXP:
+						memcpy(REAL(vv), &REAL(val)[pt], sizeof(double)*nn);
+						break;
+					case LGLSXP:
+						memcpy(LOGICAL(vv), &LOGICAL(val)[pt], sizeof(int)*nn);
+						break;
+					case STRSXP:
+						for (size_t i=0; i < nn; i++)
+							SET_STRING_ELT(vv, i, STRING_ELT(val, pt+i));
+						break;
+					case RAWSXP:
+						memcpy(RAW(vv), &RAW(val)[pt], nn);
+						break;
+					default:
+						throw ErrSeqArray("Not support data type for .tolist=TRUE.");
+					}
+				}
+				pt += nn;
 			}
 		} else {
-			PROTECT(rv_ans = NEW_LIST(2));
+			// create `list(length, data)`
+			rv_ans = PROTECT(NEW_LIST(2));
 				SET_ELEMENT(rv_ans, 0, I32);
 				SET_ELEMENT(rv_ans, 1, val);
 			SET_NAMES(rv_ans, R_Data_Name);
@@ -792,7 +838,7 @@ COREARRAY_DLL_LOCAL TVarMap &VarGetStruct(CFileInfo &File, const string &name)
 
 /// get data from a SeqArray GDS file
 static SEXP VarGetData(CFileInfo &File, const string &name, int use_raw,
-	int padNA, SEXP Env)
+	int padNA, int tolist, SEXP Env)
 {
 	TVarMap &vm = VarGetStruct(File, name);
 	if (vm.Obj)
@@ -806,7 +852,7 @@ static SEXP VarGetData(CFileInfo &File, const string &name, int use_raw,
 			vm.ObjID = node_id;
 		}
 	}
-	TParam param(use_raw, padNA, Env);
+	TParam param(use_raw, padNA, tolist, Env);
 	return (*vm.Func)(File, vm, &param);
 }
 
@@ -822,7 +868,7 @@ extern "C"
 
 /// Get data from a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
-	SEXP PadNA, SEXP Env)
+	SEXP PadNA, SEXP ToList, SEXP Env)
 {
 	// var.name
 	if (!Rf_isString(var_name))
@@ -838,6 +884,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 	const int padNA = Rf_asLogical(PadNA);
 	if (padNA == NA_LOGICAL)
 		error("'.padNA' must be TRUE or FALSE.");
+	// .tolist
+	const int tolist = Rf_asLogical(ToList);
+	if (tolist == NA_LOGICAL)
+		error("'.tolist' must be TRUE or FALSE.");
 	// .envir
 	if (!Rf_isNull(Env))
 	{
@@ -851,13 +901,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 		// Get data
 		if (nlen == 1)
 		{
-			rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw, padNA, Env);
+			rv_ans = VarGetData(File, CHAR(STRING_ELT(var_name, 0)), use_raw,
+				padNA, tolist, Env);
 		} else {
 			rv_ans = PROTECT(NEW_LIST(nlen));
 			for (int i=0; i < nlen; i++)
 			{
 				SET_VECTOR_ELT(rv_ans, i,
-					VarGetData(File, CHAR(STRING_ELT(var_name, i)), use_raw, padNA, Env));
+					VarGetData(File, CHAR(STRING_ELT(var_name, i)), use_raw,
+					padNA, tolist, Env));
 			}
 			setAttrib(rv_ans, R_NamesSymbol, getAttrib(var_name, R_NamesSymbol));
 			UNPROTECT(1);
@@ -886,6 +938,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 	int padNA = Rf_asLogical(RGetListElement(param, "padNA"));
 	if (padNA == NA_LOGICAL)
 		error("'.padNA' must be TRUE or FALSE.");
+	// .tolist
+	int tolist = Rf_asLogical(RGetListElement(param, "tolist"));
+	if (tolist == NA_LOGICAL)
+		error("'.tolist' must be TRUE or FALSE.");
 	// .progress
 	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
 	if (prog_flag == NA_LOGICAL)
@@ -1032,14 +1088,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 				{
 					SET_ELEMENT(R_call_param, i,
 						VarGetData(File, CHAR(STRING_ELT(var_name, i)),
-						use_raw_flag, padNA, rho));
+						use_raw_flag, padNA, tolist, rho));
 				}
 				// call R function
 				call_val = eval(R_fcall, rho);
 
 			} else {
 				R_call_param = VarGetData(File, CHAR(STRING_ELT(var_name, 0)),
-					use_raw_flag, padNA, rho);
+					use_raw_flag, padNA, tolist, rho);
 				// make a call function
 				if (VarIdx > 0)
 				{

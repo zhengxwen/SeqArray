@@ -71,7 +71,8 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L,
 #
 seqUnitApply <- function(gdsfile, units, var.name, FUN,
     as.is=c("none", "list", "unlist"), parallel=FALSE, ...,
-    .bl_size=256L, .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .envir=NULL)
+    .bl_size=256L, .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
+    .envir=NULL)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -112,7 +113,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
         for (i in seq_len(nl))
         {
             seqSetFilter(gdsfile, variant.sel=units$index[[i]], verbose=FALSE)
-            x <- seqGetData(gdsfile, var.name, .useraw, .padNA, .envir)
+            x <- seqGetData(gdsfile, var.name, .useraw, .padNA, .tolist, .envir)
             ans[[i]] <- FUN(x, ...)
             .seqProgForward(progress, 1L)
         }
@@ -195,7 +196,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             for (j in seq_len(n))
             {
                 seqSetFilter(f, variant.sel=.packageEnv$units[[j+k]], verbose=FALSE)
-                x <- seqGetData(f, vn, .useraw, .padNA, env)
+                x <- seqGetData(f, vn, .useraw, .padNA, .tolist, env)
                 rv[[j]] <- FUN(x, ...)
             }
             # return

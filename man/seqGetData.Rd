@@ -5,7 +5,8 @@
     Gets data from a SeqArray GDS file.
 }
 \usage{
-seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .envir=NULL)
+seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
+    .envir=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -16,6 +17,8 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .envir=NULL)
         if RAW is used}
     \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the
         number of data points for each variant is not greater than 1}
+    \item{.tolist}{if \code{TRUE}, return a list of vectors instead of the
+        structure \code{list(length, data)} for variable-length data}
     \item{.envir}{\code{NULL}, an environment object, a list or a
         \code{data.frame}}
 }

@@ -62,9 +62,11 @@ seqAddValue(f, "annotation/info/newff",
     desp=c("integer numbers", "character"))
 
 # variable-length annotation info data
-v <- lapply(1:1348, function(x) x)
+v <- lapply(1:1348, function(x) as.character(x))
 v[[1]] <- 1:10
 seqAddValue(f, "annotation/info/folder/val1", v)
+head(seqGetData(f, "annotation/info/folder/val1", .tolist=TRUE))
+
 
 # sample annotation
 seqAddValue(f, "sample.annotation", data.frame(ii=1:90, y=rep("A", 90)),

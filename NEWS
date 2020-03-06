@@ -5,6 +5,9 @@ UTILITIES
 
     o add a S3 method `print.SeqVCFHeaderClass()` for `seqVCF_Header()`
 
+    o new option '.tolist' in `seqGetData()`, `seqBlockApply()` and
+      `seqUnitApply()`
+
 
 CHANGES IN VERSION 1.27.8
 -------------------------
