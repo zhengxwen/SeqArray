@@ -547,12 +547,20 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 			rv_ans = PROTECT(NEW_LIST(n));
 			int *psel = INTEGER(I32);
 			size_t d2 = (Var.NDim < 2) ? 1 : dimcnt[1], pt = 0;
+			SEXP ZeroLen = NULL;
 			for (int i=0; i < n; i++)
 			{
 				size_t nn = psel[i] * d2;
-				SEXP vv = Rf_allocVector(TYPEOF(val), nn);
+				SEXP vv;
+				if (nn <= 0)
+				{
+					if (!ZeroLen) ZeroLen = Rf_allocVector(TYPEOF(val), 0);
+					vv = ZeroLen;
+				} else {
+					vv = Rf_allocVector(TYPEOF(val), nn);
+				}
 				SET_ELEMENT(rv_ans, i, vv);
-				if (psel[i] > 0)
+				if (nn > 0)
 				{
 					switch (TYPEOF(val))
 					{
