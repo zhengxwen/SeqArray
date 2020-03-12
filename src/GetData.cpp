@@ -27,6 +27,11 @@
 namespace SeqArray
 {
 
+// the mode of R data allowing sparse matrix, defined in >= gdsfmt_1.23.6
+#ifndef GDS_R_READ_ALLOW_SP_MATRIX
+#   define GDS_R_READ_ALLOW_SP_MATRIX    0
+#endif
+
 // check macro
 #define CHECK_SAMPLE_DIMENSION    \
 	if ((vm.NDim != 1) || (vm.Dim[0] != File.SampleNum()))    \
@@ -208,7 +213,8 @@ static SEXP get_phase(CFileInfo &File, TVarMap &Var, void *param)
 	if (Var.NDim == 3)
 		ss[2] = NeedArrayTRUEs(Var.Dim[2]);
 	return GDS_R_Array_Read(Var.Obj, NULL, NULL, ss,
-		GDS_R_READ_DEFAULT_MODE | (P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0));
+		GDS_R_READ_DEFAULT_MODE | GDS_R_READ_ALLOW_SP_MATRIX |
+		(P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0));
 }
 
 /// get dosage of reference allele from 'genotype/data'
@@ -604,7 +610,8 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
 	const C_UInt32 UseMode =
-		GDS_R_READ_DEFAULT_MODE | (P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0);
+		GDS_R_READ_DEFAULT_MODE | GDS_R_READ_ALLOW_SP_MATRIX |
+		(P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0);
 
 	SEXP rv_ans = R_NilValue;
 	TSelection &Sel = File.Selection();
