@@ -605,7 +605,7 @@ inline static void getFloatArray(char *p, char *end, vector<double> &F64s)
 }
 
 
-/// get an integer from a string
+/// get multiple strings from a string split by comma
 inline static void getStringArray(char *p, char *end, vector<string> &UTF8s)
 {
 	UTF8s.clear();
@@ -618,6 +618,7 @@ inline static void getStringArray(char *p, char *end, vector<string> &UTF8s)
 		const char *e = p;
 		while ((s < e) && (*(e-1) == ' ')) e --;
 
+		if (s[0]=='.' && (s+1)==e) e = s;
 		UTF8s.push_back(string(s, e));
 		if ((p < end) && (*p == ',')) p ++;
 	}
@@ -927,7 +928,7 @@ public:
 		}
 	}
 
-	/// get an integer from a string
+	/// get multiple strings from a string split by comma
 	void GetStrings(char *p, char *end, size_t samp_idx)
 	{
 		CellNum = 0;
@@ -940,6 +941,7 @@ public:
 			const char *e = p;
 			while ((s < e) && (*(e-1) == ' ')) e --;
 
+			if (s[0]=='.' && (s+1)==e) e = s;
 			Push_S8(string(s, e), samp_idx);
 			if ((p < end) && (*p == ',')) p ++;
 		}

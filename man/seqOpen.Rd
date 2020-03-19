@@ -14,7 +14,8 @@ seqOpen(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
         with read-only mode when it has been opened in the same R session}
 }
 \value{
-    Return an object of class \code{\link{gds.class}}.
+    Return an object of class \code{SeqVarGDSClass} inherited from
+\code{\link{gds.class}}.
 }
 \details{
     It is strongly suggested to call \code{seqOpen} instead of

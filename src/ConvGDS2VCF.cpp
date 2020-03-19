@@ -2,7 +2,7 @@
 //
 // ConvGDS2VCF.cpp: format conversion from GDS to VCF
 //
-// Copyright (C) 2013-2018    Xiuwen Zheng
+// Copyright (C) 2013-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -220,7 +220,8 @@ inline static void put_text(const char *fmt, ...)
 /// return the number in the INFO field
 inline static int INFO_GetNum(SEXP X, int n)
 {
-	if (n < 0) n = Rf_length(X);
+	if (n < 0)
+		n = !Rf_isNull(X) ? Rf_length(X) : 0;
 
 	if (IS_INTEGER(X))
 	{
@@ -270,9 +271,12 @@ inline static void INFO_Write(SEXP X, size_t n)
 		for (; i < n; i++)
 		{
 			if (i > 0) *pLine++ = ',';
-			LineBuf_Append(CHAR(STRING_ELT(X, i)));
+			SEXP s = STRING_ELT(X, i);
+			LineBuf_Append(
+				((s != NA_STRING) && (CHAR(s)[0] != 0)) ? CHAR(s) : ".");
 		}
-	}
+	} else
+		throw ErrSeqArray("INFO_Write: invalid data type.");
 }
 
 
@@ -320,12 +324,13 @@ inline static void FORMAT_Write(SEXP X, size_t n, size_t Start, size_t Step)
 		{
 			if (i > 0) *pLine++ = ',';
 			SEXP s = STRING_ELT(X, Start);
-			if (s != NA_STRING)
+			if ((s != NA_STRING) && (CHAR(s)[0] != 0))
 				LineBuf_Append(CHAR(s));
 			else
 				*pLine++ = '.';
 		}
-	}
+	} else
+		throw ErrSeqArray("FORMAT_Write: invalid data type.");
 
 	if (n <= 0) *pLine++ = '.';
 }

@@ -1193,7 +1193,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         for (fn in ptmpfn)
         {
             if (verbose)
-                cat("    opening '", basename(fn), "' ...", sep="")
+                cat("    ", basename(fn), " ...", sep="")
             # open the gds file
             tmpgds <- seqOpen(fn)
             # merge variables

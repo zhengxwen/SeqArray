@@ -1,3 +1,12 @@
+CHANGES IN VERSION 1.27.13
+-------------------------
+
+UTILITIES
+
+    o String "." in a VCF file are converted to a blank string (missing value)
+      in `seqVCF2GDS()`
+
+
 CHANGES IN VERSION 1.27.12
 -------------------------
 
