@@ -950,7 +950,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
         {
             # the process id, starting from one
-            i <- SeqArray:::process_index
+            i <- process_index
             # open the bed file
             bedfile <- .open_bin(bed.fn)
             on.exit({ .close_conn(bedfile) })
@@ -1051,7 +1051,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
         seqParallel(parallel, NULL, FUN = function(tmp.fn, nsamp, psplit, cp)
         {
             # the process id, starting from one
-            i <- SeqArray:::process_index
+            i <- process_index
             # create gds file
             f <- createfn.gds(tmp.fn[i])
             on.exit(closefn.gds(f))

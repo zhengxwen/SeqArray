@@ -24,7 +24,7 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
     \item{FUN}{the function to be applied, should be like
         \code{FUN(gdsfile, ...)} or \code{FUN(...)}}
     \item{split}{split the dataset by variant or sample according to multiple
-        processes, or "none" for no split}
+        processes, or "none" for no split; \code{split="by.variant"} by default}
     \item{.combine}{define a fucntion for combining results from different
         processes; by default, \code{"unlist"} is used, to produce a vector
         which contains all the atomic components, via

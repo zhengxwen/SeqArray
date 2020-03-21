@@ -22,7 +22,8 @@ seqGDS2SNP(gdsfile, out.gdsfn, dosage=FALSE, compress.geno="LZMA_RA",
         except "genotype"; optional values are defined in the function
         \code{add.gdsn}}
     \item{ds.type}{applicable when import dosages, the data type for storing
-        dosages; see \code{\link{add.gdsn}}}
+        dosages; see \code{\link{add.gdsn}}; \code{ds.type="packedreal16"} by
+        default}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}

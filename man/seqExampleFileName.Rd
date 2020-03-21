@@ -8,15 +8,13 @@
 seqExampleFileName(type=c("gds", "vcf", "KG_Phase1"))
 }
 \arguments{
-    \item{type}{either "gds" or "vcf"}
+    \item{type}{either "gds" (by default) or "vcf"}
 }
 \value{
-    Return the file name of a VCF file shipped with the package if
-\code{type = "vcf"}, or the file name of a GDS file if \code{type = "gds"}.
-}
-\details{
-    The SeqArray GDS file was created from a subset of VCF data of the 1000
-Genomes Phase 1 Project.
+    Return the path of a VCF file in the package if \code{type="vcf"}, or
+the path of a GDS file if \code{type="gds"}. If \code{type="KG_Phase1"},
+return the path of GDS file on Chromosome 22 of the 1000 Genomes Phase 1
+project.
 }
 
 \author{Xiuwen Zheng}

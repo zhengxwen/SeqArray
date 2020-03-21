@@ -10,7 +10,7 @@ seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax", "non
 }
 \arguments{
     \item{gds.fn}{the file name of SeqArray file}
-    \item{compress}{the compression method}
+    \item{compress}{the compression method, \code{compress="ZIP"} by default}
     \item{exclude}{excluded GDS nodes}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}

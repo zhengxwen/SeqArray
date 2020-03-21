@@ -18,7 +18,8 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, use_Rsamtools=TRUE,
     \item{fmt.var}{a list of variable names in the FORMAT field, or NULL for
         using all variables; \code{character(0)} for no variable
         in the FORMAT field}
-    \item{use_Rsamtools}{TRUE for loading the Rsamtools package, see details}
+    \item{use_Rsamtools}{\code{TRUE} for loading the Rsamtools package, see
+        details}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

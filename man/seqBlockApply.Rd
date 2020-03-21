@@ -16,18 +16,18 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
     \item{var.name}{the variable name(s), see details}
     \item{FUN}{the function to be applied}
     \item{margin}{giving the dimension which the function will be applied over}
-    \item{as.is}{returned value: a list, a vector or none;
-        \code{as.is} can be a \code{\link{connection}} object, or a GDS node
-        \code{\link{gdsn.class}} object; if "unlist" is used, produces a vector
-        which contains all the atomic components, via
-        \code{unlist(..., recursive=FALSE)}}
-    \item{var.index}{if \code{"none"}, call \code{FUN(x, ...)} without variable
-        index; if \code{"relative"} or \code{"absolute"}, add an argument to
-        the user-defined function \code{FUN} like \code{FUN(index, x, ...)}
-        where \code{index} is an index of variant starting from 1 if
-        \code{margin = "by.variant"}: \code{"relative"} for indexing in the
-        selection defined by \code{\link{seqSetFilter}}, \code{"absolute"}
-        for indexing with respect to all data}
+    \item{as.is}{returned value: a list, an integer vector, etc; return nothing
+        by default \code{as.is="none"}; \code{as.is} can be a
+        \code{\link{connection}} object, or a GDS node \code{\link{gdsn.class}}
+        object; if "unlist" is used, produces a vector which contains all the
+        atomic components, via \code{unlist(..., recursive=FALSE)}}
+    \item{var.index}{if \code{"none"} (by default), call \code{FUN(x, ...)}
+        without variable index; if \code{"relative"} or \code{"absolute"}, add
+        an argument to the user-defined function \code{FUN} like
+        \code{FUN(index, x, ...)} where \code{index} is an index of variant
+        starting from 1 if \code{margin = "by.variant"}: \code{"relative"} for
+        indexing in the selection defined by \code{\link{seqSetFilter}},
+        \code{"absolute"} for indexing with respect to all data}
     \item{bsize}{block size}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed

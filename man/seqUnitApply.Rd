@@ -15,11 +15,11 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
         \code{SeqUnitListClass}}
     \item{var.name}{the variable name(s), see details}
     \item{FUN}{the function to be applied}
-    \item{as.is}{returned value: a list, a vector or none;
-        \code{as.is} can be a \code{\link{connection}} object, or a GDS node
-        \code{\link{gdsn.class}} object; if "unlist" is used, produces a vector
-        which contains all the atomic components, via
-        \code{unlist(..., recursive=FALSE)}}
+    \item{as.is}{returned value: a list, an integer vector, etc; return nothing
+        by default \code{as.is="none"}; \code{as.is} can be a
+        \code{\link{connection}} object, or a GDS node \code{\link{gdsn.class}}
+        object; if "unlist" is used, produces a vector which contains all the
+        atomic components, via \code{unlist(..., recursive=FALSE)}}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see

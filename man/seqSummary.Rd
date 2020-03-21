@@ -13,7 +13,8 @@ seqSummary(gdsfile, varname=NULL, check=c("default", "none", "full"),
     \item{varname}{if \code{NULL}, check the whole GDS file; or a character
         specifying variable name, and return a description of that variable.
         See details}
-    \item{check}{should be one of "default", "none", "full"}
+    \item{check}{should be one of "default", "none", "full";
+        \code{check="default"} by default}
     \item{verbose}{if \code{TRUE}, display information}
 }
 \value{
