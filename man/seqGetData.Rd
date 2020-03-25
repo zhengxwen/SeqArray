@@ -24,7 +24,7 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
 }
 \value{
     Return vectors, matrices or lists (with \code{length} and \code{data}
-components).
+components) with a class name \code{SeqVarDataList}.
 }
 \details{
     The variable name should be \code{"sample.id"}, \code{"variant.id"},

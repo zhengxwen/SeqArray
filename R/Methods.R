@@ -398,6 +398,8 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE,
     .Call(SEQ_GetData, gdsfile, var.name, .useraw, .padNA, .tolist, .envir)
 }
 
+print.SeqVarDataList <- function(x, ...) str(x)
+
 
 
 #######################################################################

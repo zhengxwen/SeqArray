@@ -598,6 +598,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 				SET_ELEMENT(rv_ans, 0, I32);
 				SET_ELEMENT(rv_ans, 1, val);
 			SET_NAMES(rv_ans, R_Data_Name);
+			SET_CLASS(rv_ans, R_Data_ListClass);
 		}
 		UNPROTECT(3);
 	}
@@ -634,6 +635,7 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 		SET_NAMES(rv_ans, R_Data_Name);
 		if (XLENGTH(DAT) > 0)
 			SET_DIMNAMES(DAT, R_Data_Dim2_Name);
+		SET_CLASS(rv_ans, R_Data_ListClass);
 	UNPROTECT(2);
 	return rv_ans;
 }

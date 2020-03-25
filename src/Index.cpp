@@ -1334,6 +1334,7 @@ SEXP R_Geno_Dim3_Name = R_NilValue;
 SEXP R_Dosage_Name    = R_NilValue;
 SEXP R_Data_Name      = R_NilValue;
 SEXP R_Data_Dim2_Name = R_NilValue;
+SEXP R_Data_ListClass = R_NilValue;
 
 int* R_Process_Count = NULL;
 int* R_Process_Index = NULL;
