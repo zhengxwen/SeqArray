@@ -479,7 +479,8 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 		int var_start, var_count;
 		vector<C_BOOL> var_sel;
 		// get var_start, var_count, var_sel
-		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count, var_sel));
+		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count,
+			var_sel));
 
 		C_BOOL *ss[2] = { &var_sel[0], NULL };
 		C_Int32 dimst[2]  = { var_start, 0 };
@@ -589,8 +590,8 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 					default:
 						throw ErrSeqArray("Not support data type for .tolist=TRUE.");
 					}
+					pt += nn;
 				}
-				pt += nn;
 			}
 		} else {
 			// create `list(length, data)`
@@ -618,25 +619,98 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 	TSelection &Sel = File.Selection();
 	Sel.GetStructVariant();
 	CIndex &V = Var.Index;
-	int var_start, var_count;
-	vector<C_BOOL> var_sel;
-	SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count, var_sel));
+	if (!V.HasIndex() || (P->padNA==TRUE && V.IsFixedOne()))
+	{
+		// no index or fixed-one
+		Sel.GetStructVariant();
+		C_BOOL *ss[2] = { Sel.pVariant+Sel.varStart, Sel.pSample };
+		C_Int32 dimst[2]  = { C_Int32(Sel.varStart), 0 };
+		C_Int32 dimcnt[2] = { C_Int32(Sel.varEnd-Sel.varStart), Var.Dim[1] };
+		rv_ans = GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode);
+		if (XLENGTH(rv_ans) > 0)
+			SET_DIMNAMES(rv_ans, R_Data_Dim2_Name);
 
-	C_BOOL *ss[2] = { &var_sel[0], Sel.pSample };
-	C_Int32 dimst[2]  = { var_start, 0 };
-	C_Int32 dimcnt[2];
-	GDS_Array_GetDim(Var.Obj, dimcnt, 2);
-	dimcnt[0] = var_count;
+	} else {
+		int var_start, var_count;
+		vector<C_BOOL> var_sel;
+		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count,
+			var_sel));
 
-	PROTECT(rv_ans = NEW_LIST(2));
-		SET_ELEMENT(rv_ans, 0, I32);
-		SEXP DAT = GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode);
-		SET_ELEMENT(rv_ans, 1, DAT);
-		SET_NAMES(rv_ans, R_Data_Name);
-		if (XLENGTH(DAT) > 0)
-			SET_DIMNAMES(DAT, R_Data_Dim2_Name);
-		SET_CLASS(rv_ans, R_Data_ListClass);
-	UNPROTECT(2);
+		C_BOOL *ss[2] = { &var_sel[0], Sel.pSample };
+		C_Int32 dimst[2]  = { var_start, 0 };
+		C_Int32 dimcnt[2];
+		GDS_Array_GetDim(Var.Obj, dimcnt, 2);
+		dimcnt[0] = var_count;
+
+		if (!P->tolist)
+		{
+			PROTECT(rv_ans = NEW_LIST(2));
+				SET_ELEMENT(rv_ans, 0, I32);
+				SEXP DAT = GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode);
+				SET_ELEMENT(rv_ans, 1, DAT);
+				SET_NAMES(rv_ans, R_Data_Name);
+				if (XLENGTH(DAT) > 0)
+					SET_DIMNAMES(DAT, R_Data_Dim2_Name);
+				SET_CLASS(rv_ans, R_Data_ListClass);
+			UNPROTECT(2);
+		} else {
+			// check
+			SEXP val = PROTECT(GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss,
+				UseMode));
+			switch (TYPEOF(val))
+			{
+				case INTSXP: case REALSXP: case LGLSXP:
+				case STRSXP: case RAWSXP:
+					break;
+				default:
+					throw ErrSeqArray("Not support data type for .tolist=TRUE.");
+			}
+			// convert to a list
+			const int n = Rf_length(I32);
+			rv_ans = PROTECT(NEW_LIST(n));
+			int *psel = INTEGER(I32);
+			size_t d2 = File.SampleNum(), pt = 0;
+			SEXP ZeroLen = NULL;
+			for (int i=0; i < n; i++)
+			{
+				SEXP vv;
+				size_t nn = psel[i] * d2;
+				if (nn <= 0)
+				{
+					if (!ZeroLen) ZeroLen = Rf_allocMatrix(TYPEOF(val), d2, 0);
+					vv = ZeroLen;
+				} else {
+					vv = Rf_allocMatrix(TYPEOF(val), d2, psel[i]);
+				}
+				SET_ELEMENT(rv_ans, i, vv);
+				if (nn > 0)
+				{
+					switch (TYPEOF(val))
+					{
+					case INTSXP:
+						memcpy(INTEGER(vv), &INTEGER(val)[pt], sizeof(int)*nn);
+						break;
+					case REALSXP:
+						memcpy(REAL(vv), &REAL(val)[pt], sizeof(double)*nn);
+						break;
+					case LGLSXP:
+						memcpy(LOGICAL(vv), &LOGICAL(val)[pt], sizeof(int)*nn);
+						break;
+					case STRSXP:
+						for (size_t i=0; i < nn; i++)
+							SET_STRING_ELT(vv, i, STRING_ELT(val, pt+i));
+						break;
+					case RAWSXP:
+						memcpy(RAW(vv), &RAW(val)[pt], nn);
+						break;
+					}
+					pt += nn;
+				}
+			}
+			UNPROTECT(3);
+		}
+	}
+	// output
 	return rv_ans;
 }
 

@@ -6,6 +6,9 @@ UTILITIES
     o String "." in a VCF file are converted to a blank string (missing value)
       in `seqVCF2GDS()`
 
+    o add a class name 'SeqVarDataList' to the returned 'list(length, data)'
+      from `seqGetData()`
+
 
 CHANGES IN VERSION 1.27.12
 -------------------------

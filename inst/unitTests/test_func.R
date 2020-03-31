@@ -253,7 +253,7 @@ test_random_format <- function()
 	on.exit(seqClose(f))
 
 	seqResetFilter(f)
-	dat <- seqGetData(f, "annotation/format/DP")
+	dat <- seqGetData(f, "annotation/format/DP", .padNA=FALSE)
 	y <- dat$data
 	dimnames(y) <- NULL
 
@@ -319,8 +319,12 @@ test.apply_vs_blockapply <- function()
 	# annotation/format/DP
 	v1 <- seqApply(f, "annotation/format/DP", function(x) mean(x, na.rm=TRUE),
 		as.is="double")
-	v2 <- seqBlockApply(f, "annotation/format/DP", function(x)
-		colMeans(x$data, na.rm=TRUE), as.is="unlist", bsize=128L)
+	v2 <- seqBlockApply(f, "annotation/format/DP", function(x) {
+			if (inherits(x, "SeqVarDataList"))
+				colMeans(x$data, na.rm=TRUE)
+			else
+				colMeans(x, na.rm=TRUE)
+		}, as.is="unlist", bsize=128L)
 	checkEquals(v1, v2, "Apply vs BlockApply: DP")
 
 	invisible()
