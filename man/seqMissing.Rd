@@ -9,8 +9,9 @@ seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE, parallel=seqGetParallel()
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{per.variant}{missing rate per variant if \code{TRUE}, or
-        missing rate per sample if \code{FALSE}}
+    \item{per.variant}{missing rate per variant if \code{TRUE},
+        missing rate per sample if \code{FALSE}, or calculating missing rates
+        for variants and samples if \code{NA}}
     \item{.progress}{if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
@@ -18,7 +19,8 @@ seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE, parallel=seqGetParallel()
         \code{\link{seqParallel}} for more details.}
 }
 \value{
-    A vector of missing rates.
+    A vector of missing rates, or a \code{list(variant, sample)} for both
+variants and samples.
 }
 
 \author{Xiuwen Zheng}
@@ -34,9 +36,12 @@ seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE, parallel=seqGetParallel()
 # display
 (f <- seqOpen(gds.fn))
 
-summary(seqMissing(f, TRUE, .progress=TRUE))
+summary(m1 <- seqMissing(f, TRUE, .progress=TRUE))
+summary(m2 <- seqMissing(f, FALSE, .progress=TRUE))
 
-summary(seqMissing(f, FALSE, .progress=TRUE))
+str(m <- seqMissing(f, NA, .progress=TRUE))
+identical(m1, m$variant)  # should be TRUE
+identical(m2, m$sample)   # should be TRUE
 
 # close the GDS file
 seqClose(f)

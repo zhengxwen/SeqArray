@@ -9,6 +9,8 @@ UTILITIES
     o add a class name 'SeqVarDataList' to the returned 'list(length, data)'
       from `seqGetData()`
 
+    o new option `seqMissing(, per.variant=NA)`
+
 
 CHANGES IN VERSION 1.27.12
 -------------------------

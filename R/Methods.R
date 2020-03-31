@@ -545,10 +545,27 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.logical(per.variant))
+    stopifnot(is.logical(per.variant), length(per.variant)==1L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
 
-    if (per.variant)
+    if (is.na(per.variant))
+    {
+        dm <- .seldim(gdsfile)
+        sv <- seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(f, num, pg)
+            {
+                tmpsum <- integer(num)
+                v <- seqApply(f, "genotype", margin="by.variant",
+                    as.is="double", FUN=.cfunction2("FC_Missing_SampVariant"),
+                    y=tmpsum, .progress=pg & (process_index==1L))
+                list(v, tmpsum)
+            }, .combine=function(v1, v2) {
+                list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
+            }, num=dm[2L], pg=.progress)
+        sv[[2L]] <- sv[[2L]] / (dm[1L] * dm[3L])
+        names(sv) <- c("variant", "sample")
+        sv
+    } else if (per.variant)
     {
         seqParallel(parallel, gdsfile, split="by.variant",
             FUN = function(f, pg)
@@ -565,7 +582,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
                 tmpsum <- integer(num)
                 seqApply(f, "genotype", margin="by.variant",
                     as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
-                    y=tmpsum, .progress=pg & (process_index==1L))
+                    y=tmpsum, .useraw=NA, .progress=pg & (process_index==1L))
                 tmpsum
             }, .combine="+", num=dm[2L], pg=.progress)
         sv / (dm[1L] * dm[3L])

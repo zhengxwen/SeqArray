@@ -2,7 +2,7 @@
 //
 // Methods.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2015-2019    Xiuwen Zheng
+// Copyright (C) 2015-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -47,20 +47,53 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
 {
 	int *pdim = INTEGER(GET_DIM(Geno));
 	int num_ploidy=pdim[0], num_sample=pdim[1];
-
-	int *pG = INTEGER(Geno);
 	int *pS = INTEGER(sum);
 
-	for (int i=0; i < num_sample; i++)
+	if (TYPEOF(Geno) == RAWSXP)
 	{
-		for (int j=0; j < num_ploidy; j++)
+		const Rbyte *pG = RAW(Geno), MISSING=NA_RAW;
+		for (int i=0; i < num_sample; i++)
 		{
-			if (*pG++ == NA_INTEGER)
-				pS[i] ++;
+			for (int j=0; j < num_ploidy; j++)
+				if (*pG++ == MISSING) pS[i]++;
+		}
+	} else {
+		const int *pG = INTEGER(Geno);
+		for (int i=0; i < num_sample; i++)
+		{
+			for (int j=0; j < num_ploidy; j++)
+				if (*pG++ == NA_INTEGER) pS[i]++;
 		}
 	}
 
 	return R_NilValue;
+}
+
+/// Calculate the missing rate per sample and variant
+COREARRAY_DLL_EXPORT SEXP FC_Missing_SampVariant(SEXP Geno, SEXP sum)
+{
+	int *pdim = INTEGER(GET_DIM(Geno));
+	int num_ploidy=pdim[0], num_sample=pdim[1];
+	int *pS = INTEGER(sum), n=0;
+
+	if (TYPEOF(Geno) == RAWSXP)
+	{
+		const Rbyte *pG = RAW(Geno), MISSING=NA_RAW;
+		for (int i=0; i < num_sample; i++)
+		{
+			for (int j=0; j < num_ploidy; j++)
+				if (*pG++ == MISSING) { pS[i]++; n++; }
+		}
+	} else {
+		const int *pG = INTEGER(Geno);
+		for (int i=0; i < num_sample; i++)
+		{
+			for (int j=0; j < num_ploidy; j++)
+				if (*pG++ == NA_INTEGER) { pS[i]++; n++; }
+		}
+	}
+
+	return ScalarReal((double)n / (num_ploidy*num_sample));
 }
 
 
