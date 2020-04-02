@@ -30,7 +30,8 @@ seqOpen <- function(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
         {
             stop(sprintf(
                 "'%s' is a SNP GDS file, please use SNPRelate::snpgdsOpen().",
-                gds.fn))
+                gds.fn), "\n",
+                "Or use SeqArray::seqSNP2GDS() for converting SNP GDS to SeqArray GDS.")
         }
         if (!identical(at$FileFormat, "SEQ_ARRAY"))
         {

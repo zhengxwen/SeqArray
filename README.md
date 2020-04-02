@@ -180,7 +180,7 @@ See: [https://github.com/zhengxwen/SeqArray/issues/59](https://github.com/zhengx
 [gds2bgen](https://github.com/zhengxwen/gds2bgen): Format conversion from BGEN to GDS
 
 
-## Also See
+## See Also
 
 [JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): Data manipulation of whole-genome sequencing variant data in Julia
 
