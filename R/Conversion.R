@@ -760,9 +760,9 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 # Convert a PLINK BED file to a SeqArray GDS file
 #
 
-seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
-    compress.annotation="LZMA_RA", chr.conv=TRUE, optimize=TRUE, digest=TRUE,
-    parallel=FALSE, verbose=TRUE)
+seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
+    compress.geno="LZMA_RA", compress.annotation="LZMA_RA", chr.conv=TRUE,
+    optimize=TRUE, digest=TRUE, parallel=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(bed.fn), length(bed.fn)==1L)
@@ -807,7 +807,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     ##  read fam.fn  ##
     f <- .open_text(fam.fn, TRUE)
-    famD <- read.table(f$con, header=FALSE, stringsAsFactors=FALSE)
+    famD <- read.table(f$con, header=FALSE, comment.char="",
+        stringsAsFactors=FALSE)
     .close_conn(f)
     names(famD) <- c("FamilyID", "InvID", "PatID", "MatID", "Sex", "Pheno")
     if (anyDuplicated(famD$InvID) == 0L)
@@ -828,7 +829,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
 
     ##  read bim.fn  ##
     f <- .open_text(bim.fn, TRUE)
-    bimD <- read.table(f$con, header=FALSE, stringsAsFactors=FALSE)
+    bimD <- read.table(f$con, header=FALSE, comment.char="",
+        stringsAsFactors=FALSE)
     .close_conn(f)
     names(bimD) <- c("chr", "snp.id", "map", "pos", "allele1", "allele2")
     if (verbose)
@@ -920,6 +922,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA
     vg <- add.gdsn(n, "data", storage="bit2", valdim=c(2L, num4, 0L),
         compress=ifelse(bed_flag, "", compress.geno))
 
+    # num of cores/processes
     if (pnum <= 1L)
     {
         # convert
