@@ -7,9 +7,25 @@
 
 
 #######################################################################
-# Package-wide variable
+# Package-wide variables
 
 .packageEnv <- new.env()
+
+# the index of current children process
+process_index <- 1L
+# the number of children processes
+process_count <- 1L
+
+## R objects for class, dimnames ...
+.dim_name <- list(
+    geno_dim2 = list(allele=NULL, sample=NULL),
+    geno_dim3 = list(allele=NULL, sample=NULL, variant=NULL),
+    dosage_dim = list(sample=NULL, variant=NULL),
+    data_dim  = c("length", "data"),
+    data_dim2 = list(sample=NULL, variant=NULL),
+    data_class = "SeqVarDataList"
+)
+
 
 
 #######################################################################

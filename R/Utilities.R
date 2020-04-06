@@ -7,22 +7,6 @@
 #
 
 
-## Package-wide variables
-process_index <- 1L
-process_count <- 1L
-
-## Internal R objects
-.dim_name <- list(
-    geno_dim2 = list(allele=NULL, sample=NULL),
-    geno_dim3 = list(allele=NULL, sample=NULL, variant=NULL),
-    dosage_dim = list(sample=NULL, variant=NULL),
-    data_dim  = c("length", "data"),
-    data_dim2 = list(sample=NULL, variant=NULL),
-    data_class = "SeqVarDataList"
-)
-
-
-
 #######################################################################
 
 .onLoad <- function(lib, pkg)
@@ -90,7 +74,10 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
         setup <- function(num.cores)
         {
             cl <- makeCluster(num.cores)
-            clusterCall(cl, function() { library(SeqArray); NULL })
+            clusterCall(cl, function() {
+                library(SeqArray, quietly=TRUE, verbose=FALSE)
+                TRUE
+            })
             cl
         }
 
@@ -344,7 +331,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .Call(SEQ_IntAssign, process_count, .proc_cnt)
 
                 # load the package
-                library("SeqArray")
+                library(SeqArray, quietly=TRUE, verbose=FALSE)
 
                 if (is.null(.gds.fn))
                 {
@@ -418,7 +405,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .Call(SEQ_IntAssign, process_index, 0L)
                 .Call(SEQ_IntAssign, process_count, 0L)
                 # load the package
-                library("SeqArray")
+                library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # open the file
                 if (is.character(gds))
                     gds <- seqOpen(gds, readonly=TRUE, allow.duplicate=TRUE)
@@ -512,7 +499,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             .Call(SEQ_IntAssign, process_count, .proc_cnt)
 
             # load the package
-            library("SeqArray")
+            library(SeqArray, quietly=TRUE, verbose=FALSE)
 
             if (is.null(.gds.fn))
             {
@@ -558,7 +545,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     } else {
         ## forking processes
 
-        if (.Platform$OS.type == "windows")
+        if (getOption("seqarray.nofork", FALSE) || .Platform$OS.type=="windows")
         {
             # no forking on windows
             cl <- makeCluster(njobs, outfile="")

@@ -1,57 +1,4 @@
-CHANGES IN VERSION 1.27.13
--------------------------
-
-UTILITIES
-
-    o String "." in a VCF file are converted to a blank string (missing value)
-      in `seqVCF2GDS()`
-
-    o add a class name 'SeqVarDataList' to the returned 'list(length, data)'
-      from `seqGetData()`
-
-    o new option `seqMissing(, per.variant=NA)`
-
-
-CHANGES IN VERSION 1.27.12
--------------------------
-
-UTILITIES
-
-    o add a S3 method `print.SeqVCFHeaderClass()` for `seqVCF_Header()`
-
-    o new option '.tolist' in `seqGetData()`, `seqBlockApply()` and
-      `seqUnitApply()`
-
-
-CHANGES IN VERSION 1.27.8
--------------------------
-
-UTILITIES
-
-    o rewrite `seqGetData()` for faster loading
-
-    o significantly improve `seqBlockApply()` on 'annotation/info/VARIABLE'
-      (https://github.com/zhengxwen/SeqArray/issues/59)
-
-
-CHANGES IN VERSION 1.27.7
--------------------------
-
-NEW FEATURES
-
-    o new functions `seqSetFilterAnnotID()` and `seqGDS2BED()`
-
-    o multicore function in `seqBED2GDS(, parallel=)`
-
-UTILITIES
-
-    o `seqBED2GDS()` allows a single file name without the extended file names
-      (.bed, .fam, .bim)
-
-    o allele flip in `seqBED2GDS()` to allow major allele to be reference
-
-
-CHANGES IN VERSION 1.27.3
+CHANGES IN VERSION 1.28.0
 -------------------------
 
 NEW FEATURES
@@ -66,9 +13,40 @@ NEW FEATURES
 
     o new arguments '.padNA' and '.envir' in `seqGetData()`
 
+    o new functions `seqSetFilterAnnotID()` and `seqGDS2BED()`
+
+    o multicore function in `seqBED2GDS(, parallel=)`
+
+    o new package-wide option `options(seqarray.nofork=TRUE)` to disable forking
+
 UTILITIES
 
     o `seqAddValue()` adds vectors, matrices and data frame to "annotation/info"
+
+    o `seqBED2GDS()` allows a single file name without the extended file names
+      (.bed, .fam, .bim)
+
+    o allele flip in `seqBED2GDS()` to allow major allele to be reference
+
+    o rewrite `seqGetData()` for faster loading
+
+    o significantly improve `seqBlockApply()` on 'annotation/info/VARIABLE'
+      (https://github.com/zhengxwen/SeqArray/issues/59)
+
+    o add a S3 method `print.SeqVCFHeaderClass()` for `seqVCF_Header()`
+
+    o new option '.tolist' in `seqGetData()`, `seqBlockApply()` and
+      `seqUnitApply()`
+
+    o String "." in a VCF file are converted to a blank string (missing value)
+      in `seqVCF2GDS()`
+
+    o add a class name 'SeqVarDataList' to the returned 'list(length, data)'
+      from `seqGetData()`
+
+    o new option `seqMissing(, per.variant=NA)`
+
+    o add `comment.char=""` to `seqBED2GDS()`
 
 
 CHANGES IN VERSION 1.26.2
