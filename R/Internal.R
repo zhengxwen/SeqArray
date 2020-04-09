@@ -479,6 +479,7 @@ process_count <- 1L
         }
     }
 
+    # output
     ans
 }
 
@@ -596,6 +597,8 @@ process_count <- 1L
         warning(sprintf("%d function calls resulted in an error", has.errors),
             immediate.=TRUE, domain=NA)
     }
+
+    # output
     ans
 }
 
