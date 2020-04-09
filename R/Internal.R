@@ -372,6 +372,24 @@ process_count <- 1L
 #   .updatefun -- a user-defined function for updating progress (could be NULL)
 #   ... -- other parameters passed to .fun
 #
+
+.parse_send_data <- parse(text=
+    "parallel:::sendData(con, list(type=type,data=value,tag=tag))")
+.postNode <- function(con, type, value=NULL, tag=NULL) eval(.parse_send_data)
+
+.sendCall <- function(con, fun, args, return=TRUE, tag=NULL)
+{
+    .postNode(con, "EXEC", list(fun=fun, args=args, return=return, tag=tag))
+    NULL
+}
+
+.parse_recv_one_data <- parse(text="parallel:::recvOneData(cl)")
+.recvOneResult <- function(cl)
+{
+    v <- eval(.parse_recv_one_data)
+    list(value=v$value$value, node=v$node, tag=v$value$tag)
+}
+
 .DynamicClusterCall <- function(cl, .num, .fun, .combinefun,
     .updatefun=NULL, ...)
 {
@@ -384,29 +402,6 @@ process_count <- 1L
     stopifnot(is.function(.fun))
     stopifnot(is.character(.combinefun) | is.function(.combinefun))
     stopifnot(is.null(.updatefun) | is.function(.updatefun))
-
-    .SendData <- parse(text=
-        "parallel:::sendData(con, list(type=type,data=value,tag=tag))")
-    .RecvOneData <- parse(text="parallel:::recvOneData(cl)")
-
-    postNode <- function(con, type, value = NULL, tag = NULL)
-    {
-        eval(.SendData)
-    }
-    sendCall <- function(con, fun, args, return = TRUE, tag = NULL)
-    {
-        postNode(con, "EXEC",
-            list(fun = fun, args = args, return = return, tag = tag))
-        NULL
-    }
-    recvOneResult <- function(cl)
-    {
-        v <- eval(.RecvOneData)
-        list(value = v$value$value, node = v$node, tag = v$value$tag)
-    }
-
-
-    #################################################################
 
     if (!is.null(cl))
     {
@@ -424,12 +419,12 @@ process_count <- 1L
 
             argfun <- function(i) c(i, list(...))
             submit <- function(node, job)
-                sendCall(cl[[node]], .fun, argfun(job), tag = job)
+                .sendCall(cl[[node]], .fun, argfun(job), tag = job)
 
             for (i in 1:min(.num, p)) submit(i, i)
             for (i in seq_len(.num))
             {
-                d <- recvOneResult(cl)
+                d <- .recvOneResult(cl)
                 j <- i + min(.num, p)
                 if (j <= .num) submit(d$node, j)
 
@@ -488,6 +483,32 @@ process_count <- 1L
 }
 
 
+
+#######################################################################
+# Parallel functions
+#   ncore -- the number of cores
+#   .num -- the total number of segments
+#   .fun -- a user-defined function
+#   .combinefun -- a user-defined function for combining the returned values
+#   .updatefun -- a user-defined function for updating progress (could be NULL)
+#   ... -- other parameters passed to .fun
+#
+
+.parse_prepare_cleanup <- parse(text="parallel:::prepareCleanup()")
+.mc_prepCleanup <- function() eval(.parse_prepare_cleanup)
+
+.parse_cleanup <- parse(text="parallel:::cleanup(TRUE)")
+.mc_cleanup <- function() eval(.parse_cleanup)
+
+.parse_process_id <- parse(text="parallel:::processID(jobs)")
+.mc_processID <- function(jobs) eval(.parse_process_id)
+
+.parse_sel_child <- parse(text="parallel:::selectChildren(children, timeout)")
+.mc_selectChildren <- function(children, timeout) eval(.parse_sel_child)
+
+.parse_read_child <- parse(text="parallel:::readChild(child)")
+.mc_readChild <- function(child) eval(.parse_read_child)
+
 .DynamicForkCall <- function(ncore, .num, .fun, .combinefun, .updatefun, ...)
 {
     # in order to use the internal functions accessed by ':::'
@@ -502,8 +523,8 @@ process_count <- 1L
 
     # all processes created from now on will be terminated by cleanup
     parallel::mc.reset.stream()
-    parallel:::prepareCleanup()
-    on.exit(parallel:::cleanup(TRUE))
+    .mc_prepCleanup()
+    on.exit(.mc_cleanup())
 
     # initialize
     if (identical(.combinefun, "unlist") | identical(.combinefun, "list"))
@@ -513,7 +534,7 @@ process_count <- 1L
 
     jobs <- lapply(seq_len(min(.num, ncore)), function(i)
         parallel::mcparallel(.fun(i, ...), name=NULL, mc.set.seed=TRUE, silent=FALSE))
-    jobsp <- parallel:::processID(jobs)
+    jobsp <- .mc_processID(jobs)
     jobid <- seq_along(jobsp)
     has.errors <- 0L
 
@@ -521,7 +542,7 @@ process_count <- 1L
     nexti <- length(jobid) + 1L
     while (!all(finish))
     {
-        s <- parallel:::selectChildren(jobs[!is.na(jobsp)], -1)
+        s <- .mc_selectChildren(jobs[!is.na(jobsp)], -1)
         if (is.null(s)) break  # no children, should not happen
         if (is.integer(s))
         {
@@ -529,7 +550,7 @@ process_count <- 1L
             {
                 ji <- match(TRUE, jobsp==ch)
                 ci <- jobid[ji]
-                r <- parallel:::readChild(ch)
+                r <- .mc_readChild(ch)
                 if (is.raw(r))
                 {
                     child.res <- unserialize(r)
@@ -562,7 +583,7 @@ process_count <- 1L
                         jobid[ji] <- nexti
                         jobs[[ji]] <- parallel::mcparallel(.fun(nexti, ...),
                             name=NULL, mc.set.seed=TRUE, silent=FALSE)
-                        jobsp[ji] <- parallel:::processID(jobs[[ji]])
+                        jobsp[ji] <- .mc_processID(jobs[[ji]])
                         nexti <- nexti + 1L
                     }
                 }
