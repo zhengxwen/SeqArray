@@ -373,8 +373,8 @@ process_count <- 1L
 #   ... -- other parameters passed to .fun
 #
 
-.parse_send_data <- parse(text=
-    "parallel:::sendData(con, list(type=type,data=value,tag=tag))")
+.parse_send_data <- quote(
+    parallel:::sendData(con, list(type=type,data=value,tag=tag)))
 .postNode <- function(con, type, value=NULL, tag=NULL) eval(.parse_send_data)
 
 .sendCall <- function(con, fun, args, return=TRUE, tag=NULL)
@@ -383,7 +383,7 @@ process_count <- 1L
     NULL
 }
 
-.parse_recv_one_data <- parse(text="parallel:::recvOneData(cl)")
+.parse_recv_one_data <- quote(parallel:::recvOneData(cl))
 .recvOneResult <- function(cl)
 {
     v <- eval(.parse_recv_one_data)
@@ -495,19 +495,19 @@ process_count <- 1L
 #   ... -- other parameters passed to .fun
 #
 
-.parse_prepare_cleanup <- parse(text="parallel:::prepareCleanup()")
+.parse_prepare_cleanup <- quote(parallel:::prepareCleanup())
 .mc_prepCleanup <- function() eval(.parse_prepare_cleanup)
 
-.parse_cleanup <- parse(text="parallel:::cleanup(TRUE)")
+.parse_cleanup <- quote(parallel:::cleanup(TRUE))
 .mc_cleanup <- function() eval(.parse_cleanup)
 
-.parse_process_id <- parse(text="parallel:::processID(jobs)")
+.parse_process_id <- quote(parallel:::processID(jobs))
 .mc_processID <- function(jobs) eval(.parse_process_id)
 
-.parse_sel_child <- parse(text="parallel:::selectChildren(children, timeout)")
+.parse_sel_child <- quote(parallel:::selectChildren(children, timeout))
 .mc_selectChildren <- function(children, timeout) eval(.parse_sel_child)
 
-.parse_read_child <- parse(text="parallel:::readChild(child)")
+.parse_read_child <- quote(parallel:::readChild(child))
 .mc_readChild <- function(child) eval(.parse_read_child)
 
 .DynamicForkCall <- function(ncore, .num, .fun, .combinefun, .updatefun, ...)
