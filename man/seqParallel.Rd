@@ -30,7 +30,7 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         which contains all the atomic components, via
         \code{unlist(..., recursive=FALSE)}; \code{"list"}, return a list
         of results created by child processes; \code{"none"}, no return; or a
-        function, like "+".}
+        function with one or two arguments, like "+"}
     \item{.selection.flag}{\code{TRUE} -- passes a logical vector of selection
         to the second argument of \code{FUN(gdsfile, selection, ...)}}
     \item{.initialize}{a user-defined function for initializing workers, should
@@ -97,7 +97,7 @@ seqParallelSetup(2)
 afreq1 <- seqParallel(, gdsfile, FUN = function(f) {
         seqApply(f, "genotype", as.is="double",
             FUN=function(x) mean(x==0, na.rm=TRUE))
-    }, split = "by.variant")
+    }, split="by.variant")
 
 length(afreq1)
 summary(afreq1)
@@ -107,7 +107,7 @@ summary(afreq1)
 afreq2 <- seqParallel(, gdsfile, FUN = function(f) {
         seqApply(f, "genotype", as.is="double",
             FUN=function(x) mean(x==0, na.rm=TRUE))
-    }, split = "by.variant")
+    }, split="by.variant")
 
 length(afreq2)
 summary(afreq2)
@@ -123,7 +123,7 @@ all(afreq1 == afreq2)
 seqParallel(, gdsfile, FUN = function(f) {
         v <- seqGetFilter(f)
         sum(v$variant.sel)
-    }, split = "by.variant")
+    }, split="by.variant")
 # [1] 674 674
 
 
@@ -131,7 +131,15 @@ seqParallel(, gdsfile, FUN = function(f) {
 
 seqParallel(, NULL, FUN = function() {
         paste(SeqArray:::process_index, SeqArray:::process_count, sep=" / ")
-    }, split = "none")
+    }, split="none")
+
+seqParallel(, NULL, FUN = function() {
+        SeqArray:::process_index
+    }, split="none", .combine=function(i) print(i))
+
+seqParallel(, NULL, FUN = function() {
+        SeqArray:::process_index
+    }, split="none", .combine="+")
 
 
 ################################################################
@@ -140,7 +148,7 @@ seqParallel(, NULL, FUN = function() {
 # close the GDS file
 seqClose(gdsfile)
 
-
+# clear the parallel cluster
 seqParallelSetup(FALSE)
 }
 
