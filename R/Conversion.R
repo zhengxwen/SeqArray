@@ -943,11 +943,14 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         if (verbose)
         {
             cat(sprintf("    >>> writing to %d files: <<<\n", pnum))
-            cat(sprintf("        %s [%s .. %s]\n", basename(ptmpfn),
+            cat(sprintf("        %s\t[%s .. %s]\n", basename(ptmpfn),
                 .pretty(psplit[[1L]]),
                 .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
             flush.console()
         }
+        # working flags
+        .packageEnv$work_idx <- 1L
+        .packageEnv$work_flag <- rep(FALSE, pnum)
 
         # conversion in parallel
         seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
@@ -965,7 +968,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             cat(tmp.fn[i], ":\n", file=progfile, sep="")
             on.exit({ close(progfile) }, add=TRUE)
             # new a gds node
-            vg <- add.gdsn(f, "data", storage="bit2", valdim=c(2L, num4, 0L), compress=cp)
+            vg <- add.gdsn(f, "data", storage="bit2", valdim=c(2L, num4, 0L),
+                compress=cp)
             # re-position the file
             cnt <- psplit[[2L]][i]
             if (cnt > 0L)
@@ -989,23 +993,43 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
                     progfile)
             }
             readmode.gdsn(vg)
-            invisible()
-        }, split="none", bed.fn=bed.fn, tmp.fn=ptmpfn, num4=num4, psplit=psplit,
-            cp=ifelse(bed_flag, "", compress.geno))
+            # output
+            process_index
 
-        if (verbose) cat("        merging files ...")
-        for (i in seq_along(ptmpfn))
-        {
-            if (psplit[[2L]][i] > 0L)
+        }, split="none", bed.fn=bed.fn, tmp.fn=ptmpfn, num4=num4,
+            psplit=psplit, cp=ifelse(bed_flag, "", compress.geno),
+            # combine the files as many as possible
+            .combine = function(fn_idx)
             {
-                f <- openfn.gds(ptmpfn[i])
-                append.gdsn(vg, index.gdsn(f, "data"))
-                closefn.gds(f)
-            }
-            unlink(ptmpfn[i], force=TRUE)
-            unlink(paste0(ptmpfn[i], ".progress"), force=TRUE)
-        }
-        if (verbose) cat(" [Done]\n    ")
+                # set TRUE to indicate the file completed
+                .packageEnv$work_flag[fn_idx] <- TRUE
+                if (verbose && fn_idx==1L)
+                    cat("    >>> merging the files: <<<\n")
+                # check whether merging the file or not
+                if (.packageEnv$work_idx == fn_idx)
+                {
+                    while (isTRUE(.packageEnv$work_flag[fn_idx]))
+                    {
+                        if (verbose)
+                            cat("       ", basename(ptmpfn[fn_idx]))
+                        if (psplit[[2L]][fn_idx] > 0L)
+                        {
+                            f <- openfn.gds(ptmpfn[fn_idx])
+                            append.gdsn(vg, index.gdsn(f, "data"))
+                            closefn.gds(f)
+                        }
+                        if (verbose) cat("\t[Done]\n")
+                        fn_idx <- fn_idx + 1L
+                    }
+                    .packageEnv$work_idx <- fn_idx
+                }
+            })
+
+        # delete temporary files
+        unlink(c(ptmpfn, paste0(ptmpfn, ".progress")), force=TRUE)
+        .packageEnv$work_idx <- NULL
+        .packageEnv$work_flag <- NULL
+        if (verbose && !isFALSE(digest)) cat("    ")
     }
 
     n1 <- add.gdsn(n, "@data", storage="uint8", compress=compress.annotation,

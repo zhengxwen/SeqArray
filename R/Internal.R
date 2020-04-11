@@ -27,6 +27,11 @@ process_count <- 1L
 )
 
 
+#######################################################################
+# Display function
+#
+.cat <- function(...) cat(..., "\n", sep="")
+
 
 #######################################################################
 # Get the numbers of selected samples and variants
@@ -402,6 +407,9 @@ process_count <- 1L
     stopifnot(is.function(.fun))
     stopifnot(is.character(.combinefun) | is.function(.combinefun))
     stopifnot(is.null(.updatefun) | is.function(.updatefun))
+    argone <- FALSE
+    if (is.function(.combinefun))
+        argone <- length(formals(args(.combinefun))) == 1L
 
     if (!is.null(cl))
     {
@@ -437,10 +445,15 @@ process_count <- 1L
 
                 if (is.function(.combinefun))
                 {
-                    if (is.null(ans))
-                        ans <- dv
-                    else
-                        ans <- .combinefun(ans, dv)
+                    if (argone)
+                    {
+                        .combinefun(dv)
+                    } else {
+                        if (is.null(ans))
+                            ans <- dv
+                        else
+                            ans <- .combinefun(ans, dv)
+                    }
                 } else if (.combinefun %in% c("unlist", "list"))
                 {
                     # assignment NULL would remove it from the list
@@ -458,10 +471,15 @@ process_count <- 1L
             for (i in seq_len(.num))
             {
                 dv <- .fun(i, ...)
-                if (is.null(ans))
-                    ans <- dv
-                else
-                    ans <- .combinefun(ans, dv)
+                if (argone)
+                {
+                    .combinefun(dv)
+                } else {
+                    if (is.null(ans))
+                        ans <- dv
+                    else
+                        ans <- .combinefun(ans, dv)
+                }
             }
         } else if (identical(.combinefun, "none"))
         {
@@ -521,6 +539,9 @@ process_count <- 1L
     stopifnot(is.function(.fun))
     stopifnot(is.character(.combinefun) | is.function(.combinefun))
     stopifnot(is.null(.updatefun) | is.function(.updatefun))
+    argone <- FALSE
+    if (is.function(.combinefun))
+        argone <- length(formals(args(.combinefun))) == 1L
 
     # all processes created from now on will be terminated by cleanup
     parallel::mc.reset.stream()
@@ -564,10 +585,15 @@ process_count <- 1L
                     {
                         if (inherits(child.res, "try-error"))
                             stop(child.res)
-                        if (is.null(ans))
-                            ans <- child.res
-                        else
-                            ans <- .combinefun(ans, child.res)
+                        if (argone)
+                        {
+                            .combinefun(child.res)
+                        } else {
+                            if (is.null(ans))
+                                ans <- child.res
+                            else
+                                ans <- .combinefun(ans, child.res)
+                        }
                     } else if (.combinefun %in% c("unlist", "list"))
                     {
                         # assignment NULL would remove it from the list
