@@ -680,7 +680,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         # get the number of variants in each VCF file
         num_array <- unlist(seqParApply(parallel, vcf.fn, function(fn)
         {
-            library("SeqArray")
+            library(SeqArray, quietly=TRUE, verbose=FALSE)
             seqVCF_Header(fn, getnum=TRUE)$num.variant
         }))
         num_var <- sum(num_array)
@@ -717,12 +717,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 genotype.var.name, ignore.chr.prefix, scenario, optim,
                 raise.err, ptmpfn, psplit, num_array)
             {
-                library("SeqArray")
+                # load package
+                library(SeqArray, quietly=TRUE, verbose=FALSE)
 
                 attr(vcf.fn, "variant_count") <- num_array
-
-                # the process id, starting from one
-                i <- process_index
+                i <- process_index  # the process id, starting from one
 
                 seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
                     storage.option=storage.option, info.import=info.import,

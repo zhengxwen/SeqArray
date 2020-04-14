@@ -326,12 +326,11 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample, .sel_variant,
                     FUN, .split, .selection.flag, ...)
             {
+                # load the package
+                library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # export to global variables
                 .Call(SEQ_IntAssign, process_index, .proc_idx)
                 .Call(SEQ_IntAssign, process_count, .proc_cnt)
-
-                # load the package
-                library(SeqArray, quietly=TRUE, verbose=FALSE)
 
                 if (is.null(.gds.fn))
                 {
@@ -401,11 +400,11 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             # initialize
             clusterCall(cl, fun=function(gds, sel_sample, sel_variant, sel_idx, proglen)
             {
+                # load the package
+                library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # export to global variables
                 .Call(SEQ_IntAssign, process_index, 0L)
                 .Call(SEQ_IntAssign, process_count, 0L)
-                # load the package
-                library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # open the file
                 if (is.character(gds))
                     gds <- seqOpen(gds, readonly=TRUE, allow.duplicate=TRUE)
@@ -494,12 +493,11 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample, .sel_variant,
                 .FUN, .split, .selection.flag, ...)
         {
+            # load the package
+            library(SeqArray, quietly=TRUE, verbose=FALSE)
             # export to global variables
             .Call(SEQ_IntAssign, process_index, .proc_idx)
             .Call(SEQ_IntAssign, process_count, .proc_cnt)
-
-            # load the package
-            library(SeqArray, quietly=TRUE, verbose=FALSE)
 
             if (is.null(.gds.fn))
             {
