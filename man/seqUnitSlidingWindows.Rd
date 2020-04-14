@@ -24,15 +24,16 @@ indices).
 }
 
 \author{Xiuwen Zheng}
+\seealso{
+    \code{\link{seqUnitApply}}, \code{\link{seqUnitFilterCond}}
+}
 
 \examples{
 # open the GDS file
 gdsfile <- seqOpen(seqExampleFileName("gds"))
 
 v <- seqUnitSlidingWindows(gdsfile)
-names(v) # "desp"  "index"
-
-head(v$desp)
+v  # "desp" "index"
 
 # close the GDS file
 seqClose(gdsfile)

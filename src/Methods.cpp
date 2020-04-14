@@ -404,7 +404,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleCount(SEXP List)
 }
 
 
-/// Get a list of reference allele counts
+/// Get the numbers of reference and missing alleles
 COREARRAY_DLL_EXPORT SEXP FC_AlleleCount2(SEXP Geno)
 {
 	const size_t N = XLENGTH(Geno);

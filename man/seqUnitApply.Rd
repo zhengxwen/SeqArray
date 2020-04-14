@@ -76,6 +76,9 @@ starting from 1.
 }
 
 \author{Xiuwen Zheng}
+\seealso{
+    \code{\link{seqUnitSlidingWindows}}, \code{\link{seqUnitFilterCond}}
+}
 
 \examples{
 # open the GDS file

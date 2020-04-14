@@ -297,7 +297,7 @@ seqSetFilterPos <- function(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
 
 
 #######################################################################
-# Set a filter according to specified conditions
+# Set a filter according to specified conditions of MAF, MAC and missing rates
 #
 seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
     parallel=seqGetParallel(), .progress=FALSE, verbose=TRUE)
@@ -312,26 +312,30 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
 
     if (!all(c(is.na(maf), is.na(mac), is.na(missing.rate))))
     {
-        # calculation
-        n <- seqParallel(parallel, gdsfile, split="by.variant",
+        # calculate # of ref. allele and missing genotype
+        ns <- seqParallel(parallel, gdsfile, split="by.variant",
             FUN = function(f, pg)
             {
                 seqApply(f, "genotype", margin="by.variant", as.is="list",
                     FUN = .cfunction("FC_AlleleCount2"),
-                    .useraw=NA, .progress=pg & (process_index==1L))
-            }, pg=.progress)
-        N <- .seldim(gdsfile)
-        N <- N[1L] * N[2L]    # the total number of alleles per site
-        n0 <- sapply(n, `[`, i=1L)
-        nm <- sapply(n, `[`, i=2L)
-        nn <- N - nm    # the number of non-missing alleles per site
-        n0 <- pmin(n0, nn-n0)
+                    .useraw=NA, .list_dup=FALSE,
+                    .progress=pg & (process_index==1L))
+            }, pg=.progress || verbose)
+        # the total number of alleles for a site
+        N <- prod(.seldim(gdsfile)[c(1L,2L)])
+        n0 <- sapply(ns, `[`, i=1L)
+        nm <- sapply(ns, `[`, i=2L)
+        remove(ns)
+        nn <- N - nm           # the number of non-missing alleles
+        n0 <- pmin(n0, nn-n0)  # MAC
         # selection
         sel <- rep(TRUE, length(n0))
+        # check mac[1] <= ... < mac[2]
         if (!is.na(mac[1L]))
             sel <- sel & (mac[1L] <= n0)
         if (!is.na(mac[2L]))
             sel <- sel & (n0 < mac[2L])
+        # check maf[1] <= ... < maf[2]
         if (any(!is.na(maf)))
         {
             p <- n0 / nn
@@ -340,6 +344,7 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
             if (!is.na(maf[2L]))
                 sel <- sel & (p < maf[2L])
         }
+        # check ... <= missing.rate
         if (!is.na(missing.rate))
             sel <- sel & (nm/N <= missing.rate)
         # set filter
@@ -360,10 +365,9 @@ seqSetFilterAnnotID <- function(object, id, verbose=TRUE)
     # check
     stopifnot(inherits(object, "SeqVarGDSClass"))
     stopifnot(is.character(id))
-
     # call C function
     .Call(SEQ_SetSpaceAnnotID, object, id, verbose)
-
+    # no return
     invisible()
 }
 
@@ -376,7 +380,7 @@ seqGetFilter <- function(gdsfile, .useraw=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-
+    # call C function
     .Call(SEQ_GetSpace, gdsfile, .useraw)
 }
 

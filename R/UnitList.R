@@ -7,16 +7,114 @@
 
 
 #######################################################################
+# Filter out the unit variants according to MAF, MAC and missing rates
+#
+seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
+    minsize=1L, parallel=seqGetParallel(), verbose=TRUE)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(inherits(units, "SeqUnitListClass"))
+    stopifnot(is.numeric(maf), length(maf) %in% 1:2)
+    stopifnot(is.numeric(mac), length(mac) %in% 1:2)
+    stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
+    stopifnot(is.numeric(minsize), length(minsize)==1L, minsize>=0L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    # save state
+    seqSetFilter(gdsfile, variant.sel=unlist(units$index), action="push+set",
+        verbose=FALSE)
+    on.exit({ seqSetFilter(gdsfile, action="pop", verbose=FALSE) })
+
+    # calculate # of ref. allele and missing genotype
+    if (verbose)
+        cat("Calculating MAF, MAC and missing rates ...\n")
+    ns <- seqParallel(parallel, gdsfile, split="by.variant",
+        FUN = function(f, pg)
+        {
+            seqApply(f, "genotype", margin="by.variant", as.is="list",
+                FUN = .cfunction("FC_AlleleCount2"),
+                .useraw=NA, .list_dup=FALSE, .progress=pg & (process_index==1L))
+        }, pg=verbose)
+
+    # the total number of alleles for a site
+    N <- prod(.seldim(gdsfile)[c(1L,2L)])
+    n0 <- sapply(ns, `[`, i=1L)
+    nm <- sapply(ns, `[`, i=2L)
+    remove(ns)
+    nn <- N - nm           # the number of non-missing alleles
+    n0 <- pmin(n0, nn-n0)  # MAC
+
+    # selection
+    sel <- rep(TRUE, length(n0))
+    # check mac[1] <= ... < mac[2]
+    if (!is.na(mac[1L]))
+        sel <- sel & (mac[1L] <= n0)
+    if (!is.na(mac[2L]))
+        sel <- sel & (n0 < mac[2L])
+    # check maf[1] <= ... < maf[2]
+    if (any(!is.na(maf)))
+    {
+        p <- n0 / nn
+        if (!is.na(maf[1L]))
+            sel <- sel & (maf[1L] <= p)
+        if (!is.na(maf[2L]))
+            sel <- sel & (p < maf[2L])
+    }
+    # check ... <= missing.rate
+    if (!is.na(missing.rate))
+        sel <- sel & (nm/N <= missing.rate)
+    if (all(sel))
+    {
+        if (verbose) cat("No variant excluded!")
+        return(units)
+    } else {
+        if (verbose)
+        {
+            n <- length(sel) - sum(sel)
+            .cat("Excluding ", .pretty(n), " variant", .plural(n), " ...")
+        }
+    }
+
+    # global sel according to all variants
+    x <- rep(FALSE, .dim(gdsfile)[3L])
+    x[seqGetData(gdsfile, "$variant_index")] <- sel
+    sel <- x
+
+    # for each unit
+    idx <- lapply(units$index, function(ii) {
+        s <- sel[ii]
+        if (all(s)) return(ii)
+        ii[s]
+    })
+    units$index <- idx
+    # check unit size
+    x <- lengths(idx) >= minsize
+    if (!all(x))
+    {
+        if (verbose)
+        {
+            n <- length(idx) - sum(x)
+            .cat("Remove ", .pretty(n), " unit", .plural(n))
+        }
+        units$desp <- units$desp[x, ]
+        units$index <- units$index[x]
+    }
+    if (verbose) cat("New a unit list\n")
+    units
+}
+
+
+#######################################################################
 # Get a list of units of selected variants via sliding windows based on basepairs
 #
 seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L,
     win.start=0L, dup.rm=TRUE, verbose=TRUE)
 {
+    # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    stopifnot(is.numeric(win.size), is.finite(win.size), length(win.size)==1L,
-        win.size>0L)
-    stopifnot(is.numeric(win.shift), is.finite(win.shift), length(win.shift)==1L,
-        win.shift>0L)
+    stopifnot(is.numeric(win.size), length(win.size)==1L, win.size>0L)
+    stopifnot(is.numeric(win.shift), length(win.shift)==1L, win.shift>0L)
     stopifnot(is.numeric(win.start), is.finite(win.start), length(win.start)==1L)
     stopifnot(is.logical(dup.rm), length(dup.rm)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
@@ -67,12 +165,11 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L,
 
 
 #######################################################################
-# Get a list of units of selected variants via sliding windows based on basepairs
+# Apply a user-defined function to each unit
 #
 seqUnitApply <- function(gdsfile, units, var.name, FUN,
-    as.is=c("none", "list", "unlist"), parallel=FALSE, ...,
-    .bl_size=256L, .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
-    .envir=NULL)
+    as.is=c("none", "list", "unlist"), parallel=FALSE, ..., .bl_size=256L,
+    .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE, .envir=NULL)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -216,3 +313,6 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
         ans <- invisible()
     ans
 }
+
+
+print.SeqUnitListClass <- function(x, ...) str(x, list.len=6L)
