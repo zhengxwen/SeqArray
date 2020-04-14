@@ -19,6 +19,8 @@ NEW FEATURES
 
     o new package-wide option `options(seqarray.nofork=TRUE)` to disable forking
 
+    o new option 'minor' in `seqAlleleFreq()` and `seqAlleleCount()`
+
 UTILITIES
 
     o `seqAddValue()` adds vectors, matrices and data frame to "annotation/info"

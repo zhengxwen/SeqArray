@@ -2,7 +2,7 @@
 \alias{seqUnitSlidingWindows}
 \title{Sliding units of selected variants}
 \description{
-    Generating units of selected variants via sliding windows.
+    Generates units of selected variants via sliding windows.
 }
 \usage{
 seqUnitSlidingWindows(gdsfile, win.size=5000L, win.shift=2500L, win.start=0L,

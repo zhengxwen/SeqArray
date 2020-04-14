@@ -2,7 +2,7 @@
 \alias{seqUnitFilterCond}
 \title{Filter unit variants}
 \description{
-    Filter out the unit variants according to MAF, MAC and missing rates.
+    Filters out the unit variants according to MAF, MAC and missing rates.
 }
 \usage{
 seqUnitFilterCond(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
@@ -52,8 +52,7 @@ newunit
 exvar <- setdiff(unique(unlist(unit1$index)), unique(unlist(newunit$index)))
 
 seqSetFilter(gdsfile, variant.sel=exvar)
-af <- seqAlleleFreq(gdsfile)
-maf <- pmin(af, 1-af)
+maf <- seqAlleleFreq(gdsfile, minor=TRUE)
 table(maf > 0)
 summary(maf[maf > 0])  # > 0.01
 

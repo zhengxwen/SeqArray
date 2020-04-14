@@ -1,8 +1,8 @@
 \name{seqUnitApply}
 \alias{seqUnitApply}
-\title{Sliding units of selected variants}
+\title{Apply Function Over Variant Units}
 \description{
-    Generating units of selected variants via sliding windows.
+    Applies a user-defined function to each variant unit.
 }
 \usage{
 seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),

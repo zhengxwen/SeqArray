@@ -3,16 +3,19 @@
 \alias{seqAlleleCount}
 \title{Get Allele Frequencies or Counts}
 \description{
-    Calculates the allele frequencies or counts.
+    Calculates the allele frequencies or counts for reference or minor alleles.
 }
 \usage{
-seqAlleleFreq(gdsfile, ref.allele=0L, .progress=FALSE, parallel=seqGetParallel())
-seqAlleleCount(gdsfile, ref.allele=0L, .progress=FALSE, parallel=seqGetParallel())
+seqAlleleFreq(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
+    parallel=seqGetParallel())
+seqAlleleCount(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
+    parallel=seqGetParallel())
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{ref.allele}{\code{NULL}, a single numeric value, a numeric vector
         or a character vector; see Value}
+    \item{minor}{if \code{TRUE}, return minor allele frequency/count}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
@@ -28,9 +31,6 @@ first alternative allele, etc). If \code{ref.allele} is a numeric vector,
 \code{ref.allele} specifies each allele per site. If \code{ref.allele} is a
 character vector, \code{ref.allele} specifies the desired allele for each site
 (e.g, ancestral allele for the derived allele frequency/count).
-
-    The minor allele frequency (MAF) can be obtained using
-\code{af <- seqAlleleFreq(gdsfile); maf <- pmin(af, 1-af)}.
 }
 
 \author{Xiuwen Zheng}
@@ -52,14 +52,20 @@ head(seqAlleleFreq(f, NULL, .progress=TRUE))
 # return a numeric vector
 summary(seqAlleleFreq(f, 0L, .progress=TRUE))
 
+# return a numeric vector
+summary(seqAlleleFreq(f, 0L, minor=TRUE, .progress=TRUE))
+
 # return a numeric vector, AA is ancestral allele
 AA <- seqGetData(f, "annotation/info/AA", .padNA=TRUE)
-head(seqAlleleFreq(f, AA))
+summary(seqAlleleFreq(f, AA))
+summary(seqAlleleFreq(f, AA, minor=TRUE))
 
 # allele counts
 head(seqAlleleCount(f, NULL, .progress=TRUE))
 head(seqAlleleCount(f, 0L, .progress=TRUE))
+head(seqAlleleCount(f, 0L, minor=TRUE, .progress=TRUE))
 head(seqAlleleCount(f, AA, .progress=TRUE))
+head(seqAlleleCount(f, AA, minor=TRUE, .progress=TRUE))
 
 # close the GDS file
 seqClose(f)
