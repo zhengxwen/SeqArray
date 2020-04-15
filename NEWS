@@ -21,6 +21,10 @@ NEW FEATURES
 
     o new option 'minor' in `seqAlleleFreq()` and `seqAlleleCount()`
 
+    o new option 'verbose' in `seqMissing()`, `seqAlleleFreq()` and
+      `seqAlleleCount()`; '.progress' is deprecated, but still can be used
+      for compatiblity
+
 UTILITIES
 
     o `seqAddValue()` adds vectors, matrices and data frame to "annotation/info"

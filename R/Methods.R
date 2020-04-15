@@ -546,12 +546,14 @@ seqNumAllele <- function(gdsfile)
 # Missing rate
 #
 seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
-    parallel=seqGetParallel())
+    parallel=seqGetParallel(), verbose=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(per.variant), length(per.variant)==1L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+    verbose <- verbose | .progress
 
     if (is.na(per.variant))
     {
@@ -566,7 +568,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
                 list(v, tmpsum)
             }, .combine=function(v1, v2) {
                 list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
-            }, num=dm[2L], pg=.progress)
+            }, num=dm[2L], pg=verbose)
         sv[[2L]] <- sv[[2L]] / (dm[1L] * dm[3L])
         names(sv) <- c("variant", "sample")
         sv
@@ -578,7 +580,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
                seqApply(f, "genotype", margin="by.variant",
                    as.is="double", FUN=.cfunction("FC_Missing_PerVariant"),
                    .useraw=NA, .progress=pg & (process_index==1L))
-            }, pg=.progress)
+            }, pg=verbose)
     } else {
         dm <- .seldim(gdsfile)
         sv <- seqParallel(parallel, gdsfile, split="by.variant",
@@ -589,7 +591,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
                     as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
                     y=tmpsum, .useraw=NA, .progress=pg & (process_index==1L))
                 tmpsum
-            }, .combine="+", num=dm[2L], pg=.progress)
+            }, .combine="+", num=dm[2L], pg=verbose)
         sv / (dm[1L] * dm[3L])
     }
 }
@@ -600,7 +602,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
 # Allele frequency
 #
 seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
-    parallel=seqGetParallel())
+    parallel=seqGetParallel(), verbose=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -608,6 +610,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
         is.character(ref.allele))
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+    verbose <- verbose | .progress
 
     if (is.null(ref.allele))
     {
@@ -617,7 +621,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                 seqApply(f, c("genotype", "$num_allele"), as.is="list",
                     FUN = .cfunction("FC_AF_List"), .list_dup=FALSE,
                     .useraw=NA, .progress=pg & process_index==1L)
-            }, pg=.progress)
+            }, pg=verbose)
     } else if (is.numeric(ref.allele))
     {
         if (length(ref.allele) == 1L)
@@ -631,7 +635,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                         seqApply(f, "genotype", as.is="double",
                             FUN = .cfunction("FC_AF_Ref"),
                             .useraw=NA, .progress=pg & process_index==1L)
-                    }, pg=.progress, minor=minor)
+                    }, pg=verbose, minor=minor)
             } else {
                 seqParallel(parallel, gdsfile, split="by.variant",
                     FUN = function(f, ref, pg, minor)
@@ -640,7 +644,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                         seqApply(f, c("genotype", "$num_allele"),
                             as.is="double", FUN = .cfunction("FC_AF_Index"),
                             .useraw=NA, .progress=pg & process_index==1L)
-                    }, ref=ref.allele, pg=.progress, minor=minor)
+                    }, ref=ref.allele, pg=verbose, minor=minor)
             }
         } else {
             dm <- .seldim(gdsfile)
@@ -657,7 +661,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                     seqApply(f, c("genotype", "$num_allele"),
                         as.is="double", FUN = .cfunction("FC_AF_Index"),
                         .useraw=NA, .progress=pg & process_index==1L)
-                }, ref=ref.allele, pg=.progress, minor=minor)
+                }, ref=ref.allele, pg=verbose, minor=minor)
         }
     } else if (is.character(ref.allele))
     {
@@ -674,7 +678,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                 seqApply(f, c("genotype", "allele"), margin="by.variant",
                     as.is="double", FUN = .cfunction("FC_AF_Allele"),
                     .useraw=NA, .progress=pg & process_index==1L)
-            }, ref=ref.allele, pg=.progress, minor=minor)
+            }, ref=ref.allele, pg=verbose, minor=minor)
     } else {
         stop("Invalid 'ref.allele'.")
     }
@@ -686,12 +690,14 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
 # Allele counts
 #
 seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
-    parallel=seqGetParallel())
+    parallel=seqGetParallel(), verbose=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+    verbose <- verbose | .progress
 
     if (is.null(ref.allele))
     {
@@ -702,7 +708,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                     as.is="list", FUN = .cfunction("FC_AlleleCount"),
                     .useraw=NA, .list_dup=FALSE,
                     .progress=pg & process_index==1L)
-            }, pg=.progress)
+            }, pg=verbose)
     } else if (is.numeric(ref.allele))
     {
         if (length(ref.allele) == 1L)
@@ -716,7 +722,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                         seqApply(f, "genotype", as.is="integer",
                             FUN = .cfunction("FC_AC_Ref"),
                             .useraw=NA, .progress=pg & process_index==1L)
-                    }, pg=.progress, minor=minor)
+                    }, pg=verbose, minor=minor)
             } else {
                 seqParallel(parallel, gdsfile, split="by.variant",
                     FUN = function(f, ref, pg, minor)
@@ -725,7 +731,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                         seqApply(f, c("genotype", "$num_allele"),
                             as.is="integer", FUN = .cfunction("FC_AC_Index"),
                             .useraw=NA, .progress=pg & process_index==1L)
-                    }, ref=ref.allele, pg=.progress, minor=minor)
+                    }, ref=ref.allele, pg=verbose, minor=minor)
             }
         } else {
             dm <- .seldim(gdsfile)
@@ -742,7 +748,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                     seqApply(f, c("genotype", "$num_allele"),
                         as.is="integer", FUN = .cfunction("FC_AC_Index"),
                         .useraw=NA, .progress=pg & process_index==1L)
-                }, ref=ref.allele, pg=.progress, minor=minor)
+                }, ref=ref.allele, pg=verbose, minor=minor)
         }
     } else if (is.character(ref.allele))
     {
@@ -759,7 +765,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                 seqApply(f, c("genotype", "allele"), margin="by.variant",
                     as.is="double", FUN = .cfunction("FC_AC_Allele"),
                     .useraw=NA, .progress=pg & process_index==1L)
-            }, ref=ref.allele, pg=.progress, minor=minor)
+            }, ref=ref.allele, pg=verbose, minor=minor)
     } else {
         stop("Invalid 'ref.allele'.")
     }
