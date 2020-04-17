@@ -1,8 +1,8 @@
 Package: SeqArray
 Type: Package
 Title: Data management of large-scale whole-genome sequence variant calls
-Version: 1.27.16
-Date: 2020-04-16
+Version: 1.27.17
+Date: 2020-04-18
 Depends: R (>= 3.5.0), gdsfmt (>= 1.23.5)
 Imports: methods, parallel, IRanges, GenomicRanges, GenomeInfoDb, Biostrings,
         S4Vectors

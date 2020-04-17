@@ -99,6 +99,52 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_SampVariant(SEXP Geno, SEXP sum)
 
 // ======================================================================
 
+static int  AFreq_Index  = 0;
+static int* AFreq_RefPtr = NULL;
+static SEXP AFreq_Allele = NULL;
+static bool AFreq_Minor  = false;  //< true for return MAF/MAC
+static int  AFreq_Ploidy = 0;      //< ploidy, e.g., 2 by default
+
+inline static void get_ds_n_m(SEXP DS, int &n, int &m)
+{
+	n = XLENGTH(DS); m = 1;
+	SEXP dm = GET_DIM(DS);
+	if (!isNull(dm))
+	{
+		if (XLENGTH(dm) != 2)
+			throw ErrSeqArray("# of dimensions should be 2 for dosages.");
+		m = INTEGER(dm)[1];
+	}
+}
+
+/// Set the reference allele with an index
+COREARRAY_DLL_EXPORT SEXP FC_AF_SetIndex(SEXP idx, SEXP minor, SEXP ploidy)
+{
+	if (XLENGTH(idx) == 1)
+	{
+		AFreq_Index = Rf_asInteger(idx);
+		AFreq_RefPtr = NULL;
+	} else {
+		AFreq_Index = 0;
+		AFreq_RefPtr = INTEGER(idx);
+	}
+	AFreq_Minor = (Rf_asLogical(minor)==TRUE);
+	AFreq_Ploidy = Rf_asInteger(ploidy);
+	return R_NilValue;
+}
+
+/// Set the reference allele with string
+COREARRAY_DLL_EXPORT SEXP FC_AF_SetAllele(SEXP allele, SEXP minor, SEXP ploidy)
+{
+	AFreq_Allele = allele;
+	AFreq_Index = 0;
+	AFreq_Minor = (Rf_asLogical(minor)==TRUE);
+	AFreq_Ploidy = Rf_asInteger(ploidy);
+	return R_NilValue;
+}
+
+// ========
+
 /// Get a list of allele frequencies
 COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 {
@@ -175,27 +221,6 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 	return rv;
 }
 
-
-static ssize_t AlleleFreq_Index = 0;
-static int *AlleleFreq_RefPtr = NULL;
-static SEXP AlleleFreq_Allele = R_NilValue;
-static bool AlleleFreq_Minor  = false;
-
-/// Set the reference allele with an index
-COREARRAY_DLL_EXPORT SEXP FC_AF_SetIndex(SEXP RefIndex, SEXP minor)
-{
-	if (XLENGTH(RefIndex) == 1)
-	{
-		AlleleFreq_Index = Rf_asInteger(RefIndex);
-		AlleleFreq_RefPtr = NULL;
-	} else {
-		AlleleFreq_Index = 0;
-		AlleleFreq_RefPtr = INTEGER(RefIndex);
-	}
-	AlleleFreq_Minor = (Rf_asLogical(minor)==TRUE);
-	return R_NilValue;
-}
-
 /// Get reference allele frequency
 COREARRAY_DLL_EXPORT SEXP FC_AF_Ref(SEXP Geno)
 {
@@ -209,7 +234,48 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Ref(SEXP Geno)
 	if (n > 0)
 	{
 		double p = double(m) / n;
-		if (AlleleFreq_Minor && p>0.5) p = 1 - p;
+		if (AFreq_Minor && p>0.5) p = 1 - p;
+		return ScalarReal(p);
+	} else
+		return ScalarReal(R_NaN);
+}
+
+/// Get reference allele frequency from dosage
+COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Ref(SEXP DS)
+{
+	int n, m, num=0;
+	get_ds_n_m(DS, n, m);
+
+	double sum=0;
+	switch (TYPEOF(DS))
+	{
+	case RAWSXP:
+		{
+			const Rbyte *p = RAW(DS);
+			for (int i=0; i < n; i++, p++)
+				if (*p != NA_RAW) { sum += *p; num++; }
+			break;
+		}
+	case INTSXP:
+		{
+			const int *p = INTEGER(DS);
+			for (int i=0; i < n; i++, p++)
+				if (*p != NA_INTEGER) { sum += *p; num++; }
+			break;
+		}
+	case REALSXP:
+		{
+			const double *p = REAL(DS);
+			for (int i=0; i < n; i++, p++)
+				if (R_FINITE(*p)) { sum += *p; num++; }
+			break;
+		}
+	}
+
+	if (num > 0)
+	{
+		double p = 1 - sum * m / (num * AFreq_Ploidy);
+		if (AFreq_Minor && p>0.5) p = 1 - p;
 		return ScalarReal(p);
 	} else
 		return ScalarReal(R_NaN);
@@ -223,8 +289,8 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 
 	const size_t N = XLENGTH(Geno);
 	size_t n = 0, m = 0;
-	int A = (AlleleFreq_RefPtr==NULL) ?
-		AlleleFreq_Index : AlleleFreq_RefPtr[AlleleFreq_Index++];
+	int A = (AFreq_RefPtr==NULL) ?
+		AFreq_Index : AFreq_RefPtr[AFreq_Index++];
 
 	if (A < nAllele)
 	{
@@ -238,25 +304,16 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 	if (n > 0)
 	{
 		double p = double(m) / n;
-		if (AlleleFreq_Minor && p>0.5) p = 1 - p;
+		if (AFreq_Minor && p>0.5) p = 1 - p;
 		return ScalarReal(p);
 	} else
 		return ScalarReal(R_NaN);
 }
 
-/// Set the reference allele with string
-COREARRAY_DLL_EXPORT SEXP FC_AF_SetAllele(SEXP RefAllele, SEXP minor)
-{
-	AlleleFreq_Allele = RefAllele;
-	AlleleFreq_Index = 0;
-	AlleleFreq_Minor = (Rf_asLogical(minor)==TRUE);
-	return R_NilValue;
-}
-
 /// Get allele frequency
 COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 {
-	SEXP Ref = STRING_ELT(AlleleFreq_Allele, AlleleFreq_Index++);
+	SEXP Ref = STRING_ELT(AFreq_Allele, AFreq_Index++);
 	int A = -1;
 	if (Ref != NA_STRING)
 		A = GetIndexOfAllele(CHAR(Ref), CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
@@ -280,7 +337,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 	if (n > 0)
 	{
 		double p = double(m) / n;
-		if (AlleleFreq_Minor && p>0.5) p = 1 - p;
+		if (AFreq_Minor && p>0.5) p = 1 - p;
 		return ScalarReal(p);
 	} else
 		return ScalarReal(R_NaN);
@@ -298,12 +355,54 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Ref(SEXP Geno)
 		vec_i8_count2((const char*)RAW(Geno), N, 0, NA_RAW, &m, &n);
 	else
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &m, &n);
-	if (AlleleFreq_Minor)
+	if (AFreq_Minor)
 	{
 		n = N - n - m;  // allele count for alternative
 		if (n < m) m = n;
 	}
 	return ScalarInteger(m);
+}
+
+/// Get reference allele frequency from dosage
+COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Ref(SEXP DS)
+{
+	int n, m, num=0;
+	get_ds_n_m(DS, n, m);
+
+	double sum=0;
+	switch (TYPEOF(DS))
+	{
+	case RAWSXP:
+		{
+			const Rbyte *p = RAW(DS);
+			for (int i=0; i < n; i++, p++)
+				if (*p != NA_RAW) { sum += *p; num++; }
+			break;
+		}
+	case INTSXP:
+		{
+			const int *p = INTEGER(DS);
+			for (int i=0; i < n; i++, p++)
+				if (*p != NA_INTEGER) { sum += *p; num++; }
+			break;
+		}
+	case REALSXP:
+		{
+			const double *p = REAL(DS);
+			for (int i=0; i < n; i++, p++)
+				if (R_FINITE(*p)) { sum += *p; num++; }
+			break;
+		}
+	}
+
+	if (num > 0)
+	{
+		double totac = double(num * AFreq_Ploidy) / m;
+		double ac = totac - sum;
+		if (AFreq_Minor && ac>0.5*totac) ac = totac - ac;
+		return ScalarReal(ac);
+	} else
+		return ScalarReal(R_NaN);
 }
 
 /// Get allele count
@@ -313,8 +412,8 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 	const int nAllele = Rf_asInteger(VECTOR_ELT(List, 1));
 
 	const size_t N = XLENGTH(Geno);
-	int A = (AlleleFreq_RefPtr==NULL) ?
-		AlleleFreq_Index : AlleleFreq_RefPtr[AlleleFreq_Index++];
+	int A = (AFreq_RefPtr==NULL) ?
+		AFreq_Index : AFreq_RefPtr[AFreq_Index++];
 
 	int ans;
 	if (A < nAllele)
@@ -324,7 +423,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 			vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
 		else
 			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
-		if (AlleleFreq_Minor)
+		if (AFreq_Minor)
 		{
 			n = N - n - m;  // allele count for alternative
 			if (n < m) m = n;
@@ -341,7 +440,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 {
 	SEXP Geno = VECTOR_ELT(List, 0);
 	int A = GetIndexOfAllele(
-		CHAR(STRING_ELT(AlleleFreq_Allele, AlleleFreq_Index++)),
+		CHAR(STRING_ELT(AFreq_Allele, AFreq_Index++)),
 		CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
 
 	int ans = NA_INTEGER;
@@ -354,7 +453,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 			if (A < 255)
 			{
 				vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
-				if (AlleleFreq_Minor)
+				if (AFreq_Minor)
 				{
 					n = N - n - m;  // allele count for alternative
 					if (n < m) m = n;
@@ -363,7 +462,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 			}
 		} else {
 			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
-			if (AlleleFreq_Minor)
+			if (AFreq_Minor)
 			{
 				n = N - n - m;  // allele count for alternative
 				if (n < m) m = n;

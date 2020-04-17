@@ -25,6 +25,9 @@ NEW FEATURES
       `seqAlleleCount()`; '.progress' is deprecated, but still can be used
       for compatiblity
 
+    o `seqAlleleFreq()` and `seqAlleleCount()` work on 'annotation/format/DS',
+      if 'genotype/data' is not available
+
 UTILITIES
 
     o `seqAddValue()` adds vectors, matrices and data frame to "annotation/info"
