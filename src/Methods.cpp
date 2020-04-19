@@ -240,6 +240,22 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Ref(SEXP Geno)
 		return ScalarReal(R_NaN);
 }
 
+#define GET_SUM_NUM(TYPE, TYPEPTR, START, NA_VAL, N)  \
+	{ \
+		const TYPE *p = TYPEPTR(DS) + START; \
+		for (int i=0; i < N; i++, p++) \
+			if (*p != NA_VAL) { sum += *p; num++; } \
+		break; \
+	}
+#define GET_SUM_NUM_F(START, N)  \
+	{ \
+		const double *p = REAL(DS) + START; \
+		for (int i=0; i < N; i++, p++) \
+			if (R_FINITE(*p)) { sum += *p; num++; } \
+		break; \
+	}
+static const char *ERR_DS_TYPE = "Invalid type of dosage.";
+
 /// Get reference allele frequency from dosage
 COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Ref(SEXP DS)
 {
@@ -250,26 +266,13 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Ref(SEXP DS)
 	switch (TYPEOF(DS))
 	{
 	case RAWSXP:
-		{
-			const Rbyte *p = RAW(DS);
-			for (int i=0; i < n; i++, p++)
-				if (*p != NA_RAW) { sum += *p; num++; }
-			break;
-		}
+		GET_SUM_NUM(Rbyte, RAW, 0, NA_RAW, n)
 	case INTSXP:
-		{
-			const int *p = INTEGER(DS);
-			for (int i=0; i < n; i++, p++)
-				if (*p != NA_INTEGER) { sum += *p; num++; }
-			break;
-		}
+		GET_SUM_NUM(int, INTEGER, 0, NA_INTEGER, n)
 	case REALSXP:
-		{
-			const double *p = REAL(DS);
-			for (int i=0; i < n; i++, p++)
-				if (R_FINITE(*p)) { sum += *p; num++; }
-			break;
-		}
+		GET_SUM_NUM_F(0, n)
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
 	}
 
 	if (num > 0)
@@ -304,6 +307,44 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 	if (n > 0)
 	{
 		double p = double(m) / n;
+		if (AFreq_Minor && p>0.5) p = 1 - p;
+		return ScalarReal(p);
+	} else
+		return ScalarReal(R_NaN);
+}
+
+/// Get allele frequency
+COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Index(SEXP List)
+{
+	SEXP DS = VECTOR_ELT(List, 0);
+	const int A = (AFreq_RefPtr==NULL) ?
+		AFreq_Index : AFreq_RefPtr[AFreq_Index++];
+	if (A == 0) return FC_AF_DS_Ref(DS);
+
+	const int nAllele = Rf_asInteger(VECTOR_ELT(List, 1));
+	if (A >= nAllele) return ScalarReal(R_NaN);
+
+	int n, m;
+	get_ds_n_m(DS, n, m);
+	if (A > m) return ScalarReal(R_NaN);
+
+	double sum=0;
+	int num = 0, nrow = n/m;
+	switch (TYPEOF(DS))
+	{
+	case RAWSXP:
+		GET_SUM_NUM(Rbyte, RAW, nrow*(A-1), NA_RAW, nrow)
+	case INTSXP:
+		GET_SUM_NUM(int, INTEGER, nrow*(A-1), NA_INTEGER, nrow)
+	case REALSXP:
+		GET_SUM_NUM_F(nrow*(A-1), nrow)
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
+	}
+
+	if (num > 0)
+	{
+		double p = sum / (num * AFreq_Ploidy);
 		if (AFreq_Minor && p>0.5) p = 1 - p;
 		return ScalarReal(p);
 	} else
@@ -373,26 +414,13 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Ref(SEXP DS)
 	switch (TYPEOF(DS))
 	{
 	case RAWSXP:
-		{
-			const Rbyte *p = RAW(DS);
-			for (int i=0; i < n; i++, p++)
-				if (*p != NA_RAW) { sum += *p; num++; }
-			break;
-		}
+		GET_SUM_NUM(Rbyte, RAW, 0, NA_RAW, n)
 	case INTSXP:
-		{
-			const int *p = INTEGER(DS);
-			for (int i=0; i < n; i++, p++)
-				if (*p != NA_INTEGER) { sum += *p; num++; }
-			break;
-		}
+		GET_SUM_NUM(int, INTEGER, 0, NA_INTEGER, n)
 	case REALSXP:
-		{
-			const double *p = REAL(DS);
-			for (int i=0; i < n; i++, p++)
-				if (R_FINITE(*p)) { sum += *p; num++; }
-			break;
-		}
+		GET_SUM_NUM_F(0, n)
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
 	}
 
 	if (num > 0)
@@ -433,6 +461,44 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 		ans = NA_INTEGER;
 	
 	return ScalarInteger(ans);
+}
+
+/// Get allele count
+COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Index(SEXP List)
+{
+	SEXP DS = VECTOR_ELT(List, 0);
+	const int A = (AFreq_RefPtr==NULL) ?
+		AFreq_Index : AFreq_RefPtr[AFreq_Index++];
+	if (A == 0) return FC_AC_DS_Ref(DS);
+
+	const int nAllele = Rf_asInteger(VECTOR_ELT(List, 1));
+	if (A >= nAllele) return ScalarReal(R_NaN);
+
+	int n, m;
+	get_ds_n_m(DS, n, m);
+	if (A > m) return ScalarReal(R_NaN);
+
+	double sum=0;
+	int num = 0, nrow = n/m;
+	switch (TYPEOF(DS))
+	{
+	case RAWSXP:
+		GET_SUM_NUM(Rbyte, RAW, nrow*(A-1), NA_RAW, nrow)
+	case INTSXP:
+		GET_SUM_NUM(int, INTEGER, nrow*(A-1), NA_INTEGER, nrow)
+	case REALSXP:
+		GET_SUM_NUM_F(nrow*(A-1), nrow)
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
+	}
+
+	if (num > 0)
+	{
+		double sum2 = num * AFreq_Ploidy - sum;
+		if (AFreq_Minor && sum>sum2) sum = sum2;
+		return ScalarReal(sum);
+	} else
+		return ScalarReal(R_NaN);
 }
 
 /// Get allele count

@@ -654,18 +654,17 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                     }, pg=verbose, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AF_Ref", "FC_AF_DS_Ref"))
             } else {
-                if (!gv) stop(err)
                 seqParallel(parallel, gdsfile, split="by.variant",
-                    FUN = function(f, ref, pg, mi, pl)
+                    FUN = function(f, ref, pg, nm, mi, pl, cn)
                     {
                         .cfunction3("FC_AF_SetIndex")(ref, mi, pl)
-                        seqApply(f, c("genotype", "$num_allele"),
-                            as.is="double", FUN = .cfunction("FC_AF_Index"),
-                            .useraw=NA, .progress=pg & process_index==1L)
-                    }, ref=ref.allele, pg=verbose, mi=minor, pl=ploidy)
+                        seqApply(f, c(nm, "$num_allele"), as.is="double",
+                            FUN=.cfunction(cn), .useraw=NA,
+                            .progress=pg & process_index==1L)
+                    }, ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
+                        cn=ifelse(gv, "FC_AF_Index", "FC_AF_DS_Index"))
             }
         } else {
-            if (!gv) stop(err)
             dm <- .seldim(gdsfile)
             if (length(ref.allele) != dm[3L])
                 stop("'length(ref.allele)' should be 1 or the number of selected variants.")
@@ -673,14 +672,15 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
             ref.allele <- as.integer(ref.allele)
             seqParallel(parallel, gdsfile, split="by.variant",
                 .selection.flag=TRUE,
-                FUN = function(f, selflag, ref, pg, mi, pl)
+                FUN = function(f, selflag, ref, pg, nm, mi, pl, cn)
                 {
                     s <- ref[selflag]
                     .cfunction3("FC_AF_SetIndex")(s, mi, pl)
-                    seqApply(f, c("genotype", "$num_allele"),
-                        as.is="double", FUN = .cfunction("FC_AF_Index"),
-                        .useraw=NA, .progress=pg & process_index==1L)
-                }, ref=ref.allele, pg=verbose, mi=minor, pl=ploidy)
+                    seqApply(f, c(nm, "$num_allele"), as.is="double",
+                        FUN=.cfunction(cn), .useraw=NA,
+                        .progress=pg & process_index==1L)
+                }, ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
+                    cn=ifelse(gv, "FC_AF_Index", "FC_AF_DS_Index"))
         }
     } else if (is.character(ref.allele))
     {
@@ -762,18 +762,17 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
                     }, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AC_Ref", "FC_AC_DS_Ref"))
             } else {
-                if (!gv) stop(err)
                 seqParallel(parallel, gdsfile, split="by.variant",
-                    FUN = function(f, ref, pg, mi, pl)
+                    FUN = function(f, ref, pg, tp, nm, mi, pl, cn)
                     {
                         .cfunction3("FC_AF_SetIndex")(ref, mi, pl)
-                        seqApply(f, c("genotype", "$num_allele"),
-                            as.is="integer", FUN = .cfunction("FC_AC_Index"),
-                            .useraw=NA, .progress=pg & process_index==1L)
-                    }, ref=ref.allele, pg=verbose, mi=minor, pl=ploidy)
+                        seqApply(f, c(nm, "$num_allele"), as.is=tp,
+                            FUN=.cfunction(cn), .useraw=NA,
+                            .progress=pg & process_index==1L)
+                    }, ref=ref.allele, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
+                        cn=ifelse(gv, "FC_AC_Index", "FC_AC_DS_Index"))
             }
         } else {
-            if (!gv) stop(err)
             dm <- .seldim(gdsfile)
             if (length(ref.allele) != dm[3L])
                 stop("'length(ref.allele)' should be 1 or the number of selected variants.")
@@ -781,14 +780,15 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
             ref.allele <- as.integer(ref.allele)
             seqParallel(parallel, gdsfile, split="by.variant",
                 .selection.flag=TRUE,
-                FUN = function(f, selflag, ref, pg, mi, pl)
+                FUN = function(f, selflag, ref, pg, tp, nm, mi, pl, cn)
                 {
                     s <- ref[selflag]
                     .cfunction3("FC_AF_SetIndex")(s, mi, pl)
-                    seqApply(f, c("genotype", "$num_allele"),
-                        as.is="integer", FUN = .cfunction("FC_AC_Index"),
-                        .useraw=NA, .progress=pg & process_index==1L)
-                }, ref=ref.allele, pg=verbose, mi=minor, pl=ploidy)
+                    seqApply(f, c(nm, "$num_allele"), as.is=tp,
+                        FUN=.cfunction(cn), .useraw=NA,
+                        .progress=pg & process_index==1L)
+                }, ref=ref.allele, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
+                    cn=ifelse(gv, "FC_AC_Index", "FC_AC_DS_Index"))
         }
     } else if (is.character(ref.allele))
     {
