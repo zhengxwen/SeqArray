@@ -28,32 +28,6 @@ process_count <- 1L
 
 
 #######################################################################
-# Display function
-#
-.cat <- function(...) cat(..., "\n", sep="")
-
-
-#######################################################################
-# Get the numbers of selected samples and variants
-#
-.seldim <- function(gdsfile)
-{
-    # seldim[1L] -- ploidy
-    # seldim[2L] -- # of selected samples
-    # seldim[3L] -- # of selected variants
-    .Call(SEQ_Summary, gdsfile, "genotype")$seldim
-}
-
-.dim <- function(gdsfile)
-{
-    # dim[1L] -- ploidy
-    # dim[2L] -- # of total samples
-    # dim[3L] -- # of total variants
-    .Call(SEQ_Summary, gdsfile, "genotype")$dim
-}
-
-
-#######################################################################
 # Internal C functions
 #
 .cfunction0 <- function(name)
@@ -117,19 +91,52 @@ process_count <- 1L
 }
 
 
+#######################################################################
+# Get the numbers of selected samples and variants
+#
+.seldim <- function(gdsfile)
+{
+    # seldim[1L] -- ploidy
+    # seldim[2L] -- # of selected samples
+    # seldim[3L] -- # of selected variants
+    .Call(SEQ_Summary, gdsfile, "genotype")$seldim
+}
+
+.dim <- function(gdsfile)
+{
+    # dim[1L] -- ploidy
+    # dim[2L] -- # of total samples
+    # dim[3L] -- # of total variants
+    .Call(SEQ_Summary, gdsfile, "genotype")$dim
+}
+
 
 #######################################################################
-# crayon package
+# Detect whether there are integer genotypes or numeric dosages
 #
+.has_geno <- function(gdsfile)
+{
+    !is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE))
+}
+
+.has_dosage <- function(gdsfile)
+{
+    nm <- getOption("seqarray.node_ds", "annotation/format/DS")
+    if (is.null(index.gdsn(gdsfile, paste0(nm, "/data"), silent=TRUE)))
+        stop("No 'genotype/data' or 'annotation/format/DS'.")
+    nm
+}
+
+
+#######################################################################
+# Display functions
+#
+.cat <- function(...) cat(..., "\n", sep="")
+
 .crayon <- function()
 {
-    crayon.flag <- getOption("gds.crayon", TRUE)
-    if (!is.logical(crayon.flag))
-        crayon.flag <- TRUE
-    crayon.flag <- crayon.flag[1L]
-    if (is.na(crayon.flag))
-        crayon.flag <- FALSE
-    crayon.flag && requireNamespace("crayon", quietly=TRUE)
+    flag <- getOption("gds.crayon", TRUE)
+    isTRUE(flag) && requireNamespace("crayon", quietly=TRUE)
 }
 
 

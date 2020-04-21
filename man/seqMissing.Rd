@@ -24,6 +24,13 @@ seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE,
     A vector of missing rates, or a \code{list(variant, sample)} for both
 variants and samples.
 }
+\details{
+    If the gds node 'genotype/data' (integer genotypes) is not available,
+the node 'annotation/format/DS' (numeric genotype dosages for alternative
+alleles) will be used to calculate allele frequencies. At a site, it assumes
+'annotation/format/DS' stores the dosage of the 1st alternative allele in the
+1st column, 2nd alt. allele in the 2nd column if it is multi-allelic, and so on.
+}
 
 \author{Xiuwen Zheng}
 \seealso{

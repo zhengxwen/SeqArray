@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2019    Xiuwen Zheng
+// Copyright (C) 2016-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -23,7 +23,7 @@
  *	\file     vectorization.h
  *	\author   Xiuwen Zheng [zhengx@u.washington.edu]
  *	\version  1.0
- *	\date     2016
+ *	\date     2016-2020
  *	\brief    compiler optimization with vectorization
  *	\details
 **/
@@ -384,6 +384,8 @@ COREARRAY_DLL_DEFAULT int vec_i32_bound_check(const int32_t *p, size_t n, int bo
 // functions for float64
 // ===========================================================
 
+/// get the number of finite numbers
+COREARRAY_DLL_DEFAULT size_t vec_f64_num_notfinite(const double p[], size_t n);
 
 
 // ===========================================================

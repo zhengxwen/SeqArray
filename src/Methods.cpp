@@ -29,21 +29,44 @@ using namespace SeqArray;
 extern "C"
 {
 
+static const char *ERR_DS_TYPE = "Invalid type of dosage.";
+static const char *ERR_DS_DIM  = "Invalid dimension of dosage.";
+
+static void get_ds_n_m(SEXP DS, int &n, int &m)
+{
+	n = XLENGTH(DS); m = 1;
+	SEXP dm = GET_DIM(DS);
+	if (!isNull(dm))
+	{
+		if (XLENGTH(dm) != 2)
+			throw ErrSeqArray("# of dimensions should be 2 for dosages.");
+		m = INTEGER(dm)[1];
+	}
+}
+
+
 // ======================================================================
 
 /// Calculate the missing rate per variant
 COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 {
-	size_t n = XLENGTH(Geno), m;
-	if (TYPEOF(Geno) == RAWSXP)
-		m = vec_i8_count((char*)RAW(Geno), n, NA_RAW);
-	else
-		m = vec_i32_count(INTEGER(Geno), n, NA_INTEGER);
-	return ScalarReal((n > 0) ? (double(m) / n) : R_NaN);
+	size_t n = XLENGTH(Geno), n_miss;
+	switch (TYPEOF(Geno))
+	{
+	case RAWSXP:
+		n_miss = vec_i8_count((char*)RAW(Geno), n, NA_RAW); break;
+	case INTSXP:
+		n_miss = vec_i32_count(INTEGER(Geno), n, NA_INTEGER); break;
+	case REALSXP:
+		n_miss = vec_f64_num_notfinite(REAL(Geno), n); break;
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
+	}
+	return ScalarReal((n > 0) ? (double(n_miss) / n) : R_NaN);
 }
 
 /// Calculate the missing rate per sample
-COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
+COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSamp(SEXP Geno, SEXP sum)
 {
 	int *pdim = INTEGER(GET_DIM(Geno));
 	int num_ploidy=pdim[0], num_sample=pdim[1];
@@ -65,6 +88,52 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerSample(SEXP Geno, SEXP sum)
 				if (*pG++ == NA_INTEGER) pS[i]++;
 		}
 	}
+
+	return R_NilValue;
+}
+
+/// Calculate the missing rate per sample for annotation/format/DS
+COREARRAY_DLL_EXPORT SEXP FC_Missing_DS_PerSamp(SEXP DS, SEXP sum, SEXP tmp)
+{
+	int num_samp = XLENGTH(sum), n, m;
+	get_ds_n_m(DS, n, m);
+	if (m * num_samp != n) throw ErrSeqArray(ERR_DS_DIM);
+
+	int *pT = INTEGER(tmp);
+	memset(pT, 0, sizeof(int)*num_samp);
+	switch (TYPEOF(DS))
+	{
+	case RAWSXP:
+		{
+			const Rbyte *pG = RAW(DS), MISSING=NA_RAW;
+			for (int j=0; j < m; j++)
+				for (int i=0; i < num_samp; i++)
+					if (*pG++ == MISSING) pT[i]++;
+			break;
+		}
+	case INTSXP:
+		{
+			const int *pG = INTEGER(DS), MISSING=NA_INTEGER;
+			for (int j=0; j < m; j++)
+				for (int i=0; i < num_samp; i++)
+					if (*pG++ == MISSING) pT[i]++;
+			break;
+		}
+	case REALSXP:
+		{
+			const double *pG = REAL(DS);
+			for (int j=0; j < m; j++)
+				for (int i=0; i < num_samp; i++)
+					if (!R_FINITE(*pG++)) pT[i]++;
+			break;
+		}
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
+	}
+
+	int *pS = INTEGER(sum);
+	for (int i=0; i < num_samp; i++)
+		pS[i] += (pT[i] > 0) ? 1 : 0;
 
 	return R_NilValue;
 }
@@ -96,6 +165,56 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_SampVariant(SEXP Geno, SEXP sum)
 	return ScalarReal((double)n / (num_ploidy*num_sample));
 }
 
+/// Calculate the missing rate per sample and variant
+COREARRAY_DLL_EXPORT SEXP FC_Missing_DS_SampVariant(SEXP DS, SEXP sum, SEXP tmp)
+{
+	int num_samp = XLENGTH(sum), n, m;
+	get_ds_n_m(DS, n, m);
+	if (m * num_samp != n) throw ErrSeqArray(ERR_DS_DIM);
+
+	int *pT = INTEGER(tmp);
+	memset(pT, 0, sizeof(int)*num_samp);
+	int n_miss;
+	switch (TYPEOF(DS))
+	{
+	case RAWSXP:
+		{
+			const Rbyte *pG = RAW(DS), MISSING=NA_RAW;
+			n_miss = vec_i8_count((char*)pG, n, NA_RAW);
+			for (int j=0; j < m; j++)
+				for (int i=0; i < num_samp; i++)
+					if (*pG++ == MISSING) pT[i]++;
+			break;
+		}
+	case INTSXP:
+		{
+			const int *pG = INTEGER(DS), MISSING=NA_INTEGER;
+			n_miss = vec_i32_count(pG, n, NA_INTEGER);
+			for (int j=0; j < m; j++)
+				for (int i=0; i < num_samp; i++)
+					if (*pG++ == MISSING) pT[i]++;
+			break;
+		}
+	case REALSXP:
+		{
+			const double *pG = REAL(DS);
+			n_miss = vec_f64_num_notfinite(pG, n);
+			for (int j=0; j < m; j++)
+				for (int i=0; i < num_samp; i++)
+					if (!R_FINITE(*pG++)) pT[i]++;
+			break;
+		}
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
+	}
+
+	int *pS = INTEGER(sum);
+	for (int i=0; i < num_samp; i++)
+		pS[i] += (pT[i] > 0) ? 1 : 0;
+
+	return ScalarReal((n > 0) ? (double(n_miss) / n) : R_NaN);
+}
+
 
 // ======================================================================
 
@@ -104,18 +223,6 @@ static int* AFreq_RefPtr = NULL;
 static SEXP AFreq_Allele = NULL;
 static bool AFreq_Minor  = false;  //< true for return MAF/MAC
 static int  AFreq_Ploidy = 0;      //< ploidy, e.g., 2 by default
-
-inline static void get_ds_n_m(SEXP DS, int &n, int &m)
-{
-	n = XLENGTH(DS); m = 1;
-	SEXP dm = GET_DIM(DS);
-	if (!isNull(dm))
-	{
-		if (XLENGTH(dm) != 2)
-			throw ErrSeqArray("# of dimensions should be 2 for dosages.");
-		m = INTEGER(dm)[1];
-	}
-}
 
 /// Set the reference allele with an index
 COREARRAY_DLL_EXPORT SEXP FC_AF_SetIndex(SEXP idx, SEXP minor, SEXP ploidy)
@@ -254,7 +361,6 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Ref(SEXP Geno)
 			if (R_FINITE(*p)) { sum += *p; num++; } \
 		break; \
 	}
-static const char *ERR_DS_TYPE = "Invalid type of dosage.";
 
 /// Get reference allele frequency from dosage
 COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Ref(SEXP DS)

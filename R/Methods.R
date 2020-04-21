@@ -555,44 +555,85 @@ seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
     stopifnot(is.logical(verbose), length(verbose)==1L)
     verbose <- verbose | .progress
 
+    # check genotypes
+    nm <- "genotype"
+    gv <- .has_geno(gdsfile)
+    if (!gv) nm <- .has_dosage(gdsfile)
+
+    # calculate
     if (is.na(per.variant))
     {
         dm <- .seldim(gdsfile)
-        sv <- seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(f, num, pg)
-            {
-                tmpsum <- integer(num)
-                v <- seqApply(f, "genotype", margin="by.variant",
-                    as.is="double", FUN=.cfunction2("FC_Missing_SampVariant"),
-                    y=tmpsum, .progress=pg & (process_index==1L))
-                list(v, tmpsum)
-            }, .combine=function(v1, v2) {
-                list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
-            }, num=dm[2L], pg=verbose)
-        sv[[2L]] <- sv[[2L]] / (dm[1L] * dm[3L])
+        if (gv)
+        {
+            sv <- seqParallel(parallel, gdsfile, split="by.variant",
+                FUN = function(f, num, pg)
+                {
+                    ssum <- integer(num)
+                    v <- seqApply(f, "genotype", as.is="double",
+                        FUN=.cfunction2("FC_Missing_SampVariant"), y=ssum,
+                        .progress=pg & (process_index==1L))
+                    list(v, ssum)
+                }, .combine=function(v1, v2) {
+                    list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
+                }, num=dm[2L], pg=verbose)
+            sv[[2L]] <- sv[[2L]] / (dm[1L] * dm[3L])
+        } else {
+            sv <- seqParallel(parallel, gdsfile, split="by.variant",
+                FUN = function(f, num, pg, nm)
+                {
+                    ssum <- integer(num)
+                    tmpsum <- integer(num)
+                    v <- seqApply(f, nm, as.is="double",
+                        FUN=.cfunction3("FC_Missing_DS_SampVariant"),
+                        y=ssum, z=tmpsum, .progress=pg & (process_index==1L))
+                    list(v, ssum)
+                }, .combine=function(v1, v2) {
+                    list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
+                }, num=dm[2L], pg=verbose, nm=nm)
+            sv[[2L]] <- sv[[2L]] / dm[3L]
+        }
         names(sv) <- c("variant", "sample")
         sv
+
     } else if (per.variant)
     {
         seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(f, pg)
+            FUN = function(f, pg, nm)
             {
-               seqApply(f, "genotype", margin="by.variant",
-                   as.is="double", FUN=.cfunction("FC_Missing_PerVariant"),
-                   .useraw=NA, .progress=pg & (process_index==1L))
-            }, pg=verbose)
+               seqApply(f, nm, as.is="double",
+                   FUN=.cfunction("FC_Missing_PerVariant"), .useraw=NA,
+                   .progress=pg & (process_index==1L))
+            }, pg=verbose, nm=nm)
+
     } else {
         dm <- .seldim(gdsfile)
-        sv <- seqParallel(parallel, gdsfile, split="by.variant",
-            FUN = function(f, num, pg)
-            {
-                tmpsum <- integer(num)
-                seqApply(f, "genotype", margin="by.variant",
-                    as.is="none", FUN=.cfunction2("FC_Missing_PerSample"),
-                    y=tmpsum, .useraw=NA, .progress=pg & (process_index==1L))
-                tmpsum
-            }, .combine="+", num=dm[2L], pg=verbose)
-        sv / (dm[1L] * dm[3L])
+        if (gv)
+        {
+            sv <- seqParallel(parallel, gdsfile, split="by.variant",
+                FUN = function(f, num, pg)
+                {
+                    ssum <- integer(num)
+                    seqApply(f, "genotype", as.is="none",
+                        FUN=.cfunction2("FC_Missing_PerSamp"), y=ssum,
+                        .useraw=NA, .progress=pg & (process_index==1L))
+                    ssum
+                }, .combine="+", num=dm[2L], pg=verbose)
+            sv / (dm[1L] * dm[3L])
+        } else {
+            sv <- seqParallel(parallel, gdsfile, split="by.variant",
+                FUN = function(f, num, pg, nm)
+                {
+                    ssum <- integer(num)
+                    tmpsum <- integer(num)
+                    seqApply(f, nm, as.is="none",
+                        FUN=.cfunction3("FC_Missing_DS_PerSamp"),
+                        y=ssum, z=tmpsum, .useraw=NA,
+                        .progress=pg & (process_index==1L))
+                    ssum
+                }, .combine="+", num=dm[2L], pg=verbose, nm=nm)
+            sv / dm[3L]
+        }
     }
 }
 
@@ -614,15 +655,13 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
     verbose <- verbose | .progress
 
     # check genotypes
-    gv <- !is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE))
+    gv <- .has_geno(gdsfile)
     if (gv)
     {
         nm <- "genotype"
         ploidy <- .dim(gdsfile)[1L]
     } else {
-        nm <- getOption("seqarray.node_ds", "annotation/format/DS")
-        if (is.null(index.gdsn(gdsfile, paste0(nm, "/data"), silent=TRUE)))
-            stop("No 'genotype/data' or 'annotation/format/DS'.")
+        nm <- .has_dosage(gdsfile)
         ploidy <- getOption("seqarray.ploidy", 2L)
         err <- "No 'genotype/data', try seqAlleleFreq(, ref.allele=0)"
     }
@@ -718,16 +757,14 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
     verbose <- verbose | .progress
 
     # check genotypes
-    gv <- !is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE))
+    gv <- .has_geno(gdsfile)
     if (gv)
     {
         nm <- "genotype"
         ploidy <- .dim(gdsfile)[1L]
         tp <- "integer"
     } else {
-        nm <- getOption("seqarray.node_ds", "annotation/format/DS")
-        if (is.null(index.gdsn(gdsfile, paste0(nm, "/data"), silent=TRUE)))
-            stop("No 'genotype/data' or 'annotation/format/DS'.")
+        nm <- .has_dosage(gdsfile)
         ploidy <- getOption("seqarray.ploidy", 2L)
         tp <- "double"
         err <- "No 'genotype/data', try seqAlleleFreq(, ref.allele=0)"

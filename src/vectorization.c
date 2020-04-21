@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2019    Xiuwen Zheng
+// Copyright (C) 2016-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -23,7 +23,7 @@
  *	\file     vectorization.c
  *	\author   Xiuwen Zheng [zhengx@u.washington.edu]
  *	\version  1.0
- *	\date     2016-2019
+ *	\date     2016-2020
  *	\brief    compiler optimization with vectorization
  *	\details
 **/
@@ -33,6 +33,7 @@
 #endif
 
 #include "vectorization.h"
+#include <Rdefines.h>
 
 
 /// get the number of non-zero
@@ -1581,8 +1582,6 @@ void vec_i32_shr_b2(int32_t *p, size_t n)
 /// bounds checking, excluding NA_INTEGER
 int vec_i32_bound_check(const int32_t *p, size_t n, int bound)
 {
-	#define NA_INTEGER  0x80000000
-
 #ifdef COREARRAY_SIMD_AVX2
 	__m256i NA8   = _mm256_set1_epi32(NA_INTEGER);
 	__m256i ZERO8 = _mm256_setzero_si256();
@@ -1621,6 +1620,19 @@ int vec_i32_bound_check(const int32_t *p, size_t n, int bound)
 	return -1;
 }
 
+
+// ===========================================================
+// functions for float64
+// ===========================================================
+
+/// get the number of finite numbers
+size_t vec_f64_num_notfinite(const double p[], size_t n)
+{
+	size_t m = 0;
+	for (size_t i=0; i < n; i++)
+		if (!R_FINITE(p[i])) m ++;
+	return m;
+}
 
 
 // ===========================================================
