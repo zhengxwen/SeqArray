@@ -384,6 +384,45 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 		return ScalarReal(R_NaN);
 }
 
+/// Get allele frequency
+COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Allele(SEXP List)
+{
+	SEXP Ref = STRING_ELT(AFreq_Allele, AFreq_Index++);
+	int A = -1;
+	if (Ref != NA_STRING)
+		A = GetIndexOfAllele(CHAR(Ref), CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
+
+	SEXP DS = VECTOR_ELT(List, 0);
+	if (A == 0) return FC_AF_DS_Ref(DS);
+
+	int n, m;
+	get_ds_n_m(DS, n, m);  // get total # and # of columns
+	double sum = 0;
+	int num = 0, nrow = n/m;
+	if (A > 0 && A <= m)
+	{
+		switch (TYPEOF(DS))
+		{
+		case RAWSXP:
+			GET_SUM_NUM(Rbyte, RAW, nrow*(A-1), NA_RAW, nrow)
+		case INTSXP:
+			GET_SUM_NUM(int, INTEGER, nrow*(A-1), NA_INTEGER, nrow)
+		case REALSXP:
+			GET_SUM_NUM_F(nrow*(A-1), nrow)
+		default:
+			throw ErrSeqArray(ERR_DS_TYPE);
+		}
+	}
+
+	if (num > 0)
+	{
+		double p = sum / (num * AFreq_Ploidy);
+		if (AFreq_Minor && p>0.5) p = 1 - p;
+		return ScalarReal(p);
+	} else
+		return ScalarReal(R_NaN);
+}
+
 
 // ======================================================================
 
@@ -538,6 +577,45 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 	}
 
 	return ScalarInteger(ans);
+}
+
+/// Get allele count
+COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Allele(SEXP List)
+{
+	SEXP Ref = STRING_ELT(AFreq_Allele, AFreq_Index++);
+	int A = -1;
+	if (Ref != NA_STRING)
+		A = GetIndexOfAllele(CHAR(Ref), CHAR(STRING_ELT(VECTOR_ELT(List, 1), 0)));
+
+	SEXP DS = VECTOR_ELT(List, 0);
+	if (A == 0) return FC_AC_DS_Ref(DS);
+
+	int n, m;
+	get_ds_n_m(DS, n, m);  // get total # and # of columns
+	double sum = 0;
+	int num = 0, nrow = n/m;
+	if (A > 0 && A <= m)
+	{
+		switch (TYPEOF(DS))
+		{
+		case RAWSXP:
+			GET_SUM_NUM(Rbyte, RAW, nrow*(A-1), NA_RAW, nrow)
+		case INTSXP:
+			GET_SUM_NUM(int, INTEGER, nrow*(A-1), NA_INTEGER, nrow)
+		case REALSXP:
+			GET_SUM_NUM_F(nrow*(A-1), nrow)
+		default:
+			throw ErrSeqArray(ERR_DS_TYPE);
+		}
+	}
+
+	if (num > 0)
+	{
+		double sum2 = num * AFreq_Ploidy - sum;
+		if (AFreq_Minor && sum>sum2) sum = sum2;
+		return ScalarReal(sum);
+	} else
+		return ScalarReal(R_NaN);
 }
 
 
