@@ -1380,6 +1380,22 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Debug(SEXP gdsfile)
 
 
 // ===========================================================
+// Get system configuration
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP SEQ_TestNode(SEXP gdsfile, SEXP nodepath)
+{
+	COREARRAY_TRY
+		PdGDSFolder root = GDS_R_SEXP2FileRoot(gdsfile);
+		const char *nm = CHAR(STRING_ELT(nodepath, 0));
+		PdGDSObj nd = GDS_Node_Path(root, nm, FALSE);
+		rv_ans = ScalarLogical(nd ? TRUE : FALSE);
+	COREARRAY_CATCH
+}
+
+
+
+// ===========================================================
 // Progress object
 // ===========================================================
 
@@ -1528,7 +1544,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
 		CALL(SEQ_IntAssign, 2),             CALL(SEQ_AppendFill, 3),
-		CALL(SEQ_ClearVarMap, 1),
+		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_TestNode, 2),
 
 		CALL(SEQ_bgzip_create, 1),
 

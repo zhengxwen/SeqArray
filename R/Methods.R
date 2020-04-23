@@ -310,7 +310,7 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
-    if (!all(c(is.na(maf), is.na(mac), is.na(missing.rate))))
+    if (!all(is.na(maf), is.na(mac), is.na(missing.rate)))
     {
         # calculate # of ref. allele and missing genotype
         ns <- seqParallel(parallel, gdsfile, split="by.variant",
@@ -350,7 +350,8 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
         # set filter
         seqSetFilter(gdsfile, variant.sel=sel, action="intersect",
             verbose=verbose)
-    }
+    } else if (verbose)
+        cat("No action in seqSetFilterCond().")
 
     invisible()
 }
