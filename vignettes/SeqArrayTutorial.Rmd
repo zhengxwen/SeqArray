@@ -173,6 +173,7 @@ The optional folders include `phase` (phasing information), `annotation`, and `s
         2. `~data`, an optional variable, the transposed array according to `data`.
         3. `@data`, one-dimensional array, the index data for the variable `data`, and the prefix `@` is used to indicate the index data. It should be equal-size as `variant.id`, which is used to specify the data size of each variant.
     2. `OTHER_VARIABLES`, ...
+    3. typical variables include `AD` (allelic depth), `DS` (dosage of alternative alleles, and multiple columns if more than one alt. allele)
 
 * The folder `sample.annotation` contains variables of vector or matrix according to `sample.id`.
 

@@ -799,8 +799,23 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleCount(SEXP List)
 }
 
 
-/// Get the numbers of reference and missing alleles
-COREARRAY_DLL_EXPORT SEXP FC_AlleleCount2(SEXP Geno)
+// ======================================================================
+
+// val[0] -- maf, val[1] -- mac, val[2] -- missing
+static double *mafmac_ptr = NULL;
+// ploidy
+static int mafmac_ploidy = 0;
+
+/// Initialize maf/mac/missing internal variable
+COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_Init(SEXP M_3n, SEXP ploidy)
+{
+	mafmac_ptr = REAL(M_3n);  // M_3n is a matrix with three rows
+	mafmac_ploidy = Rf_asInteger(ploidy);
+	return R_NilValue;
+}
+
+/// Get MAF/MAC/missing rate from integer genotypes
+COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_Geno(SEXP Geno)
 {
 	const size_t N = XLENGTH(Geno);
 	size_t n0, nmiss;
@@ -808,12 +823,65 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleCount2(SEXP Geno)
 		vec_i8_count2((const char*)RAW(Geno), N, 0, 0xFF, &n0, &nmiss);
 	else
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &n0, &nmiss);
-	SEXP rv = NEW_INTEGER(2);
-	int *p = INTEGER(rv);
-	p[0] = n0; p[1] = nmiss;
-	return rv;
+	size_t n = N - nmiss;
+	// MAF
+	double af = R_NaN;
+	if (n > 0)
+	{
+		af = (double)n0 / n;
+		if (af > 0.5) af = 1 - af;
+	}
+	mafmac_ptr[0] = af;
+	// MAC
+	double ac = n0, ac2 = n - n0;
+	if (ac > ac2) ac = ac2;
+	mafmac_ptr[1] = ac;
+	// Missing rate
+	mafmac_ptr[2] = (double)nmiss / N;
+	mafmac_ptr += 3;
+	// output
+	return R_NilValue;
 }
 
+/// Get MAF/MAC/missing rate from dosages
+COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_DS(SEXP DS)
+{
+	int n, m, num=0;
+	get_ds_n_m(DS, n, m);
+
+	double sum=0;
+	switch (TYPEOF(DS))
+	{
+	case RAWSXP:
+		GET_SUM_NUM(Rbyte, RAW, 0, NA_RAW, n)
+	case INTSXP:
+		GET_SUM_NUM(int, INTEGER, 0, NA_INTEGER, n)
+	case REALSXP:
+		GET_SUM_NUM_F(0, n)
+	default:
+		throw ErrSeqArray(ERR_DS_TYPE);
+	}
+
+	double af=R_NaN, ac=R_NaN;
+	if (num > 0)
+	{
+		af = sum * m / (num * mafmac_ploidy);
+		if (af > 0.5) af = 1 - af;
+		double totac = double(num * mafmac_ploidy) / m;
+		ac = totac - sum;
+		if (ac > 0.5*totac) ac = totac - ac;
+	}
+
+	// MAF
+	mafmac_ptr[0] = af;
+	// MAC
+	mafmac_ptr[1] = ac;
+	// Missing rate
+	mafmac_ptr[2] = (double)(n - num) / n;
+	mafmac_ptr += 3;
+	// output
+	return R_NilValue;
+}
 
 
 // ======================================================================

@@ -29,41 +29,27 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
     # calculate # of ref. allele and missing genotype
     if (verbose)
         cat("Calculating MAF, MAC and missing rates ...\n")
-    ns <- seqParallel(parallel, gdsfile, split="by.variant",
-        FUN = function(f, pg)
-        {
-            seqApply(f, "genotype", margin="by.variant", as.is="list",
-                FUN = .cfunction("FC_AlleleCount2"),
-                .useraw=NA, .list_dup=FALSE, .progress=pg & (process_index==1L))
-        }, pg=verbose)
-
-    # the total number of alleles for a site
-    N <- prod(.seldim(gdsfile)[c(1L,2L)])
-    n0 <- sapply(ns, `[`, i=1L)
-    nm <- sapply(ns, `[`, i=2L)
-    remove(ns)
-    nn <- N - nm           # the number of non-missing alleles
-    n0 <- pmin(n0, nn-n0)  # MAC
+    # get MAF/MAC/missing rate
+    v <- .Get_MAF_MAC_Missing(gdsfile, parallel, verbose)
 
     # selection
-    sel <- rep(TRUE, length(n0))
+    sel <- rep(TRUE, length(v$maf))
     # check mac[1] <= ... < mac[2]
     if (!is.na(mac[1L]))
-        sel <- sel & (mac[1L] <= n0)
+        sel <- sel & (mac[1L] <= v$mac)
     if (!is.na(mac[2L]))
-        sel <- sel & (n0 < mac[2L])
+        sel <- sel & (v$mac < mac[2L])
     # check maf[1] <= ... < maf[2]
     if (any(!is.na(maf)))
     {
-        p <- n0 / nn
         if (!is.na(maf[1L]))
-            sel <- sel & (maf[1L] <= p)
+            sel <- sel & (maf[1L] <= v$maf)
         if (!is.na(maf[2L]))
-            sel <- sel & (p < maf[2L])
+            sel <- sel & (v$maf < maf[2L])
     }
     # check ... <= missing.rate
     if (!is.na(missing.rate))
-        sel <- sel & (nm/N <= missing.rate)
+        sel <- sel & (v$miss <= missing.rate)
     if (all(sel))
     {
         if (verbose) cat("No variant excluded!")

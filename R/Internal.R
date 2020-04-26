@@ -122,8 +122,9 @@ process_count <- 1L
 .has_dosage <- function(gdsfile)
 {
     nm <- getOption("seqarray.node_ds", "annotation/format/DS")
-    if (!.Call(SEQ_TestNode, gdsfile, paste0(nm, "/data")))
-        stop("No ", sQuote("genotype/data"), " or ", sQuote(nm), ".")
+    nm2 <- paste0(nm, "/data")
+    if (!.Call(SEQ_TestNode, gdsfile, nm2))
+        stop("No ", sQuote("genotype/data"), " or ", sQuote(nm2), ".")
     nm
 }
 
@@ -897,6 +898,46 @@ process_count <- 1L
     }
 
     invisible()
+}
+
+
+
+#######################################################################
+# Get MAF, MAC and missing rate for variants
+#
+.Get_MAF_MAC_Missing <- function(gdsfile, parallel, verbose)
+{
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    # check genotypes
+    gv <- .has_geno(gdsfile)
+    if (gv)
+    {
+        nm <- "genotype"
+        ploidy <- .dim(gdsfile)[1L]
+    } else {
+        nm <- .has_dosage(gdsfile)
+        ploidy <- getOption("seqarray.ploidy", 2L)
+    }
+    if (is.na(ploidy)) ploidy <- 2L
+
+    # calculate
+    m3s <- seqParallel(parallel, gdsfile, split="by.variant", .combine="list",
+        FUN = function(f, pg, nm, pl, cn)
+        {
+            m3 <- matrix(0, nrow=3L, ncol=.seldim(f)[3L])
+            .cfunction2("FC_MAF_MAC_Init")(m3, pl)
+            seqApply(f, nm, as.is="none", FUN=.cfunction(cn),
+                .useraw=NA, .progress=pg & (process_index==1L))
+            m3
+        }, pg=verbose, nm=nm, pl=ploidy,
+            cn=ifelse(gv, "FC_MAF_MAC_Geno", "FC_MAF_MAC_DS"))
+
+    # merge
+    if (is.list(m3s)) m3s <- do.call(cbind, m3s)
+    # output
+    list(maf=m3s[1L,], mac=m3s[2L,], miss=m3s[3L,])
 }
 
 
