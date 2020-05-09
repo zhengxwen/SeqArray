@@ -23,7 +23,7 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
 
     # save state
     seqSetFilter(gdsfile, variant.sel=unlist(units$index), action="push+set",
-        verbose=FALSE)
+        verbose=verbose)
     on.exit({ seqSetFilter(gdsfile, action="pop", verbose=FALSE) })
 
     # calculate # of ref. allele and missing genotype

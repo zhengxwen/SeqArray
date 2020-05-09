@@ -381,7 +381,7 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
     f <- openfn.gds(gds.fn, readonly=FALSE)
     on.exit({ closefn.gds(f) })
     if (verbose)
-        cat("Open '", gds.fn, "' ...\n", sep="")
+        cat("Open", sQuote(gds.fn), "...\n")
 
     nm_lst <- ls.gdsn(f, include.hidden=TRUE, recursive=TRUE)
     nm_lst <- nm_lst[!grepl("^description", nm_lst)]
@@ -418,10 +418,10 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
             if (!is.null(get.attr.gdsn(n)$md5))
             {
                 digest.gdsn(n, algo="md5", action="add")
-                cat("  MD5:", get.attr.gdsn(n)$md5, "\n", sep="")
-            } else {
+                if (verbose)
+                    cat("  MD5:", get.attr.gdsn(n)$md5, "\n", sep="")
+            } else if (verbose)
                 cat("\n")
-            }
         }
     }
 

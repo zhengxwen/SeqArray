@@ -1,11 +1,18 @@
+CHANGES IN VERSION 1.28.1
+-------------------------
+
+BUG FIXES
+
+    o `seqRecompress(, verbose=FALSE)` works correctly
+
+
 CHANGES IN VERSION 1.28.0
 -------------------------
 
 NEW FEATURES
 
-    o new function `seqUnitSlidingWindows()`
-
-    o new function `seqUnitApply()`
+    o new functions `seqUnitSlidingWindows()`, `seqUnitApply()`,
+      `seqUnitFilterCond()`
 
     o new variable "$variant_index", "$sample_index" in `SeqGetData()`,
       `seqBlockApply()` and `seqUnitApply()` to get the indices of selected
@@ -25,8 +32,9 @@ NEW FEATURES
       `seqAlleleCount()`; '.progress' is deprecated, but still can be used
       for compatiblity
 
-    o `seqAlleleFreq()` and `seqAlleleCount()` work on 'annotation/format/DS',
-      if 'genotype/data' is not available
+    o `seqAlleleFreq()`, `seqAlleleCount()`, `seqMissing()`,
+      `seqSetFilterCond()` work on 'annotation/format/DS', if 'genotype/data'
+      is not available
 
 UTILITIES
 
