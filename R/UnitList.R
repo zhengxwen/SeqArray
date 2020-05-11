@@ -22,14 +22,14 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # save state
-    seqSetFilter(gdsfile, action="push", verbose=FALSE)
+    seqSetFilter(gdsfile, variant.sel=unlist(units$index), action="push+set",
+        verbose=FALSE)
     on.exit({ seqSetFilter(gdsfile, action="pop", verbose=FALSE) })
-    seqSetFilter(gdsfile, variant.sel=unlist(units$index), verbose=FALSE)
     if (verbose)
     {
         dm <- .seldim(gdsfile)
-        .cat("Dataset: ", dm[2L], " sample", .plural(dm[2L]),
-            ", ", dm[3L], " variant", .plural(dm[3L]))
+        .cat("Dataset: ", .pretty(dm[2L]), " sample", .plural(dm[2L]),
+            " x ", .pretty(dm[3L]), " variant", .plural(dm[3L]))
     }
 
     # calculate # of ref. allele and missing genotype
@@ -40,9 +40,16 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
     # show maf, mac and missing rate
     if (verbose)
     {
-        .cat("[Threshold] MAF: ", paste(maf, collapse=","),
-            "; MAC: ", paste(mac, collapse=","),
-            "; missing rate: ", missing.rate)
+        if (length(maf) == 1L)
+            smaf <- paste0(">=", maf)
+        else
+            smaf <- paste0("[", maf[1L], ",", maf[2L], ")")
+        if (length(mac) == 1L)
+            smac <- paste0(">=", mac)
+        else
+            smac <- paste0("[", mac[1L], ",", mac[2L], ")")
+        .cat("[Filter] MAF: ", smaf, "; MAC: ", smac, "; missing rate: ",
+            ifelse(is.na(missing.rate), "no", paste0("<=", missing.rate)))
     }
 
     # selection
@@ -99,7 +106,6 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
         units$desp <- units$desp[x, ]
         units$index <- units$index[x]
     }
-    if (verbose) cat("New a unit list.\n")
     units
 }
 

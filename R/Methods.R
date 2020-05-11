@@ -118,7 +118,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
                 return(invisible())
             },
             "push+set" = {
-                .Call(SEQ_FilterPushEmpty, object)
+                .Call(SEQ_FilterPushLast, object)
             },
             "push+intersect" = {
                 .Call(SEQ_FilterPushLast, object)

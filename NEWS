@@ -5,6 +5,9 @@ BUG FIXES
 
     o `seqRecompress(, verbose=FALSE)` works correctly
 
+    o `seqSetFilter(, action="push+set")` should not reset the filter
+      before setting a new filter
+
 
 CHANGES IN VERSION 1.28.0
 -------------------------
