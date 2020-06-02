@@ -632,22 +632,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 
 			if (NodeList.size() <= 1)
 			{
-				// ToDo: optimize this
-				SEXP tmp = NodeList[0].NeedRData(nProtected);
-				if (tmp != R_call_param)
+				SEXP pm = NodeList[0].NeedRData(nProtected);
+				if (pm != R_call_param)
 				{
-					R_call_param = tmp;
 					if (VarIdx > 0)
-					{
-						PROTECT(R_fcall = LCONS(FUN, LCONS(R_Index,
-							LCONS(R_call_param, LCONS(R_DotsSymbol, R_NilValue)))));
-					} else {
-						PROTECT(R_fcall = LCONS(FUN,
-							LCONS(R_call_param, LCONS(R_DotsSymbol, R_NilValue))));
-					}
-					nProtected ++;
+						SETCADDR(R_fcall, pm);
+					else
+						SETCADR(R_fcall, pm);
+					R_call_param = pm;
 				}
-				NodeList[0].ReadData(R_call_param);
+				NodeList[0].ReadData(pm);
 			} else {
 				int idx = 0;
 				for (it=NodeList.begin(); it != NodeList.end(); it ++)
