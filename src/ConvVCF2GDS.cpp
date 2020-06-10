@@ -1084,7 +1084,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
 	int num = Rf_asInteger(pnum);
 	if (num <= 0) error("'pnum' should be > 0.");
 	int multi = Rf_asInteger(multiple);
-	if (multi <= 0) error("'multiple' should be > 0.");
+	if (multi < 0) error("'multiple' should be > 0.");
+	if (multi == 0) multi = 1;
 	SEXP ans = PROTECT(NEW_LIST(2));
 	SEXP start_array = PROTECT(NEW_NUMERIC(num));
 	SEXP count_array = PROTECT(NEW_NUMERIC(num));
