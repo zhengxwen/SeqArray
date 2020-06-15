@@ -337,7 +337,7 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
         seqSetFilter(gdsfile, variant.sel=sel, action="intersect",
             verbose=verbose)
     } else if (verbose)
-        cat("No action in seqSetFilterCond().\n")
+        cat("No action in the filter of MAF, MAC and missing rate.\n")
 
     invisible()
 }
