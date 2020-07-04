@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.29.2
+-------------------------
+
+UTILITIES
+
+    o show a warning when an unsorted index is used in `seqSetFilter()`
+
+
 CHANGES IN VERSION 1.28.1
 -------------------------
 

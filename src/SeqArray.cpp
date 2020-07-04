@@ -235,6 +235,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample(SEXP gdsfile, SEXP samp_id,
 COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 	SEXP intersect, SEXP verbose)
 {
+	static const char *WARN_SEL_INDEX =
+		"'sample.sel' is sorted to be strictly increasing.";
 	int intersect_flag = Rf_asLogical(intersect);
 
 	COREARRAY_TRY
@@ -300,12 +302,20 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 				int *pI = INTEGER(samp_sel);
 				R_xlen_t N = XLENGTH(samp_sel);
 				// check
+				bool if_warn = false;
+				int last_I = NA_INTEGER;
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
 					if ((I != NA_INTEGER) && ((I < 1) || (I > Count)))
 						throw ErrSeqArray("Out of range 'sample.sel'.");
+					if (!if_warn)
+					{
+						if (I <= last_I) if_warn = true;
+						last_I = I;
+					}
 				}
+				if (if_warn) warning(WARN_SEL_INDEX);
 				// set values
 				memset((void*)pArray, 0, Count);
 				pI = INTEGER(samp_sel);
@@ -319,12 +329,20 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 				int *pI = INTEGER(samp_sel);
 				R_xlen_t N = XLENGTH(samp_sel);
 				// check
+				bool if_warn = false;
+				int last_I = NA_INTEGER;
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
 					if ((I != NA_INTEGER) && ((I < 1) || (I > Cnt)))
 						throw ErrSeqArray("Out of range 'sample.sel'.");
+					if (!if_warn)
+					{
+						if (I <= last_I) if_warn = true;
+						last_I = I;
+					}
 				}
+				if (if_warn) warning(WARN_SEL_INDEX);
 				// get the current index
 				vector<int> Idx;
 				Idx.reserve(Cnt);
@@ -463,7 +481,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant(SEXP gdsfile, SEXP var_id,
 COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 	SEXP intersect, SEXP verbose)
 {
-	static const char *ERR_OUT_RANGE = "Out of range 'variant.sel'.";
+	static const char *ERR_OUT_RANGE =
+		"Out of range 'variant.sel'.";
+	static const char *WARN_SEL_INDEX =
+		"'variant.sel' is sorted to be strictly increasing.";
 	int intersect_flag = Rf_asLogical(intersect);
 
 	COREARRAY_TRY
@@ -553,25 +574,38 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 				// clear
 				Sel.ClearSelectVariant();
 				// set values
+				bool if_warn = false;
+				int last_I = NA_INTEGER;
 				ssize_t num=0, st=Count, ed=0;
 				int *pI = INTEGER(var_sel);
 				for (R_xlen_t i=0; i < N; i++)
 				{
 					int I = *pI ++;
-					if (I!=NA_INTEGER && !pArray[I-1])
+					if (I != NA_INTEGER)
 					{
-						if (I > ed) ed = I;
-						ssize_t ii = I - 1;
-						if (ii < st) st = ii;
-						pArray[ii] = TRUE;
-						num ++;
+						if (!pArray[I-1])
+						{
+							if (!if_warn)
+							{
+								if (I <= last_I) if_warn = true;
+								last_I = I;
+							}
+							if (I > ed) ed = I;
+							ssize_t ii = I - 1;
+							if (ii < st) st = ii;
+							pArray[ii] = TRUE;
+							num ++;
+						} else
+							if_warn = true;
 					}
 				}
+				if (if_warn) warning(WARN_SEL_INDEX);
 				// set the structure of selected variants
 				Sel.varTrueNum = num;
 				Sel.varStart = st;
 				Sel.varEnd = (ed < st) ? st : ed;
 			} else {
+				// TODO Optimize ...
 				int Cnt = File.VariantSelNum();
 				R_xlen_t N = XLENGTH(var_sel);
 				// check
