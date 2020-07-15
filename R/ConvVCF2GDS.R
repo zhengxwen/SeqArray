@@ -58,6 +58,19 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     nSample <- nVariant <- 0L
     samp.id <- NULL
 
+    # add a message if fails
+    error_fn <- FALSE
+    on.exit({
+        if (!isFALSE(error_fn))
+        {
+            if (is.character(error_fn))
+                message("Parsing the VCF header fails: ", error_fn)
+            else
+                message("Parsing the VCF header from a connection object fails.")
+            error_fn <- FALSE
+        }
+    })
+
     n <- 0L
     for (i in ilist)
     {
@@ -65,7 +78,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         if (!inherits(vcf.fn, "connection"))
         {
             infile <- file(vcf.fn[i], open="rt")
-            on.exit(close(infile))
+            error_fn <- sQuote(vcf.fn[i])
             if (grepl("\\.bcf$", vcf.fn[i], ignore.case=TRUE))
             {
                 s <- readChar(infile, 9L)
@@ -75,6 +88,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                 is_vcf_fn <- TRUE
         } else {
             infile <- vcf.fn
+            error_fn <- TRUE
         }
 
         # read header
@@ -116,11 +130,15 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
             }
         }
 
-        if (!inherits(vcf.fn, "connection"))
-        {
-            close(infile)
-            on.exit()
-        }
+        if (!inherits(vcf.fn, "connection")) close(infile)
+    }
+
+    # add a message if fails
+    if (!inherits(vcf.fn, "connection"))
+    {
+        error_fn <- paste(sQuote(vcf.fn), collapse=", ")
+    } else {
+        error_fn <- TRUE
     }
 
     ans <- unique(ans)
@@ -147,7 +165,6 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         }
         rv
     }
-
 
     #########################################################
     # get names and values, length(txt) == 1L
@@ -369,16 +386,24 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
 
     contig <- NULL
     s <- ans$value[ans$id == "contig"]
-    for (i in seq_along(s))
+    lst <- lapply(s, function(x) {
+        v <- AsDataFrame(x, NULL)
+        if (is.null(v)) stop("contig=", x)
+        v
+    })
+    nmlst <- unique(unlist(lapply(lst, function(x) colnames(x))))
+    xx <- lapply(lst, function(x) {
+        for (nm in setdiff(nmlst, colnames(x)))
+            x[[nm]] <- NA_character_
+        x[, match(nmlst, colnames(x)), drop=FALSE]
+    })
+    contig <- unique(Reduce(rbind, xx))
+    for (i in seq_len(NCOL(contig)))
     {
-        v <- AsDataFrame(s[i], NULL)
-        if (!is.null(v))
-        {
-            contig <- rbind(contig, v)
-        } else
-            stop("contig=", s[i])
+        s <- type.convert(contig[, i], as.is=TRUE, numerals="no.loss")
+        if (is.logical(s) && all(is.na(s))) s <- as.integer(s)
+        contig[, i] <- s
     }
-    contig <- unique(contig)
     ans <- ans[ans$id != "contig", ]
 
 
@@ -394,6 +419,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
     #########################################################
     # output
 
+    error_fn <- FALSE
     rv <- list(fileformat=fileformat, info=INFO, filter=FILTER, format=FORMAT,
         alt=ALT, contig=contig, assembly=assembly, reference=reference,
         header=ans, ploidy=ploidy)

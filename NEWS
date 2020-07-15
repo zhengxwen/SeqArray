@@ -5,6 +5,13 @@ UTILITIES
 
     o show a warning when an unsorted index is used in `seqSetFilter()`
 
+    o show a message if `seqVCF_Header()` fails
+
+BUG FIXES
+
+    o `seqVCF_Header()` fixes 'contig' in the header of VCF if there are
+      different fields
+
 
 CHANGES IN VERSION 1.28.1
 -------------------------
