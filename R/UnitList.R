@@ -22,8 +22,8 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # save state
-    seqSetFilter(gdsfile, variant.sel=unlist(units$index), action="push+set",
-        verbose=FALSE)
+    suppressWarnings(seqSetFilter(gdsfile, variant.sel=unlist(units$index),
+        action="push+set", verbose=FALSE))
     on.exit({ seqSetFilter(gdsfile, action="pop", verbose=FALSE) })
     if (verbose)
     {
@@ -216,7 +216,8 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
         {
             seqSetFilter(gdsfile, variant.sel=units$index[[i]], verbose=FALSE)
             x <- seqGetData(gdsfile, var.name, .useraw, .padNA, .tolist, .envir)
-            ans[[i]] <- FUN(x, ...)
+            v <- FUN(x, ...)
+            if (!is.null(v)) ans[[i]] <- v
             .seqProgForward(progress, 1L)
         }
         # finalize
@@ -299,7 +300,8 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             {
                 seqSetFilter(f, variant.sel=.packageEnv$units[[j+k]], verbose=FALSE)
                 x <- seqGetData(f, vn, .useraw, .padNA, .tolist, env)
-                rv[[j]] <- FUN(x, ...)
+                v <- FUN(x, ...)
+                if (!is.null(v)) rv[[j]] <- v
             }
             # return
             rv
