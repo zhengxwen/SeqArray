@@ -73,8 +73,9 @@ static vector<SEXP> VCF_FORMAT_List;
 
 static size_t VCF_NumAllele;  ///< the number of alleles
 static size_t VCF_NumSample;  ///< the number of samples
+static size_t VCF_ChrPrefix_NChar = 0;    ///< # of characters in chromosome prefix
+static const char *VCF_ChrPrefix = NULL;  ///< pointer to chromosome prefix
 static Rconnection VCF_File = NULL;  ///< R connection object
-
 
 static const size_t LINE_BUFFER_SIZE = 4096;
 static vector<char> LineBuffer;
@@ -199,6 +200,13 @@ inline static void LineBuf_Append(double val)
 inline static void LineBuf_Append(const char *txt)
 {
 	const size_t n = strlen(txt);
+	LineBuf_NeedSize(n + 16);
+	memcpy(pLine, txt, n);
+	pLine += n;
+}
+
+inline static void LineBuf_Append(const char *txt, const size_t n)
+{
 	LineBuf_NeedSize(n + 16);
 	memcpy(pLine, txt, n);
 	pLine += n;
@@ -345,6 +353,8 @@ inline static void FORMAT_Write(SEXP X, size_t n, size_t Start, size_t Step)
 inline static void ExportHead(SEXP X)
 {
 	// CHROM
+	if (VCF_ChrPrefix_NChar > 0)
+		LineBuf_Append(VCF_ChrPrefix, VCF_ChrPrefix_NChar);
 	LineBuf_Append(CHAR(STRING_ELT(VECTOR_ELT(X, 0), 0)));
 	*pLine++ = '\t';
 
@@ -508,11 +518,22 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 
 
 /// initialize
-COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP Sel, SEXP Info, SEXP Format,
-	SEXP File, SEXP Verbose)
+COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP SelDim, SEXP ChrPrefix, SEXP Info,
+	SEXP Format, SEXP File, SEXP Verbose)
 {
-	VCF_NumAllele = INTEGER(Sel)[0];
-	VCF_NumSample = INTEGER(Sel)[1];
+	VCF_NumAllele = INTEGER(SelDim)[0];
+	VCF_NumSample = INTEGER(SelDim)[1];
+
+	SEXP chr = STRING_ELT(ChrPrefix, 0);
+	if (chr != NA_STRING)
+	{
+		VCF_ChrPrefix = CHAR(chr);
+		VCF_ChrPrefix_NChar = strlen(VCF_ChrPrefix);
+	} else {
+		VCF_ChrPrefix_NChar = 0;
+		VCF_ChrPrefix = "";
+	}
+
 	VCF_File = R_GetConnection(File);
 
 	int *pInfo = INTEGER(Info);
@@ -522,7 +543,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP Sel, SEXP Info, SEXP Format,
 	VCF_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
 
 	VCF_FORMAT_List.reserve(256);
-	LineBuf_Init(INTEGER(Sel)[2]);
+	LineBuf_Init(INTEGER(SelDim)[2]);
 
 	return R_NilValue;
 }

@@ -5,8 +5,8 @@
     Converts a SeqArray GDS file to a Variant Call Format (VCF) file.
 }
 \usage{
-seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, use_Rsamtools=TRUE,
-    verbose=TRUE)
+seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
+    use_Rsamtools=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -18,6 +18,8 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, use_Rsamtools=TRUE,
     \item{fmt.var}{a list of variable names in the FORMAT field, or NULL for
         using all variables; \code{character(0)} for no variable
         in the FORMAT field}
+    \item{chr_prefix}{the prefix of chromosome, e.g., "chr"; no prefix by
+        default}
     \item{use_Rsamtools}{\code{TRUE} for loading the Rsamtools package, see
         details}
     \item{verbose}{if \code{TRUE}, show information}
@@ -30,9 +32,10 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, use_Rsamtools=TRUE,
 the export.
 
     If the filename extension is "gz", the gzip compression algorithm is used
-to compress the output data. When the Rsamtools package is installed, the
-exported file utilizes the bgzf format (\link[Rsamtools:zip]{bgzip}, a variant
-of gzip format) allowing for fast indexing.
+to compress the output data. When the Rsamtools package is installed and
+\code{use_Rsamtools=TRUE}, the exported file utilizes the bgzf format
+(\link[Rsamtools:zip]{bgzip}, a variant of gzip format) allowing for fast
+indexing.
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,

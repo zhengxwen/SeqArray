@@ -13,7 +13,7 @@
 #
 
 seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
-    use_Rsamtools=TRUE, verbose=TRUE)
+    chr_prefix="", use_Rsamtools=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
@@ -23,6 +23,9 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         stopifnot(is.character(vcf.fn), length(vcf.fn)==1L)
     stopifnot(is.null(info.var) | is.character(info.var))
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
+    stopifnot(is.character(chr_prefix), length(chr_prefix)==1L)
+    stopifnot(is.logical(use_Rsamtools), length(use_Rsamtools)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (is.character(gdsfile))
     {
@@ -285,7 +288,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     # initialize
     dm <- .seldim(gdsfile)
-    .Call(SEQ_ToVCF_Init, dm, len.info, len.fmt, ofile, verbose)
+    .Call(SEQ_ToVCF_Init, dm, chr_prefix, len.info, len.fmt, ofile, verbose)
     on.exit({ .Call(SEQ_ToVCF_Done) }, add=TRUE)
 
     # variable names

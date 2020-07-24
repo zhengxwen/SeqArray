@@ -7,6 +7,8 @@ UTILITIES
 
     o show a message if `seqVCF_Header()` fails
 
+    o a new option 'chr_prefix' in `seqGDS2VCF()`
+
 BUG FIXES
 
     o `seqVCF_Header()` fixes 'contig' in the header of VCF if there are

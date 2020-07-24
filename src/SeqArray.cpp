@@ -236,7 +236,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 	SEXP intersect, SEXP verbose)
 {
 	static const char *WARN_SEL_INDEX =
-		"'sample.sel' is sorted to be strictly increasing.";
+		"rearrange 'sample.sel' to be strictly increasing and remove the duplicates.";
 	int intersect_flag = Rf_asLogical(intersect);
 
 	COREARRAY_TRY
@@ -484,7 +484,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 	static const char *ERR_OUT_RANGE =
 		"Out of range 'variant.sel'.";
 	static const char *WARN_SEL_INDEX =
-		"'variant.sel' is sorted to be strictly increasing.";
+		"rearrange 'variant.sel' to be strictly increasing and remove the duplicates.";
 	int intersect_flag = Rf_asLogical(intersect);
 
 	COREARRAY_TRY
@@ -1546,6 +1546,9 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	extern SEXP SEQ_bgzip_create(SEXP);
 
+    extern SEXP SEQ_ToVCF_Init(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+    extern SEXP SEQ_ToVCF_Done();
+
 	static R_CallMethodDef callMethods[] =
 	{
 		CALL(SEQ_Pkg_Init, 3),
@@ -1581,6 +1584,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_TestNode, 2),
 
 		CALL(SEQ_bgzip_create, 1),
+		CALL(SEQ_ToVCF_Init, 6),            CALL(SEQ_ToVCF_Done, 0),
 
 		CALL(SEQ_Progress, 2),              CALL(SEQ_ProgressAdd, 2),
 
