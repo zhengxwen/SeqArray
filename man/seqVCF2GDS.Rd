@@ -99,7 +99,12 @@ larger memory than other compression methods. Users may consider using
 \code{\link{seqRecompress}} to recompress the GDS file after calling
 \code{seqVCF2GDS()} with \code{storage.option="ZIP_RA"}, since
 \code{seqRecompress()} compresses data nodes one by one, taking much less memory
-when \code{"Ultra"} or \code{"UltraMax"} is used.
+than \code{"Ultra"} and \code{"UltraMax"}.
+
+    If \code{storage.option="LZMA_RA"} runs out of memory (e.g., there are too
+many annotation fields in the VCF file), users could use
+\code{storage.option="ZIP_RA"} and then call
+\code{seqRecompress(, compress="LZMA")}.
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,

@@ -11,7 +11,7 @@ seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax", "non
 \arguments{
     \item{gds.fn}{the file name of SeqArray file}
     \item{compress}{the compression method, \code{compress="ZIP"} by default}
-    \item{exclude}{excluded GDS nodes}
+    \item{exclude}{a list of GDS nodes to be excluded, see details}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}
@@ -24,6 +24,10 @@ takes lots of memory when the compression method \code{"LZMA_RA.max"},
 GDS file with a higher compression option, e.g., \code{"UltraMax"}.
 \code{seqRecompress()} takes much less memory, since it recompresses data in
 a GDS node each time.
+
+    \code{ls.gdsn(gdsfile, include.hidden=TRUE, recursive=TRUE)} returns a list
+of GDS nodes to be re-compressed, and users can specify the excluded nodes in
+the argument \code{exclude}.
 }
 \value{
     None.
