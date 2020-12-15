@@ -1,4 +1,13 @@
-CHANGES IN VERSION 1.29.2
+CHANGES IN VERSION 1.31.1
+-------------------------
+
+UTILITIES
+
+    o allow no variant in `seqApply()`
+
+
+
+CHANGES IN VERSION 1.30.0
 -------------------------
 
 UTILITIES

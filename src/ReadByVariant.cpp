@@ -2,7 +2,7 @@
 //
 // ReadByVariant.cpp: Read data variant by variant
 //
-// Copyright (C) 2013-2018    Xiuwen Zheng
+// Copyright (C) 2013-2020    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -824,7 +824,6 @@ COREARRAY_DLL_LOCAL const char *Txt_Apply_VarIdx[] =
 };
 
 
-
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho)
@@ -853,7 +852,33 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// the number of selected variants
 		int nVariant = File.VariantSelNum();
 		if (nVariant <= 0)
-			throw ErrSeqArray("There is no selected variant.");
+		{
+			if (Rf_inherits(as_is, "connection") || Rf_inherits(as_is, "gdsn.class"))
+			{
+				return R_NilValue;
+			} else {
+				int dt = MatchText(CHAR(STRING_ELT(as_is, 0)), Txt_Apply_AsIs);
+				switch (dt)
+				{
+				case 0:
+					return R_NilValue;
+				case 1:
+					return NEW_LIST(nVariant);
+				case 2:
+					return NEW_INTEGER(nVariant);
+				case 3:
+					return NEW_NUMERIC(nVariant);
+				case 4:
+					return NEW_CHARACTER(nVariant);
+				case 5:
+					return NEW_LOGICAL(nVariant);
+				case 6:
+					return NEW_RAW(nVariant);
+				default:
+					throw ErrSeqArray("'as.is' is not valid!");
+				}
+			}
+		}
 
 
 		// ===========================================================
