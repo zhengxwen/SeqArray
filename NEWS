@@ -3,7 +3,7 @@ CHANGES IN VERSION 1.31.1
 
 UTILITIES
 
-    o allow no variant in `seqApply()`
+    o allow no variant in `seqApply()` and `seqBlockApply()`
 
 
 
