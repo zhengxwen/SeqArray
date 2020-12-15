@@ -25,7 +25,7 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
         without variable index; if \code{"relative"} or \code{"absolute"}, add
         an argument to the user-defined function \code{FUN} like
         \code{FUN(index, x, ...)} where \code{index} is an index of variant
-        starting from 1 if \code{margin = "by.variant"}: \code{"relative"} for
+        starting from 1 if \code{margin="by.variant"}: \code{"relative"} for
         indexing in the selection defined by \code{\link{seqSetFilter}},
         \code{"absolute"} for indexing with respect to all data}
     \item{bsize}{block size}

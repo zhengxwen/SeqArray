@@ -1050,7 +1050,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		// the number of selected variants
 		int nVariant = File.VariantSelNum();
 		if (nVariant <= 0)
-			throw ErrSeqArray("There is no selected variant.");
+		{
+			const char *s = CHAR(STRING_ELT(as_is, 0));
+			if (strcmp(s, "list")==0 || strcmp(s, "unlist")==0)
+			{
+				return NEW_LIST(0);
+			} else {
+				return R_NilValue;
+			}
+		}
 
 		// the number of data blocks
 		int NumBlock = nVariant / bsize;

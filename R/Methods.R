@@ -489,9 +489,10 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
         as.is <- match.arg(as.is)
     }
 
+    dm <- .seldim(gdsfile)
     if (margin == "by.variant")
     {
-        if (njobs <= 1L)
+        if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
             # C call, by.variant
             rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,
