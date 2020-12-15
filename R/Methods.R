@@ -424,9 +424,10 @@ seqApply <- function(gdsfile, var.name, FUN,
         as.is <- match.arg(as.is)
     }
 
+    dm <- .seldim(gdsfile)
     if (margin == "by.variant")
     {
-        if (njobs <= 1L)
+        if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
             # C call, by.variant
             rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
@@ -441,7 +442,7 @@ seqApply <- function(gdsfile, var.name, FUN,
                 .varidx=var.index, .param=param, ...)
         }
     } else {
-        if (njobs <= 1L)
+        if ((njobs <= 1L) || (dm[2L] <= 0L))
         {
             # C call, by.sample
             rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
