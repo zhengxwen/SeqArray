@@ -382,15 +382,19 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
 #######################################################################
 # Set a filter with RS ID (stored in annotation/id)
 #
-seqSetFilterAnnotID <- function(object, id, verbose=TRUE)
+seqSetFilterAnnotID <- function(object, id, ret.idx=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(inherits(object, "SeqVarGDSClass"))
     stopifnot(is.character(id))
+    stopifnot(is.logical(ret.idx), length(ret.idx)==1L)
     # call C function
     .Call(SEQ_SetSpaceAnnotID, object, id, verbose)
-    # no return
-    invisible()
+    # output
+    if (ret.idx)
+        match(id, seqGetData(object, "annotation/id"))
+    else
+        invisible()
 }
 
 

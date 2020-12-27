@@ -28,7 +28,7 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
     intersect=FALSE, verbose=TRUE)
 seqSetFilterPos(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
     verbose=TRUE)
-seqSetFilterAnnotID(object, id, verbose=TRUE)
+seqSetFilterAnnotID(object, id, ret.idx=FALSE, verbose=TRUE)
 }
 \arguments{
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
@@ -91,7 +91,12 @@ as 0, and \code{NA} in \code{to.bp} is treated as the maximum of integer
 (2^31 - 1).
 }
 \value{
-    None.
+    If \code{ret.idx=TRUE}, \code{seqSetFilter()} returns a list with two
+components \code{sample_idx} and \code{variant_idx} to indicate the indices
+of the output array according to the input 'sample.id', 'sample.sel',
+'variant.id' or 'variant.sel';
+    if \code{ret.idx=TRUE}, \code{seqSetFilterAnnotID()} return an index vector;
+    otherwise no return.
 }
 
 \author{Xiuwen Zheng}
