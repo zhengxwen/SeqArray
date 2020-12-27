@@ -1,10 +1,14 @@
 CHANGES IN VERSION 1.31.1
 -------------------------
 
+NEW FEATURES
+
+    o new option 'ret.idx' in `seqSetFilter()` for unsorted sample and variant
+      indices
+
 UTILITIES
 
     o allow no variant in `seqApply()` and `seqBlockApply()`
-
 
 
 CHANGES IN VERSION 1.30.0

@@ -16,7 +16,7 @@
 \S4method{seqSetFilter}{SeqVarGDSClass,ANY}(object, variant.sel,
     sample.sel=NULL, variant.id=NULL, sample.id=NULL,
     action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
-    verbose=TRUE)
+    ret.idx=FALSE, verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRanges}(object, variant.sel,
     rm.txt="chr", intersect=FALSE, verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRangesList}(object, variant.sel,
@@ -55,6 +55,8 @@ seqSetFilterAnnotID(object, id, verbose=TRUE)
             set the current filter to the intersection of selected samples
             and/or variants;
         \code{"pop"} -- pop up the last filter}
+    \item{ret.idx}{if TRUE, return the index in the output array according to
+        the order of 'sample.id', 'sample.sel', 'variant.id' or 'variant.sel'}
     \item{rm.txt}{a character, the characters will be removed from
         \code{seqnames(variant.sel)}}
     \item{chr}{a vector of character for chromsome coding}
@@ -121,8 +123,18 @@ head(seqGetData(f, "allele"))
 # "T,C" "G,A" "G,A" ...
 
 
-# set sample and variant filters
+# set sample filters
 seqSetFilter(f, sample.id=samp.id[c(2,4,6,8)])
+seqSetFilter(f, sample.id=samp.id[c(2,4,6,8)], ret.idx=TRUE)
+
+(v <- seqSetFilter(f, sample.id=samp.id[c(8,2,6,4)], ret.idx=TRUE))
+all(seqGetData(f, "sample.id")[v$sample_idx] == samp.id[c(8,2,6,4)])
+
+# set variant filters
+seqSetFilter(f, variant.id=variant.id[c(2,4,6,8,10,12)], ret.idx=TRUE)
+(v <- seqSetFilter(f, variant.id=variant.id[c(12,4,6,10,8,12)], ret.idx=TRUE))
+all(variant.id[c(12,4,6,10,8,12)] == seqGetData(f, "variant.id")[v$variant_idx])
+
 set.seed(100)
 seqSetFilter(f, variant.id=sample(variant.id, 5))
 

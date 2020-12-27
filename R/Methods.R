@@ -95,14 +95,15 @@ setMethod("seqClose", signature(object="SeqVarGDSClass"),
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
     function(object, variant.sel, sample.sel=NULL, variant.id=NULL,
         sample.id=NULL, action=c("set", "intersect", "push", "push+set",
-        "push+intersect", "pop"), verbose=TRUE)
+        "push+intersect", "pop"), ret.idx=FALSE, verbose=TRUE)
     {
-        if (missing(variant.sel)) variant.sel <- NULL
-
         # check
+        if (missing(variant.sel)) variant.sel <- NULL
         action <- match.arg(action)
-        stopifnot(is.logical(verbose))
+        stopifnot(is.logical(ret.idx), length(ret.idx)==1L)
+        stopifnot(is.logical(verbose), length(verbose)==1L)
 
+        # action behavior
         setflag <- FALSE
         switch(action,
             "set" = NULL,
@@ -136,28 +137,58 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
             }
         )
 
+        # set sample filter
+        ii_samp <- NULL
         if (!is.null(sample.id))
         {
             stopifnot(is.vector(sample.id))
             stopifnot(is.numeric(sample.id) | is.character(sample.id))
             .Call(SEQ_SetSpaceSample, object, sample.id, setflag, verbose)
+            if (ret.idx)
+                ii_samp <- match(sample.id, seqGetData(object, "sample.id"))
         } else if (!is.null(sample.sel))
         {
             stopifnot(is.vector(sample.sel))
             stopifnot(is.logical(sample.sel) | is.raw(sample.sel) | is.numeric(sample.sel))
             .Call(SEQ_SetSpaceSample2, object, sample.sel, setflag, verbose)
+            if (ret.idx)
+            {
+                if (is.numeric(sample.sel))
+                {
+                    ii_samp <- order(sample.sel)
+                    if (anyNA(sample.sel))
+                        ii_samp[is.na(sample.sel)] <- NA_integer_
+                } else {
+                    ii_samp <- seq_len(SeqArray:::.seldim(object)[2L])
+                }
+            }
         }
 
+        # set variant filter
+        ii_var <- NULL
         if (!is.null(variant.id))
         {
             stopifnot(is.vector(variant.id))
             stopifnot(is.numeric(variant.id) | is.character(variant.id))
             .Call(SEQ_SetSpaceVariant, object, variant.id, setflag, verbose)
+            if (ret.idx)
+                ii_var <- match(variant.id, seqGetData(object, "variant.id"))
         } else if (!is.null(variant.sel))
         {
             stopifnot(is.vector(variant.sel))
             stopifnot(is.logical(variant.sel) | is.raw(variant.sel) | is.numeric(variant.sel))
             .Call(SEQ_SetSpaceVariant2, object, variant.sel, setflag, verbose)
+            if (ret.idx)
+            {
+                if (is.numeric(variant.sel))
+                {
+                    ii_var <- order(variant.sel)
+                    if (anyNA(variant.sel))
+                        ii_var[is.na(variant.sel)] <- NA_integer_
+                } else {
+                    ii_var <- seq_len(SeqArray:::.seldim(object)[3L])
+                }
+            }
         } else {
             if (is.null(sample.id) & is.null(sample.sel))
             {
@@ -166,7 +197,11 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
             }
         }
 
-        invisible()
+        # output
+        if (ret.idx)
+            list(sample_idx=ii_samp, variant_idx=ii_var)
+        else
+            invisible()
     }
 )
 
