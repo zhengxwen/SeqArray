@@ -16,6 +16,10 @@ UTILITIES
 
     o allow no variant in `seqApply()` and `seqBlockApply()`
 
+BUG FIXES
+
+    o `seqgGDS2VCF()` should output "." instead of NA in the FILTER column
+
 
 CHANGES IN VERSION 1.30.0
 -------------------------

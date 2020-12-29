@@ -391,12 +391,29 @@ inline static void ExportHead(SEXP X)
 	*pLine++ = '\t';
 
 	// FILTER
-	SEXP tmp = VECTOR_ELT(X, 5);
-	if (Rf_isFactor(tmp))
-		tmp = Rf_asCharacterFactor(tmp);
-	else
-		tmp = AS_CHARACTER(tmp);
-	LineBuf_Append(CHAR(STRING_ELT(tmp, 0)));
+	SEXP x = VECTOR_ELT(X, 5);
+	bool is_na = false;
+	switch (TYPEOF(x))
+	{
+	case LGLSXP:
+		is_na = (LOGICAL_ELT(x, 0) == NA_LOGICAL); break;
+	case INTSXP:
+		is_na = (INTEGER_ELT(x, 0) == NA_INTEGER); break;
+	case REALSXP:
+		is_na = R_FINITE(REAL_ELT(x, 0)); break;
+	case STRSXP:
+		is_na = (STRING_ELT(x, 0) == NA_STRING); break;
+	}
+	if (!is_na)
+	{
+		if (Rf_isFactor(x))
+			x = Rf_asCharacterFactor(x);
+		else
+			x = AS_CHARACTER(x);
+		LineBuf_Append(CHAR(STRING_ELT(x, 0)));
+	} else {
+		*pLine++ = '.';
+	}
 	*pLine++ = '\t';
 }
 
