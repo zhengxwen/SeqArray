@@ -298,35 +298,86 @@ seqSetFilterChrom <- function(object, include=NULL, is.num=NA,
 
 
 #######################################################################
-# Set a filter according to specified chromosomes and positions
+# Set a filter according to specified chromosomes, positions, ref & alt alleles
 #
-seqSetFilterPos <- function(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
-    verbose=TRUE)
+seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
+    intersect=FALSE, multi.pos=TRUE, ret.idx=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(inherits(object, "SeqVarGDSClass"))
     stopifnot(is.vector(chr))
     stopifnot(is.vector(pos))
     stopifnot(length(chr)==1L || length(chr)==length(pos))
+    has_ref_alt <- !is.null(ref) && !is.null(alt)
+    if (!is.null(ref))
+    {
+        stopifnot(is.vector(ref), length(ref)==length(pos), is.character(ref))
+        if (is.null(alt)) stop("'alt' is missing.")
+    }
+    if (!is.null(alt))
+    {
+        stopifnot(is.vector(alt), length(alt)==length(pos), is.character(alt))
+        if (is.null(ref)) stop("'ref' is missing.")
+    }
     stopifnot(is.logical(intersect), length(intersect)==1L)
     stopifnot(is.logical(multi.pos), length(multi.pos)==1L)
+    stopifnot(is.logical(ret.idx), length(ret.idx)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
+    # user-defined set
+    d0 <- data.frame(
+        chr=if (length(chr)==1L) rep(chr, length(pos)) else chr,
+        pos=pos, stringsAsFactors=FALSE)
+    if (ret.idx) d0$i0 <- seq_along(pos)
+
+    # need reset the fitler on variants?
     if (!intersect)
         seqResetFilter(object, sample=FALSE, verbose=FALSE)
-    if (multi.pos)
-    {
-        x <- paste0(seqGetData(object, "chromosome"), ":",
-            seqGetData(object, "position"))
-    } else {
-        x <- seqGetData(object, "$chrom_pos")
-    }
-    y <- paste0(chr, ":", pos)
-    seqSetFilter(object, variant.sel = x %in% y,
-        action = ifelse(intersect, "intersect", "set"),
-        verbose = verbose)
 
-    invisible()
+    # set filter
+    d1 <- data.frame(
+        chr=seqGetData(object, "chromosome"),
+        pos=seqGetData(object, "position"),
+        i1=seqGetData(object, "$variant_index"), stringsAsFactors=FALSE)
+
+    if (has_ref_alt)
+    {
+        # set filter on chromosomes and positions first
+        d <- merge(d0, d1, sort=FALSE)
+        suppressWarnings(seqSetFilter(object, variant.sel=d$i1, verbose=FALSE))
+        d1 <- data.frame(
+            chr=seqGetData(object, "chromosome"),
+            pos=seqGetData(object, "position"),
+            i1=seqGetData(object, "$variant_index"), stringsAsFactors=FALSE)
+        # then on alleles
+        d0$allele <- paste0(ref, ",", alt)
+        d1$allele <- seqGetData(object, "allele")
+    }
+
+    # match
+    d <- merge(d0, d1, sort=FALSE)
+    i <- d$i1
+    if (ret.idx)
+    {
+        d <- d[order(i),]
+        d <- d[!duplicated(d$i0),]
+    }
+    if (isFALSE(multi.pos))
+    {
+        if (ret.idx)
+        {
+            i <- d$i1
+        } else {
+            k <- order(i); i <- i[k[!duplicated(d$i0[k])]]
+        }
+    }
+    suppressWarnings(seqSetFilter(object, variant.sel=i, verbose=verbose))
+
+    # output
+    if (ret.idx)
+        match(d$i1, seqGetData(object, "$variant_index"))
+    else
+        invisible()
 }
 
 

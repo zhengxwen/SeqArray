@@ -26,8 +26,8 @@
 seqResetFilter(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
     intersect=FALSE, verbose=TRUE)
-seqSetFilterPos(object, chr, pos, intersect=FALSE, multi.pos=FALSE,
-    verbose=TRUE)
+seqSetFilterPos(object, chr, pos, ref=NULL, alt=NULL, intersect=FALSE,
+    multi.pos=TRUE, ret.idx=FALSE, verbose=TRUE)
 seqSetFilterAnnotID(object, id, ret.idx=FALSE, verbose=TRUE)
 }
 \arguments{
@@ -75,6 +75,8 @@ seqSetFilterAnnotID(object, id, ret.idx=FALSE, verbose=TRUE)
         selection are all samples/variants (by default); if \code{TRUE}, the
         candidate samples/variants are from the selected samples/variants
         defined via the previous call}
+    \item{ref}{the reference alleles}
+    \item{alt}{the alternative alleles}
     \item{multi.pos}{\code{FALSE}, use the first matched position;
         \code{TRUE}, allow multiple variants at the same position}
     \item{id}{a character vector for RS IDs (stored in \code{"annotation/id"})}

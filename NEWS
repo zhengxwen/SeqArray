@@ -9,6 +9,9 @@ NEW FEATURES
     o new option 'ret.idx' in `seqSetFilterAnnotID()` for unsorted variant
       index
 
+    o rewrite the function `seqSetFilterPos()`: new options 'ref' and 'alt',
+      'multi.pos=TRUE' by default
+
 UTILITIES
 
     o allow no variant in `seqApply()` and `seqBlockApply()`
