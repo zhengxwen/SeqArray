@@ -472,7 +472,8 @@
         cat("Annotation, FORMAT variable(s):\n")
 
     # genotype
-    if (GT)
+    n <- index.gdsn(gdsfile, "genotype/data", silent=TRUE)
+    if (GT && !is.null(n))
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
         if (is.null(a$VariableName)) a$VariableName <- "GT"
