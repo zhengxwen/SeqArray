@@ -497,6 +497,8 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 			val = AS_LOGICAL(val);
 			PROTECT(val);
 		}
+		// whether it is a factor variable or not
+		bool is_factor = Rf_isFactor(val) != FALSE;
 
 		if (P->padNA==TRUE && V.ValLenMax()==1 && Var.NDim==1)
 		{
@@ -511,6 +513,11 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 					int *p = INTEGER(rv_ans), *s = INTEGER(val);
 					for (size_t i=0; i < n; i++)
 						p[i] = (psel[i]) ? (*s++) : NA_INTEGER;
+					if (is_factor)
+					{
+						SET_CLASS(rv_ans, GET_CLASS(val));
+						SET_LEVELS(rv_ans, GET_LEVELS(val));
+					}
 					break;
 				}
 			case REALSXP:
@@ -561,10 +568,23 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 				SEXP vv;
 				if (nn <= 0)
 				{
-					if (!ZeroLen) ZeroLen = Rf_allocVector(TYPEOF(val), 0);
+					if (!ZeroLen)
+					{
+						ZeroLen = Rf_allocVector(TYPEOF(val), 0);
+						if (is_factor)
+						{
+							SET_CLASS(ZeroLen, GET_CLASS(val));
+							SET_LEVELS(ZeroLen, GET_LEVELS(val));
+						}
+					}
 					vv = ZeroLen;
 				} else {
 					vv = Rf_allocVector(TYPEOF(val), nn);
+					if (is_factor)
+					{
+						SET_CLASS(vv, GET_CLASS(val));
+						SET_LEVELS(vv, GET_LEVELS(val));
+					}
 				}
 				SET_ELEMENT(rv_ans, i, vv);
 				if (nn > 0)
