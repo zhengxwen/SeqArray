@@ -7,8 +7,8 @@
 
 
 # modify sample.id
-.r_sample_id <- function(gdsfile, val, replace, nsamp, desp, compress,
-    verbose)
+.r_sample_id <- function(gdsfile, val, replace, nsamp, desp, compress, verbose,
+    verbose.attr)
 {
     stopifnot(replace)
     stopifnot(is.vector(val), is.character(val) | is.numeric(val))
@@ -28,7 +28,7 @@
 
 # modify variant.id
 .r_variant_id <- function(gdsfile, val, replace, nvar, desp, compress,
-    verbose)
+    verbose, verbose.attr)
 {
     stopifnot(replace)
     stopifnot(is.vector(val), is.character(val) | is.numeric(val))
@@ -47,7 +47,8 @@
 }
 
 # modify position
-.r_position <- function(gdsfile, val, replace, nvar, desp, compress, verbose)
+.r_position <- function(gdsfile, val, replace, nvar, desp, compress, verbose,
+    verbose.attr)
 {
     stopifnot(replace)
     stopifnot(is.vector(val), is.numeric(val))
@@ -64,7 +65,8 @@
 }
 
 # modify position
-.r_position <- function(gdsfile, val, replace, nvar, desp, compress, verbose)
+.r_position <- function(gdsfile, val, replace, nvar, desp, compress, verbose,
+    verbose.attr)
 {
     stopifnot(replace)
     stopifnot(is.vector(val), is.character(val) | is.numeric(val))
@@ -83,7 +85,8 @@
 }
 
 # modify allele
-.r_allele <- function(gdsfile, val, replace, nvar, desp, compress, verbose)
+.r_allele <- function(gdsfile, val, replace, nvar, desp, compress, verbose,
+    verbose.attr)
 {
     stopifnot(replace)
     stopifnot(is.vector(val), is.character(val))
@@ -116,7 +119,7 @@
 
 # modify sample.annotation/VARNAME
 .r_samp_annot_sub <- function(gdsfile, varnm, val, replace, nsamp, desp,
-    compress, verbose)
+    compress, verbose, verbose.attr)
 {
     stopifnot(is.vector(val), length(val)==nsamp)
     n <- index.gdsn(gdsfile, "sample.annotation", silent=TRUE)
@@ -155,7 +158,7 @@
 
 # add annotation/info/VARNAME
 .r_annot_info_sub <- function(gdsfile, varnm, val, replace, nvar, desp,
-    compress, verbose, verbose.attr)
+    compress, packed, verbose, verbose.attr)
 {
     n <- index.gdsn(gdsfile, varnm, silent=TRUE)
     if (!is.null(n))
@@ -206,7 +209,7 @@
             n <- add.gdsn(node, nm, val, compress=compress, closezip=TRUE,
                 replace=TRUE)
             nidx <- index.gdsn(node, paste0("@", nm), silent=TRUE)
-            if (!is.null(nidx)) delete.gdsn(nidex)
+            if (!is.null(nidx)) delete.gdsn(nidx)
             nidx <- NULL
             num <- as.character(ifelse(isvec, 1L, nrow(val)))
         }
@@ -281,22 +284,20 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
     nsamp <- dm[2L]; nvar  <- dm[3L]
 
     ret <- switch(varnm,
-        "sample.id" =
-            .r_sample_id(gdsfile, val, replace, nsamp, desp, compress, verbose),
-        "variant.id" =
-            .r_variant_id(gdsfile, val, replace, nvar, desp, compress, verbose),
-        "position" =
-            .r_position(gdsfile, val, replace, nvar, desp, compress, verbose),
-        "chromosome" =
-            .r_position(gdsfile, val, replace, nvar, desp, compress, verbose),
-        "allele" =
-            .r_allele(gdsfile, val, replace, nvar, desp, compress, verbose),
-        "sample.annotation" =
-            .r_samp_annot(gdsfile, val, replace, nsamp, compress, verbose),
-        "annotation/info" =
-            .r_annot_info(gdsfile),
-        "annotation/format" =
-            .r_annot_fmt(gdsfile),
+        "sample.id"  = .r_sample_id(gdsfile, val, replace, nsamp, desp,
+                compress, verbose, verbose.attr),
+        "variant.id" = .r_variant_id(gdsfile, val, replace, nvar, desp,
+                compress, verbose, verbose.attr),
+        "position"   = .r_position(gdsfile, val, replace, nvar, desp,
+                compress, verbose, verbose.attr),
+        "chromosome" = .r_position(gdsfile, val, replace, nvar, desp,
+                compress, verbose, verbose.attr),
+        "allele"     = .r_allele(gdsfile, val, replace, nvar, desp,
+                compress, verbose, verbose.attr),
+        "sample.annotation" = .r_samp_annot(gdsfile, val, replace, nsamp,
+                compress, verbose),
+        "annotation/info"   = .r_annot_info(gdsfile),
+        "annotation/format" = .r_annot_fmt(gdsfile),
         FALSE
     )
     if (ret) return(invisible())
@@ -305,13 +306,13 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
     if (substr(varnm, 1L, 18L) == "sample.annotation/")
     {
         .r_samp_annot_sub(gdsfile, varnm, val, replace, nsamp, desp, compress,
-            verbose)
+            verbose, verbose.attr)
     } else if (substr(varnm, 1L, 16L) == "annotation/info/")
     {
         if (nchar(varnm) <= 16L)
             stop("Invalid 'varnm'.")
         .r_annot_info_sub(gdsfile, varnm, val, replace, nvar, desp, compress,
-            verbose, verbose.attr)
+            packed, verbose, verbose.attr)
     } else
         stop("Invalid `varnm`.")
 
