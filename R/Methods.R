@@ -355,27 +355,25 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     }
 
     # match
-    d <- merge(d0, d1, sort=FALSE)
-    i <- d$i1
-    if (ret.idx)
-    {
-        d <- d[order(i),]
-        d <- d[!duplicated(d$i0),]
-    }
+    d <- merge(d0, d1, all.x=TRUE, sort=FALSE)
+    i1 <- i <- d$i1
     if (isFALSE(multi.pos))
     {
         if (ret.idx)
         {
+            d <- d[order(i),]
+            d <- d[!duplicated(d$i0),]
             i <- d$i1
         } else {
-            k <- order(i); i <- i[k[!duplicated(d$i0[k])]]
+            k <- order(i)
+            i <- i[k[!duplicated(d$i0[k])]]
         }
     }
     suppressWarnings(seqSetFilter(object, variant.sel=i, verbose=verbose))
 
     # output
     if (ret.idx)
-        match(d$i1, seqGetData(object, "$variant_index"))
+        match(i1, seqGetData(object, "$variant_index"))
     else
         invisible()
 }

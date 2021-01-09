@@ -1022,7 +1022,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 					VarGetData(File, CHAR(STRING_ELT(var_name, i)), use_raw,
 					padNA, tolist, Env));
 			}
-			setAttrib(rv_ans, R_NamesSymbol, getAttrib(var_name, R_NamesSymbol));
+			SEXP nm = getAttrib(var_name, R_NamesSymbol);
+			if (nm == R_NilValue) nm = var_name;
+			setAttrib(rv_ans, R_NamesSymbol, nm);
 			UNPROTECT(1);
 		}
 	COREARRAY_CATCH
