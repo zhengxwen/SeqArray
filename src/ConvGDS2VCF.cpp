@@ -2,7 +2,7 @@
 //
 // ConvGDS2VCF.cpp: format conversion from GDS to VCF
 //
-// Copyright (C) 2013-2020    Xiuwen Zheng
+// Copyright (C) 2013-2021    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -258,24 +258,22 @@ inline static int INFO_GetNum(SEXP X, int n)
 inline static void INFO_Write(SEXP X, size_t n)
 {
 	size_t i = 0;
-	if (IS_INTEGER(X))
+	switch (TYPEOF(X))
 	{
-		LineBuf_NeedSize(12*n + 32);
-		for (int *p = INTEGER(X); i < n; i++)
+	case INTSXP:
+		if (!Rf_isFactor(X))
 		{
-			if (i > 0) *pLine++ = ',';
-			_Line_Append(*p++);
+			LineBuf_NeedSize(12*n + 32);
+			for (int *p = INTEGER(X); i < n; i++)
+			{
+				if (i > 0) *pLine++ = ',';
+				_Line_Append(*p++);
+			}
+			break;
+		} else {
+			X = Rf_asCharacterFactor(X);
 		}
-	} else if (IS_NUMERIC(X))
-	{
-		LineBuf_NeedSize(12*n + 32);
-		for (double *p = REAL(X); i < n; i++)
-		{
-			if (i > 0) *pLine++ = ',';
-			_Line_Append(*p++);
-		}
-	} else if (IS_CHARACTER(X))
-	{
+	case STRSXP:
 		for (; i < n; i++)
 		{
 			if (i > 0) *pLine++ = ',';
@@ -283,62 +281,111 @@ inline static void INFO_Write(SEXP X, size_t n)
 			LineBuf_Append(
 				((s != NA_STRING) && (CHAR(s)[0] != 0)) ? CHAR(s) : ".");
 		}
-	} else
+		break;
+	case REALSXP:
+		LineBuf_NeedSize(12*n + 32);
+		for (double *p = REAL(X); i < n; i++)
+		{
+			if (i > 0) *pLine++ = ',';
+			_Line_Append(*p++);
+		}
+		break;
+	case LGLSXP:
+		LineBuf_NeedSize(2*n + 32);
+		for (int *p = LOGICAL(X); i < n; i++)
+		{
+			if (i > 0) *pLine++ = ',';
+			if (*p == NA_INTEGER)
+				*pLine++ = '.';
+			else if (*p == 0)
+				*pLine++ = '0';
+			else
+				*pLine++ = '1';
+		}
+		break;
+	default:
 		throw ErrSeqArray("INFO_Write: invalid data type.");
+	}
 }
 
 
 /// write format values
 inline static void FORMAT_Write(SEXP X, size_t n, size_t Start, size_t Step)
 {
-	if (IS_INTEGER(X) || IS_LOGICAL(X))
+	switch (TYPEOF(X))
 	{
-		int *base = (IS_INTEGER(X) ? INTEGER(X) : LOGICAL(X)) + Start;
-		int *p = base + (n - 1)*Step;
-		for (; n > 0; n--, p-=Step)
-			if (*p != NA_INTEGER) break;
-		LineBuf_NeedSize(12*n + 32);
-		p = base;
-		for (size_t i=0; i < n; i++)
+	case INTSXP:
+		if (!Rf_isFactor(X))
 		{
-			if (i > 0) *pLine++ = ',';
-			_Line_Append(*p);
-			p += Step;
-		}
-	} else if (IS_NUMERIC(X))
-	{
-		double *base = REAL(X) + Start;
-		double *p = base + (n - 1)*Step;
-		for (; n > 0; n--, p-=Step)
-			if (R_finite(*p)) break;
-		LineBuf_NeedSize(12*n + 32);
-		p = base;
-		for (size_t i=0; i < n; i++)
-		{
-			if (i > 0) *pLine++ = ',';
-			_Line_Append(*p);
-			p += Step;
-		}
-	} else if (IS_CHARACTER(X) || Rf_isFactor(X))
-	{
-		if (Rf_isFactor(X))
+			int *base = INTEGER(X) + Start, *p = base + (n - 1)*Step;
+			for (; n > 0; n--, p-=Step)
+				if (*p != NA_INTEGER) break;
+			LineBuf_NeedSize(12*n + 32);
+			p = base;
+			for (size_t i=0; i < n; i++)
+			{
+				if (i > 0) *pLine++ = ',';
+				_Line_Append(*p); p += Step;
+			}
+			break;
+		} else {
 			X = Rf_asCharacterFactor(X);
-		for (; n > 0; n--)
-		{
-			SEXP s = STRING_ELT(X, Start + (n - 1)*Step);
-			if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
 		}
-		for (size_t i=0; i < n; i++, Start += Step)
+	case STRSXP:
 		{
-			if (i > 0) *pLine++ = ',';
-			SEXP s = STRING_ELT(X, Start);
-			if ((s != NA_STRING) && (CHAR(s)[0] != 0))
-				LineBuf_Append(CHAR(s));
-			else
-				*pLine++ = '.';
+			for (; n > 0; n--)
+			{
+				SEXP s = STRING_ELT(X, Start + (n - 1)*Step);
+				if ((s != NA_STRING) && (CHAR(s)[0] != 0)) break;
+			}
+			for (size_t i=0; i < n; i++, Start += Step)
+			{
+				if (i > 0) *pLine++ = ',';
+				SEXP s = STRING_ELT(X, Start);
+				if ((s != NA_STRING) && (CHAR(s)[0] != 0))
+					LineBuf_Append(CHAR(s));
+				else
+					*pLine++ = '.';
+			}
+			break;
 		}
-	} else
+	case REALSXP:
+		{
+			double *base = REAL(X) + Start, *p = base + (n - 1)*Step;
+			for (; n > 0; n--, p-=Step)
+				if (R_finite(*p)) break;
+			LineBuf_NeedSize(12*n + 32);
+			p = base;
+			for (size_t i=0; i < n; i++)
+			{
+				if (i > 0) *pLine++ = ',';
+				_Line_Append(*p); p += Step;
+			}
+			break;
+		}
+	case LGLSXP:
+		{
+			int *base = LOGICAL(X) + Start, *p = base + (n - 1)*Step;
+			for (; n > 0; n--, p-=Step)
+				if (*p != NA_INTEGER) break;
+			LineBuf_NeedSize(2*n + 32);
+			p = base;
+			for (size_t i=0; i < n; i++)
+			{
+				if (i > 0) *pLine++ = ',';
+				if (*p == NA_INTEGER)
+					*pLine++ = '.';
+				else if (*p == 0)
+					*pLine++ = '0';
+				else
+					*pLine++ = '1';
+				p += Step;
+			}
+			break;
+		}
+	default:
 		throw ErrSeqArray("FORMAT_Write: invalid data type.");
+	}
 
 	if (n <= 0) *pLine++ = '.';
 }

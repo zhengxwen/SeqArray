@@ -24,6 +24,8 @@ BUG FIXES
     o `seqGDS2VCF()` should output "." instead of NA in the FILTER column
 
     o `seqGetData()` should support factor when '.padNA=TRUE' or '.tolist=TRUE'
+    
+    o fix `seqGDS2VCF()` with factor variables
 
 
 CHANGES IN VERSION 1.30.0
