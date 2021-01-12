@@ -75,7 +75,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # create an output text file
 
-    bgzf <- FALSE
+    outfmt <- 1L
     if (!inherits(vcf.fn, "connection"))
     {
         ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
@@ -86,21 +86,24 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             if (isTRUE(use_Rsamtools) && requireNamespace("Rsamtools"))
             {
                 ofile <- .Call(SEQ_bgzip_create, vcf.fn)
-                bgzf <- TRUE
+                outfmt <- 2L
             } else {
                 if (verbose)
                 {
                     if (.Platform$OS.type != "windows")
-                        message("Hint: install Rsamtools to enable the bgzf output.")
+                        message("Hint: install Rsamtools to enable the outfmt output.")
                 }
                 ofile <- gzfile(vcf.fn, "wb")
+                outfmt <- 3L
             }
         } else if (ext == ".bz")
         {
             ofile <- bzfile(vcf.fn, "wb")
+            outfmt <- 4L
         } else if (ext == ".xz")
         {
             ofile <- xzfile(vcf.fn, "wb")
+            outfmt <- 5L
         } else {
             ofile <- file(vcf.fn, open="wb")
         }
@@ -115,17 +118,18 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     if (verbose)
     {
-        cat(date(), "\n", sep="")
-        cat("VCF Export: ", basename(vcf.fn), "\n", sep="")
+        .cat(date())
+        .cat("VCF Export: ", basename(vcf.fn))
         s <- .seldim(gdsfile)
-        cat("    ", .pretty(s[2L]), " sample", .plural(s[2L]), ", ",
-            .pretty(s[3L]), " variant", .plural(s[3L]), "\n", sep="")
+        .cat("    ", .pretty(s[2L]), " sample", .plural(s[2L]), ", ",
+            .pretty(s[3L]), " variant", .plural(s[3L]))
         s <- paste(z$info$ID, collapse=", ")
-        cat("    INFO Field: ", ifelse(s!="", s, "<none>"), "\n", sep="")
+        .cat("    INFO Field: ", ifelse(s!="", s, "<none>"))
         s <- paste(z$format$ID, collapse=", ")
-        cat("    FORMAT Field: ", ifelse(s!="", s, "<none>"), "\n", sep="")
-        cat(ifelse(bgzf,
-            "    output to BGZF format\n", "    output to a general gzip file\n"))
+        .cat("    FORMAT Field: ", ifelse(s!="", s, "<none>"))
+        .cat("    output to ",
+            c("a VCF text file", "a BGZF-format file", "a general gzip file",
+            "a bz file", "a xz file")[outfmt])
     }
 
 
