@@ -6,7 +6,8 @@
 }
 \usage{
 seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE,
-    compress="LZMA_RA", packed=TRUE, verbose=TRUE, verbose.attr=TRUE)
+    compress="LZMA_RA", packed=TRUE, packed.idx=TRUE, verbose=TRUE,
+    verbose.attr=TRUE)
 }
 \arguments{
     \item{gdsfile}{character for file name, or a \code{\link{SeqVarGDSClass}}
@@ -22,6 +23,8 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE,
     \item{compress}{the compression method can be "" (no compression), see
         \code{\link{add.gdsn}}}
     \item{packed}{\code{TRUE}, pack data if there is any missing value}
+    \item{packed.idx}{\code{TRUE}, store the index variable using integers with
+        the fewest bits if possible}
     \item{verbose}{if \code{TRUE}, show information}
     \item{verbose.attr}{if \code{TRUE}, show attribute information in a GDS
         node}

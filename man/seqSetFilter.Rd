@@ -103,9 +103,8 @@ of the output array according to the input 'sample.id', 'sample.sel',
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqSetFilterChrom}}, \code{\link{seqSetFilterCond}},
-    \code{\link{seqGetFilter}}, \code{\link{seqGetData}},
-    \code{\link{seqApply}}
+    \code{\link{seqSetFilterCond}}, \code{\link{seqGetFilter}},
+    \code{\link{seqGetData}}, \code{\link{seqApply}}
 }
 
 \examples{
