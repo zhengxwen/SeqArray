@@ -815,7 +815,7 @@ process_count <- 1L
 #######################################################################
 # Get the unique data frame
 #
-.DigestCode <- function(node, algo, verbose)
+.DigestCode <- function(node, algo=TRUE, verbose=TRUE)
 {
     if (!is.null(node))
     {
@@ -838,7 +838,7 @@ process_count <- 1L
 }
 
 
-.DigestFile <- function(gfile, digest, verbose)
+.DigestFile <- function(gfile, digest=TRUE, verbose=TRUE)
 {
     ## digest
     flag <- verbose & (isTRUE(digest) | is.character(digest))

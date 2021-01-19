@@ -236,6 +236,7 @@
     nm <- basename(varnm)
     if (is.data.frame(val))
     {
+        # store a data.frame
         stopifnot(nrow(val) == nvar)
         if (length(desp))
             stopifnot(ncol(val) == length(desp))
@@ -252,6 +253,7 @@
         n <- nidx <- NULL
     } else if (is.null(val))
     {
+        # it is a folder
         n <- addfolder.gdsn(node, nm, replace=TRUE)
         if (length(desp))
             put.attr.gdsn(n, "Description", desp[1L])
@@ -260,6 +262,7 @@
         n <- nidx <- NULL
     } else if ((is.vector(val) || is.factor(val) || is.matrix(val)) && !is.list(val))
     {
+        # a vector or matrix
         isvec <- is.vector(val) || is.factor(val)
         if (isvec)
             stopifnot(length(val) == nvar)
@@ -284,6 +287,7 @@
         }
     } else if (inherits(val, "SeqVarDataList"))
     {
+        # it is an SeqVarDataList object list(length, data)
         ns <- val$length
         ns[is.na(ns) | ns<0L] <- 0L
         if (length(ns) != nvar)
@@ -297,6 +301,7 @@
             compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
     } else if (is.list(val))
     {
+        # store lists
         stopifnot(length(val) == nvar)
         val <- lapply(val, function(x) unlist(x, use.names=FALSE))
         ns <- lengths(val)
