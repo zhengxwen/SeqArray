@@ -293,7 +293,6 @@
         n <- add.gdsn(node, nm, val$data, compress=compress, closezip=TRUE,
             replace=TRUE)
         st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
-        st <- storage.mode(ns)
         nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
             compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
     } else if (is.list(val))
@@ -304,7 +303,6 @@
         n <- add.gdsn(node, nm, unlist(val, use.names=FALSE),
             compress=compress, closezip=TRUE, replace=TRUE)
         st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
-        st <- storage.mode(ns)
         nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
             compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
     } else
