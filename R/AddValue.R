@@ -9,12 +9,18 @@
 # get matched GDS type for indexing
 .maxlen_bit_type <- function(nmax)
 {
-    if (nmax < 2L) "bit1"
-    else if (nmax < 4L) "bit2"
-    else if (nmax < 16L) "bit4"
-    else if (nmax < 256L) "uint8"
-    else if (nmax < 65536L) "uint16"
-    else "int32"
+    if (nmax < 2L)
+        "bit1"
+    else if (nmax < 4L)
+        "bit2"
+    else if (nmax < 16L)
+        "bit4"
+    else if (nmax < 256L)
+        "uint8"
+    else if (nmax < 65536L)
+        "uint16"
+    else
+        "int32"
 }
 
 # modify sample.id
@@ -278,15 +284,16 @@
         }
     } else if (inherits(val, "SeqVarDataList"))
     {
-        if (length(val$length) != nvar)
+        ns <- val$length
+        ns[is.na(ns) | ns<0L] <- 0L
+        if (length(ns) != nvar)
             stop("length(val$length) should be ", nvar)
-        if (!isTRUE(sum(val$length)==length(val$data)))
+        if (!isTRUE(sum(ns)==length(val$data)))
             stop("Invalid 'SeqVarDataList' input.")
         n <- add.gdsn(node, nm, val$data, compress=compress, closezip=TRUE,
             replace=TRUE)
-        ns <- val$length
-        ns[is.na(ns) | ns<0L] <- 0L
-        st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int32"
+        st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
+        st <- storage.mode(ns)
         nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
             compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
     } else if (is.list(val))
@@ -296,8 +303,8 @@
         ns <- lengths(val)
         n <- add.gdsn(node, nm, unlist(val, use.names=FALSE),
             compress=compress, closezip=TRUE, replace=TRUE)
-        ns <- lengths(val)
-        st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int32"
+        st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
+        st <- storage.mode(ns)
         nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
             compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
     } else

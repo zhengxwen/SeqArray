@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.31.1-1.31.5
+CHANGES IN VERSION 1.31.1-1.31.6
 -------------------------
 
 NEW FEATURES
@@ -11,6 +11,9 @@ NEW FEATURES
 
     o rewrite the function `seqSetFilterPos()`: new options 'ref' and 'alt',
       'multi.pos=TRUE' by default
+
+    o new option 'packed.idx' in `seqAddValue()` for packing an indexing
+      variable
 
 UTILITIES
 
