@@ -16,7 +16,7 @@
 \S4method{seqSetFilter}{SeqVarGDSClass,ANY}(object, variant.sel,
     sample.sel=NULL, variant.id=NULL, sample.id=NULL,
     action=c("set", "intersect", "push", "push+set", "push+intersect", "pop"),
-    ret.idx=FALSE, verbose=TRUE)
+    ret.idx=FALSE, warn=TRUE, verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRanges}(object, variant.sel,
     rm.txt="chr", intersect=FALSE, verbose=TRUE)
 \S4method{seqSetFilter}{SeqVarGDSClass,GRangesList}(object, variant.sel,
@@ -80,6 +80,9 @@ seqSetFilterAnnotID(object, id, ret.idx=FALSE, verbose=TRUE)
     \item{multi.pos}{\code{FALSE}, use the first matched position;
         \code{TRUE}, allow multiple variants at the same position}
     \item{id}{a character vector for RS IDs (stored in \code{"annotation/id"})}
+    \item{warn}{if \code{TRUE}, show a warning when the input \code{sample.sel}
+        or \code{variant.sel} is not ordered as the GDS file or there is any
+        duplicate}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{

@@ -95,12 +95,13 @@ setMethod("seqClose", signature(object="SeqVarGDSClass"),
 setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
     function(object, variant.sel, sample.sel=NULL, variant.id=NULL,
         sample.id=NULL, action=c("set", "intersect", "push", "push+set",
-        "push+intersect", "pop"), ret.idx=FALSE, verbose=TRUE)
+        "push+intersect", "pop"), ret.idx=FALSE, warn=TRUE, verbose=TRUE)
     {
         # check
         if (missing(variant.sel)) variant.sel <- NULL
         action <- match.arg(action)
         stopifnot(is.logical(ret.idx), length(ret.idx)==1L)
+        stopifnot(is.logical(warn), length(warn)==1L)
         stopifnot(is.logical(verbose), length(verbose)==1L)
 
         # action behavior
@@ -149,8 +150,10 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
         } else if (!is.null(sample.sel))
         {
             stopifnot(is.vector(sample.sel))
-            stopifnot(is.logical(sample.sel) | is.raw(sample.sel) | is.numeric(sample.sel))
-            .Call(SEQ_SetSpaceSample2, object, sample.sel, setflag, verbose)
+            stopifnot(is.logical(sample.sel) | is.raw(sample.sel) |
+                is.numeric(sample.sel))
+            .Call(SEQ_SetSpaceSample2, object, sample.sel, setflag, warn,
+                verbose)
             if (ret.idx)
             {
                 if (is.numeric(sample.sel))
@@ -176,8 +179,10 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
         } else if (!is.null(variant.sel))
         {
             stopifnot(is.vector(variant.sel))
-            stopifnot(is.logical(variant.sel) | is.raw(variant.sel) | is.numeric(variant.sel))
-            .Call(SEQ_SetSpaceVariant2, object, variant.sel, setflag, verbose)
+            stopifnot(is.logical(variant.sel) | is.raw(variant.sel) |
+                is.numeric(variant.sel))
+            .Call(SEQ_SetSpaceVariant2, object, variant.sel, setflag, warn,
+                verbose)
             if (ret.idx)
             {
                 if (is.numeric(variant.sel))
@@ -344,7 +349,7 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     {
         # set filter on chromosomes and positions first
         d <- merge(d0, d1, sort=FALSE)
-        suppressWarnings(seqSetFilter(object, variant.sel=d$i1, verbose=FALSE))
+        seqSetFilter(object, variant.sel=d$i1, warn=FALSE, verbose=FALSE)
         d1 <- data.frame(
             chr=seqGetData(object, "chromosome"),
             pos=seqGetData(object, "position"),
@@ -362,7 +367,7 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     {
         # multi.pos = TRUE
         i1 <- d$i1
-        suppressWarnings(seqSetFilter(object, variant.sel=i1, verbose=verbose))
+        seqSetFilter(object, variant.sel=i1, warn=FALSE, verbose=verbose)
         if (ret.idx)
         {
             if (nrow(d) <= nrow(d0))
@@ -385,13 +390,13 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
             j <- order(d$i0, d$i1)
             j <- j[!duplicated(d$i0[j])]
             i <- d$i1[j]
-            suppressWarnings(seqSetFilter(object, variant.sel=i, verbose=verbose))
+            seqSetFilter(object, variant.sel=i, warn=FALSE, verbose=verbose)
             match(i, seqGetData(object, "$variant_index"))
         } else {
             i <- d$i1
             j <- order(i)
             i <- i[j[!duplicated(d$i0[j])]]
-            suppressWarnings(seqSetFilter(object, variant.sel=i, verbose=verbose))
+            seqSetFilter(object, variant.sel=i, warn=FALSE, verbose=verbose)
             invisible()
         }
     }

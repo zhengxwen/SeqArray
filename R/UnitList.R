@@ -22,8 +22,8 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # save state
-    suppressWarnings(seqSetFilter(gdsfile, variant.sel=unlist(units$index),
-        action="push+set", verbose=FALSE))
+    seqSetFilter(gdsfile, variant.sel=unlist(units$index), action="push+set",
+        warn=FALSE, verbose=FALSE)
     on.exit({ seqSetFilter(gdsfile, action="pop", verbose=FALSE) })
     if (verbose)
     {
