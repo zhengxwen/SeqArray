@@ -356,26 +356,45 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
 
     # match
     d <- merge(d0, d1, all.x=TRUE, sort=FALSE)
-    i1 <- i <- d$i1
-    if (isFALSE(multi.pos))
-    {
-        if (ret.idx)
-        {
-            d <- d[order(i),]
-            d <- d[!duplicated(d$i0),]
-            i <- d$i1
-        } else {
-            k <- order(i)
-            i <- i[k[!duplicated(d$i0[k])]]
-        }
-    }
-    suppressWarnings(seqSetFilter(object, variant.sel=i, verbose=verbose))
 
     # output
-    if (ret.idx)
-        match(i1, seqGetData(object, "$variant_index"))
-    else
-        invisible()
+    if (!isFALSE(multi.pos))
+    {
+        # multi.pos = TRUE
+        i1 <- d$i1
+        suppressWarnings(seqSetFilter(object, variant.sel=i1, verbose=verbose))
+        if (ret.idx)
+        {
+            if (nrow(d) <= nrow(d0))
+            {
+                # no duplicated d$i0
+                i1 <- i1[order(d$i0)]
+            } else {
+                # find the smallest d$i1 (the first variant in GDS)
+                j <- order(d$i0, d$i1)
+                i1 <- d$i1[j][!duplicated(d$i0[j])]
+            }
+            match(i1, seqGetData(object, "$variant_index"))
+        } else {
+            invisible()
+        }
+    } else {
+        # multi.pos = FALSE
+        if (ret.idx)
+        {
+            j <- order(d$i0, d$i1)
+            j <- j[!duplicated(d$i0[j])]
+            i <- d$i1[j]
+            suppressWarnings(seqSetFilter(object, variant.sel=i, verbose=verbose))
+            match(i, seqGetData(object, "$variant_index"))
+        } else {
+            i <- d$i1
+            j <- order(i)
+            i <- i[j[!duplicated(d$i0[j])]]
+            suppressWarnings(seqSetFilter(object, variant.sel=i, verbose=verbose))
+            invisible()
+        }
+    }
 }
 
 
