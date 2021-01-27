@@ -508,18 +508,30 @@ seqNewVarData <- function(len, data)
 {
     # check
     stopifnot(is.vector(len), is.numeric(len) | is.raw(len))
-    stopifnot(is.vector(data) | is.factor(data))
+    stopifnot(is.vector(data) | is.matrix(data) | is.factor(data))
     len <- as.integer(len)
     if (any(len < 0L) || anyNA(len))
         stop("'len' should be a non-negative vector.'")
-    if (sum(len) != length(data))
-        stop("Invalid length of data.")
+    if (!is.matrix(data))
+    {
+        if (sum(len) != length(data))
+            stop("Invalid length of data.")
+    } else {
+        if (sum(len) != ncol(data))
+            stop("Invalid column number of data.")
+    }
     # output
     rv <- list(length=len, data=data)
     class(rv) <- "SeqVarDataList"
     rv
 }
 
+seqListVarData <- function(obj)
+    # check
+    stopifnot(inherits(obj, "SeqVarDataList"))
+    # call
+    .Call(SEQ_ListVarData, obj$length, obj$data)
+}
 
 
 

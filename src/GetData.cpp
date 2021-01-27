@@ -2,7 +2,7 @@
 //
 // GetData.cpp: Get data from a SeqArray GDS file
 //
-// Copyright (C) 2015-2020    Xiuwen Zheng
+// Copyright (C) 2015-2021    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -447,6 +447,68 @@ static SEXP get_variant_index(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
+/// convert to a list
+static SEXP get_list(SEXP len, SEXP val, size_t elmsize, bool is_factor)
+{
+	const int n = Rf_length(len);
+	SEXP rv_ans = PROTECT(NEW_LIST(n));
+	int *psel = INTEGER(len);
+	size_t d2 = elmsize, pt = 0;
+	SEXP ZeroLen = NULL;
+	for (int i=0; i < n; i++)
+	{
+		size_t nn = psel[i] * d2;
+		SEXP vv;
+		if (nn <= 0)
+		{
+			if (!ZeroLen)
+			{
+				ZeroLen = Rf_allocVector(TYPEOF(val), 0);
+				if (is_factor)
+				{
+					SET_CLASS(ZeroLen, GET_CLASS(val));
+					SET_LEVELS(ZeroLen, GET_LEVELS(val));
+				}
+			}
+			vv = ZeroLen;
+		} else {
+			vv = Rf_allocVector(TYPEOF(val), nn);
+			if (is_factor)
+			{
+				SET_CLASS(vv, GET_CLASS(val));
+				SET_LEVELS(vv, GET_LEVELS(val));
+			}
+		}
+		SET_ELEMENT(rv_ans, i, vv);
+		if (nn > 0)
+		{
+			switch (TYPEOF(val))
+			{
+			case INTSXP:
+				memcpy(INTEGER(vv), &INTEGER(val)[pt], sizeof(int)*nn);
+				break;
+			case REALSXP:
+				memcpy(REAL(vv), &REAL(val)[pt], sizeof(double)*nn);
+				break;
+			case LGLSXP:
+				memcpy(LOGICAL(vv), &LOGICAL(val)[pt], sizeof(int)*nn);
+				break;
+			case STRSXP:
+				for (size_t i=0; i < nn; i++)
+					SET_STRING_ELT(vv, i, STRING_ELT(val, pt+i));
+				break;
+			case RAWSXP:
+				memcpy(RAW(vv), &RAW(val)[pt], nn);
+				break;
+			default:
+				throw ErrSeqArray("Not support data type for .tolist=TRUE.");
+			}
+			pt += nn;
+		}
+	}
+	return rv_ans;
+}
+
 /// get data from annotation/info/VARIABLE, TODO
 static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 {
@@ -473,7 +535,6 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 			rv_ans = AS_LOGICAL(rv_ans);
 			UNPROTECT(1);
 		}
-
 	} else {
 		// with index
 		int var_start, var_count;
@@ -498,7 +559,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 			PROTECT(val);
 		}
 		// whether it is a factor variable or not
-		bool is_factor = Rf_isFactor(val) != FALSE;
+		const bool is_factor = Rf_isFactor(val) != FALSE;
 
 		if (P->padNA==TRUE && V.ValLenMax()==1 && Var.NDim==1)
 		{
@@ -557,67 +618,13 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 		} else if (P->tolist)
 		{
 			// convert to a list
-			const int n = Rf_length(I32);
-			rv_ans = PROTECT(NEW_LIST(n));
-			int *psel = INTEGER(I32);
-			size_t d2 = (Var.NDim < 2) ? 1 : dimcnt[1], pt = 0;
-			SEXP ZeroLen = NULL;
-			for (int i=0; i < n; i++)
-			{
-				size_t nn = psel[i] * d2;
-				SEXP vv;
-				if (nn <= 0)
-				{
-					if (!ZeroLen)
-					{
-						ZeroLen = Rf_allocVector(TYPEOF(val), 0);
-						if (is_factor)
-						{
-							SET_CLASS(ZeroLen, GET_CLASS(val));
-							SET_LEVELS(ZeroLen, GET_LEVELS(val));
-						}
-					}
-					vv = ZeroLen;
-				} else {
-					vv = Rf_allocVector(TYPEOF(val), nn);
-					if (is_factor)
-					{
-						SET_CLASS(vv, GET_CLASS(val));
-						SET_LEVELS(vv, GET_LEVELS(val));
-					}
-				}
-				SET_ELEMENT(rv_ans, i, vv);
-				if (nn > 0)
-				{
-					switch (TYPEOF(val))
-					{
-					case INTSXP:
-						memcpy(INTEGER(vv), &INTEGER(val)[pt], sizeof(int)*nn);
-						break;
-					case REALSXP:
-						memcpy(REAL(vv), &REAL(val)[pt], sizeof(double)*nn);
-						break;
-					case LGLSXP:
-						memcpy(LOGICAL(vv), &LOGICAL(val)[pt], sizeof(int)*nn);
-						break;
-					case STRSXP:
-						for (size_t i=0; i < nn; i++)
-							SET_STRING_ELT(vv, i, STRING_ELT(val, pt+i));
-						break;
-					case RAWSXP:
-						memcpy(RAW(vv), &RAW(val)[pt], nn);
-						break;
-					default:
-						throw ErrSeqArray("Not support data type for .tolist=TRUE.");
-					}
-					pt += nn;
-				}
-			}
+			size_t d2 = (Var.NDim < 2) ? 1 : dimcnt[1];
+			rv_ans = get_list(I32, val, d2, is_factor);
 		} else {
 			// create `list(length, data)`
 			rv_ans = PROTECT(NEW_LIST(2));
-				SET_ELEMENT(rv_ans, 0, I32);
-				SET_ELEMENT(rv_ans, 1, val);
+			SET_ELEMENT(rv_ans, 0, I32);
+			SET_ELEMENT(rv_ans, 1, val);
 			SET_NAMES(rv_ans, R_Data_Name);
 			SET_CLASS(rv_ans, R_Data_ListClass);
 		}
@@ -1278,6 +1285,20 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		UNPROTECT(nProtected);
 
 	COREARRAY_CATCH
+}
+
+
+/// Convert variable-length data to a list
+COREARRAY_DLL_EXPORT SEXP SEQ_ListVarData(SEXP len, SEXP val)
+{
+	const bool is_factor = Rf_isFactor(val) != FALSE;
+	size_t d2 = 1;
+	SEXP dim = GET_DIM(val);
+	if (dim!=R_NilValue && Rf_length(dim)==2)
+		d2 = INTEGER(dim)[1];
+	SEXP rv_ans = get_list(len, val, d2, is_factor);
+	UNPROTECT(1);
+	return rv_ans;
 }
 
 } // extern "C"
