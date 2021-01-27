@@ -35,7 +35,7 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE,
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF2GDS}}, \code{\link{seqNewVarData}}
 }
 
 \examples{

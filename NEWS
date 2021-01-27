@@ -17,6 +17,8 @@ NEW FEATURES
 
     o new option 'warn' in `seqSetFilter()` to enable or disable the warning
 
+    o new function `seqNewVarData()` for variable-length data
+
 UTILITIES
 
     o allow no variant in `seqApply()` and `seqBlockApply()`

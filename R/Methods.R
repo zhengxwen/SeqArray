@@ -504,6 +504,23 @@ seqGetData <- function(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE,
 
 print.SeqVarDataList <- function(x, ...) str(x)
 
+seqNewVarData <- function(len, data)
+{
+    # check
+    stopifnot(is.vector(len), is.numeric(len) | is.raw(len))
+    stopifnot(is.vector(data) | is.factor(data))
+    len <- as.integer(len)
+    if (any(len < 0L) || anyNA(len))
+        stop("'len' should be a non-negative vector.'")
+    if (sum(len) != length(data))
+        stop("Invalid length of data.")
+    # output
+    rv <- list(length=len, data=data)
+    class(rv) <- "SeqVarDataList"
+    rv
+}
+
+
 
 
 #######################################################################

@@ -65,7 +65,8 @@ selected variants.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqSetFilter}}, \code{\link{seqApply}}
+    \code{\link{seqSetFilter}}, \code{\link{seqApply}},
+    \code{\link{seqNewVarData}}
 }
 
 \examples{
