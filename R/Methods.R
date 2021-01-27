@@ -527,6 +527,7 @@ seqNewVarData <- function(len, data)
 }
 
 seqListVarData <- function(obj)
+{
     # check
     stopifnot(inherits(obj, "SeqVarDataList"))
     # call
