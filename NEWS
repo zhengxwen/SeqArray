@@ -35,6 +35,9 @@ BUG FIXES
     
     o fix `seqGDS2VCF()` with factor variables
 
+    o `seqSummary(gds, "$filter")` should return a data frame with zero row if
+      'annotation/filter' is not a factor
+
 
 CHANGES IN VERSION 1.30.0
 -------------------------

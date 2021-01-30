@@ -359,22 +359,14 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         {
             dp <- rbind(dp, seqSummary(flist[[i]], "$filter", check="none",
                 verbose=FALSE))
-            v <- c(v, as.character(read.gdsn(index.gdsn(flist[[i]], nm))))
+            a <- read.gdsn(index.gdsn(flist[[i]], nm))
+            if (is.null(v)) v <- a else v <- c(v, a)
         }
-        if (!all(is.na(v)))
-        {
-            v <- as.factor(v)
-            n <- .AddVar(storage.option, varAnnot, "filter", v)
-            v <- dp$Description[match(levels(v), dp$ID)]
-            if (length(v) <= 0L) v <- ""
-            put.attr.gdsn(n, "Description", v)
-        } else {
-            v <- rep(NA_integer_, length(v))
-            n <- .AddVar(storage.option, varAnnot, "filter", v)
-            v <- dp$Description
-            if (length(v) <= 0L) v <- ""
-            put.attr.gdsn(n, "Description", v)
-        }
+        dp <- unique(dp)
+        if (is.factor(v) || is.character(v))
+            v <- factor(v, dp$ID)
+        n <- .AddVar(storage.option, varAnnot, "filter", v)
+        put.attr.gdsn(n, "Description", dp$Description)
         .DigestCode(n, digest, verbose)
 
     } else {

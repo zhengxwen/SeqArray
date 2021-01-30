@@ -359,7 +359,6 @@
 .summary_filter <- function(gdsfile, check, verbose)
 {
     if (verbose) cat("Annotation, FILTER:\n")
-
     n <- index.gdsn(gdsfile, "annotation/filter")
     if (check != "none")
     {
@@ -370,6 +369,7 @@
 
     at <- get.attr.gdsn(n)
     id <- at$R.levels
+    if (is.null(id)) id <- character()
     dp <- at$Description
     if (is.null(dp))
     {
@@ -382,10 +382,16 @@
         } else
             dp <- rep(NA_character_, length(id))
     }
-    ans <- data.frame(ID=id, Description=dp, stringsAsFactors=FALSE)
+    ans <- data.frame(ID=id, Description=dp[seq_along(id)],
+        stringsAsFactors=FALSE)
 
     if (check != "none")
     {
+        if (length(id) != length(dp))
+        {
+            warning("filter: length(Description) is different from length(ID).",
+                immediate.=TRUE)
+        }
         ans <- list(value=ans)
         v <- seqGetData(gdsfile, "annotation/filter")
         a <- table(v)
