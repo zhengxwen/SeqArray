@@ -46,7 +46,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     for (i in seq_along(gds.fn))
     {
         if (verbose)
-            cat("    opening '", gds.fn[i], "'\n", sep="")
+            cat("    opening ", sQuote(gds.fn[i]), "\n", sep="")
         flist[[i]] <- seqOpen(gds.fn[i])
     }
     if (verbose)
@@ -105,7 +105,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     }
 
     # common samples
-    if (length(samp2.id) > 0L)
+    if (length(samp2.id)>0L || length(samp.id)==0L)
     {
         if (length(variant2.id) > 0L)
         {
