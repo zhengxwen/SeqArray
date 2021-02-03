@@ -705,6 +705,7 @@ seqDelete <- function(gdsfile, info.var=character(), fmt.var=character(),
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     if (verbose) cat("Delete INFO variable(s):")
+    if (length(info.var) == 0L) cat(" <None>")
     for (nm in info.var)
     {
         n <- index.gdsn(gdsfile, paste0("annotation/info/", nm))
@@ -717,6 +718,7 @@ seqDelete <- function(gdsfile, info.var=character(), fmt.var=character(),
     if (verbose) cat("\n")
 
     if (verbose) cat("Delete FORMAT variable(s):")
+    if (length(fmt.var) == 0L) cat(" <None>")
     for (nm in fmt.var)
     {
         n <- index.gdsn(gdsfile, paste0("annotation/format/", nm))
@@ -726,6 +728,7 @@ seqDelete <- function(gdsfile, info.var=character(), fmt.var=character(),
     if (verbose) cat("\n")
 
     if (verbose) cat("Delete Sample Annotation variable(s):")
+    if (length(samp.var) == 0L) cat(" <None>")
     for (nm in samp.var)
     {
         n <- index.gdsn(gdsfile, paste0("sample.annotation/", nm))
