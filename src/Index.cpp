@@ -1415,6 +1415,8 @@ COREARRAY_DLL_LOCAL void RAppendGDS(PdAbstractArray Node, SEXP Val)
 {
 	switch (TYPEOF(Val))
 	{
+	case NILSXP:  // NULL
+		break;
 	case LGLSXP:  // logical
 		GDS_Array_AppendData(Node, XLENGTH(Val), LOGICAL(Val), svInt32);
 		break;
@@ -1440,7 +1442,9 @@ COREARRAY_DLL_LOCAL void RAppendGDS(PdAbstractArray Node, SEXP Val)
 		}
 		break;
 	default:
-		throw ErrSeqArray("the user-defined function should return a vector.");
+		throw ErrSeqArray(
+			"the user-defined function should return a vector, but receive a type (%d).",
+			(int)TYPEOF(Val));
 	}
 }
 

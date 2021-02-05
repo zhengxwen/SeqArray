@@ -596,28 +596,31 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     #              format=FORMAT, alt=ALT, contig=contig, assembly=assembly,
     #              reference, header, ploidy)
 
+    # genome reference information
+    reference <- as.character(unique(c(reference, header$reference)))
+
     if (verbose)
     {
-        cat("Variant Call Format (VCF) Import:\n")
+        .cat("Variant Call Format (VCF) Import:")
         if (!inherits(vcf.fn, "connection"))
         {
-            cat("    file(s):\n")
-            cat(sprintf("        %s (%s)\n", basename(vcf.fn),
-                .pretty_size(file.size(vcf.fn))), sep="")
+            .cat("    file(s):")
+            .cat("        ", basename(vcf.fn), " (",
+                .pretty_size(file.size(vcf.fn)), ")")
         } else {
-            cat("    [connection object]\n")
+            .cat("    [connection object]")
         }
-        cat("    file format: ", header$fileformat, "\n", sep="")
-        cat("    the number of sets of chromosomes (ploidy): ",
-            header$ploidy, "\n", sep="")
-        cat("    the number of samples: ", .pretty(length(samp.id)),
-            "\n", sep="")
-        cat("    genotype storage: ", genotype.storage, "\n", sep="")
+        .cat("    file format: ", header$fileformat)
+        .cat("    genome reference: ", if (length(reference))
+            paste(reference, collapse=", ") else "<unknown>")
+        .cat("    the number of sets of chromosomes (ploidy): ", header$ploidy)
+        .cat("    the number of samples: ", .pretty(length(samp.id)))
+        .cat("    genotype storage: ", genotype.storage)
 
         if (!is.character(storage.tmp))
             storage.tmp <- "customized"
-        cat("    compression method: ", storage.tmp, "\n", sep="")
-        cat("    # of samples: ", length(header$sample.id), "\n", sep="")
+        .cat("    compression method: ", storage.tmp)
+        .cat("    # of samples: ", length(header$sample.id))
         if (identical(scenario, "imputation"))
         {
             cat("    scenario: imputation\n")
@@ -792,7 +795,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     put.attr.gdsn(n, "vcf.fileformat", header$fileformat)
     if (!is.null(header$assembly))
         put.attr.gdsn(n, "vcf.assembly", header$assembly)
-    reference <- as.character(unique(c(reference, header$reference)))
     .AddVar(storage.option, n, "reference", reference, closezip=TRUE,
         visible=FALSE)
     if (!is.null(header$alt))
