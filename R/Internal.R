@@ -198,7 +198,11 @@ process_count <- 1L
     for (i in seq_along(gdslist))
     {
         append.gdsn(target.node, index.gdsn(gdslist[[i]], varname))
-        if (verbose) cat(s)
+        if (verbose)
+        {
+            cat(s)
+            flush(stdout()); flush.console()
+        }
     }
     readmode.gdsn(target.node)
     invisible()

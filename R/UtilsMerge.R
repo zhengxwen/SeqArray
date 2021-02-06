@@ -109,7 +109,11 @@
                 cnt <- objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
                 .append_rep_gds(n3, as.raw(0L), cnt)
             }
-            if (verbose) cat(h)
+            if (verbose)
+            {
+                cat(h)
+                flush(stdout()); flush.console()
+            }
         }
 
         readmode.gdsn(n2)
@@ -182,7 +186,7 @@
                     h <- paste0(ifelse(j > 1L, ",", ""), j)
                     if (.crayon()) h <- crayon::blurred(h)
                     cat(h)
-                    flush.console()
+                    flush(stdout()); flush.console()
                 }
                 f <- flist[[j]]
                 n6 <- index.gdsn(f, paste0("annotation/format/", varnm[i]),
