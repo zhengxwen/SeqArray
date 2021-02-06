@@ -2,7 +2,7 @@
 //
 // Methods.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2015-2020    Xiuwen Zheng
+// Copyright (C) 2015-2021    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -24,6 +24,49 @@
 #include "Index.h"
 
 using namespace SeqArray;
+
+
+// used in FC_SetPackedGeno()
+
+static inline unsigned char g2b(Rbyte g)
+{
+	return (0<=g && g<=2) ? g : 3;
+}
+
+static inline unsigned char g2b(int g)
+{
+	return (0<=g && g<=2) ? g : 3;
+}
+
+static inline unsigned char g2b(double g)
+{
+	return R_FINITE(g) ? g2b((int)round(g)) : 3;
+}
+
+template<typename TYPE>
+	static void packed_geno(Rbyte *p, TYPE *s, int n)
+{
+	unsigned char b0, b1, b2, b3;
+	for (; n >= 4; n-=4, s+=4)
+	{
+		b0 = g2b(s[0]); b1 = g2b(s[1]); b2 = g2b(s[2]); b3 = g2b(s[3]);
+		*p++ = b0 | (b1<<2) | (b2<<4) | (b3<<6);
+	}
+	switch (n)
+	{
+		case 3:
+			b0 = g2b(s[0]); b1 = g2b(s[1]); b2 = g2b(s[2]);
+			*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
+			break;
+		case 2:
+			b0 = g2b(s[0]); b1 = g2b(s[1]);
+			*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
+			break;
+		case 1:
+			b0 = g2b(s[0]);
+			*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
+	}
+}
 
 
 extern "C"
@@ -1011,117 +1054,34 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 // ======================================================================
 
 /// store dosage in a 2-bit packed matrix
-COREARRAY_DLL_EXPORT SEXP FC_SetPackedGeno(SEXP index, SEXP dosage, SEXP rawmat)
+COREARRAY_DLL_EXPORT SEXP FC_SetPackedGeno(SEXP index, SEXP dosage, SEXP param)
 {
-	SEXP dm = Rf_getAttrib(rawmat, R_DimSymbol);
-	size_t NumPacked = INTEGER(dm)[0];
-	if (Rf_length(dosage) > (int)NumPacked*4)
-		error("Internal error: store genotype in packed raw format!");
-	int idx = Rf_asInteger(index) - 1;
+	SEXP rawmat = VECTOR_ELT(param, 0);
+	int NumPacked = INTEGER(GET_DIM(rawmat))[0];
+	SEXP samp = VECTOR_ELT(param, 1);
+	int nSamp = Rf_asInteger(samp);
 	int n = Rf_length(dosage);
-	Rbyte *p = RAW(rawmat) + NumPacked * idx;
-	unsigned char b0, b1, b2, b3;
+	if (n < nSamp)
+		error("Internal error: store genotype in packed raw format!");
+	if (n > nSamp) n = nSamp;
 
-	if (TYPEOF(dosage) == RAWSXP)
+	Rbyte *p = RAW(rawmat) + NumPacked * (Rf_asInteger(index) - 1);
+
+	switch (TYPEOF(dosage))
 	{
-		Rbyte *s = RAW(dosage);
-		for (; n >= 4; n-=4)
-		{
-			b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-			b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-			b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
-			b3 = (0<=s[3] && s[3]<=2) ? s[3] : 3;
-			s += 4;
-			*p++ = b0 | (b1<<2) | (b2<<4) | (b3<<6);
-		}
-		switch (n)
-		{
-			case 3:
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-				b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
-				s += 3;
-				*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
-			case 2:
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-				s += 2;
-				*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
-			case 1:
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				s ++;
-				*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
-		}
-	} else if (TYPEOF(dosage) == INTSXP)
-	{
-		int *s = INTEGER(dosage);
-		for (; n >= 4; n-=4)
-		{
-			b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-			b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-			b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
-			b3 = (0<=s[3] && s[3]<=2) ? s[3] : 3;
-			s += 4;
-			*p++ = b0 | (b1<<2) | (b2<<4) | (b3<<6);
-		}
-		switch (n)
-		{
-			case 3:
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-				b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
-				s += 3;
-				*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
-			case 2:
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-				s += 2;
-				*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
-			case 1:
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				s ++;
-				*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
-		}
-	} else if (TYPEOF(dosage) == REALSXP)
-	{
-		double *ds = REAL(dosage);
-		int s[4];
-		for (; n >= 4; n-=4)
-		{
-			s[0] = (int)round(ds[0]); s[1] = (int)round(ds[1]);
-			s[2] = (int)round(ds[2]); s[3] = (int)round(ds[3]);
-			b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-			b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-			b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
-			b3 = (0<=s[3] && s[3]<=2) ? s[3] : 3;
-			ds += 4;
-			*p++ = b0 | (b1<<2) | (b2<<4) | (b3<<6);
-		}
-		switch (n)
-		{
-			case 3:
-				s[0] = (int)round(ds[0]); s[1] = (int)round(ds[1]);
-				s[2] = (int)round(ds[2]);
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-				b2 = (0<=s[2] && s[2]<=2) ? s[2] : 3;
-				ds += 3;
-				*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
-			case 2:
-				s[0] = (int)round(ds[0]); s[1] = (int)round(ds[1]);
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				b1 = (0<=s[1] && s[1]<=2) ? s[1] : 3;
-				ds += 2;
-				*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
-			case 1:
-				s[0] = (int)round(ds[0]);
-				b0 = (0<=s[0] && s[0]<=2) ? s[0] : 3;
-				ds ++;
-				*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
-		}
-	} else {
+	case RAWSXP:
+		packed_geno<Rbyte>(p, RAW(dosage), n);
+		break;
+	case INTSXP:
+		packed_geno<int>(p, INTEGER(dosage), n);
+		break;
+	case REALSXP:
+		packed_geno<double>(p, REAL(dosage), n);
+		break;
+	default:
 		error("Internal error: invalid data type of dosage!");
 	}
+
 	return R_NilValue;
 }
 

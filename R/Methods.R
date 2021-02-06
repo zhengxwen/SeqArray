@@ -989,7 +989,17 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
     npack <- dm[2L] %/% 4L
     if (dm[2L] %% 4L) npack <- npack + 1L
 	rv <- matrix(as.raw(0), nrow=npack, ncol=dm[3L])
-    seqApply(gdsfile, "$dosage_alt", FUN=.cfunction3("FC_SetPackedGeno"),
-        var.index="relative", .useraw=NA, z=rv, .progress=verbose)
+
+    n <- index.gdsn(gdsfile, "genotype/data", silent=TRUE)
+    if (!is.null(n))
+        varnm <- "$dosage_alt"
+    else if (!is.null(index.gdsn(gdsfile, "annotation/format/DS", silent=TRUE)))
+        varnm <- "annotation/format/DS"
+    else
+        stop("No 'genotype' or 'annotation/format/DS' is available.")
+
+    seqApply(gdsfile, varnm, FUN=.cfunction3("FC_SetPackedGeno"),
+        var.index="relative", .useraw=NA, z=list(rv, dm[2L]),
+        .progress=verbose)
     rv
 }
