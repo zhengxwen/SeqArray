@@ -420,8 +420,9 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
     nSamp <- length(samp.id)
     nVariant <- length(variant.id)
+    is_merge_variant <- length(samp2.id)>0L || length(samp.id)==0L
 
-    if (length(samp2.id)>0L || length(samp.id)==0L)
+    if (is_merge_variant)
     {
         ## merge different variants
 
@@ -567,8 +568,14 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         {
             dp <- rbind(dp, seqSummary(flist[[i]], "$filter", check="none",
                 verbose=FALSE))
-            a <- read.gdsn(index.gdsn(flist[[i]], nm))
-            if (is.null(v)) v <- a else v <- c(v, a)
+            a <- seqGetData(flist[[i]], nm)
+            if (is.null(v))
+            {
+                if (is.factor(a)) a <- as.character(a)
+                v <- a
+            } else {
+                v <- c(v, a)
+            }
         }
         dp <- unique(dp)
         if (is.factor(v) || is.character(v))
@@ -746,7 +753,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     if (verbose)
         .cat("    annotation/info (", paste(varnm, collapse=","), ")")
 
-    if (length(samp2.id)>0L || length(samp.id)==0L)
+    if (is_merge_variant)
     {
         # merge different variants
         .append_info_variant(flist, varnm, storage.option, varInfo, digest,
@@ -860,9 +867,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         varnm <- unique(intersect(fmt.var, varnm))
     }
 
-    .append_format(flist, varnm, samp.id, gfile,
-        length(samp2.id)>0L || length(samp.id)==0L,
-        nVariant, varidx, storage.option, digest, verbose)
+    .append_format(flist, varnm, samp.id, gfile, is_merge_variant, nVariant,
+        varidx, storage.option, digest, verbose)
 
 
     ####  sample annotation  ####
@@ -890,7 +896,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         cat("    sample.annotation (",
             paste(varnm, collapse=","), ")\n", sep="")
     }
-    if (length(samp2.id) > 0L)
+    if (is_merge_variant)
     {
         ## merge different variants
         for (i in seq_along(varnm))
