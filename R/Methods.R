@@ -335,11 +335,11 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
         pos=pos, stringsAsFactors=FALSE)
     if (ret.idx) d0$i0 <- seq_along(pos)
 
+    # set filter on chromosome first
     # need reset the fitler on variants?
-    if (!intersect)
-        seqResetFilter(object, sample=FALSE, verbose=FALSE)
+    seqSetFilterChrom(object, chr, intersect=intersect, verbose=FALSE)
 
-    # set filter
+    # gds variant set
     d1 <- data.frame(
         chr=seqGetData(object, "chromosome"),
         pos=seqGetData(object, "position"),
