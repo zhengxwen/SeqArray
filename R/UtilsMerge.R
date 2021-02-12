@@ -569,13 +569,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
             dp <- rbind(dp, seqSummary(flist[[i]], "$filter", check="none",
                 verbose=FALSE))
             a <- seqGetData(flist[[i]], nm)
-            if (is.null(v))
-            {
-                if (is.factor(a)) a <- as.character(a)
-                v <- a
-            } else {
-                v <- c(v, a)
-            }
+            if (is.factor(a)) a <- as.character(a)
+            v <- c(v, a)
         }
         dp <- unique(dp)
         if (is.factor(v) || is.character(v))
