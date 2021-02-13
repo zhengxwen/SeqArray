@@ -11,6 +11,21 @@
 # Merge multiple GDS files
 #
 
+# check whether the chromosomes are overlapping or not (for faster checking)
+.is_variant_overlap_bychr <- function(flist)
+{
+    lst <- lapply(flist, function(f) unique(seqGetData(f, "chromosome")))
+    for (i in seq_len(length(lst))[-1L])
+    {
+        for (j in seq_len(i-1L))
+        {
+            s <- intersect(lst[[i]], lst[[j]])
+            if (length(s)) return(TRUE)
+        }
+    }
+    FALSE
+}
+
 # append values in the nodes
 .append_node_variant <- function(varFolder, varnm, storage, storage.option,
     flist, nVariant, digest, verbose)
@@ -233,6 +248,7 @@
 }
 
 
+# Merge files
 seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     info.var=NULL, fmt.var=NULL, samp.var=NULL, optimize=TRUE, digest=TRUE,
     geno.pad=TRUE, verbose=TRUE)
@@ -287,48 +303,60 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         samp2.id <- intersect(samp2.id, s)
     }
 
+    nSamp <- length(samp.id)
     if (verbose)
     {
         cat(sprintf("    %d sample%s in total (%d sample%s in common)\n",
-            length(samp.id), .plural(length(samp.id)),
-            length(samp2.id), .plural(length(samp2.id))))
+            nSamp, .plural(nSamp), length(samp2.id), .plural(length(samp2.id))))
     }
 
     # variants
-    variant.id <- variant2.id <- seqGetData(flist[[1L]], "$chrom_pos")
-    if (verbose)
+    if (!.is_variant_overlap_bychr(flist))
     {
-        cat(sprintf("    [%-2d] %s (%s variant%s)\n", 1L, basename(gds.fn[1L]),
-            .pretty(length(variant.id)), .plural(length(variant.id))))
-    }
-    for (i in seq_along(flist)[-1L])
-    {
-        s <- seqGetData(flist[[i]], "$chrom_pos")
+        variant2.id <- NULL
+        nVariant <- 0L
+        for (f in flist)
+        {
+            nVariant <- nVariant + objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
+        }
+    } else {
+        variant.id <- variant2.id <- seqGetData(flist[[1L]], "$chrom_pos")
         if (verbose)
         {
-            cat(sprintf("    [%-2d] %s (%s variant%s)\n", i,
-                basename(gds.fn[i]), .pretty(length(s)), .plural(length(s))))
+            cat(sprintf("    [%-2d] %s (%s variant%s)\n", 1L, basename(gds.fn[1L]),
+                .pretty(length(variant.id)), .plural(length(variant.id))))
         }
+        for (i in seq_along(flist)[-1L])
+        {
+            s <- seqGetData(flist[[i]], "$chrom_pos")
+            if (verbose)
+            {
+                cat(sprintf("    [%-2d] %s (%s variant%s)\n", i,
+                    basename(gds.fn[i]), .pretty(length(s)), .plural(length(s))))
+            }
 
-        # variant id maybe not unique
-        s1 <- intersect(variant.id, s)
-        if (length(s1) <= 0L)
-            variant.id <- c(variant.id, s)
-        else
-            variant.id <- c(variant.id, setdiff(s, s1))
-        variant2.id <- intersect(variant2.id, s)
-        remove(s, s1)
+            # variant id maybe not unique
+            s1 <- intersect(variant.id, s)
+            if (length(s1) <= 0L)
+                variant.id <- c(variant.id, s)
+            else
+                variant.id <- c(variant.id, setdiff(s, s1))
+            variant2.id <- intersect(variant2.id, s)
+            remove(s, s1)
+        }
+        nVariant <- length(variant.id)
     }
 
     if (verbose)
     {
         cat(sprintf("    %s variant%s in total, %s variant%s in common\n",
-            .pretty(length(variant.id)), .plural(length(variant.id)),
+            .pretty(nVariant), .plural(nVariant),
             .pretty(length(variant2.id)), .plural(length(variant2.id))))
     }
 
     # common samples
-    if (length(samp2.id)>0L || length(samp.id)==0L)
+    is_merge_variant <- length(samp2.id)>0L || length(samp.id)==0L
+    if (is_merge_variant)
     {
         if (length(variant2.id) > 0L)
         {
@@ -414,13 +442,9 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
     ## add variant.id
     if (verbose) cat("    variant.id")
-    n <- .AddVar(storage.option, gfile, "variant.id", seq_along(variant.id),
+    n <- .AddVar(storage.option, gfile, "variant.id", seq_len(nVariant),
         storage="int32", closezip=TRUE)
     .DigestCode(n, digest, verbose)
-
-    nSamp <- length(samp.id)
-    nVariant <- length(variant.id)
-    is_merge_variant <- length(samp2.id)>0L || length(samp.id)==0L
 
     if (is_merge_variant)
     {
