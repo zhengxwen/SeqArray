@@ -706,34 +706,37 @@ seqDelete <- function(gdsfile, info.var=character(), fmt.var=character(),
 
     if (verbose) cat("Delete INFO variable(s):")
     if (length(info.var) == 0L) cat(" <None>")
-    for (nm in info.var)
+    for (i in seq_along(info.var))
     {
+        nm <- info.var[i]
         n <- index.gdsn(gdsfile, paste0("annotation/info/", nm))
         delete.gdsn(n, force=TRUE)
         n <- index.gdsn(gdsfile, paste0("annotation/info/@", nm), silent=TRUE)
         if (!is.null(n))
             delete.gdsn(n, force=TRUE)
-        if (verbose) cat("", nm)
+        if (verbose) cat(ifelse(i>1L, ",", ""), nm)
     }
     if (verbose) cat("\n")
 
     if (verbose) cat("Delete FORMAT variable(s):")
     if (length(fmt.var) == 0L) cat(" <None>")
-    for (nm in fmt.var)
+    for (i in seq_along(fmt.var))
     {
+        nm <- fmt.var[i]
         n <- index.gdsn(gdsfile, paste0("annotation/format/", nm))
         delete.gdsn(n, force=TRUE)
-        if (verbose) cat("", nm)
+        if (verbose) cat(ifelse(i>1L, ",", ""), nm)
     }
     if (verbose) cat("\n")
 
     if (verbose) cat("Delete Sample Annotation variable(s):")
     if (length(samp.var) == 0L) cat(" <None>")
-    for (nm in samp.var)
+    for (i in seq_along(samp.var))
     {
+        nm <- samp.var[i]
         n <- index.gdsn(gdsfile, paste0("sample.annotation/", nm))
         delete.gdsn(n, force=TRUE)
-        if (verbose) cat("", nm)
+        if (verbose) cat(ifelse(i>1L, ",", ""), nm)
     }
     if (verbose) cat("\n")
 
