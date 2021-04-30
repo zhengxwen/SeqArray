@@ -8,7 +8,7 @@ Imports: methods, parallel, IRanges, GenomicRanges, GenomeInfoDb, Biostrings,
         S4Vectors
 LinkingTo: gdsfmt
 Suggests: Biobase, BiocGenerics, BiocParallel, RUnit, Rcpp, SNPRelate, digest,
-        crayon, knitr, rmarkdown, Rsamtools, VariantAnnotation
+        crayon, knitr, markdown, rmarkdown, Rsamtools, VariantAnnotation
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu", comment=c(ORCID="0000-0002-1390-0708")),
         person("Stephanie", "Gogarten", role="aut", email="sdmorris@uw.edu"),
