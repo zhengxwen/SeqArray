@@ -28,6 +28,7 @@ seqOpen <- function(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
         # but it is encouraged to add this attribute
         if (identical(at$FileFormat, "SNP_ARRAY"))
         {
+            closefn.gds(ans)
             stop(sprintf(
                 "'%s' is a SNP GDS file, please use SNPRelate::snpgdsOpen().",
                 gds.fn), "\n",
@@ -35,6 +36,7 @@ seqOpen <- function(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
         }
         if (!identical(at$FileFormat, "SEQ_ARRAY"))
         {
+            closefn.gds(ans)
             stop(sprintf("'%s' is not a SeqArray GDS file (%s).",
                 gds.fn, "'FileFormat' should be 'SEQ_ARRAY'"))
         }
@@ -48,6 +50,7 @@ seqOpen <- function(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
         # but it is encouraged to add this attribute
         if (!identical(version, "v1.0"))
         {
+            closefn.gds(ans)
             stop(sprintf(
                 "Invalid FileVersion '%s' (should be v1.0).",
                 as.character(version)))
