@@ -4,6 +4,7 @@
 #
 
 library(SeqArray)
+library(parallel)
 library(RUnit)
 
 
