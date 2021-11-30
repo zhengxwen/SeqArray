@@ -44,7 +44,7 @@ gds.fn <- seqExampleFileName("gds")
 file.copy(gds.fn, "tmp.gds", overwrite=TRUE)
 
 # display
-(f <- seqOpen("tmp.gds", FALSE))
+(f <- seqOpen("tmp.gds", readonly=FALSE))
 
 show(index.gdsn(f, "sample.id"))
 seqAddValue(f, "sample.id", 1:90, replace=TRUE)
