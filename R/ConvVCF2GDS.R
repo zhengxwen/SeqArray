@@ -159,8 +159,8 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         {
             if (x[i] > 0L)
             {
-                rv[i,1L] <- substring(txt[i], 1L, x[i]-1L)
-                rv[i,2L] <- substring(txt[i], x[i]+1L)
+                rv[i,1L] <- trimws(substring(txt[i], 1L, x[i]-1L))
+                rv[i,2L] <- trimws(substring(txt[i], x[i]+1L))
             }
         }
         rv
