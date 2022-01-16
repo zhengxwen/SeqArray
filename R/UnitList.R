@@ -257,12 +257,16 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
                 parallel <- makeCluster(njobs)
             }
             # distribute the parameters to each node
-            clusterCall(parallel, function(fn, ut, vn, env) {
-                .packageEnv$gdsfile <- SeqArray::seqOpen(fn, allow.duplicate=TRUE)
+            clusterCall(parallel, function(fn, ut, vn, ss, env) {
+                f <- SeqArray::seqOpen(fn, allow.duplicate=TRUE)
+                .packageEnv$gdsfile <- f
+                SeqArray::seqSetFilter(f, sample.sel=ss, verbose=FALSE)
                 .packageEnv$units <- ut
                 .packageEnv$var.name <- vn
                 .packageEnv$envir <- env
-            }, fn=gdsfile$filename, ut=units$index, vn=var.name, env=.envir)
+                invisible()
+            }, fn=gdsfile$filename, ut=units$index, vn=var.name,
+                ss=.Call(SEQ_GetSpaceSample, gdsfile), env=.envir)
             # finalize
             on.exit({
                 clusterCall(parallel, function() {

@@ -8,7 +8,8 @@ useDynLib(SeqArray,
     SEQ_SetSpaceVariant, SEQ_SetSpaceVariant2,
     SEQ_SetSpaceChrom, SEQ_SetSpaceAnnotID,
     SEQ_SplitSelection, SEQ_SplitSelectionX,
-    SEQ_GetSpace, SEQ_Summary, SEQ_System,
+    SEQ_GetSpace, SEQ_GetSpaceSample, SEQ_GetSpaceVariant,
+    SEQ_Summary, SEQ_System,
     SEQ_VCF_NumLines, SEQ_VCF_Split, SEQ_VCF_Parse,
     SEQ_ToVCF_Init, SEQ_ToVCF_Done,
     SEQ_Quote, SEQ_GetData, SEQ_ListVarData,
@@ -27,6 +28,7 @@ useDynLib(SeqArray,
 # Import all packages listed as Imports or Depends
 import(methods)
 import(gdsfmt)
+importFrom(stats, median, sd)
 importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
     makeCluster, makeForkCluster, mclapply, stopCluster)
 importFrom(utils, read.table, flush.console, write.table, str, tail,

@@ -5,6 +5,11 @@ UTILITIES
 
     o add `summary.SeqUnitListClass()`
 
+BUG FIXES
+
+    o `seqUnitApply()` works correctly with selected samples if 'parallel' is
+      a non-fork cluster
+
 
 CHANGES IN VERSION 1.32.0
 -------------------------

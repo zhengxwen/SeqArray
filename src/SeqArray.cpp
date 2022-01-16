@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2021    Xiuwen Zheng
+// Copyright (C) 2013-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -890,7 +890,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbos
 
 // ================================================================
 
-/// set a working space flag with selected variant id
+/// get a working space flag with selected samples and variants
 COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile, SEXP UseRaw)
 {
 	int use_raw_flag = Rf_asLogical(UseRaw);
@@ -941,6 +941,34 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile, SEXP UseRaw)
 
 		UNPROTECT(4);
 
+	COREARRAY_CATCH
+}
+
+/// get a raw vector for selected samples
+COREARRAY_DLL_EXPORT SEXP SEQ_GetSpaceSample(SEXP gdsfile)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		size_t n = File.SampleNum();  // # of samples
+		// output
+		PROTECT(rv_ans = NEW_RAW(n));
+		TSelection &Sel = File.Selection();
+		memcpy(RAW(rv_ans), Sel.pSample, n);
+		UNPROTECT(1);
+	COREARRAY_CATCH
+}
+
+/// get a raw vector for selected variants
+COREARRAY_DLL_EXPORT SEXP SEQ_GetSpaceVariant(SEXP gdsfile)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		size_t n = File.VariantNum();  // # of variants
+		// output
+		PROTECT(rv_ans = NEW_RAW(n));
+		TSelection &Sel = File.Selection();
+		memcpy(RAW(rv_ans), Sel.pVariant, n);
+		UNPROTECT(1);
 	COREARRAY_CATCH
 }
 
