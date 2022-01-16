@@ -323,3 +323,16 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
 
 
 print.SeqUnitListClass <- function(x, ...) str(x, list.len=6L)
+
+summary.SeqUnitListClass <- function(object, ...)
+{
+    .cat("# of units: ", length(object$index))
+    .cat("# of variants in total: ", .pretty(length(unique(object$index))))
+    v <- lengths(object$index, use.names=FALSE)
+    .cat("Avg # of variants per unit: ", mean(v))
+    .cat("Median # of variants in a unit: ", median(v))
+    .cat("Min # of variants in a unit: ", min(v))
+    .cat("Max # of variants in a unit: ", max(v))
+    .cat("SD # of variants in a unit: ", sd(v))
+    invisible()
+}

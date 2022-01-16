@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.35.1
+-------------------------
+
+UTILITIES
+
+    o add `summary.SeqUnitListClass()`
+
+
 CHANGES IN VERSION 1.32.0
 -------------------------
 

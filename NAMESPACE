@@ -48,6 +48,7 @@ importFrom(Biostrings, DNAStringSet, DNAStringSetList)
 S3method(print, SeqVCFHeaderClass)
 S3method(print, SeqVarDataList)
 S3method(print, SeqUnitListClass)
+S3method(summary, SeqUnitListClass)
 
 
 # Export all names
