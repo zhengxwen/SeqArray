@@ -22,7 +22,8 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         See details}
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object, or \code{NULL}}
     \item{FUN}{the function to be applied, should be like
-        \code{FUN(gdsfile, ...)} or \code{FUN(...)}}
+        \code{FUN(gdsfile, ...)} if \code{gdsfile} is given,
+        or \code{FUN(...)} if \code{gdsfile=NULL}}
     \item{split}{split the dataset by variant or sample according to multiple
         processes, or "none" for no split; \code{split="by.variant"} by default}
     \item{.combine}{define a fucntion for combining results from different
