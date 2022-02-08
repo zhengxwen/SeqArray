@@ -287,6 +287,14 @@ static SEXP get_dosage_alt(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
+inline static void check_vector_size(size_t n)
+{
+#ifdef COREARRAY_REGISTER_BIT64
+	if (n > 2147483647)
+		throw ErrSeqArray("There are too many non-zeros in a sparse matrix.");
+#endif
+}
+
 /// get sparse form of dosage of alternative allele(s) from 'genotype/data'
 static SEXP get_dosage_sp(CFileInfo &File, TVarMap &Var, void *param)
 {
@@ -298,63 +306,89 @@ static SEXP get_dosage_sp(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		// initialize GDS genotype Node
 		CApply_Variant_Dosage NodeVar(File, false, true);
-		vector<double> x;
-		vector<int> i, p(nVariant+1);
-		int i_col=0;
-		if (P->use_raw)
+		// dgCMatrix@x, @i, @p
+		SEXP x_r, i_r;
+		SEXP p_r = PROTECT(NEW_INTEGER(nVariant+1));
+		int *p = INTEGER(p_r), i_col;
+		p[0] = i_col = 0;
+		// use RAW or integer
+		if (P->use_raw && nSample<16777216)  // 2^24
 		{
 			SEXP buffer = PROTECT(NEW_RAW(nSample));
 			C_UInt8 *g_buf = (C_UInt8*)RAW(buffer);
+			// dgCMatrix@i & @x (i << 8 | x)
+			vector<C_UInt32> i_x;
+			i_x.reserve(nSample);
 			do {
 				NodeVar.ReadDosageAlt(g_buf);
 				// get # of nonzero
 				size_t nnzero = vec_i8_count((char *)g_buf, nSample, 0);
-				x.reserve(x.size() + nnzero);
-				i.reserve(i.size() + nnzero);
-				// fill x & i
+				i_x.reserve(i_x.size() + nnzero);
+				// fill i & x
 				for (ssize_t j=0; j < nSample; j++)
 				{
 					C_UInt8 g = g_buf[j];
 					if (g != 0)
-					{
-						x.push_back(g!=NA_RAW ? g : NA_REAL);
-						i.push_back(j);
-					}
+						i_x.push_back((C_UInt32(j) << 8) | g);
 				}
 				// update p
-				p[++i_col] = x.size();
+				p[++i_col] = i_x.size();
 			} while (NodeVar.Next());
-			UNPROTECT(1);
+			UNPROTECT(1);  // free buffer
+			const size_t n = i_x.size();
+			check_vector_size(n);
+			// dgCMatrix@x & @i
+			x_r = PROTECT(NEW_NUMERIC(n));
+			i_r = PROTECT(NEW_INTEGER(n));
+			double *x_r_p = REAL(x_r);
+			int *i_r_p = INTEGER(i_r);
+			for (size_t i=0; i < n; i++)
+			{
+				C_UInt32 v = i_x[i];
+				C_UInt8 g = v;
+				x_r_p[i] = (g != NA_RAW) ? g : NA_REAL;
+				i_r_p[i] = v >> 8;
+			}
 		} else {
 			SEXP buffer = PROTECT(NEW_INTEGER(nSample));
 			int *g_buf = INTEGER(buffer);
+			// dgCMatrix@i & @x (i << 32 | x)
+			vector<C_UInt64> i_x;
+			i_x.reserve(nSample);
 			do {
 				NodeVar.ReadDosageAlt(g_buf);
 				// get # of nonzero
 				size_t nnzero = vec_i32_count(g_buf, nSample, 0);
-				x.reserve(x.size() + nnzero);
-				i.reserve(i.size() + nnzero);
-				// fill x & i
+				i_x.reserve(i_x.size() + nnzero);
+				// fill i & x
 				for (ssize_t j=0; j < nSample; j++)
 				{
 					int g = g_buf[j];
 					if (g != 0)
-					{
-						x.push_back(g!=NA_INTEGER ? g : NA_REAL);
-						i.push_back(j);
-					}
+						i_x.push_back((C_UInt64(j) << 32) | C_UInt32(g));
 				}
 				// update p
-				p[++i_col] = x.size();
+				p[++i_col] = i_x.size();
 			} while (NodeVar.Next());
-			UNPROTECT(1);
+			UNPROTECT(1);  // free buffer
+			const size_t n = i_x.size();
+			check_vector_size(n);
+			// dgCMatrix@x & @i
+			x_r = PROTECT(NEW_NUMERIC(n));
+			i_r = PROTECT(NEW_INTEGER(n));
+			double *x_r_p = REAL(x_r);
+			int *i_r_p = INTEGER(i_r);
+			for (size_t i=0; i < n; i++)
+			{
+				C_UInt64 v = i_x[i];
+				int g = v;
+				x_r_p[i] = (g != NA_INTEGER) ? g : NA_REAL;
+				i_r_p[i] = v >> 32;
+			}
 		}
-	#ifdef COREARRAY_REGISTER_BIT64
-		if (x.size() > 2147483647)
-			throw ErrSeqArray("There are too many non-zeros in a sparse matrix.");
-	#endif
-		rv_ans = GDS_New_SpCMatrix(&x[0], &i[0], &p[0], x.size(),
-			nSample, nVariant);
+		// new dgCMatrix
+		rv_ans = GDS_New_SpCMatrix2(x_r, i_r, p_r, nSample, nVariant);
+		UNPROTECT(3);
 	}
 	// output
 	return rv_ans;

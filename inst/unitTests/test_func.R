@@ -415,3 +415,22 @@ test.parallel_balancing <- function()
 
 	invisible()
 }
+
+
+test.sp_dosage <- function()
+{
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
+
+	g1 <- seqGetData(f, "$dosage_alt")
+	g2 <- seqGetData(f, "$dosage_sp")
+	g3 <- seqGetData(f, "$dosage_sp", .useraw=TRUE)
+
+	g1 <- as(g1, "sparseMatrix")
+	dimnames(g1) <- list(NULL, NULL)
+
+	checkEquals(g1, g2, "Sparse matrix for dosages")
+	checkEquals(g2, g3, "Sparse matrix for dosages")
+
+	invisible()
+}
