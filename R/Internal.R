@@ -972,12 +972,7 @@ process_count <- 1L
 
 .seqProgForward <- function(progress, inc)
 {
-    if (!is.null(progress))
-    {
-        stopifnot(inherits(progress, "SeqClass_Progress"))
-        stopifnot(is.numeric(inc))
-        .Call(SEQ_ProgressAdd, progress, inc)
-    }
+    .Call(SEQ_ProgressAdd, progress, inc)
     invisible()
 }
 
