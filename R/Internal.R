@@ -966,15 +966,10 @@ process_count <- 1L
 # Convert to a VariantAnnotation object
 
 .seqProgress <- function(count, nproc)
-{
     .Call(SEQ_Progress, count, nproc)
-}
 
 .seqProgForward <- function(progress, inc)
-{
-    .Call(SEQ_ProgressAdd, progress, inc)
-    invisible()
-}
+    invisible(.Call(SEQ_ProgressAdd, progress, inc))
 
 
 

@@ -2,7 +2,7 @@
 //
 // Index.h: Indexing Objects
 //
-// Copyright (C) 2016-2020    Xiuwen Zheng
+// Copyright (C) 2016-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -602,12 +602,15 @@ public:
 	void Forward(C_Int64 Inc=1);
 	virtual void ShowProgress();
 
+	inline C_Int64 Counter() const { return vCounter; }
+	inline C_Int64 TotalCount() const { return vTotalCount; }
+
 protected:
-	C_Int64 TotalCount;  ///< the total number
-	C_Int64 Counter;     ///< the current counter
-	Rconnection File;    ///< R connection
-	C_Int64 FwdCnt;      ///< the number of calling Forward()
-	time_t _start_time;  ///< the starting time
+	C_Int64 vTotalCount;  ///< the total number
+	C_Int64 vCounter;     ///< the current counter
+	Rconnection File;     ///< R connection
+	C_Int64 FwdCnt;       ///< the number of calling Forward()
+	time_t _start_time;   ///< the starting time
 	bool NewLine;
 	double _start, _step;
 	C_Int64 _hit;

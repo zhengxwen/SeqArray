@@ -2,7 +2,7 @@
 //
 // Index.cpp: Indexing Objects
 //
-// Copyright (C) 2016-2020    Xiuwen Zheng
+// Copyright (C) 2016-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1123,8 +1123,8 @@ static const char *time_str(double s)
 
 CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 {
-	TotalCount = count;
-	Counter = (start >= 0) ? start : 0;
+	vTotalCount = count;
+	vCounter = (start >= 0) ? start : 0;
 	double percent;
 	File = NULL;
 	if (conn && !Rf_isNull(conn))
@@ -1139,8 +1139,8 @@ CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 		if (n < 1) n = 1;
 		_start = _step = (double)count / n;
 		_hit = (C_Int64)(_start);
-		if (Counter > count) Counter = count;
-		percent = (double)Counter / count;
+		if (vCounter > count) vCounter = count;
+		percent = (double)vCounter / count;
 	} else {
 		_start = _step = 0;
 		_hit = PROGRESS_LINE_NUM;
@@ -1161,21 +1161,21 @@ CProgress::~CProgress()
 void CProgress::Forward(C_Int64 Inc)
 {
 	FwdCnt++;
-	Counter += Inc;
-	if (TotalCount > 0 && Counter > TotalCount)
-		Counter = TotalCount;
-	if (Counter >= _hit)
+	vCounter += Inc;
+	if (vTotalCount > 0 && vCounter > vTotalCount)
+		vCounter = vTotalCount;
+	if (vCounter >= _hit)
 	{
-		if (TotalCount > 0)
+		if (vTotalCount > 0)
 		{
-			while (Counter >= _hit)
+			while (vCounter >= _hit)
 			{
 				_start += _step;
 				_hit = (C_Int64)(_start);
 			}
-			if (_hit > TotalCount) _hit = TotalCount;
+			if (_hit > vTotalCount) _hit = vTotalCount;
 		} else {
-			while (Counter >= _hit) _hit += PROGRESS_LINE_NUM;
+			while (vCounter >= _hit) _hit += PROGRESS_LINE_NUM;
 		}
 		ShowProgress();
 	}
@@ -1185,14 +1185,14 @@ void CProgress::ShowProgress()
 {
 	if (File)
 	{
-		if (TotalCount > 0)
+		if (vTotalCount > 0)
 		{
 			char bar[PROGRESS_BAR_CHAR_NUM + 1];
-			double p = (double)Counter / TotalCount;
+			double p = (double)vCounter / vTotalCount;
 			int n = (int)round(p * PROGRESS_BAR_CHAR_NUM);
 			memset(bar, '.', sizeof(bar));
 			memset(bar, '=', n);
-			if ((Counter > 0) && (n < PROGRESS_BAR_CHAR_NUM))
+			if ((vCounter > 0) && (n < PROGRESS_BAR_CHAR_NUM))
 				bar[n] = '>';
 			bar[PROGRESS_BAR_CHAR_NUM] = 0;
 
@@ -1215,34 +1215,34 @@ void CProgress::ShowProgress()
 			if (NewLine)
 			{
 				ConnPutText(File, "[%s] %2.0f%%, %s %s", bar, p,
-					Counter < TotalCount ? "ETC:" : "completed,", time_str(s));
+					vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "\n");
 			} else {
 				ConnPutText(File, "\r[%s] %2.0f%%, %s %s", bar, p,
-					Counter < TotalCount ? "ETC:" : "completed,", time_str(s));
+					vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "    ");
-				if (Counter >= TotalCount) ConnPutText(File, "\n");
+				if (vCounter >= vTotalCount) ConnPutText(File, "\n");
 			}
 		} else {
-			int n = Counter / PROGRESS_LINE_NUM;
+			int n = vCounter / PROGRESS_LINE_NUM;
 			n = (n / 10) + (n % 10 ? 1 : 0);
 			string s(n, '.');
 			if (NewLine)
 			{
-				if (Counter > 0)
-					ConnPutText(File, "[:%s (%dk lines)]", s.c_str(), Counter/1000);
+				if (vCounter > 0)
+					ConnPutText(File, "[:%s (%dk lines)]", s.c_str(), vCounter/1000);
 				else
 					ConnPutText(File, "[: (0 line)]");
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "\n");
 			} else {
-				if (Counter > 0)
-					ConnPutText(File, "\r[:%s (%dk lines)]", s.c_str(), Counter/1000);
+				if (vCounter > 0)
+					ConnPutText(File, "\r[:%s (%dk lines)]", s.c_str(), vCounter/1000);
 				else
 					ConnPutText(File, "\r[: (0 line)]");
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
@@ -1267,14 +1267,14 @@ CProgressStdOut::CProgressStdOut(C_Int64 count, int nproc, bool verbose):
 
 void CProgressStdOut::ShowProgress()
 {
-	if (Verbose && (TotalCount > 0))
+	if (Verbose && (vTotalCount > 0))
 	{
 		char bar[PROGRESS_BAR_CHAR_NUM + 1];
-		double p = (double)Counter / TotalCount;
+		double p = (double)vCounter / vTotalCount;
 		int n = (int)round(p * PROGRESS_BAR_CHAR_NUM);
 		memset(bar, '.', sizeof(bar));
 		memset(bar, '=', n);
-		if ((Counter > 0) && (n < PROGRESS_BAR_CHAR_NUM))
+		if ((vCounter > 0) && (n < PROGRESS_BAR_CHAR_NUM))
 			bar[n] = '>';
 		bar[PROGRESS_BAR_CHAR_NUM] = 0;
 
@@ -1302,7 +1302,7 @@ void CProgressStdOut::ShowProgress()
 
 		// show
 		_last_time = now;
-		if (Counter >= TotalCount)
+		if (vCounter >= vTotalCount)
 		{
 			char buffer[512];
 			s = difftime(_last_time, _start_time);
@@ -1310,12 +1310,12 @@ void CProgressStdOut::ShowProgress()
 			if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 				sprintf(buffer+n, " (process %d)", *R_Process_Index);
 			Rprintf("%s\n", buffer);
-		} else if ((interval >= 5) || (Counter <= 0))
+		} else if ((interval >= 5) || (vCounter <= 0))
 		{
 			char buffer[512];
 			_last_time = now;
 			int n = sprintf(buffer, "\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
-			if ((Counter>0) && R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+			if ((vCounter>0) && R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 				n += sprintf(buffer+n, " (process %d)", *R_Process_Index);
 			strcpy(buffer+n, "    ");
 			Rprintf("%s", buffer);

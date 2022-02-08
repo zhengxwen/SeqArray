@@ -1497,6 +1497,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 	COREARRAY_TRY
 		CProgressStdOut *obj = (CProgressStdOut*)R_ExternalPtrAddr(ref);
 		if (obj) obj->Forward(v);
+		rv_ans = ScalarReal(obj->Counter());
 	COREARRAY_CATCH
 }
 
