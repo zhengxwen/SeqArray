@@ -985,24 +985,49 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
 #######################################################################
 # get 2-bit packed genotypes in a raw matrix
 #
+
+# deprecated
 .seqGet2bGeno <- function(gdsfile, verbose=TRUE)
 {
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
-    dm <- .seldim(gdsfile)
-    npack <- dm[2L] %/% 4L
-    if (dm[2L] %% 4L) npack <- npack + 1L
-	rv <- matrix(as.raw(0), nrow=npack, ncol=dm[3L])
+    seqGet2bGeno(gdsfile, verbose=verbose)
+}
 
-    n <- index.gdsn(gdsfile, "genotype/data", silent=TRUE)
-    if (!is.null(n))
+seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, verbose=FALSE)
+{
+    # check
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.logical(samp_by_var), length(samp_by_var)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    # get gds node
+    nd <- index.gdsn(gdsfile, "genotype/data", silent=TRUE)
+    if (!is.null(nd))
         varnm <- "$dosage_alt"
     else if (!is.null(index.gdsn(gdsfile, "annotation/format/DS", silent=TRUE)))
         varnm <- "annotation/format/DS"
     else
         stop("No 'genotype' or 'annotation/format/DS' is available.")
 
-    seqApply(gdsfile, varnm, FUN=.cfunction3("FC_SetPackedGeno"),
-        var.index="relative", .useraw=NA, z=list(rv, dm[2L]),
+    # get num of samples and variants
+    dm <- .seldim(gdsfile)
+    nsamp <- dm[2L]
+    nvar  <- dm[3L]
+    if (isTRUE(samp_by_var))
+    {
+        geno <- matrix(as.raw(0xFF), nrow=ceiling(nsamp/4), ncol=nvar)
+        cfunc <- .cfunction("FC_SetPackedGenoSxV")
+    } else {
+        geno <- matrix(as.raw(0xFF), nrow=ceiling(nvar/4), ncol=nsamp)
+        cfunc <- .cfunction("FC_SetPackedGenoVxS")
+    }
+    if (length(geno) <= 0) return(geno)
+
+    # initialize
+    .cfunction("FC_InitPackedGeno")(geno)
+    # fill
+    seqApply(gdsfile, varnm, FUN=cfunc, as.is="none", .useraw=NA,
         .progress=verbose)
-    rv
+
+    # output
+    geno
 }

@@ -2,7 +2,7 @@
 //
 // Methods.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2015-2021    Xiuwen Zheng
+// Copyright (C) 2015-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -26,7 +26,7 @@
 using namespace SeqArray;
 
 
-// used in FC_SetPackedGeno()
+// used in FC_SetPackedGenoSxV() & FC_SetPackedGenoVxS()
 
 static inline unsigned char g2b(Rbyte g)
 {
@@ -44,7 +44,7 @@ static inline unsigned char g2b(double g)
 }
 
 template<typename TYPE>
-	static void packed_geno(Rbyte *p, TYPE *s, int n)
+	static void packed_geno_SxV(Rbyte *p, TYPE *s, size_t n)
 {
 	unsigned char b0, b1, b2, b3;
 	for (; n >= 4; n-=4, s+=4)
@@ -68,6 +68,26 @@ template<typename TYPE>
 	}
 }
 
+
+template<typename TYPE>
+	static void packed_geno_VxS(Rbyte *p, TYPE *s, size_t n, size_t m,
+		unsigned char bit_shift)
+{
+	// bit_shift: 0, 1, 2, 3
+	static int mask[4] = { ~0x3, ~(0x3<<2), ~(0x3<<4), ~(0x3<<6) };
+	const unsigned char bit_mask = mask[bit_shift];
+	bit_shift *= 2;
+	for (size_t i=0; i < n; i++)
+	{
+		unsigned char b = g2b(s[i]);
+		unsigned char g = *p;
+		*p = (g & bit_mask) | (b << bit_shift);
+		p += m;
+	}
+}
+
+
+// ======================================================================
 
 extern "C"
 {
@@ -1053,33 +1073,74 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 
 // ======================================================================
 
-/// store dosage in a 2-bit packed matrix
-COREARRAY_DLL_EXPORT SEXP FC_SetPackedGeno(SEXP index, SEXP dosage, SEXP param)
+static Rbyte *geno_raw_ptr = NULL;
+static size_t geno_nrow = 0;
+static size_t geno_ncol = 0;
+static size_t geno_index = 0;
+
+static const char *ERR_PACKED_GENO_N =
+	"Internal error: store genotype in packed raw format!";
+static const char *ERR_PACKED_GENO_TYPE =
+	"Internal error: invalid data type of dosage!";
+
+/// initialize the packed raw genotype matrix
+COREARRAY_DLL_EXPORT SEXP FC_InitPackedGeno(SEXP geno)
 {
-	SEXP rawmat = VECTOR_ELT(param, 0);
-	int NumPacked = INTEGER(GET_DIM(rawmat))[0];
-	SEXP samp = VECTOR_ELT(param, 1);
-	int nSamp = Rf_asInteger(samp);
-	int n = Rf_length(dosage);
-	if (n < nSamp)
-		error("Internal error: store genotype in packed raw format!");
-	if (n > nSamp) n = nSamp;
+	geno_raw_ptr = RAW(geno);
+	geno_nrow = INTEGER(GET_DIM(geno))[0];
+	geno_ncol = INTEGER(GET_DIM(geno))[1];
+	geno_index = 0;
+	return R_NilValue;
+}
 
-	Rbyte *p = RAW(rawmat) + NumPacked * (Rf_asInteger(index) - 1);
+/// store dosage in a 2-bit packed matrix (sample by variant)
+COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSxV(SEXP dosage)
+{
+	size_t n = Rf_xlength(dosage);
+	if (n > geno_nrow*4) Rf_error(ERR_PACKED_GENO_N);
 
+	Rbyte *p = geno_raw_ptr + geno_nrow * geno_index;
+	geno_index ++;
 	switch (TYPEOF(dosage))
 	{
 	case RAWSXP:
-		packed_geno<Rbyte>(p, RAW(dosage), n);
+		packed_geno_SxV<Rbyte>(p, RAW(dosage), n);
 		break;
 	case INTSXP:
-		packed_geno<int>(p, INTEGER(dosage), n);
+		packed_geno_SxV<int>(p, INTEGER(dosage), n);
 		break;
 	case REALSXP:
-		packed_geno<double>(p, REAL(dosage), n);
+		packed_geno_SxV<double>(p, REAL(dosage), n);
 		break;
 	default:
-		error("Internal error: invalid data type of dosage!");
+		Rf_error(ERR_PACKED_GENO_TYPE);
+	}
+
+	return R_NilValue;
+}
+
+/// store dosage in a 2-bit packed matrix (variant by sample)
+COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoVxS(SEXP dosage)
+{
+	size_t n = Rf_xlength(dosage);
+	if (n !=  geno_ncol) Rf_error(ERR_PACKED_GENO_N);
+
+	Rbyte *p = geno_raw_ptr + (geno_index >> 2);
+	geno_index ++;
+	unsigned char bit_shift = geno_index & 0x03;
+	switch (TYPEOF(dosage))
+	{
+	case RAWSXP:
+		packed_geno_VxS<Rbyte>(p, RAW(dosage), n, geno_nrow, bit_shift);
+		break;
+	case INTSXP:
+		packed_geno_VxS<int>(p, INTEGER(dosage), n, geno_nrow, bit_shift);
+		break;
+	case REALSXP:
+		packed_geno_VxS<double>(p, REAL(dosage), n, geno_nrow, bit_shift);
+		break;
+	default:
+		Rf_error(ERR_PACKED_GENO_TYPE);
 	}
 
 	return R_NilValue;
