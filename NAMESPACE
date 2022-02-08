@@ -55,7 +55,7 @@ S3method(summary, SeqUnitListClass)
 
 # Export all names
 exportPattern("^seq*")
-export(.onAttach, .Last.lib)
+export(.Last.lib)
 exportClasses(SeqVarGDSClass)
 exportMethods(granges, ref, alt, qual, filt, header, fixed, info, geno,
     colData, rowRanges)
