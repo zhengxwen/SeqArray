@@ -308,9 +308,7 @@ static SEXP get_dosage_sp(CFileInfo &File, TVarMap &Var, void *param)
 			do {
 				NodeVar.ReadDosageAlt(g_buf);
 				// get # of nonzero
-				size_t nnzero=0;
-				for (ssize_t j=0; j < nSample; j++)
-					if (g_buf[j] != 0) nnzero++;
+				size_t nnzero = vec_i8_count((char *)g_buf, nSample, 0);
 				x.reserve(x.size() + nnzero);
 				i.reserve(i.size() + nnzero);
 				// fill x & i
@@ -333,9 +331,7 @@ static SEXP get_dosage_sp(CFileInfo &File, TVarMap &Var, void *param)
 			do {
 				NodeVar.ReadDosageAlt(g_buf);
 				// get # of nonzero
-				size_t nnzero=0;
-				for (ssize_t j=0; j < nSample; j++)
-					if (g_buf[j] != 0) nnzero++;
+				size_t nnzero = vec_i32_count(g_buf, nSample, 0);
 				x.reserve(x.size() + nnzero);
 				i.reserve(i.size() + nnzero);
 				// fill x & i
