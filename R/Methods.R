@@ -878,15 +878,13 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
 #######################################################################
 # Allele counts
 #
-seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
+seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
     parallel=seqGetParallel(), verbose=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(minor), length(minor)==1L)
-    stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    verbose <- verbose | .progress
 
     # check genotypes
     gv <- .has_geno(gdsfile)

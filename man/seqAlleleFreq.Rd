@@ -8,8 +8,8 @@
 \usage{
 seqAlleleFreq(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
     parallel=seqGetParallel(), verbose=FALSE)
-seqAlleleCount(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
-    parallel=seqGetParallel(), verbose=FALSE)
+seqAlleleCount(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
+    verbose=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
