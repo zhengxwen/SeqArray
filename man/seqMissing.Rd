@@ -5,15 +5,13 @@
     Calculates the missing rates per variant or per sample.
 }
 \usage{
-seqMissing(gdsfile, per.variant=TRUE, .progress=FALSE,
-    parallel=seqGetParallel(), verbose=FALSE)
+seqMissing(gdsfile, per.variant=TRUE, parallel=seqGetParallel(), verbose=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
     \item{per.variant}{missing rate per variant if \code{TRUE},
         missing rate per sample if \code{FALSE}, or calculating missing rates
         for variants and samples if \code{NA}}
-    \item{.progress}{[deprecated] if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see

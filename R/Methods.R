@@ -679,15 +679,13 @@ seqNumAllele <- function(gdsfile)
 #######################################################################
 # Missing rate
 #
-seqMissing <- function(gdsfile, per.variant=TRUE, .progress=FALSE,
-    parallel=seqGetParallel(), verbose=FALSE)
+seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
+    verbose=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(per.variant), length(per.variant)==1L)
-    stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    verbose <- verbose | .progress
 
     # check genotypes
     nm <- "genotype"

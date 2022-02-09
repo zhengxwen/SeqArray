@@ -5,6 +5,10 @@ NEW FEATURES
 
     o new function `seqGet2bGeno()`
 
+UTILITIES
+
+    o remove the deprecated '.progress' in `seqMissing()`
+
 
 CHANGES IN VERSION 1.35.2
 -------------------------
