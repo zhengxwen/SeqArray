@@ -8,6 +8,7 @@ NEW FEATURES
 UTILITIES
 
     o remove the deprecated '.progress' in `seqMissing()`, `seqAlleleCount()`
+      and `seqAlleleFreq()`
 
 
 CHANGES IN VERSION 1.35.2

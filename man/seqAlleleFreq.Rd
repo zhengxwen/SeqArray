@@ -6,8 +6,8 @@
     Calculates the allele frequencies or counts for reference or minor alleles.
 }
 \usage{
-seqAlleleFreq(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
-    parallel=seqGetParallel(), verbose=FALSE)
+seqAlleleFreq(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
+    verbose=FALSE)
 seqAlleleCount(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
     verbose=FALSE)
 }
@@ -16,7 +16,6 @@ seqAlleleCount(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
     \item{ref.allele}{\code{NULL}, a single numeric value, a numeric vector
         or a character vector; see Value}
     \item{minor}{if \code{TRUE}, return minor allele frequency/count}
-    \item{.progress}{[deprecated] if TRUE, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see

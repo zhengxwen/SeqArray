@@ -774,7 +774,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
 #######################################################################
 # Allele frequency
 #
-seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
+seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
     parallel=seqGetParallel(), verbose=FALSE)
 {
     # check
@@ -782,9 +782,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE, .progress=FALSE,
     stopifnot(is.null(ref.allele) | is.numeric(ref.allele) |
         is.character(ref.allele))
     stopifnot(is.logical(minor), length(minor)==1L)
-    stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    verbose <- verbose | .progress
 
     # check genotypes
     gv <- .has_geno(gdsfile)
