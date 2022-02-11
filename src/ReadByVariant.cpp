@@ -2,7 +2,7 @@
 //
 // ReadByVariant.cpp: Read data variant by variant
 //
-// Copyright (C) 2013-2020    Xiuwen Zheng
+// Copyright (C) 2013-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -326,6 +326,22 @@ SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
 		}
 		return VarRawGeno;
 	}
+}
+
+bool CApply_Variant_Geno::NeedIntType()
+{
+	const C_BOOL *b = MarginalSelect;
+	C_Int32 P = Position;
+	while (P < MarginalEnd)
+	{
+		C_UInt8 NumIndexRaw;
+		C_Int64 Index;
+		GenoIndex->GetInfo(P, Index, NumIndexRaw);
+		if (NumIndexRaw > 4) return true;
+		// find next
+		P = VEC_BOOL_FIND_TRUE(b+P+1, b+MarginalEnd) - b;
+	}
+	return false;
 }
 
 void CApply_Variant_Geno::ReadGenoData(int *Base)

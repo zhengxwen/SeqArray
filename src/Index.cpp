@@ -1029,7 +1029,7 @@ void CVarApply::Reset()
 
 bool CVarApply::Next()
 {
-	C_BOOL *p = MarginalSelect;
+	const C_BOOL *p = MarginalSelect;
 	Position = VEC_BOOL_FIND_TRUE(p+Position+1, p+MarginalEnd) - p;
 	return (Position < MarginalEnd);
 }

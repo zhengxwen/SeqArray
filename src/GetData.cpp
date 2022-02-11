@@ -297,7 +297,6 @@ inline static void check_vector_size(size_t n)
 /// get sparse form of dosage of alternative allele(s) from 'genotype/data'
 static SEXP get_dosage_sp(CFileInfo &File, TVarMap &Var, void *param)
 {
-	const TParam *P = (const TParam*)param;
 	SEXP rv_ans = R_NilValue;
 	const ssize_t nSample  = File.SampleSelNum();
 	const ssize_t nVariant = File.VariantSelNum();
@@ -305,13 +304,14 @@ static SEXP get_dosage_sp(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		// initialize GDS genotype Node
 		CApply_Variant_Dosage NodeVar(File, false, true);
+		const bool isI32 = NodeVar.NeedIntType();
 		// dgCMatrix@x, @i, @p
 		SEXP x_r, i_r;
 		SEXP p_r = PROTECT(NEW_INTEGER(nVariant+1));
 		int *p = INTEGER(p_r), i_col;
 		p[0] = i_col = 0;
 		// use RAW or integer
-		if (P->use_raw && nSample<16777216)  // 2^24
+		if (!isI32 && nSample<16777216)  // 2^24
 		{
 			SEXP buffer = PROTECT(NEW_RAW(nSample));
 			C_UInt8 *g_buf = (C_UInt8*)RAW(buffer);

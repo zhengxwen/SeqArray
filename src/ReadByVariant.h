@@ -2,7 +2,7 @@
 //
 // ReadByVariant.h: Read data variant by variant
 //
-// Copyright (C) 2013-2020    Xiuwen Zheng
+// Copyright (C) 2013-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -102,6 +102,7 @@ public:
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);
+	bool NeedIntType();
 
 	/// read genotypes in 32-bit integer
 	void ReadGenoData(int *Base);
