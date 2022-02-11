@@ -165,7 +165,7 @@ static SEXP get_data_1d(CFileInfo &File, TVarMap &Var, void *param)
 }
 
 /// get if I32 is needed for genotypes or not
-static bool get_geno_is_i32(const TParam *P, CApply_Variant_Geno &NodeVar)
+inline static bool get_geno_is_i32(const TParam *P, CApply_Variant_Geno &NodeVar)
 {
 	if  (P->use_raw == 0)
 		return true;
