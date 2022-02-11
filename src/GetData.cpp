@@ -164,6 +164,17 @@ static SEXP get_data_1d(CFileInfo &File, TVarMap &Var, void *param)
 		GDS_R_READ_DEFAULT_MODE | (P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0));
 }
 
+/// get if I32 is needed for genotypes or not
+static bool get_geno_is_i32(const TParam *P, CApply_Variant_Geno &NodeVar)
+{
+	if  (P->use_raw == 0)
+		return true;
+	else if (P->use_raw == NA_INTEGER)
+		return NodeVar.NeedIntType();
+	else
+		return false;
+}
+
 /// get genotypes from 'genotype/data'
 static SEXP get_genotype(CFileInfo &File, TVarMap &Var, void *param)
 {
@@ -177,7 +188,7 @@ static SEXP get_genotype(CFileInfo &File, TVarMap &Var, void *param)
 		CApply_Variant_Geno NodeVar(File, P->use_raw);
 		// size to be allocated
 		ssize_t SIZE = (ssize_t)nSample * File.Ploidy();
-		if (P->use_raw)
+		if (!get_geno_is_i32(P, NodeVar))
 		{
 			rv_ans = PROTECT(NEW_RAW(nVariant * SIZE));
 			C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
@@ -229,7 +240,7 @@ static SEXP get_dosage(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		// initialize GDS genotype Node
 		CApply_Variant_Dosage NodeVar(File, false, false);
-		if (P->use_raw)
+		if (!get_geno_is_i32(P, NodeVar))
 		{
 			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
 			C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
@@ -263,7 +274,7 @@ static SEXP get_dosage_alt(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		// initialize GDS genotype Node
 		CApply_Variant_Dosage NodeVar(File, false, true);
-		if (P->use_raw)
+		if (!get_geno_is_i32(P, NodeVar))
 		{
 			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
 			C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
