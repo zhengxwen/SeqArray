@@ -99,8 +99,8 @@ head(seqGetData(f, "$chrom_pos"))
 # get '$dosage'
 seqGetData(f, "$dosage")[1:6, 1:10]
 
-# get a sparse matrix of dosages with missing genotypes imputed by mean
-seqGetData(f, "$dosage_sp2")[1:6, 1:10]
+# get a sparse matrix of dosages
+seqGetData(f, "$dosage_sp")[1:6, 1:10]
 
 # get '$num_allele'
 head(seqGetData(f, "$num_allele"))
