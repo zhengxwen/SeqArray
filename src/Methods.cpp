@@ -864,21 +864,25 @@ COREARRAY_DLL_EXPORT SEXP FC_AlleleCount(SEXP List)
 
 // ======================================================================
 
-// val[0] -- maf, val[1] -- mac, val[2] -- missing
-static double *mafmac_ptr = NULL;
+// val[0] -- AF/MAF, val[1] -- AC/MAC, val[2] -- missing
+static double *af_ac_miss_ptr = NULL;
 // ploidy
-static int mafmac_ploidy = 0;
+static int af_ac_miss_ploidy = 0;
+// whether return minor AF/AC
+static bool af_ac_miss_minor = false;
 
 /// Initialize maf/mac/missing internal variable
-COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_Init(SEXP M_3n, SEXP ploidy)
+COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Init(SEXP M_3n, SEXP ploidy, SEXP minor)
 {
-	mafmac_ptr = REAL(M_3n);  // M_3n is a matrix with three rows
-	mafmac_ploidy = Rf_asInteger(ploidy);
+	af_ac_miss_ptr = REAL(M_3n);  // M_3n is a matrix with three rows
+	af_ac_miss_ploidy = Rf_asInteger(ploidy);
+	if (af_ac_miss_ploidy < 0) af_ac_miss_ploidy = 2;
+	af_ac_miss_minor = (Rf_asLogical(minor) == TRUE);
 	return R_NilValue;
 }
 
 /// Get MAF/MAC/missing rate from integer genotypes
-COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_Geno(SEXP Geno)
+COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Geno(SEXP Geno)
 {
 	const size_t N = XLENGTH(Geno);
 	size_t n0, nmiss;
@@ -887,27 +891,28 @@ COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_Geno(SEXP Geno)
 	else
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &n0, &nmiss);
 	size_t n = N - nmiss;
-	// MAF
+	// AF/MAF
 	double af = R_NaN;
 	if (n > 0)
 	{
 		af = (double)n0 / n;
-		if (af > 0.5) af = 1 - af;
+		if (af_ac_miss_minor && (af > 0.5))
+			af = 1 - af;
 	}
-	mafmac_ptr[0] = af;
-	// MAC
+	af_ac_miss_ptr[0] = af;
+	// AC/MAC
 	double ac = n0, ac2 = n - n0;
-	if (ac > ac2) ac = ac2;
-	mafmac_ptr[1] = ac;
-	// Missing rate
-	mafmac_ptr[2] = (double)nmiss / N;
-	mafmac_ptr += 3;
-	// output
+	if (af_ac_miss_minor && (ac > ac2)) ac = ac2;
+	af_ac_miss_ptr[1] = ac;
+	// missing rate
+	af_ac_miss_ptr[2] = (double)nmiss / N;
+	af_ac_miss_ptr += 3;
+	// output nothing
 	return R_NilValue;
 }
 
 /// Get MAF/MAC/missing rate from dosages
-COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_DS(SEXP DS)
+COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_DS(SEXP DS)
 {
 	int n, m, num=0;
 	get_ds_n_m(DS, n, m);
@@ -928,21 +933,23 @@ COREARRAY_DLL_EXPORT SEXP FC_MAF_MAC_DS(SEXP DS)
 	double af=R_NaN, ac=R_NaN;
 	if (num > 0)
 	{
-		af = sum * m / (num * mafmac_ploidy);
-		if (af > 0.5) af = 1 - af;
-		double totac = double(num * mafmac_ploidy) / m;
+		af = sum * m / (num * af_ac_miss_ploidy);
+		if (af_ac_miss_minor && (af > 0.5))
+			af = 1 - af;
+		double totac = double(num * af_ac_miss_ploidy) / m;
 		ac = totac - sum;
-		if (ac > 0.5*totac) ac = totac - ac;
+		if (af_ac_miss_minor && (ac > 0.5*totac))
+			ac = totac - ac;
 	}
 
-	// MAF
-	mafmac_ptr[0] = af;
-	// MAC
-	mafmac_ptr[1] = ac;
-	// Missing rate
-	mafmac_ptr[2] = (double)(n - num) / n;
-	mafmac_ptr += 3;
-	// output
+	// AF/MAF
+	af_ac_miss_ptr[0] = af;
+	// AC/MAC
+	af_ac_miss_ptr[1] = ac;
+	// missing rate
+	af_ac_miss_ptr[2] = (double)(n - num) / n;
+	af_ac_miss_ptr += 3;
+	// output nothing
 	return R_NilValue;
 }
 

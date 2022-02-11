@@ -1,6 +1,7 @@
 \name{seqAlleleFreq}
 \alias{seqAlleleFreq}
 \alias{seqAlleleCount}
+\alias{seqGetAF_AC_Missing}
 \title{Get Allele Frequencies or Counts}
 \description{
     Calculates the allele frequencies or counts for reference or minor alleles.
@@ -9,6 +10,8 @@
 seqAlleleFreq(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
     verbose=FALSE)
 seqAlleleCount(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
+    verbose=FALSE)
+seqGetAF_AC_Missing(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     verbose=FALSE)
 }
 \arguments{
@@ -31,6 +34,11 @@ first alternative allele, etc). If \code{ref.allele} is a numeric vector,
 \code{ref.allele} specifies each allele per site. If \code{ref.allele} is a
 character vector, \code{ref.allele} specifies the desired allele for each site
 (e.g, ancestral allele for the derived allele frequency/count).
+
+    \code{seqGetAF_AC_Missing()} returns \code{list(af, ac, miss)} for allele
+frequencies, allele counts and missing rates. It is faster than calling
+\code{seqAlleleFreq()}, \code{seqAlleleCount()} and \code{seqMissing}
+sequentially.
 }
 \details{
     If the gds node 'genotype/data' (integer genotypes) is not available,
@@ -42,7 +50,7 @@ alleles) will be used to calculate allele frequencies. At a site, it assumes
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqNumAllele}}, \code{\link{seqMissing}},
+    \code{\link{seqMissing}}, \code{\link{seqNumAllele}},
     \code{\link{seqParallel}}, \code{\link{seqGetParallel}}
 }
 

@@ -3,7 +3,7 @@ CHANGES IN VERSION 1.35.3
 
 NEW FEATURES
 
-    o new function `seqGet2bGeno()`
+    o new functions `seqGet2bGeno()` and `seqGetAF_AC_Missing()`
 
 UTILITIES
 

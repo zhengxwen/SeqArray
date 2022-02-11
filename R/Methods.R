@@ -977,12 +977,22 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
 
 
 #######################################################################
-# Get MAF, MAC and missing rate for variants
+# Get AF/MAF, AC/MAC and missing rate for variants
 #
+# [deprecated]
 .Get_MAF_MAC_Missing <- function(gdsfile, parallel, verbose)
 {
+    v <- seqGetAF_AC_Missing(gdsfile, parallel=parallel, verbose=verbose)
+    list(maf=v$af, mac=v$ac, miss=v$miss)
+}
+
+seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
+    verbose=FALSE)
+{
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    .NumParallel(parallel)
 
     # check genotypes
     gv <- .has_geno(gdsfile)
@@ -1001,17 +1011,17 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
         FUN = function(f, pg, nm, pl, cn)
         {
             m3 <- matrix(0, nrow=3L, ncol=.seldim(f)[3L])
-            .cfunction2("FC_MAF_MAC_Init")(m3, pl)
+            .cfunction2("FC_AF_AC_MISS_Init")(m3, pl)
             seqApply(f, nm, as.is="none", FUN=.cfunction(cn),
                 .useraw=NA, .progress=pg & (process_index==1L))
             m3
         }, pg=verbose, nm=nm, pl=ploidy,
-            cn=ifelse(gv, "FC_MAF_MAC_Geno", "FC_MAF_MAC_DS"))
+            cn=ifelse(gv, "FC_AF_AC_MISS_Geno", "FC_AF_AC_MISS_DS"))
 
     # merge
     if (is.list(m3s)) m3s <- do.call(cbind, m3s)
     # output
-    list(maf=m3s[1L,], mac=m3s[2L,], miss=m3s[3L,])
+    list(af=m3s[1L,], ac=m3s[2L,], miss=m3s[3L,])
 }
 
 
