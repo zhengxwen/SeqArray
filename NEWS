@@ -16,8 +16,7 @@ CHANGES IN VERSION 1.35.2
 
 NEW FEATURES
 
-    o new functions `seqGetData(, "$dosage_sp")` and
-      `seqGetData(, "$dosage_sp2")` for a sparse matrix of dosages
+    o new function `seqGetData(, "$dosage_sp")` for a sparse matrix of dosages
 
 UTILITIES
 

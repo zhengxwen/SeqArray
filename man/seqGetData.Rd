@@ -46,10 +46,6 @@ allele without distinguishing different alternative alleles.
 \code{"$dosage_sp"} returns a sparse matrix (dgCMatrix) for the dosages of
 alternative allele without distinguishing different alternative alleles.
 
-\code{"$dosage_sp2"} returns a sparse matrix (dgCMatrix) for the dosages of
-alternative allele without distinguishing different alternative alleles, and
-the missing genotypes are imputed by the sample mean(s).
-
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
