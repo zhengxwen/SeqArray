@@ -170,6 +170,46 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L,
 
 
 #######################################################################
+# Subset and merge the units
+#
+seqUnitSubset <- function(units, i)
+{
+    # check
+    stopifnot(inherits(units, "SeqUnitListClass"))
+    stopifnot(is.vector(i), is.numeric(i) | is.logical(i))
+    n <- length(units$index)
+    if (is.logical(i))
+    {
+        if (n != length(i))
+            stop("'i' should be a logical vector of length ", n, ".")
+        i[is.na(i)] <- FALSE
+    } else {
+        x <- (1L <= i) & (i <= n)
+        if (anyNA(x))
+            stop("'i' should not have NA.")
+        if (!all(x))
+            stop("'i' should be between 1 and ", n, ".")
+    }
+
+    # output
+    units$desp <- units$desp[i, ]
+    units$index <- units$index[i]
+    units
+}
+
+seqUnitMerge <- function(ut1, ut2)
+{
+    # check
+    stopifnot(inherits(ut1, "SeqUnitListClass"))
+    stopifnot(inherits(ut2, "SeqUnitListClass"))
+    # output
+    ut1$desp <- rbind(ut1$desp, ut2$desp)
+    ut1$index <- c(ut1$index, ut2$index)
+    ut1
+}
+
+
+#######################################################################
 # Apply a user-defined function to each unit
 #
 seqUnitApply <- function(gdsfile, units, var.name, FUN,
