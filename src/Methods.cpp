@@ -74,7 +74,7 @@ template<typename TYPE>
 		unsigned char bit_shift)
 {
 	// bit_shift: 0, 1, 2, 3
-	static int mask[4] = { ~0x3, ~(0x3<<2), ~(0x3<<4), ~(0x3<<6) };
+	const static int mask[4] = { ~0x3, ~(0x3<<2), ~(0x3<<4), ~(0x3<<6) };
 	const unsigned char bit_mask = mask[bit_shift];
 	bit_shift *= 2;
 	for (size_t i=0; i < n; i++)
@@ -1133,8 +1133,8 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoVxS(SEXP dosage)
 	if (n !=  geno_ncol) Rf_error(ERR_PACKED_GENO_N);
 
 	Rbyte *p = geno_raw_ptr + (geno_index >> 2);
-	geno_index ++;
 	unsigned char bit_shift = geno_index & 0x03;
+	geno_index ++;
 	switch (TYPEOF(dosage))
 	{
 	case RAWSXP:

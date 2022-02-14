@@ -982,7 +982,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
 # [deprecated]
 .Get_MAF_MAC_Missing <- function(gdsfile, parallel, verbose)
 {
-    v <- seqGetAF_AC_Missing(gdsfile, parallel=parallel, verbose=verbose)
+    v <- seqGetAF_AC_Missing(gdsfile, minor=TRUE, parallel=parallel,
+        verbose=verbose)
     list(maf=v$af, mac=v$ac, miss=v$miss)
 }
 
@@ -1008,14 +1009,14 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
 
     # calculate
     m3s <- seqParallel(parallel, gdsfile, split="by.variant", .combine="list",
-        FUN = function(f, pg, nm, pl, cn)
+        FUN = function(f, pg, nm, pl, minor, cn)
         {
             m3 <- matrix(0, nrow=3L, ncol=.seldim(f)[3L])
-            .cfunction2("FC_AF_AC_MISS_Init")(m3, pl)
+            .cfunction3("FC_AF_AC_MISS_Init")(m3, pl, minor)
             seqApply(f, nm, as.is="none", FUN=.cfunction(cn),
                 .useraw=NA, .progress=pg & (process_index==1L))
             m3
-        }, pg=verbose, nm=nm, pl=ploidy,
+        }, pg=verbose, nm=nm, pl=ploidy, minor=minor,
             cn=ifelse(gv, "FC_AF_AC_MISS_Geno", "FC_AF_AC_MISS_DS"))
 
     # merge
@@ -1033,7 +1034,7 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
 # deprecated
 .seqGet2bGeno <- function(gdsfile, verbose=TRUE)
 {
-    seqGet2bGeno(gdsfile, verbose=verbose)
+    seqGet2bGeno(gdsfile, samp_by_var=TRUE, verbose=verbose)
 }
 
 seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, verbose=FALSE)
