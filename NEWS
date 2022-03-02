@@ -5,6 +5,8 @@ NEW FEATURES
 
     o new functions `seqUnitCreate()`, `seqUnitSubset()` and `seqUnitMerge()`
 
+    o new functions `seqFilterPush()` and `seqFilterPop()`
+
 
 CHANGES IN VERSION 1.35.3
 -------------------------

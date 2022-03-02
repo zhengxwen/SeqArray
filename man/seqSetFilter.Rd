@@ -8,6 +8,8 @@
 \alias{seqSetFilterChrom}
 \alias{seqSetFilterPos}
 \alias{seqSetFilterAnnotID}
+\alias{seqFilterPush}
+\alias{seqFilterPop}
 \title{Set a Filter to Sample or Variant}
 \description{
     Sets a filter to sample and/or variant.
@@ -29,6 +31,8 @@ seqSetFilterChrom(object, include=NULL, is.num=NA, from.bp=NULL, to.bp=NULL,
 seqSetFilterPos(object, chr, pos, ref=NULL, alt=NULL, intersect=FALSE,
     multi.pos=TRUE, ret.idx=FALSE, verbose=TRUE)
 seqSetFilterAnnotID(object, id, ret.idx=FALSE, verbose=TRUE)
+seqFilterPush(object)  # store the current filter
+seqFilterPop(object)   # restore the last filter
 }
 \arguments{
     \item{object}{a \code{\link{SeqVarGDSClass}} object}

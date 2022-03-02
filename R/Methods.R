@@ -264,6 +264,22 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
 #######################################################################
 # Reset a working space without selected samples and variants
 #
+seqFilterPush <- function(object)
+{
+    stopifnot(inherits(object, "SeqVarGDSClass"))
+    seqSetFilter(object, action="push", verbose=FALSE)
+}
+
+seqFilterPop <- function(object)
+{
+    stopifnot(inherits(object, "SeqVarGDSClass"))
+    seqSetFilter(object, action="pop", verbose=FALSE)
+}
+
+
+#######################################################################
+# Reset a working space without selected samples and variants
+#
 seqResetFilter <- function(object, sample=TRUE, variant=TRUE, verbose=TRUE)
 {
     stopifnot(inherits(object, "SeqVarGDSClass"))
