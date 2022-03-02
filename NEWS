@@ -1,9 +1,9 @@
-CHANGES IN VERSION 1.35.4
+CHANGES IN VERSION 1.35.5
 -------------------------
 
 NEW FEATURES
 
-    o new functions `seqUnitSubset()` and `seqUnitMerge()`
+    o new functions `seqUnitCreate()`, `seqUnitSubset()` and `seqUnitMerge()`
 
 
 CHANGES IN VERSION 1.35.3

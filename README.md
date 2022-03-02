@@ -28,7 +28,7 @@ Release Version: v1.34.0
 * Tutorials: [Data Management](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArrayTutorial.html), [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArray.html), [Overview Slides](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/OverviewSlides.html)
 * [News](http://www.bioconductor.org/packages/release/bioc/news/SeqArray/NEWS)
 
-Development Version: v1.35.3
+Development Version: v1.35.5
 
 [http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html](http://www.bioconductor.org/packages/devel/bioc/html/SeqArray.html)
 

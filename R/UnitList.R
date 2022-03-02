@@ -170,8 +170,36 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L,
 
 
 #######################################################################
-# Subset and merge the units
+# Create, subset and merge the units
 #
+seqUnitCreate <- function(idx, desp)
+{
+    # check
+    stopifnot(is.list(idx))
+    stopifnot(is.null(desp) | is.data.frame(desp))
+    if (is.data.frame(desp))
+        stopifnot(length(idx) == nrow(desp))
+    if (is.null(desp))
+        desp <- data.frame(id=seq_along(idx))
+    for (i in seq_along(idx))
+    {
+        k <- idx[[i]]
+        if (is.numeric(k) && is.vector(k))
+        {
+            if (anyNA(k) || any(k < 1L, na.rm=TRUE))
+            {
+                idx[[i]] <- k[!is.na(k) & (k >= 1L)]
+            }
+        } else
+            stop(sprintf("idx[[%d]] should be a numeric index vector.", i))
+    }
+
+    # output
+    ans <- list(desp=desp, index=idx)
+    class(ans) <- "SeqUnitListClass"
+    ans
+}
+
 seqUnitSubset <- function(units, i)
 {
     # check
