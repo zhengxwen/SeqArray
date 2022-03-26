@@ -662,7 +662,7 @@ seqSummary <- function(gdsfile, varname=NULL,
     if (is.character(gdsfile))
     {
         stopifnot(length(gdsfile) == 1L)
-        gdsfile <- seqOpen(gdsfile)
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))   
     }
 
@@ -906,7 +906,7 @@ seqCheck <- function(gdsfile, verbose=TRUE)
     {
         if (verbose)
             cat("Open '", gdsfile, "'\n", sep="")
-        gdsfile <- seqOpen(gdsfile)
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit({ seqClose(gdsfile) })
     }
 

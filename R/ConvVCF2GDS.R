@@ -1222,7 +1222,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (verbose)
                 cat("    ", basename(fn), " ...", sep="")
             # open the gds file
-            tmpgds <- seqOpen(fn)
+            tmpgds <- seqOpen(fn, allow.duplicate=TRUE)
             # merge variables
             for (nm in varnm)
             {

@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.35.5
+CHANGES IN VERSION 1.35.1-1.35.7
 -------------------------
 
 NEW FEATURES
@@ -7,28 +7,19 @@ NEW FEATURES
 
     o new functions `seqFilterPush()` and `seqFilterPop()`
 
-
-CHANGES IN VERSION 1.35.3
--------------------------
-
-NEW FEATURES
-
     o new functions `seqGet2bGeno()` and `seqGetAF_AC_Missing()`
-
-UTILITIES
-
-    o remove the deprecated '.progress' in `seqMissing()`, `seqAlleleCount()`
-      and `seqAlleleFreq()`
-
-
-CHANGES IN VERSION 1.35.2
--------------------------
-
-NEW FEATURES
 
     o new function `seqGetData(, "$dosage_sp")` for a sparse matrix of dosages
 
 UTILITIES
+
+    o allow opening a duplicated GDS file ('allow.duplicate=TRUE') when the
+      input is a file name instead of a GDS object in `seqGDS2VCF()`,
+      `seqGDS2SNP()`, `seqGDS2BED()`, `seqVCF2GDS()`, `seqSummary()`,
+      `seqCheck()` and `seqMerge()`
+
+    o remove the deprecated '.progress' in `seqMissing()`, `seqAlleleCount()`
+      and `seqAlleleFreq()`
 
     o add `summary.SeqUnitListClass()`
 
@@ -39,6 +30,8 @@ BUG FIXES
 
     o `seqVCF2GDS()` and `seqVCF_Header()` work correctly if the VCF header has
        white space
+
+    o `seqGDS2BED()` with selected samples for sex and phenotype information
 
 
 CHANGES IN VERSION 1.32.0

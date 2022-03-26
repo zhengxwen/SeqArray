@@ -286,7 +286,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
     {
         if (verbose)
             cat("    opening ", sQuote(gds.fn[i]), "\n", sep="")
-        flist[[i]] <- seqOpen(gds.fn[i])
+        flist[[i]] <- seqOpen(gds.fn[i], allow.duplicate=TRUE)
     }
     if (verbose)
     {
@@ -1018,7 +1018,7 @@ seqResetVariantID <- function(gds.fn, set=NULL, digest=TRUE, optimize=TRUE,
         if (verbose)
             cat(sprintf("[%2d] %s ...", i, fn))
         i <- i + 1L
-        f <- seqOpen(fn, FALSE)
+        f <- seqOpen(fn, readonly=FALSE)
         dp <- objdesp.gdsn(index.gdsn(f, "variant.id"))
         len <- prod(dp$dim)
         v <- seq_len(len) + n

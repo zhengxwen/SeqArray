@@ -29,7 +29,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     if (is.character(gdsfile))
     {
-        gdsfile <- seqOpen(gdsfile)
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     }
 
@@ -376,7 +376,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     # if it is a file name
     if (is.character(gdsfile))
     {
-        gdsfile <- seqOpen(gdsfile)
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit({ seqClose(gdsfile) })
     }
 
@@ -1209,25 +1209,26 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     stopifnot(is.character(out.fn), length(out.fn)==1L, !is.na(out.fn))
     stopifnot(is.logical(multi.row), length(multi.row)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-
-    if (multi.row) stop("'multi.row=TRUE' is not implemented yet.")
+    if (multi.row)
+        stop("'multi.row=TRUE' is not implemented yet.")
 
     if (verbose)
     {
-        cat(date(), "\n", sep="")
-        cat("SeqArray GDS to PLINK BED:\n")
+        .cat(date())
+        .cat("SeqArray GDS to PLINK BED:")
     }
     if (is.character(gdsfile))
     {
-        if (verbose) cat("    open ", sQuote(gdsfile), "\n", sep="")
-        gdsfile <- seqOpen(gdsfile)
+        if (verbose)
+            .cat("    open ", sQuote(gdsfile))
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     }
     if (verbose)
     {
         dm <- .seldim(gdsfile)
-        cat("    # of samples: ", .pretty(dm[2L]), "\n", sep="")
-        cat("    # of variants: ", .pretty(dm[3L]), "\n", sep="")
+        .cat("    # of samples: ", .pretty(dm[2L]))
+        .cat("    # of variants: ", .pretty(dm[3L]))
     }
 
     # fam file
@@ -1236,13 +1237,14 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     fam <- data.frame(FID=rep(0L, n), IID=s, FAT=rep(0L, n), MOT=rep(0L, n),
         sex=rep(0L, n), pheno=rep(-9L, n), stringsAsFactors=FALSE)
     nm <- "sample.annotation/sex"
-    if (!is.null(index.gdsn(gdsfile, nm, silent=TRUE)))
-        fam$sex <- read.gdsn(index.gdsn(gdsfile, nm))
+    if (exist.gdsn(gdsfile, nm))
+        fam$sex <- seqGetData(gdsfile, nm)
     nm <- "sample.annotation/phenotype"
-    if (!is.null(index.gdsn(gdsfile, nm, silent=TRUE)))
-        fam$pheno <- read.gdsn(index.gdsn(gdsfile, nm))
+    if (exist.gdsn(gdsfile, nm))
+        fam$pheno <- seqGetData(gdsfile, nm)
     famfn <- paste0(out.fn, ".fam")
-    if (verbose) cat("    fam file: ", sQuote(famfn), "\n", sep="")
+    if (verbose)
+        .cat("    fam file: ", sQuote(famfn))
     write.table(fam, file=famfn, quote=FALSE, sep="\t", row.names=FALSE,
         col.names=FALSE)
     remove(fam)
@@ -1260,22 +1262,23 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
         alt2 = seqGetData(gdsfile, "$ref"),
         stringsAsFactors=FALSE)
     bimfn <- paste0(out.fn, ".bim")
-    if (verbose) cat("    bim file: ", sQuote(bimfn), "\n", sep="")
+    if (verbose)
+        .cat("    bim file: ", sQuote(bimfn))
     write.table(bim, file=bimfn, quote=FALSE, sep="\t", row.names=FALSE,
         col.names=FALSE)
     remove(bim)
     
     # bed file
     bedfn <- paste0(out.fn, ".bed")
-    if (verbose) cat("    bed file: ", sQuote(bedfn), "\n", sep="")
+    if (verbose)
+        .cat("    bed file: ", sQuote(bedfn))
     outf <- file(bedfn, "w+b")
     on.exit(close(outf), add=TRUE)
     writeBin(as.raw(c(0x6C, 0x1B, 0x01)), outf)
     seqApply(gdsfile, "$dosage", .cfunction("FC_GDS2BED"), as.is=outf,
         .useraw=TRUE, .progress=verbose)
 
-    if (verbose)
-        cat("Done.\n", date(), "\n", sep="")
+    if (verbose) .cat("Done.\n", date())
 
     # output
     invisible(normalizePath(c(famfn, bimfn, bedfn)))

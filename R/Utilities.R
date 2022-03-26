@@ -339,7 +339,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 } else if (is.character(.gds.fn))
                 {
                     # open the file
-                    .file <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
+                    .file <- seqOpen(.gds.fn, allow.duplicate=TRUE)
                     on.exit(seqClose(.file))
                 } else {
                     .file <- .gds.fn
@@ -407,7 +407,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .Call(SEQ_IntAssign, process_count, 0L)
                 # open the file
                 if (is.character(gds))
-                    gds <- seqOpen(gds, readonly=TRUE, allow.duplicate=TRUE)
+                    gds <- seqOpen(gds, allow.duplicate=TRUE)
                 # save interally
                 .packageEnv$gfile <- gds
                 .packageEnv$sample.sel <- memDecompress(sel_sample, type="gzip")
@@ -505,7 +505,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .FUN(...)
             } else {
                 # open the file
-                .file <- seqOpen(.gds.fn, readonly=TRUE, allow.duplicate=TRUE)
+                .file <- seqOpen(.gds.fn, allow.duplicate=TRUE)
                 on.exit({ seqClose(.file) })
 
                 # set filter
