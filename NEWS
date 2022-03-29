@@ -11,6 +11,9 @@ NEW FEATURES
 
     o new function `seqGetData(, "$dosage_sp")` for a sparse matrix of dosages
 
+    o the first argument 'gdsfile' can be a file name in `seqAlleleFreq()`,
+      `seqAlleleCount()`, `seqMissing()`
+
 UTILITIES
 
     o allow opening a duplicated GDS file ('allow.duplicate=TRUE') when the

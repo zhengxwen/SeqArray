@@ -699,9 +699,15 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
     verbose=FALSE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(per.variant), length(per.variant)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    }
 
     # check genotypes
     nm <- "genotype"
@@ -794,11 +800,17 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
     parallel=seqGetParallel(), verbose=FALSE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.null(ref.allele) | is.numeric(ref.allele) |
         is.character(ref.allele))
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    }
 
     # check genotypes
     gv <- .has_geno(gdsfile)
@@ -896,9 +908,15 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
     parallel=seqGetParallel(), verbose=FALSE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    }
 
     # check genotypes
     gv <- .has_geno(gdsfile)
@@ -1006,10 +1024,17 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
 seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     verbose=FALSE)
 {
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    # check
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     .NumParallel(parallel)
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    }
 
     # check genotypes
     gv <- .has_geno(gdsfile)
