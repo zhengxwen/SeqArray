@@ -1038,7 +1038,7 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     # merge
     if (is.list(m3s)) m3s <- do.call(cbind, m3s)
     # output
-    list(af=m3s[1L,], ac=m3s[2L,], miss=m3s[3L,])
+    data.frame(af=m3s[1L,], ac=m3s[2L,], miss=m3s[3L,])
 }
 
 

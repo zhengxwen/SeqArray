@@ -35,8 +35,8 @@ first alternative allele, etc). If \code{ref.allele} is a numeric vector,
 character vector, \code{ref.allele} specifies the desired allele for each site
 (e.g, ancestral allele for the derived allele frequency/count).
 
-    \code{seqGetAF_AC_Missing()} returns \code{list(af, ac, miss)} for allele
-frequencies, allele counts and missing rates. It is faster than calling
+    \code{seqGetAF_AC_Missing()} returns \code{data.frame(af, ac, miss)} for
+allele frequencies, allele counts and missing rates. It is faster than calling
 \code{seqAlleleFreq()}, \code{seqAlleleCount()} and \code{seqMissing}
 sequentially.
 }
@@ -81,6 +81,10 @@ head(seqAlleleCount(f, 0L, verbose=TRUE))
 head(seqAlleleCount(f, 0L, minor=TRUE, verbose=TRUE))
 head(seqAlleleCount(f, AA, verbose=TRUE))
 head(seqAlleleCount(f, AA, minor=TRUE, verbose=TRUE))
+
+# allele frequencies, allele counts and missing proportions
+v <- seqGetAF_AC_Missing(f, minor=TRUE)
+head(v)
 
 # close the GDS file
 seqClose(f)
