@@ -1,8 +1,8 @@
 // ===========================================================
 //
-// ConvGDS2VCF.cpp: format conversion from GDS to VCF
+// ConvGDS2VCF.cpp: Format conversion from GDS to VCF
 //
-// Copyright (C) 2013-2021    Xiuwen Zheng
+// Copyright (C) 2013-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -84,7 +84,7 @@ static char *LineEnd   = NULL;
 static char *pLine     = NULL;
 
 
-inline static void LineBuf_Init(int num_variant)
+inline static void LineBuf_Init()
 {
 	LineBuffer.resize(LINE_BUFFER_SIZE);
 	pLine = LineBegin = &LineBuffer[0];
@@ -585,7 +585,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP SelDim, SEXP ChrPrefix, SEXP Info,
 	SEXP Format, SEXP File, SEXP Verbose)
 {
-	VCF_NumAllele = INTEGER(SelDim)[0];
+	int num_allele = INTEGER(SelDim)[0];
+	if (num_allele <= 0) num_allele = 2;  // diploid
+	VCF_NumAllele = num_allele;
 	VCF_NumSample = INTEGER(SelDim)[1];
 
 	SEXP chr = STRING_ELT(ChrPrefix, 0);
@@ -607,7 +609,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP SelDim, SEXP ChrPrefix, SEXP Info,
 	VCF_FORMAT_Number.assign(pFmt, pFmt + Rf_length(Format));
 
 	VCF_FORMAT_List.reserve(256);
-	LineBuf_Init(INTEGER(SelDim)[2]);
+	LineBuf_Init();
 
 	return R_NilValue;
 }
@@ -967,13 +969,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_NoGeno(SEXP X)
 	ExportInfoFormat(X, 6);
 
 	// for-loop of samples
+	LineBuf_NeedSize(VCF_NumSample + 16);
 	for (size_t i=0; i < VCF_NumSample; i++)
 	{
 		// add '\t'
 		if (i > 0) *pLine++ = '\t';
 		// annotation
-		vector<SEXP>::iterator p;
-		vector<SEXP>::iterator st = VCF_FORMAT_List.begin();
+		vector<SEXP>::iterator p, st = VCF_FORMAT_List.begin();
 		for (p=st; p != VCF_FORMAT_List.end(); p++)
 		{
 			if (p != st) *pLine++ = ':';

@@ -50,9 +50,11 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     }
 
     # the FORMAT field
+    gt <- exist.gdsn(gdsfile, "genotype/data")
     if (!is.null(fmt.var))
     {
-        s <- z$format$ID[-1L]
+        s <- z$format$ID
+        if (gt) s <- s[-1L]  # the first is GT
         if (is.null(s)) s <- character()
         if (length(setdiff(fmt.var, s)) > 0L)
             stop(paste("Not exist:", paste(setdiff(fmt.var, s), collapse=",")))
@@ -61,7 +63,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         else
             z$format <- list()
     } else {
-        z$format <- z$format[-1L, ]
+        if (gt) z$format <- z$format[-1L,]
     }
 
 
@@ -81,18 +83,13 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
         if (ext == ".gz")
         {
-            if (.Platform$OS.type == "windows")
-                use_Rsamtools <- FALSE
             if (isTRUE(use_Rsamtools) && requireNamespace("Rsamtools"))
             {
                 ofile <- .Call(SEQ_bgzip_create, vcf.fn)
                 outfmt <- 2L
             } else {
                 if (verbose)
-                {
-                    if (.Platform$OS.type != "windows")
-                        message("Hint: install Rsamtools to enable the outfmt output.")
-                }
+                    message("Hint: install Rsamtools to enable the BGZF-format output.")
                 ofile <- gzfile(vcf.fn, "wb")
                 outfmt <- 3L
             }
@@ -311,19 +308,19 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     names(nm) <- s
 
     # C function name
-    if (is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE)))
+    if (!exist.gdsn(gdsfile, "genotype/data"))
     {
         nm <- nm[!(nm %in% c("genotype", "phase"))]
         cfn <- "SEQ_ToVCF_NoGeno"
-    } else if (is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)))
+    } else if (!exist.gdsn(gdsfile, "phase/data"))
     {
         nm <- nm[nm != "phase"]
         cfn <- "SEQ_ToVCF_Haploid"
     } else {
-        if (length(nm.format)>0L | dm[1L]!=2L)
+        if (length(nm.format)>0L || dm[1L]!=2L)
             cfn <- "SEQ_ToVCF"
         else
-            cfn <- "SEQ_ToVCF_Di_WrtFmt"
+            cfn <- "SEQ_ToVCF_Di_WrtFmt"  # for a faster version
     }
 
     # output lines by variant
