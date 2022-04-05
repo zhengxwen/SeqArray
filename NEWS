@@ -26,9 +26,6 @@ UTILITIES
 
     o add `summary.SeqUnitListClass()`
 
-    o enable the BGZF-format output from `seqGDS2VCF()` on Windows
-      (using Rsamtools)
-
 BUG FIXES
 
     o `seqUnitApply()` works correctly with selected samples if 'parallel' is

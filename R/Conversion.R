@@ -83,13 +83,18 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
         if (ext == ".gz")
         {
+            if (.Platform$OS.type == "windows")
+                use_Rsamtools <- FALSE
             if (isTRUE(use_Rsamtools) && requireNamespace("Rsamtools"))
             {
                 ofile <- .Call(SEQ_bgzip_create, vcf.fn)
                 outfmt <- 2L
             } else {
                 if (verbose)
-                    message("Hint: install Rsamtools to enable the BGZF-format output.")
+                {
+                    if (.Platform$OS.type != "windows")
+                        message("Hint: install Rsamtools to enable the BGZF-format output.")
+                }
                 ofile <- gzfile(vcf.fn, "wb")
                 outfmt <- 3L
             }
