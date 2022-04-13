@@ -136,7 +136,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
 {
     # check
-    stopifnot(is.numeric(num), length(num)==1L)
+    stopifnot(is.logical(num) || is.numeric(num), length(num)==1L)
     type <- match.arg(type)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
@@ -147,7 +147,10 @@ seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
         stopCluster(cl)
         options(seqarray.multicore=NULL)
     }
+
     # setup
+    if (isTRUE(num))
+        num <- detectCores()
     if (!is.na(num) && (num > 1L))
     {
         if ((type == "psock") || (.Platform$OS.type == "windows"))
@@ -157,6 +160,14 @@ seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
             cl <- makeForkCluster(num)
         }
         options(seqarray.multicore=cl)
+        if (isTRUE(verbose))
+        {
+            cat("Enable the multicore cluster: ")
+            print(cl)
+        }
+    } else {
+        if (isTRUE(verbose))
+            cat("Disable the user-defined multicore cluster.\n")
     }
 
     # return nothing

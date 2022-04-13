@@ -388,10 +388,18 @@ process_count <- 1L
         mc <- getOption("seqarray.multicore")
         if (inherits(mc, "cluster"))
         {
-            if (isTRUE(parallel) || (parallel == length(mc)))
+            if (isTRUE(parallel) || (parallel >= length(mc)))
+            {
+                if (parallel > length(mc))
+                {
+                    warning("Using at most ", length(mc),
+                        " cores in the user-defined multicore cluster",
+                        call.=FALSE, immediate.=TRUE)
+                }
                 parallel <- mc
-            else
+            } else {
                 parallel <- mc[seq_len(parallel)]
+            }
         }
     }
     parallel

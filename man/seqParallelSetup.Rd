@@ -18,7 +18,9 @@ seqMulticoreSetup(num, type=c("psock", "fork"), verbose=TRUE)
         a cluster object for parallel processing, created by the functions
         in the package \code{\link{parallel}}, like \code{\link{makeCluster}}.
         See details}
-    \item{num}{the maximum number of cores used for the multicore setting}
+    \item{num}{the maximum number of cores used for the user-defined multicore
+        setting; FALSE, NA or any value less than 2, to disable the multicore
+        cluster}
     \item{type}{either PSOCK or Fork cluster setup for the multicore setting,
         the resulting parallel cluster will be used if 'parallel' is a number
         greater than one in associated functions}
