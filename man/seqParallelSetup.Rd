@@ -1,6 +1,7 @@
 \name{seqParallelSetup}
 \alias{seqParallelSetup}
 \alias{seqGetParallel}
+\alias{seqMulticoreSetup}
 \title{Setup/Get a Parallel Environment}
 \description{
     Setups a parallel environment in R for the current session.
@@ -8,6 +9,7 @@
 \usage{
 seqParallelSetup(cluster=TRUE, verbose=TRUE)
 seqGetParallel()
+seqMulticoreSetup(num, type=c("psock", "fork"), verbose=TRUE)
 }
 \arguments{
     \item{cluster}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
@@ -16,6 +18,10 @@ seqGetParallel()
         a cluster object for parallel processing, created by the functions
         in the package \code{\link{parallel}}, like \code{\link{makeCluster}}.
         See details}
+    \item{num}{the maximum number of cores used for the multicore setting}
+    \item{type}{either PSOCK or Fork cluster setup for the multicore setting,
+        the resulting parallel cluster will be used if 'parallel' is a number
+        greater than one in associated functions}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{

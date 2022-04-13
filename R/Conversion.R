@@ -792,6 +792,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     pnum <- .NumParallel(parallel)
+    parallel <- .McoreParallel(parallel)
 
     if (verbose)
     {

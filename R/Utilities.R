@@ -17,13 +17,17 @@
 
 .Last.lib <- function(libpath)
 {
-    cl <- getOption("seqarray.parallel", FALSE)
+    # parallel object
+    cl <- getOption("seqarray.parallel")
     if (inherits(cl, "cluster"))
-    {
-        if (requireNamespace("parallel", quietly=TRUE))
-            parallel::stopCluster(cl)
-        options(seqarray.parallel=NULL)
-    }
+        stopCluster(cl)
+    options(seqarray.parallel=NULL)
+
+    # multicore parallel object if available
+    cl <- getOption("seqarray.multicore")
+    if (inherits(cl, "cluster"))
+        stopCluster(cl)
+    options(seqarray.multicore=NULL)
 }
 
 
@@ -125,6 +129,37 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
     }
 
     options(seqarray.parallel=cluster)
+    invisible()
+}
+
+
+seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
+{
+    # check
+    stopifnot(is.numeric(num), length(num)==1L)
+    type <- match.arg(type)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    # multicore parallel object if available
+    cl <- getOption("seqarray.multicore")
+    if (inherits(cl, "cluster"))
+    {
+        stopCluster(cl)
+        options(seqarray.multicore=NULL)
+    }
+    # setup
+    if (!is.na(num) && (num > 1L))
+    {
+        if ((type == "psock") || (.Platform$OS.type == "windows"))
+        {
+            cl <- makeCluster(num, outfile="")
+        } else {
+            cl <- makeForkCluster(num)
+        }
+        options(seqarray.multicore=cl)
+    }
+
+    # return nothing
     invisible()
 }
 
@@ -265,6 +300,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
     # get the number of workers
     njobs <- .NumParallel(cl)
+    parallel <- .McoreParallel(cl)
     if (njobs <= 1L)
     {
         if (is.function(.initialize)) .initialize(1L, .initparam)
@@ -652,6 +688,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 seqParApply <- function(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 {
     njobs <- .NumParallel(cl, "cl")
+    parallel <- .McoreParallel(cl)
     stopifnot(is.logical(load.balancing))
 
     if (njobs <= 1L)

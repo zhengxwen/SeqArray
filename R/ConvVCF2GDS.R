@@ -522,6 +522,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     pnum <- .NumParallel(parallel)
+    parallel <- .McoreParallel(parallel)
     if (inherits(vcf.fn, "connection"))
     {
         if (pnum > 1L)

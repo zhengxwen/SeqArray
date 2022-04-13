@@ -334,8 +334,9 @@ process_count <- 1L
 
 
 #######################################################################
+# Parallel functions
+
 # need parallel? how many? return 1 if no parallel
-#
 .NumParallel <- function(cl, nm="parallel")
 {
     if (is.null(cl) | identical(cl, FALSE))
@@ -347,12 +348,23 @@ process_count <- 1L
             stop("'parallel' should be length-one.")
         if (is.na(cl)) cl <- 1L
         if (cl < 1L) cl <- 1L
+        mc <- getOption("seqarray.multicore")
+        if (inherits(mc, "cluster"))
+        {
+            if (cl > length(mc)) cl <-  length(mc)
+        }
         ans <- as.integer(cl)
     } else if (isTRUE(cl))
     {
-        ans <- detectCores() - 1L
-        if (is.na(ans)) ans <- 2L
-        if (ans <= 1L) ans <- 2L
+        mc <- getOption("seqarray.multicore")
+        if (inherits(mc, "cluster"))
+        {
+            ans <- length(mc)
+        } else {
+            ans <- detectCores() - 1L
+            if (is.na(ans)) ans <- 2L
+            if (ans <= 1L) ans <- 2L
+        }
     } else if (inherits(cl, "cluster"))
     {
         ans <- length(cl)
@@ -368,11 +380,24 @@ process_count <- 1L
     ans
 }
 
+# check if the multicore cluster is specified
+.McoreParallel <- function(parallel)
+{
+    if (is.numeric(parallel) || isTRUE(parallel))
+    {
+        mc <- getOption("seqarray.multicore")
+        if (inherits(mc, "cluster"))
+        {
+            if (isTRUE(parallel) || (parallel == length(mc)))
+                parallel <- mc
+            else
+                parallel <- mc[seq_len(parallel)]
+        }
+    }
+    parallel
+}
 
-
-#######################################################################
 # forking implements or not
-#
 .IsForking <- function(cl)
 {
     if (.Platform$OS.type == "windows")

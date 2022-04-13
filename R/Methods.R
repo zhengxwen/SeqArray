@@ -572,6 +572,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     margin <- match.arg(margin)
     var.index <- match.arg(var.index)
     njobs <- .NumParallel(parallel)
+    parallel <- .McoreParallel(parallel)
     param <- list(useraw=.useraw, progress=.progress, list_dup=.list_dup)
 
     if (inherits(as.is, "connection") | inherits(as.is, "gdsn.class"))
@@ -642,6 +643,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     var.index <- match.arg(var.index)
     stopifnot(is.numeric(bsize), length(bsize)==1L)
     njobs <- .NumParallel(parallel)
+    parallel <- .McoreParallel(parallel)
     param <- list(bsize=bsize, useraw=.useraw, padNA=.padNA, tolist=.tolist,
         progress=.progress)
 
@@ -1028,6 +1030,7 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     .NumParallel(parallel)
+    parallel <- .McoreParallel(parallel)
     if (is.character(gdsfile))
     {
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)

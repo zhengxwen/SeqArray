@@ -270,6 +270,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
 
     # get the number of workers
     njobs <- .NumParallel(parallel)
+    parallel <- .McoreParallel(parallel)
     if (njobs == 1L)
     {
         # save state
