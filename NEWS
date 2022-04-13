@@ -14,6 +14,9 @@ NEW FEATURES
     o the first argument 'gdsfile' can be a file name in `seqAlleleFreq()`,
       `seqAlleleCount()`, `seqMissing()`
 
+    o new function `seqMulticoreSetup()` for setting a multicore cluster
+      according to a numeric value assigned to the argument 'parallel'
+
 UTILITIES
 
     o allow opening a duplicated GDS file ('allow.duplicate=TRUE') when the
