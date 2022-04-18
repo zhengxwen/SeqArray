@@ -29,6 +29,9 @@ UTILITIES
 
     o add `summary.SeqUnitListClass()`
 
+    o no genotype and phase data nodes from `seqSNP2GDS()` if SNP dosage GDS
+      is the input
+
 BUG FIXES
 
     o `seqUnitApply()` works correctly with selected samples if 'parallel' is

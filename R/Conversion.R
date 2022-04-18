@@ -591,18 +591,19 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
     # major reference
     .cfunction("FC_SNP2GDS_Ref")(major.ref)
 
-    nd_geno <- .AddVar(storage.option, varGeno, "data", storage="bit2",
-        valdim=c(2L, nSamp, 0L))
-    nd_geno_idx <- .AddVar(storage.option, varGeno, "@data",
-        storage="uint8", visible=FALSE)
-    n <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
-        valdim=c(3L,0L), closezip=TRUE)
-    put.attr.gdsn(n, "R.colnames",
-        c("sample.index", "variant.index", "length"))
-    .AddVar(storage.option, varGeno, "extra", storage="int16", closezip=TRUE)
-
     if (geno_type == "Integer")
     {
+        nd_geno <- .AddVar(storage.option, varGeno, "data", storage="bit2",
+            valdim=c(2L, nSamp, 0L))
+        nd_geno_idx <- .AddVar(storage.option, varGeno, "@data",
+            storage="uint8", visible=FALSE)
+        n <- .AddVar(storage.option, varGeno, "extra.index", storage="int32",
+            valdim=c(3L,0L), closezip=TRUE)
+        put.attr.gdsn(n, "R.colnames",
+            c("sample.index", "variant.index", "length"))
+        .AddVar(storage.option, varGeno, "extra", storage="int16",
+            closezip=TRUE)
+
         # add genotypes to genotype/data
         apply.gdsn(list(index.gdsn(srcfile, "genotype"),
                 index.gdsn(srcfile, "snp.allele")),
@@ -621,31 +622,27 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
         .DigestCode(nd_geno_idx, digest, FALSE)
 
         sync.gds(dstfile)
-    } else {
-        # add dosages to annotation/format/DS
-        readmode.gdsn(nd_geno)
-        readmode.gdsn(nd_geno_idx)
     }
 
     # add a folder for phase information
     if (verbose) cat("    phase")
     varPhase <- addfolder.gdsn(dstfile, "phase")
-
-    n <- .AddVar(storage.option, varPhase, "data", storage="bit1",
-        valdim=c(nSamp, 0L))
     if (geno_type == "Integer")
-        .append_rep_gds(n, as.raw(0L), as.double(nSNP)*nSamp)
-    readmode.gdsn(n)
-    .DigestCode(n, digest, verbose)
-
-    n <- .AddVar(storage.option, varPhase, "extra.index", storage="int32",
-        valdim=c(3L,0L), closezip=TRUE)
-    put.attr.gdsn(n, "R.colnames",
-        c("sample.index", "variant.index", "length"))
-    .AddVar(storage.option, varPhase, "extra", storage="bit1", closezip=TRUE)
-
-    sync.gds(dstfile)
-
+    {
+        n <- .AddVar(storage.option, varPhase, "data", storage="bit1",
+            valdim=c(nSamp, 0L))
+        if (geno_type == "Integer")
+            .append_rep_gds(n, as.raw(0L), as.double(nSNP)*nSamp)
+        readmode.gdsn(n)
+        .DigestCode(n, digest, verbose)
+        n <- .AddVar(storage.option, varPhase, "extra.index", storage="int32",
+            valdim=c(3L,0L), closezip=TRUE)
+        put.attr.gdsn(n, "R.colnames",
+            c("sample.index", "variant.index", "length"))
+        .AddVar(storage.option, varPhase, "extra", storage="bit1",
+            closezip=TRUE)
+        sync.gds(dstfile)
+    }
 
     # add annotation folder
     varAnnot <- addfolder.gdsn(dstfile, "annotation")
