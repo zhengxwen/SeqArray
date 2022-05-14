@@ -156,15 +156,15 @@ seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
         if ((type == "psock") || (.Platform$OS.type == "windows"))
         {
             cl <- makeCluster(num, outfile="")
+            if (isTRUE(verbose))
+                cat("Enable the multicore cluster: ")
         } else {
             cl <- makeForkCluster(num)
+            if (isTRUE(verbose))
+                cat("Enable the multicore cluster via forking: ")
         }
+        if (isTRUE(verbose)) print(cl)
         options(seqarray.multicore=cl)
-        if (isTRUE(verbose))
-        {
-            cat("Enable the multicore cluster: ")
-            print(cl)
-        }
     } else {
         if (isTRUE(verbose))
             cat("Disable the user-defined multicore cluster.\n")
