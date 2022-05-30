@@ -26,11 +26,12 @@
 using namespace SeqArray;
 
 
-// used in FC_SetPackedGenoSxV() & FC_SetPackedGenoVxS()
+// used in FC_SetPackedGenoSxV() and FC_SetPackedGenoVxS()
 
 static inline unsigned char g2b(Rbyte g)
 {
-	return (0<=g && g<=2) ? g : 3;
+	// since Rbyte is unsigned
+	return (g<=2) ? g : 3;
 }
 
 static inline unsigned char g2b(int g)
@@ -54,17 +55,17 @@ template<typename TYPE>
 	}
 	switch (n)
 	{
-		case 3:
-			b0 = g2b(s[0]); b1 = g2b(s[1]); b2 = g2b(s[2]);
-			*p++ = b0 | (b1<<2) | (b2<<4) | (0x03<<6);
-			break;
-		case 2:
-			b0 = g2b(s[0]); b1 = g2b(s[1]);
-			*p++ = b0 | (b1<<2) | (0x03<<4) | (0x03<<6);
-			break;
-		case 1:
-			b0 = g2b(s[0]);
-			*p++ = b0 | (0x03<<2) | (0x03<<4) | (0x03<<6);
+	case 3:
+		b0 = g2b(s[0]); b1 = g2b(s[1]); b2 = g2b(s[2]);
+		*p++ = b0 | (b1<<2) | (b2<<4) | 0xC0;  // 0xC0 = (0x03<<6);
+		break;
+	case 2:
+		b0 = g2b(s[0]); b1 = g2b(s[1]);
+		*p++ = b0 | (b1<<2) | 0xF0;  // (0x03<<4) | (0x03<<6);
+		break;
+	case 1:
+		b0 = g2b(s[0]);
+		*p++ = b0 | 0xFC;  // (0x03<<2) | (0x03<<4) | (0x03<<6);
 	}
 }
 
@@ -73,17 +74,20 @@ template<typename TYPE>
 	static void packed_geno_VxS(Rbyte *p, TYPE *s, size_t n, size_t m,
 		unsigned char bit_shift)
 {
-	// bit_shift: 0, 1, 2, 3
-	const static int mask[4] = { ~0x3, ~(0x3<<2), ~(0x3<<4), ~(0x3<<6) };
-	const unsigned char bit_mask = mask[bit_shift];
-	bit_shift *= 2;
-	for (size_t i=0; i < n; i++)
+	bit_shift *= 2;  // since bit_shift is 0, 1, 2 or 3
+	for (size_t i=0; i < n; i++, p+=m)
 	{
 		unsigned char b = g2b(s[i]);
-		unsigned char g = *p;
-		*p = (g & bit_mask) | (b << bit_shift);
-		p += m;
+		*p |= (b << bit_shift);
 	}
+}
+
+static void packed_geno_VxS_missing(Rbyte *p, size_t n, size_t m,
+	unsigned char bit_shift)
+{
+	bit_shift *= 2;  // since bit_shift is 0, 1, 2 or 3
+	const unsigned char b = (0x03 << bit_shift);
+	for (size_t i=0; i < n; i++, p+=m) *p |= b;
 }
 
 
@@ -1103,53 +1107,59 @@ COREARRAY_DLL_EXPORT SEXP FC_InitPackedGeno(SEXP geno)
 /// store dosage in a 2-bit packed matrix (sample by variant)
 COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSxV(SEXP dosage)
 {
-	size_t n = Rf_xlength(dosage);
-	if (n > geno_nrow*4) Rf_error(ERR_PACKED_GENO_N);
-
 	Rbyte *p = geno_raw_ptr + geno_nrow * geno_index;
-	geno_index ++;
-	switch (TYPEOF(dosage))
+	if (!Rf_isNull(dosage))
 	{
-	case RAWSXP:
-		packed_geno_SxV<Rbyte>(p, RAW(dosage), n);
-		break;
-	case INTSXP:
-		packed_geno_SxV<int>(p, INTEGER(dosage), n);
-		break;
-	case REALSXP:
-		packed_geno_SxV<double>(p, REAL(dosage), n);
-		break;
-	default:
-		Rf_error(ERR_PACKED_GENO_TYPE);
+		size_t n = Rf_xlength(dosage);
+		if (n > geno_nrow*4) Rf_error(ERR_PACKED_GENO_N);
+		switch (TYPEOF(dosage))
+		{
+		case RAWSXP:
+			packed_geno_SxV<Rbyte>(p, RAW(dosage), n);
+			break;
+		case INTSXP:
+			packed_geno_SxV<int>(p, INTEGER(dosage), n);
+			break;
+		case REALSXP:
+			packed_geno_SxV<double>(p, REAL(dosage), n);
+			break;
+		default:
+			Rf_error(ERR_PACKED_GENO_TYPE);
+		}
+	} else {
+		memset(p, 0xFF, geno_nrow);
 	}
-
+	geno_index ++;
 	return R_NilValue;
 }
 
 /// store dosage in a 2-bit packed matrix (variant by sample)
 COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoVxS(SEXP dosage)
 {
-	size_t n = Rf_xlength(dosage);
-	if (n !=  geno_ncol) Rf_error(ERR_PACKED_GENO_N);
-
 	Rbyte *p = geno_raw_ptr + (geno_index >> 2);
 	unsigned char bit_shift = geno_index & 0x03;
-	geno_index ++;
-	switch (TYPEOF(dosage))
+	if (!Rf_isNull(dosage))
 	{
-	case RAWSXP:
-		packed_geno_VxS<Rbyte>(p, RAW(dosage), n, geno_nrow, bit_shift);
-		break;
-	case INTSXP:
-		packed_geno_VxS<int>(p, INTEGER(dosage), n, geno_nrow, bit_shift);
-		break;
-	case REALSXP:
-		packed_geno_VxS<double>(p, REAL(dosage), n, geno_nrow, bit_shift);
-		break;
-	default:
-		Rf_error(ERR_PACKED_GENO_TYPE);
+		size_t n = Rf_xlength(dosage);
+		if (n != geno_ncol) Rf_error(ERR_PACKED_GENO_N);
+		switch (TYPEOF(dosage))
+		{
+		case RAWSXP:
+			packed_geno_VxS<Rbyte>(p, RAW(dosage), n, geno_nrow, bit_shift);
+			break;
+		case INTSXP:
+			packed_geno_VxS<int>(p, INTEGER(dosage), n, geno_nrow, bit_shift);
+			break;
+		case REALSXP:
+			packed_geno_VxS<double>(p, REAL(dosage), n, geno_nrow, bit_shift);
+			break;
+		default:
+			Rf_error(ERR_PACKED_GENO_TYPE);
+		}
+	} else {
+		packed_geno_VxS_missing(p, geno_ncol, geno_nrow, bit_shift);
 	}
-
+	geno_index ++;
 	return R_NilValue;
 }
 

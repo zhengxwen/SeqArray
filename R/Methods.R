@@ -1103,10 +1103,10 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, verbose=FALSE)
     nvar  <- dm[3L]
     if (isTRUE(samp_by_var))
     {
-        geno <- matrix(as.raw(0xFF), nrow=ceiling(nsamp/4), ncol=nvar)
+        geno <- matrix(as.raw(0L), nrow=ceiling(nsamp/4), ncol=nvar)
         cfunc <- .cfunction("FC_SetPackedGenoSxV")
     } else {
-        geno <- matrix(as.raw(0xFF), nrow=ceiling(nvar/4), ncol=nsamp)
+        geno <- matrix(as.raw(0L), nrow=ceiling(nvar/4), ncol=nsamp)
         cfunc <- .cfunction("FC_SetPackedGenoVxS")
     }
     if (length(geno) <= 0) return(geno)
@@ -1116,6 +1116,12 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, verbose=FALSE)
     # fill
     seqApply(gdsfile, varnm, FUN=cfunc, as.is="none", .useraw=NA,
         .progress=verbose)
+    # remainder for samp_by_var=FALSE
+    if (!isTRUE(samp_by_var))
+    {
+        n <- nrow(geno)*4L - nvar
+        for (i in seq_len(n)) cfunc(NULL)  # missing genotype
+    }
 
     # output
     geno
