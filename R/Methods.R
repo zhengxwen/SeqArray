@@ -1081,11 +1081,12 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     seqGet2bGeno(gdsfile, samp_by_var=TRUE, verbose=verbose)
 }
 
-seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, verbose=FALSE)
+seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L, verbose=FALSE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.logical(samp_by_var), length(samp_by_var)==1L)
+    stopifnot(is.numeric(ext_nbyte), length(ext_nbyte)==1L, ext_nbyte>=0L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # get gds node
@@ -1103,10 +1104,10 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, verbose=FALSE)
     nvar  <- dm[3L]
     if (isTRUE(samp_by_var))
     {
-        geno <- matrix(as.raw(0L), nrow=ceiling(nsamp/4), ncol=nvar)
+        geno <- matrix(as.raw(0xFF), nrow=ceiling(nsamp/4)+ext_nbyte, ncol=nvar)
         cfunc <- .cfunction("FC_SetPackedGenoSxV")
     } else {
-        geno <- matrix(as.raw(0L), nrow=ceiling(nvar/4), ncol=nsamp)
+        geno <- matrix(as.raw(0L), nrow=ceiling(nvar/4)+ext_nbyte, ncol=nsamp)
         cfunc <- .cfunction("FC_SetPackedGenoVxS")
     }
     if (length(geno) <= 0) return(geno)

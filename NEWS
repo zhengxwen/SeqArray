@@ -3,7 +3,7 @@ CHANGES IN VERSION 1.36.1
 
 UTILITIES
 
-    o faster seqGet2bGeno()
+    o new option 'ext_nbyte' in seqGet2bGeno()
 
 
 CHANGES IN VERSION 1.36.0
