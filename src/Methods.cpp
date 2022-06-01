@@ -610,13 +610,13 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Ref(SEXP Geno)
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &m, &n);
 	if (AFreq_Minor)
 	{
-		n = N - n - m;  // allele count for alternative
-		if (n < m) m = n;
+		size_t m0 = N - n - m;  // allele count for alternative
+		if (m0 < m) m = m0;
 	}
-	return ScalarInteger(m);
+	return ScalarInteger((n < N) ? (int)m : NA_INTEGER);
 }
 
-/// Get reference allele frequency from dosage
+/// Get reference allele count from dosage
 COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Ref(SEXP DS)
 {
 	int n, m, num=0;
@@ -642,10 +642,10 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Ref(SEXP DS)
 		if (AFreq_Minor && ac>0.5*totac) ac = totac - ac;
 		return ScalarReal(ac);
 	} else
-		return ScalarReal(R_NaN);
+		return ScalarReal(NA_REAL);
 }
 
-/// Get allele count
+/// Get allele count from the reference allele index
 COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 {
 	SEXP Geno = VECTOR_ELT(List, 0);
@@ -665,17 +665,17 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
 		if (AFreq_Minor)
 		{
-			n = N - n - m;  // allele count for alternative
-			if (n < m) m = n;
+			size_t m0 = N - n - m;  // allele count for alternative
+			if (m0 < m) m = m0;
 		}
-		ans = m;
+		ans = (n < N) ? (int)m : NA_INTEGER;
 	} else
 		ans = NA_INTEGER;
 	
 	return ScalarInteger(ans);
 }
 
-/// Get allele count
+/// Get allele count from dosage and the reference allele index
 COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Index(SEXP List)
 {
 	SEXP DS = VECTOR_ELT(List, 0);
@@ -710,10 +710,10 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Index(SEXP List)
 		if (AFreq_Minor && sum>sum2) sum = sum2;
 		return ScalarReal(sum);
 	} else
-		return ScalarReal(R_NaN);
+		return ScalarReal(NA_REAL);
 }
 
-/// Get allele count
+/// Get allele count for a given allele
 COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 {
 	SEXP Geno = VECTOR_ELT(List, 0);
@@ -733,19 +733,19 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 				vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
 				if (AFreq_Minor)
 				{
-					n = N - n - m;  // allele count for alternative
-					if (n < m) m = n;
+					size_t m0 = N - n - m;  // allele count for alternative
+					if (m0 < m) m = m0;
 				}
-				ans = m;
+				ans = (n < N) ? (int)m : NA_INTEGER;
 			}
 		} else {
 			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
 			if (AFreq_Minor)
 			{
-				n = N - n - m;  // allele count for alternative
-				if (n < m) m = n;
+				size_t m0 = N - n - m;  // allele count for alternative
+				if (m0 < m) m = m0;
 			}
-			ans = m;
+			ans = (n < N) ? (int)m : NA_INTEGER;
 		}
 	}
 
@@ -788,7 +788,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Allele(SEXP List)
 		if (AFreq_Minor && sum>sum2) sum = sum2;
 		return ScalarReal(sum);
 	} else
-		return ScalarReal(R_NaN);
+		return ScalarReal(NA_REAL);
 }
 
 
@@ -891,7 +891,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Geno(SEXP Geno)
 	const size_t N = XLENGTH(Geno);
 	size_t n0, nmiss;
 	if (TYPEOF(Geno) == RAWSXP)
-		vec_i8_count2((const char*)RAW(Geno), N, 0, 0xFF, &n0, &nmiss);
+		vec_i8_count2((const char*)RAW(Geno), N, 0, NA_RAW, &n0, &nmiss);
 	else
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &n0, &nmiss);
 	size_t n = N - nmiss;
@@ -907,7 +907,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Geno(SEXP Geno)
 	// AC/MAC
 	double ac = n0, ac2 = n - n0;
 	if (af_ac_miss_minor && (ac > ac2)) ac = ac2;
-	af_ac_miss_ptr[1] = ac;
+	af_ac_miss_ptr[1] = (n > 0) ? ac : NA_REAL;
 	// missing rate
 	af_ac_miss_ptr[2] = (double)nmiss / N;
 	af_ac_miss_ptr += 3;
@@ -934,7 +934,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_DS(SEXP DS)
 		throw ErrSeqArray(ERR_DS_TYPE);
 	}
 
-	double af=R_NaN, ac=R_NaN;
+	double af=R_NaN, ac=NA_REAL;
 	if (num > 0)
 	{
 		af = sum * m / (num * af_ac_miss_ploidy);
