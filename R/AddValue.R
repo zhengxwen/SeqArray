@@ -147,7 +147,7 @@
         stop("Invalid input variable name in 'sample.annotation/'.")
     n <- add.gdsn(n, varnm, val, compress=compress, closezip=TRUE,
         replace=replace)
-    if (is.character(desp))
+    if (length(desp)>0L && !is.na(desp[1L]))
         put.attr.gdsn(n, "Description", desp[1L])
     .DigestCode(n, TRUE, FALSE)
     if (verbose)
