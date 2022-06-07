@@ -361,7 +361,8 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
 
     # dm[1] -- ploidy, dm[2] -- # of total samples, dm[3] -- # of total variants
     dm <- .dim(gdsfile)
-    nsamp <- dm[2L]; nvar  <- dm[3L]
+    nsamp <- objdesp.gdsn(index.gdsn(gdsfile, "sample.id"))$dim
+    nvar  <- objdesp.gdsn(index.gdsn(gdsfile, "variant.id"))$dim
 
     ret <- switch(varnm,
         "sample.id"  = .r_sample_id(gdsfile, val, replace, nsamp, desp,
