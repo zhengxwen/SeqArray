@@ -8,6 +8,10 @@ UTILITIES
     o `seqAlleleCount()` and `seqGetAF_AC_Missing()` return NA instead of zero
       when all genotypes are missing at a site
 
+BUG FIXES
+
+    o `seqExport()` failed when there is no variant
+
 
 CHANGES IN VERSION 1.36.0
 -------------------------

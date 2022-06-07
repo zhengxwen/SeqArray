@@ -193,6 +193,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     # the selection
     S <- seqGetFilter(gdsfile)
     nsamp <- sum(S$sample.sel)
+    nsnp <- sum(S$variant.sel)
 
     ## sample.id, etc
     cp(outfile, S$sample.sel, "sample.id")
@@ -205,7 +206,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## genotype
     node <- addfolder.gdsn(outfile, "genotype")
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "genotype"))
-    if (!is.null(index.gdsn(gdsfile, "genotype/data", silent=TRUE)) && nsamp>0L)
+    if (exist.gdsn(gdsfile, "genotype/data") && nsamp && nsnp)
     {
         cp2(node, S$sample.sel, S$variant.sel, "genotype")
         if (prod(objdesp.gdsn(index.gdsn(gdsfile, "genotype/extra.index"))$dim) <= 0)
@@ -222,7 +223,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     ## phase
     node <- addfolder.gdsn(outfile, "phase")
     put.attr.gdsn(node, val=index.gdsn(gdsfile, "phase"))
-    if (!is.null(index.gdsn(gdsfile, "phase/data", silent=TRUE)) && nsamp>0L)
+    if (exist.gdsn(gdsfile, "phase/data") && nsamp && nsnp)
     {
         cp.phase(node, S$sample.sel, S$variant.sel)
         if (prod(objdesp.gdsn(index.gdsn(gdsfile, "phase/extra.index"))$dim) <= 0)
