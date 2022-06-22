@@ -236,7 +236,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 	SEXP intersect, SEXP warn, SEXP verbose)
 {
 	static const char *WARN_SEL_INDEX =
-		"rearrange 'sample.sel' to be strictly increasing and remove duplicates.";
+		"rearrange 'sample.sel' to be strictly increasing (and remove duplicates).";
 	const int intersect_flag = Rf_asLogical(intersect);
 	const int warn_flag = Rf_asLogical(warn);
 
@@ -485,7 +485,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 	static const char *ERR_OUT_RANGE =
 		"Out of range 'variant.sel'.";
 	static const char *WARN_SEL_INDEX =
-		"rearrange 'variant.sel' to be strictly increasing and remove duplicates.";
+		"rearrange 'variant.sel' to be strictly increasing (and remove duplicates).";
 	const int intersect_flag = Rf_asLogical(intersect);
 	const int warn_flag = Rf_asLogical(warn);
 

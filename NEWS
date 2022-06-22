@@ -57,7 +57,7 @@ BUG FIXES
 
     o `seqGDS2BED()` with selected samples for sex and phenotype information
 
-    o bug fix in `seqGDS2VCF()` if there is no integer genotype
+    o `seqGDS2VCF()` failed if there is no 'genotype/data' in the GDS file
 
 
 CHANGES IN VERSION 1.32.0
