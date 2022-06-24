@@ -161,9 +161,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
             {
                 if (is.numeric(sample.sel))
                 {
-                    ii_samp <- order(sample.sel)
-                    if (anyNA(sample.sel))
-                        ii_samp[is.na(sample.sel)] <- NA_integer_
+                    ii_samp <- rank(sample.sel, "keep")
                 } else {
                     ii_samp <- seq_len(SeqArray:::.seldim(object)[2L])
                 }
@@ -190,9 +188,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
             {
                 if (is.numeric(variant.sel))
                 {
-                    ii_var <- order(variant.sel)
-                    if (anyNA(variant.sel))
-                        ii_var[is.na(variant.sel)] <- NA_integer_
+                    ii_var <- rank(variant.sel, "keep")
                 } else {
                     ii_var <- seq_len(SeqArray:::.seldim(object)[3L])
                 }

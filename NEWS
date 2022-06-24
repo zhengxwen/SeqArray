@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.36.1
+CHANGES IN VERSION 1.37.1
 -------------------------
 
 UTILITIES
@@ -8,9 +8,16 @@ UTILITIES
     o `seqAlleleCount()` and `seqGetAF_AC_Missing()` return NA instead of zero
       when all genotypes are missing at a site
 
+
+CHANGES IN VERSION 1.36.1
+-------------------------
+
 BUG FIXES
 
     o `seqExport()` failed when there is no variant
+
+    o `seqSetFilter(, ret.idx=TRUE)`, see
+      https://github.com/zhengxwen/SeqArray/issues/80
 
 
 CHANGES IN VERSION 1.36.0
