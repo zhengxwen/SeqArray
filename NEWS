@@ -1,16 +1,9 @@
-CHANGES IN VERSION 1.37.1
+CHANGES IN VERSION 1.36.1
 -------------------------
 
 UTILITIES
 
     o new option 'ext_nbyte' in seqGet2bGeno()
-
-    o `seqAlleleCount()` and `seqGetAF_AC_Missing()` return NA instead of zero
-      when all genotypes are missing at a site
-
-
-CHANGES IN VERSION 1.36.1
--------------------------
 
 BUG FIXES
 
