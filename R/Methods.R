@@ -164,7 +164,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
                     ii_samp <- match(sample.sel,
                         seqGetData(object, "$sample_index"))
                 } else {
-                    ii_samp <- seq_len(SeqArray:::.seldim(object)[2L])
+                    ii_samp <- seq_len(.seldim(object)[2L])
                 }
             }
         }
@@ -192,7 +192,7 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
                     ii_var <- match(variant.sel,
                         seqGetData(object, "$variant_index"))
                 } else {
-                    ii_var <- seq_len(SeqArray:::.seldim(object)[3L])
+                    ii_var <- seq_len(.seldim(object)[3L])
                 }
             }
         } else {
