@@ -220,7 +220,7 @@ int CApply_Variant_Geno::_ReadGenoData(int *Base)
 		int missing = bit_mask;
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
-			GDS_Iter_Position(Node, &it, (Index+1)*SiteCount);
+			GDS_Iter_Position(Node, &it, (Index+i)*SiteCount);
 			read_geno(it, (C_UInt8*)ExtPtr.get(), pSampSel);
 
 			C_UInt8 shift = i * 2;
@@ -261,7 +261,7 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
-			GDS_Iter_Position(Node, &it, (Index+1)*SiteCount);
+			GDS_Iter_Position(Node, &it, (Index+i)*SiteCount);
 			read_geno(it, (C_UInt8*)ExtPtr.get(), pSampSel);
 
 			C_UInt8 shift = i * 2;
