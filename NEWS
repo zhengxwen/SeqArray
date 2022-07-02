@@ -9,6 +9,15 @@ UTILITIES
       when all genotypes are missing at a site
 
 
+CHANGES IN VERSION 1.36.2
+-------------------------
+
+BUG FIXES
+
+    o fix the bug at multi-allelic sites with more than 15 different alleles,
+      see https://github.com/zhengxwen/SeqArray/issues/78
+
+
 CHANGES IN VERSION 1.36.1
 -------------------------
 
