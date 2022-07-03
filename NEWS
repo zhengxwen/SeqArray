@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.37.1
+CHANGES IN VERSION 1.37.2
 -------------------------
 
 UTILITIES
@@ -7,6 +7,11 @@ UTILITIES
 
     o `seqAlleleCount()` and `seqGetAF_AC_Missing()` return NA instead of zero
       when all genotypes are missing at a site
+
+NEW FEATURES
+
+    o `seqGDS2BED()`` can convert to PLINK BED files with the best-guess
+      genotypes when there are only numeric dosages in the GDS file
 
 
 CHANGES IN VERSION 1.36.2

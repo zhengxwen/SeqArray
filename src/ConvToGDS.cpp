@@ -111,7 +111,7 @@ COREARRAY_DLL_EXPORT SEXP FC_GDS2BED(SEXP ds)
 	C_UInt8 *p = (C_UInt8*)RAW(rv_ans);
 	C_UInt8 *s = (C_UInt8*)RAW(ds);
 	// convert
-	static const C_UInt8 cvt[4] = { 0, 2, 3, 1 };
+	static const C_UInt8 cvt[4] = { 3, 2, 0, 1 };
 	for (; n4 > 0; n4--)
 	{
 		C_UInt8 b = 0;

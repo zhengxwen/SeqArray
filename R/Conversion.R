@@ -1204,13 +1204,11 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
-    if (is.character(gdsfile))
-        stopifnot(length(gdsfile)==1L)
     stopifnot(is.character(out.fn), length(out.fn)==1L, !is.na(out.fn))
     stopifnot(is.logical(multi.row), length(multi.row)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (multi.row)
-        stop("'multi.row=TRUE' is not implemented yet.")
+        stop("'multi.row=TRUE' is reserved for future implementation.")
 
     if (verbose)
     {
@@ -1275,7 +1273,7 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     outf <- file(bedfn, "w+b")
     on.exit(close(outf), add=TRUE)
     writeBin(as.raw(c(0x6C, 0x1B, 0x01)), outf)
-    seqApply(gdsfile, "$dosage", .cfunction("FC_GDS2BED"), as.is=outf,
+    seqApply(gdsfile, "$dosage_alt", .cfunction("FC_GDS2BED"), as.is=outf,
         .useraw=TRUE, .progress=verbose)
 
     if (verbose) .cat("Done.\n", date())
