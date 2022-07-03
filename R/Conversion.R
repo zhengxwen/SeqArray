@@ -1273,7 +1273,23 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     outf <- file(bedfn, "w+b")
     on.exit(close(outf), add=TRUE)
     writeBin(as.raw(c(0x6C, 0x1B, 0x01)), outf)
-    seqApply(gdsfile, "$dosage_alt", .cfunction("FC_GDS2BED"), as.is=outf,
+
+    # using genotypes or dosages
+    gv <- .has_geno(gdsfile)
+    if (gv)
+    {
+        nm <- "$dosage_alt"
+        ploidy <- .dim(gdsfile)[1L]
+    } else {
+        nm <- .has_dosage(gdsfile)
+        ploidy <- getOption("seqarray.ploidy", 2L)[1L]
+    }
+    if (is.na(ploidy))
+        stop("'ploidy' is not known.")
+    else if (ploidy != 2L)
+        stop("'ploidy' should be 2 for diploidy.")
+    # call C function
+    seqApply(gdsfile, nm, .cfunction("FC_GDS2BED"), as.is=outf,
         .useraw=TRUE, .progress=verbose)
 
     if (verbose) .cat("Done.\n", date())
