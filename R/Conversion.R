@@ -1282,6 +1282,8 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
         ploidy <- .dim(gdsfile)[1L]
     } else {
         nm <- .has_dosage(gdsfile)
+        if (verbose)
+            .cat("    using ", sQuote(nm))
         ploidy <- getOption("seqarray.ploidy", 2L)[1L]
     }
     if (is.na(ploidy))
