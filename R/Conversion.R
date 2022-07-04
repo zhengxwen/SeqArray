@@ -68,10 +68,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
 
     ## double quote text if needed
-    dq <- function(s, text=FALSE)
-    {
-        .Call(SEQ_Quote, s, text)
-    }
+    dq <- function(s, text=FALSE) .Call(SEQ_Quote, s, text)
 
 
     ######################################################
@@ -245,9 +242,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # write the header -- samples
 
-    txt <- c(txt, paste(
-        c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO",
-        "FORMAT", seqGetData(gdsfile, "sample.id")), collapse="\t"))
+    a <- c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO")
+    s <- seqGetData(gdsfile, "sample.id")
+    if (length(s) > 0L) a <- c(a, "FORMAT", s)
+    txt <- c(txt, paste(a, collapse="\t"))
     writeLines(txt, ofile)
 
 

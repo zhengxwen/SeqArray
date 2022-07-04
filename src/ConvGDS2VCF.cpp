@@ -509,6 +509,7 @@ inline static void ExportInfoFormat(SEXP X, size_t info_st)
 
 	//====  FORMAT  ====//
 
+	if (VCF_NumSample <= 0) return;  // no FORMAT column
 	VCF_FORMAT_List.clear();
 	size_t cnt_fmt = VCF_FORMAT_Number.size();
 
@@ -586,7 +587,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP SelDim, SEXP ChrPrefix, SEXP Info,
 	SEXP Format, SEXP File, SEXP Verbose)
 {
 	int num_allele = INTEGER(SelDim)[0];
-	if (num_allele <= 0) num_allele = 2;  // diploid
+	if (num_allele <= 0) num_allele = 2;  // diploid (notice NA < 0)
 	VCF_NumAllele = num_allele;
 	VCF_NumSample = INTEGER(SelDim)[1];
 

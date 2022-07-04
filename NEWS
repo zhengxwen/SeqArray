@@ -1,3 +1,12 @@
+CHANGES IN VERSION 1.37.3
+-------------------------
+
+UTILITIES
+
+    o `seqGDS2VCF()` does not output the FORMAT column if there is no selected
+      sample (e.g., site-only VCF files)
+
+
 CHANGES IN VERSION 1.37.2
 -------------------------
 
