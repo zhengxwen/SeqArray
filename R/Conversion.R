@@ -127,8 +127,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         s <- paste(z$format$ID, collapse=", ")
         .cat("    FORMAT Field: ", ifelse(s!="", s, "<none>"))
         .cat("    output to ",
-            c("a VCF text file", "a BGZF-format file", "a general gzip file",
-            "a bz file", "a xz file")[outfmt])
+            c("a VCF text file", "a BGZF-format gzip file",
+            "a general gzip file", "a bz file", "a xz file")[outfmt])
     }
 
 
