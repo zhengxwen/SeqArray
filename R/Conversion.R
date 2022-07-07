@@ -1297,3 +1297,51 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     # output
     invisible(normalizePath(c(famfn, bimfn, bedfn)))
 }
+
+
+
+#######################################################################
+# Create a SeqArray GDS file
+#
+
+seqEmptyFile <- function(outfn, sample.id=character(), verbose=TRUE)
+{
+    #check
+    stopifnot(is.character(outfn), length(outfn)==1L)
+    stopifnot(is.vector(sample.id))
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    # create a new GDS file
+    f <- createfn.gds(outfn)
+    on.exit({ if (!is.null(f)) closefn.gds(f) }, add=TRUE)
+    if (verbose)
+        .cat("Output: ", sQuote(outfn))
+    put.attr.gdsn(f$root, "FileFormat", "SEQ_ARRAY")
+    put.attr.gdsn(f$root, "FileVersion", "v1.0")
+    addfolder.gdsn(f, "description")
+
+    # add sample.id
+    add.gdsn(f, "sample.id", sample.id, compress="LZMA_ra", closezip=TRUE)
+
+    # add basic site information
+    add.gdsn(f, "variant.id", integer())
+    add.gdsn(f, "position", integer())
+    add.gdsn(f, "chromosome", character())
+    add.gdsn(f, "allele", character())
+
+    # add folders
+    addfolder.gdsn(f, "genotype")
+    addfolder.gdsn(f, "phase")
+    nd <- addfolder.gdsn(f, "annotation")
+    add.gdsn(nd, "id", character())
+    add.gdsn(nd, "qual", double(), storage="float")
+    n <- add.gdsn(nd, "filter", integer(), storage="int32")
+    put.attr.gdsn(n, "R.class", "factor")
+    put.attr.gdsn(n, "R.levels", c("PASS"))
+    put.attr.gdsn(n, "Description", c("All filters passed"))
+    addfolder.gdsn(nd, "info")
+    addfolder.gdsn(nd, "format")
+    addfolder.gdsn(f, "sample.annotation")
+
+    invisible()
+}

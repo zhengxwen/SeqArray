@@ -6,6 +6,10 @@ UTILITIES
     o `seqGDS2VCF()` does not output the FORMAT column if there is no selected
       sample (e.g., site-only VCF files)
 
+NEW FEATURES
+
+    o `seqEmptyFile()` outputs an empty GDS file
+
 
 CHANGES IN VERSION 1.37.2
 -------------------------
@@ -19,7 +23,7 @@ UTILITIES
 
 NEW FEATURES
 
-    o `seqGDS2BED()`` can convert to PLINK BED files with the best-guess
+    o `seqGDS2BED()` can convert to PLINK BED files with the best-guess
       genotypes when there are only numeric dosages in the GDS file
 
 
