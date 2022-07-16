@@ -80,7 +80,7 @@ to switch to 64-bit floating point format. Or packed real numbers can be
 adopted by setting
 \code{storage.option=seqStorageOption(float.mode="packedreal16:scale=0.0001")}.
 
-    By default, the compression method is "LZMA_RA" (\url{http://tukaani.org/xz},
+    By default, the compression method is "LZMA_RA" (\url{https://tukaani.org/xz/},
 LZMA algorithm with default compression level + independent data blocks for
 fine-level random access). Users can maximize the compression ratio by
 \code{storage.option="LZMA_RA.max"} or

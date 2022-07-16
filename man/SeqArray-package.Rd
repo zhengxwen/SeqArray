@@ -28,10 +28,10 @@ computing, and C++ integration in the R programming environment. The SeqArray
 package provides R functions for efficient block-wise computations, and enables
 scientists to develop custom R scripts for exploratory data analysis.
 
-    Webpage: \url{http://github.com/zhengxwen/SeqArray},
-        \url{http://www.bioconductor.org/packages/SeqArray/}
+    Webpage: \url{https://github.com/zhengxwen/SeqArray},
+        \url{http://bioconductor.org/packages/SeqArray/}
 }
-\author{Xiuwen Zheng \email{zhengxwen@gmail.com}}
+\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 
 \examples{
 # the file of VCF

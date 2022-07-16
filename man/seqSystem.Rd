@@ -16,7 +16,6 @@ seqSystem()
         packages}
 }
 
-\references{\url{http://github.com/zhengxwen/SeqArray}}
 \author{Xiuwen Zheng}
 
 \examples{

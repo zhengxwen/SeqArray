@@ -16,7 +16,7 @@ Whole-genome sequencing (WGS) data is being generated at an unprecedented rate
 
 - 1000 Genomes Project Phase 3 (1KG)
     - 81 million variants and 2,504 individuals
-    - http://www.1000genomes.org
+    - https://www.internationalgenome.org/
 
 - Variant Call Format (VCF)
     - a generic and flexible text-based format

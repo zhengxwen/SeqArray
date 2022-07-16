@@ -39,7 +39,7 @@ The SeqArray file format is built on top of the Genomic Data Structure (GDS) for
 
 SeqArray stores genotypes in a 2-bit array with ploidy, sample and variant dimensions. If two bits cannot represent all alleles at a site, a 2-bit matrix is appended to store additional bits according to the variant coordinate, hence any number of alleles can be stored including missing value. An indexing vector, associated with genotypes, is used to indicate how many bits for each variant. The INFO and FORMAT annotations in a SeqArray file can be integers, floating point numbers and characters. For a variant, variable-length vectors in an annotation are padded with missing values, and all vectors are packed together in an array. If each variant has different length, an extra vector is used to store the length information.
 
-Multiple lossless compression methods are available in the SeqArray format, and users can select the Lempel-Ziv Markov chain (LZMA) algorithm to compress data instead of the zlib algorithm. LZMA has a higher compression ratio than zlib and is implemented in a command-line tool `xz` ([http://tukaani.org/xz](http://tukaani.org/xz)) with a C library `liblzma`. Internally, the C++ kernel links to `liblzma` and calls the deflate and inflate functions. A new compression algorithm could be incorporated to the SeqArray format without changing the application program interface.
+Multiple lossless compression methods are available in the SeqArray format, and users can select the Lempel-Ziv Markov chain (LZMA) algorithm to compress data instead of the zlib algorithm. LZMA has a higher compression ratio than zlib and is implemented in a command-line tool `xz` ([https://tukaani.org/xz/](https://tukaani.org/xz/)) with a C library `liblzma`. Internally, the C++ kernel links to `liblzma` and calls the deflate and inflate functions. A new compression algorithm could be incorporated to the SeqArray format without changing the application program interface.
 
 To enable efficient random access of compressed data, a storage strategy using independent compression data blocks is employed and an indexing strategy is maintained internally. A fast performance for data filtering could be obtained since not all data have to be decompressed.
 
@@ -59,11 +59,11 @@ For data writing with multiple processes, SeqArray stores data in separate local
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
-| seqSetFilter | Define a data subset of samples or variants. [»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
-| seqApply     | Apply a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
-| seqParallel  | Apply functions in parallel. [»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
+| seqVCF2GDS   | Reformat VCF files. [»](https://rdrr.io/bioc/SeqArray/man/seqVCF2GDS.html) |
+| seqSetFilter | Define a data subset of samples or variants. [»](https://rdrr.io/bioc/SeqArray/man/seqSetFilter.html) |
+| seqGetData   | Get data from a SeqArray file with a defined filter. [»](https://rdrr.io/bioc/SeqArray/man/seqGetData.html) |
+| seqApply     | Apply a user-defined function over array margins. [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html) |
+| seqParallel  | Apply functions in parallel. [»](https://rdrr.io/bioc/SeqArray/man/seqParallel.html) |
 
 .
 
@@ -153,7 +153,7 @@ The optional folders include `phase` (phasing information), `annotation`, and `s
 
 * The folder `phase` includes:
 
-1. `data`, a matrix or 3-dimensional array for phasing information. `0` for unphased status and `1` for phased status. If it is a matrix, the first dimension is sample and the second is variant, corresponding to diploid genotypic data. If it is a 3-dimensional array, the first dimension refers to the number of ploidy minus one. More details about `/` and `|` in a VCF file can be founded: [VCF format](http://www.1000genomes.org/wiki/analysis/variant-call-format).
+1. `data`, a matrix or 3-dimensional array for phasing information. `0` for unphased status and `1` for phased status. If it is a matrix, the first dimension is sample and the second is variant, corresponding to diploid genotypic data. If it is a 3-dimensional array, the first dimension refers to the number of ploidy minus one. More details about `/` and `|` in a VCF file can be founded: [VCF format](https://www.internationalgenome.org/wiki/analysis/variant-call-format).
 2. `~data`, an optional variable, the transposed array according to `data`, the second dimension is variant and the third is sample.
 3. `extra.index`, an index (3-by-$*$) matrix for triploid call (look like `0/0/1` in the VCF file). E.g., for `0/0/1`, the first separator (`/` here) is stored in `data`, and the last separator is saved in the variable `extra`. For each column of `extra.index`, the first value is the index of sample (starting from 1), the second value is the index of variant (starting from 1), and the last value is how many separators remain (usually it is 1 since the first separator is stored in `data`) that indicates how many separator stored in `extra` contiguously.
 4. `extra`, one-dimensional array, the additional data of separator indicator for triploid call, each separator block corresponds to each column in `extra.index`.
@@ -192,7 +192,7 @@ vcf.fn
 seqVCF_Header(vcf.fn)
 ```
 
-The columns `Number`, `Type` and `Description` are defined by the 1000 Genomes Project: [VCF format](http://www.1000genomes.org/wiki/Analysis/Variant Call Format/vcf-variant-call-format-version-41). Briefly, the Number entry is an Integer that describes the number of values that can be included with the INFO field. For example, if the INFO field contains a single number, then this value should be 1; if the INFO field describes a pair of numbers, then this value should be 2 and so on. If the field has one value per alternate allele then this value should be `A`; if the field has one value for each possible genotype then this value should be `G`.  If the number of possible values varies, is unknown, or is unbounded, then this value should be `.`. The `Flag` type indicates that the INFO field does not contain an entry, and hence the Number should be 0 in this case. Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field).
+The columns `Number`, `Type` and `Description` are defined by the 1000 Genomes Project: [VCF format](https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41). Briefly, the Number entry is an Integer that describes the number of values that can be included with the INFO field. For example, if the INFO field contains a single number, then this value should be 1; if the INFO field describes a pair of numbers, then this value should be 2 and so on. If the field has one value per alternate allele then this value should be `A`; if the field has one value for each possible genotype then this value should be `G`.  If the number of possible values varies, is unknown, or is unbounded, then this value should be `.`. The `Flag` type indicates that the INFO field does not contain an entry, and hence the Number should be 0 in this case. Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field).
 
 ```R
 # convert, save in "tmp.gds" with the default lzma compression algorithm
@@ -324,13 +324,13 @@ unlink("tmp.gds")
 
 | Function       | Description |
 |:---------------|:-------------------------------------------|
-| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html)  |
-| seqApply       | Applies a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html)  |
-| seqNumAllele   | Numbers of alleles per site. [»](http://zhengxwen.github.io/SeqArray/release/help/seqNumAllele.html)  |
-| seqMissing     | Missing genotype percentages. [»](http://zhengxwen.github.io/SeqArray/release/help/seqMissing.html)  |
-| seqAlleleFreq  | Allele frequencies. [»](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleFreq.html)  |
-| seqAlleleCount | Allele counts. [»](http://zhengxwen.github.io/SeqArray/release/help/seqAlleleCount.html)  |
-| ...            | [»](http://zhengxwen.github.io/SeqArray/release/help/00Index.html)  |
+| seqGetData     | Gets data from a sequence GDS file (from a subset of data). [»](https://rdrr.io/bioc/SeqArray/man/seqGetData.html)  |
+| seqApply       | Applies a user-defined function over array margins. [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html)  |
+| seqNumAllele   | Numbers of alleles per site. [»](https://rdrr.io/bioc/SeqArray/man/seqNumAllele.html)  |
+| seqMissing     | Missing genotype percentages. [»](https://rdrr.io/bioc/SeqArray/man/seqMissing.html)  |
+| seqAlleleFreq  | Allele frequencies. [»](https://rdrr.io/bioc/SeqArray/man/seqAlleleFreq.html)  |
+| seqAlleleCount | Allele counts. [»](https://rdrr.io/bioc/SeqArray/man/seqAlleleFreq.html)  |
+| ...            | [»](https://rdrr.io/bioc/SeqArray/man/)  |
 
 .
 
@@ -974,8 +974,8 @@ seqClose(genofile)
 
 # Resources
 
-1. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)
-2. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://bioconductor.org/packages/SeqArray](http://bioconductor.org/packages/SeqArray)
+1. gdsfmt R package: [https://github.com/zhengxwen/gdsfmt](https://github.com/zhengxwen/gdsfmt), [http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)
+2. SeqArray R package: [https://github.com/zhengxwen/SeqArray](https://github.com/zhengxwen/SeqArray), [http://bioconductor.org/packages/SeqArray](http://bioconductor.org/packages/SeqArray)
 
 
 # Session Information

@@ -25,7 +25,7 @@ vignette: >
 
 .
 
-The SeqArray package is designed for R programming environment, and enables high-performance computing in the multi-core symmetric multiprocessing and loosely coupled computer cluster framework. The features of SeqArray are extended with other existing R packages for WGS data analyses, and the R codes for demonstration are available in the package vignette [R Integration](http://www.bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/R_Integration.html).
+The SeqArray package is designed for R programming environment, and enables high-performance computing in the multi-core symmetric multiprocessing and loosely coupled computer cluster framework. The features of SeqArray are extended with other existing R packages for WGS data analyses, and the R codes for demonstration are available in the package vignette [R Integration](http://bioconductor.org/packages/release/bioc/vignettes/SeqArray/inst/doc/SeqArray.html).
 
 ![](seqarray_workflow.svg)
 
@@ -70,11 +70,11 @@ seqSummary(file)
 
 | Function     | Description |
 |:-------------|:-------------------------------------------|
-| seqVCF2GDS   | Reformat VCF files. [»](http://zhengxwen.github.io/SeqArray/release/help/seqVCF2GDS.html) |
-| seqSetFilter | Define a data subset of samples or variants. [»](http://zhengxwen.github.io/SeqArray/release/help/seqSetFilter.html) |
-| seqGetData   | Get data from a SeqArray file with a defined filter. [»](http://zhengxwen.github.io/SeqArray/release/help/seqGetData.html) |
-| seqApply     | Apply a user-defined function over array margins. [»](http://zhengxwen.github.io/SeqArray/release/help/seqApply.html) |
-| seqParallel  | Apply functions in parallel. [»](http://zhengxwen.github.io/SeqArray/release/help/seqParallel.html) |
+| seqVCF2GDS   | Reformat VCF files. [»](https://rdrr.io/bioc/SeqArray/man/seqVCF2GDS.html) |
+| seqSetFilter | Define a data subset of samples or variants. [»](https://rdrr.io/bioc/SeqArray/man/seqSetFilter.html) |
+| seqGetData   | Get data from a SeqArray file with a defined filter. [»](https://rdrr.io/bioc/SeqArray/man/seqGetData.html) |
+| seqApply     | Apply a user-defined function over array margins. [»](https://rdrr.io/bioc/SeqArray/man/seqApply.html) |
+| seqParallel  | Apply functions in parallel. [»](https://rdrr.io/bioc/SeqArray/man/seqParallel.html) |
 
 Genotypic data and annotations are stored in an array-oriented manner, providing efficient data access using the R programming language. Table 1 lists five key functions provided in the SeqArray package and many data analyses can be done using just these functions.
 
@@ -579,10 +579,10 @@ The [GENESIS](http://www.bioconductor.org/packages/GENESIS) package offers metho
 
 # Resources
 
-1. gdsfmt R package: [http://github.com/zhengxwen/gdsfmt](http://github.com/zhengxwen/gdsfmt), [http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)
-2. SeqArray R package: [http://github.com/zhengxwen/SeqArray](http://github.com/zhengxwen/SeqArray), [http://bioconductor.org/packages/SeqArray](http://bioconductor.org/packages/SeqArray)
+1. gdsfmt R package: [https://github.com/zhengxwen/gdsfmt](https://github.com/zhengxwen/gdsfmt), [http://bioconductor.org/packages/gdsfmt](http://bioconductor.org/packages/gdsfmt)
+2. SeqArray R package: [https://github.com/zhengxwen/SeqArray](https://github.com/zhengxwen/SeqArray), [http://bioconductor.org/packages/SeqArray](http://bioconductor.org/packages/SeqArray)
 3. SeqVarTools R package: [http://bioconductor.org/packages/SeqVarTools](http://bioconductor.org/packages/SeqVarTools)
-4. SNPRelate R package: [http://github.com/zhengxwen/SNPRelate](http://github.com/zhengxwen/SNPRelate), [http://bioconductor.org/packages/SNPRelate](http://bioconductor.org/packages/SNPRelate)
+4. SNPRelate R package: [https://github.com/zhengxwen/SNPRelate](https://github.com/zhengxwen/SNPRelate), [http://bioconductor.org/packages/SNPRelate](http://bioconductor.org/packages/SNPRelate)
 5. GENESIS R package: [http://bioconductor.org/packages/GENESIS](http://bioconductor.org/packages/GENESIS)
 
 

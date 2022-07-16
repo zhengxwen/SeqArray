@@ -1,6 +1,6 @@
 Package: SeqArray
 Type: Package
-Title: Data management of large-scale whole-genome sequence variant calls
+Title: Data Management of Large-Scale Whole-Genome Sequence Variant Calls
 Version: 1.37.3
 Date: 2022-07-04
 Depends: R (>= 3.5.0), gdsfmt (>= 1.31.1)
@@ -22,6 +22,7 @@ Description: Data management of large-scale whole-genome sequencing variant
 License: GPL-3
 VignetteBuilder: knitr
 ByteCompile: TRUE
-URL: http://github.com/zhengxwen/SeqArray
-BugReports: http://github.com/zhengxwen/SeqArray/issues
+LazyData: true
+URL: https://github.com/zhengxwen/SeqArray
+BugReports: https://github.com/zhengxwen/SeqArray/issues
 biocViews: Infrastructure, DataRepresentation, Sequencing, Genetics
