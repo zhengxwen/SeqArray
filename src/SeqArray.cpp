@@ -676,18 +676,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetSortedIndex(SEXP sel, SEXP idx)
 			PROTECT(sel);
 		else
 			sel = PROTECT(AS_INTEGER(sel));
-		const int *s = INTEGER(sel);
-		const int *I = INTEGER(idx);
+		const int *s = INTEGER(sel), *I = INTEGER(idx);
 		rv_ans = PROTECT(NEW_INTEGER(N));
 		int *out = INTEGER(rv_ans);
-		int k = 1, last = NA_INTEGER;
+		int k = 0, last = NA_INTEGER;
 		for (size_t i=0; i < N; i++)
 		{
 			const int j = I[i] - 1, v = s[j];
 			if (v != NA_INTEGER)
 			{
-				out[j] = k;
 				if (v != last) { last = v; k++; }
+				out[j] = k;
 			} else
 				out[j] = NA_INTEGER;
 		}
