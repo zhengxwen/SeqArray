@@ -159,13 +159,8 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
                 verbose)
             if (ret.idx)
             {
-                if (is.numeric(sample.sel))
-                {
-                    ii_samp <- match(sample.sel,
-                        seqGetData(object, "$sample_index"))
-                } else {
-                    ii_samp <- seq_len(.seldim(object)[2L])
-                }
+                ii_samp <- .Call(SEQ_GetSortedIndex, sample.sel,
+                    if (is.numeric(sample.sel)) order(sample.sel) else NULL)
             }
         }
 
@@ -187,13 +182,8 @@ setMethod("seqSetFilter", signature(object="SeqVarGDSClass", variant.sel="ANY"),
                 verbose)
             if (ret.idx)
             {
-                if (is.numeric(variant.sel))
-                {
-                    ii_var <- match(variant.sel,
-                        seqGetData(object, "$variant_index"))
-                } else {
-                    ii_var <- seq_len(.seldim(object)[3L])
-                }
+                ii_var <- .Call(SEQ_GetSortedIndex, variant.sel,
+                    if (is.numeric(variant.sel)) order(variant.sel) else NULL)
             }
         } else {
             if (is.null(sample.id) & is.null(sample.sel))

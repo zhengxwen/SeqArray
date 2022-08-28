@@ -645,6 +645,61 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 }
 
 
+inline static SEXP seq_len(size_t n)
+{
+	SEXP rv_ans = NEW_INTEGER(n);
+	int *p = INTEGER(rv_ans);
+	for (size_t i=0; i < n; i++) p[i] = i+1;
+	return rv_ans;
+}
+
+/// get a sorted index according to idx
+COREARRAY_DLL_EXPORT SEXP SEQ_GetSortedIndex(SEXP sel, SEXP idx)
+{
+	const size_t N = XLENGTH(sel);
+	SEXP rv_ans = R_NilValue;
+	if (Rf_isLogical(sel))
+	{
+		const int *s = LOGICAL(sel);
+		size_t n = 0;
+		for (size_t i=0; i < N; i++) if (s[i] == TRUE) n++;
+		rv_ans = seq_len(n);
+	} else if (IS_RAW(sel))
+	{
+		const Rbyte *s = RAW(sel);
+		size_t n = 0;
+		for (size_t i=0; i < N; i++) if (s[i]) n++;
+		rv_ans = seq_len(n);
+	} else if (Rf_isInteger(sel) || Rf_isNumeric(sel))
+	{
+		if (Rf_isInteger(sel))
+			PROTECT(sel);
+		else
+			sel = PROTECT(AS_INTEGER(sel));
+		const int *s = INTEGER(sel);
+		const int *I = INTEGER(idx);
+		rv_ans = PROTECT(NEW_INTEGER(N));
+		int *out = INTEGER(rv_ans);
+		int k = 1, last = NA_INTEGER;
+		for (size_t i=0; i < N; i++)
+		{
+			const int j = I[i] - 1, v = s[j];
+			if (v != NA_INTEGER)
+			{
+				out[j] = k;
+				if (v != last) { last = v; k++; }
+			} else
+				out[j] = NA_INTEGER;
+		}
+		UNPROTECT(2);
+	} else {
+		Rf_error("Unsupported selection type.");
+	}
+	return rv_ans;
+}
+
+
+
 // ================================================================
 
 static bool is_numeric(const string &txt)
@@ -664,23 +719,23 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceChrom(SEXP gdsfile, SEXP include,
 	int IsNum = Rf_asLogical(is_num);
 	int IsIntersect = Rf_asLogical(intersect);
 	if (IsIntersect == NA_INTEGER)
-		error("'intersect' should be either FALSE or TRUE.");
+		Rf_error("'intersect' should be either FALSE or TRUE.");
 
 	if (Rf_isNull(include))
 	{
 		if (!Rf_isNull(frombp))
-			error("'from.bp' should be NULL.");
+			Rf_error("'from.bp' should be NULL.");
 		if (!Rf_isNull(tobp))
-			error("'to.bp' should be NULL.");
+			Rf_error("'to.bp' should be NULL.");
 	} else {
 		include = PROTECT(AS_CHARACTER(include));
 		nProtected ++;
 		if (!Rf_isNull(frombp) || !Rf_isNull(tobp))
 		{
 			if (RLength(include) != RLength(frombp))
-				error("'from.bp' should have the same length as 'include'.");
+				Rf_error("'from.bp' should have the same length as 'include'.");
 			if (RLength(include) != RLength(tobp))
-				error("'to.bp' should have the same length as 'include'.");
+				Rf_error("'to.bp' should have the same length as 'include'.");
 			frombp = PROTECT(AS_INTEGER(frombp));
 			tobp = PROTECT(AS_INTEGER(tobp));
 			pFrom = INTEGER(frombp); pTo = INTEGER(tobp);
@@ -842,7 +897,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbos
 
 	int verbose = Rf_asLogical(Verbose);
 	if (verbose == NA_LOGICAL)
-		error("'verbose' must be TRUE or FALSE.");
+		Rf_error("'verbose' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
 
@@ -895,7 +950,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile, SEXP UseRaw)
 {
 	int use_raw_flag = Rf_asLogical(UseRaw);
 	if (use_raw_flag == NA_LOGICAL)
-		error("'.useraw' must be TRUE or FALSE.");
+		Rf_error("'.useraw' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
 
@@ -1199,7 +1254,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SelectFlag(SEXP select, SEXP len)
 {
 	R_len_t n = XLENGTH(select);
 	if (XLENGTH(len) != n)
-		error("Index variable error.");
+		Rf_error("Index variable Rf_error.");
 
 	int *p = INTEGER(len);
 	R_len_t m = 0;
@@ -1458,10 +1513,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Progress(SEXP Count, SEXP NProc)
 {
 	C_Int64 TotalCount = (C_Int64)Rf_asReal(Count);
 	if (TotalCount < 0)
-		error(".seqProgress(): the total number should be >= 0.");
+		Rf_error(".seqProgress(): the total number should be >= 0.");
 	int nproc = Rf_asInteger(NProc);
 	if (nproc <= 0)
-		error(".seqProgress(): the number of processes should be > 0.");
+		Rf_error(".seqProgress(): the number of processes should be > 0.");
 	COREARRAY_TRY
 		CProgressStdOut *obj = new CProgressStdOut(TotalCount, nproc, true);
 		rv_ans = PROTECT(R_MakeExternalPtr(obj, R_NilValue, R_NilValue));
@@ -1476,7 +1531,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 {
 	if (Rf_isNull(ref)) return R_NilValue;
 	if (!Rf_inherits(ref, "SeqClass_Progress"))
-		error("the object should be created by .seqProgress()");
+		Rf_error("the object should be created by .seqProgress()");
 	C_Int64 v = (C_Int64)Rf_asReal(inc);
 	COREARRAY_TRY
 		CProgressStdOut *obj = (CProgressStdOut*)R_ExternalPtrAddr(ref);
@@ -1585,6 +1640,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 5),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 5),
+		CALL(SEQ_GetSortedIndex, 2),
 		CALL(SEQ_SetSpaceChrom, 7),         CALL(SEQ_SetSpaceAnnotID, 3),
 
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 9),
