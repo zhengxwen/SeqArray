@@ -645,6 +645,59 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 }
 
 
+inline static SEXP seq_len(size_t n)
+{
+	SEXP rv_ans = NEW_INTEGER(n);
+	int *p = INTEGER(rv_ans);
+	for (size_t i=0; i < n; i++) p[i] = i+1;
+	return rv_ans;
+}
+
+/// get a sorted index according to idx
+COREARRAY_DLL_EXPORT SEXP SEQ_GetSortedIndex(SEXP sel, SEXP idx)
+{
+	const size_t N = XLENGTH(sel);
+	SEXP rv_ans = R_NilValue;
+	if (Rf_isLogical(sel))
+	{
+		const int *s = LOGICAL(sel);
+		size_t n = 0;
+		for (size_t i=0; i < N; i++) if (s[i] == TRUE) n++;
+		rv_ans = seq_len(n);
+	} else if (IS_RAW(sel))
+	{
+		const Rbyte *s = RAW(sel);
+		size_t n = 0;
+		for (size_t i=0; i < N; i++) if (s[i]) n++;
+		rv_ans = seq_len(n);
+	} else if (Rf_isInteger(sel) || Rf_isNumeric(sel))
+	{
+		if (Rf_isInteger(sel))
+			PROTECT(sel);
+		else
+			sel = PROTECT(AS_INTEGER(sel));
+		const int *s = INTEGER(sel), *I = INTEGER(idx);
+		rv_ans = PROTECT(NEW_INTEGER(N));
+		int *out = INTEGER(rv_ans);
+		int k = 0, last = NA_INTEGER;
+		for (size_t i=0; i < N; i++)
+		{
+			const int j = I[i] - 1, v = s[j];
+			if (v != NA_INTEGER)
+			{
+				if (v != last) { last = v; k++; }
+				out[j] = k;
+			} else
+				out[j] = NA_INTEGER;
+		}
+		UNPROTECT(2);
+	} else {
+		Rf_error("Unsupported selection type.");
+	}
+	return rv_ans;
+}
+
+
 // ================================================================
 
 static bool is_numeric(const string &txt)
@@ -1601,6 +1654,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 5),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 5),
+		CALL(SEQ_GetSortedIndex, 2),
 		CALL(SEQ_SetSpaceChrom, 7),         CALL(SEQ_SetSpaceAnnotID, 3),
 
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 9),
