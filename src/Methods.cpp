@@ -613,7 +613,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Ref(SEXP Geno)
 		size_t m0 = N - n - m;  // allele count for alternative
 		if (m0 < m) m = m0;
 	}
-	return ScalarInteger((n < N) ? (int)m : NA_INTEGER);
+	return ScalarInteger(m);  // will be updated in v1.37.1
 }
 
 /// Get reference allele count from dosage
@@ -668,7 +668,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 			size_t m0 = N - n - m;  // allele count for alternative
 			if (m0 < m) m = m0;
 		}
-		ans = (n < N) ? (int)m : NA_INTEGER;
+		ans = m;  // will be updated in v1.37.1
 	} else
 		ans = NA_INTEGER;
 	
@@ -736,7 +736,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 					size_t m0 = N - n - m;  // allele count for alternative
 					if (m0 < m) m = m0;
 				}
-				ans = (n < N) ? (int)m : NA_INTEGER;
+				ans = m;  // will be updated in v1.37.1
 			}
 		} else {
 			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
@@ -745,7 +745,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 				size_t m0 = N - n - m;  // allele count for alternative
 				if (m0 < m) m = m0;
 			}
-			ans = (n < N) ? (int)m : NA_INTEGER;
+			ans = m;  // will be updated in v1.37.1
 		}
 	}
 

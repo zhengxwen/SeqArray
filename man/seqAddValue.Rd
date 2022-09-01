@@ -16,8 +16,7 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE,
         "chromosome", "annotation/info/NEW_VARIABLE"}
     \item{val}{the R value can be integers, real numbers, characters,
         factor, logical, raw variable, \code{data.frame} or a list; a list of
-        vectors is used for variable-length annotation data; or \code{NULL}
-        for adding a new folder}
+        vectors is used for variable-length annotation data}
     \item{desp}{variable description}
     \item{replace}{if \code{TRUE}, replace the existing variable silently if
         possible}

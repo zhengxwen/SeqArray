@@ -68,7 +68,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
 
     ## double quote text if needed
-    dq <- function(s, text=FALSE) .Call(SEQ_Quote, s, text)
+    dq <- function(s, text=FALSE)
+    {
+        .Call(SEQ_Quote, s, text)
+    }
 
 
     ######################################################
@@ -127,8 +130,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         s <- paste(z$format$ID, collapse=", ")
         .cat("    FORMAT Field: ", ifelse(s!="", s, "<none>"))
         .cat("    output to ",
-            c("a VCF text file", "a BGZF-format gzip file",
-            "a general gzip file", "a bz file", "a xz file")[outfmt])
+            c("a VCF text file", "a BGZF-format file", "a general gzip file",
+            "a bz file", "a xz file")[outfmt])
     }
 
 
@@ -242,10 +245,9 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     ######################################################
     # write the header -- samples
 
-    a <- c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO")
-    s <- seqGetData(gdsfile, "sample.id")
-    if (length(s) > 0L) a <- c(a, "FORMAT", s)
-    txt <- c(txt, paste(a, collapse="\t"))
+    txt <- c(txt, paste(
+        c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO",
+        "FORMAT", seqGetData(gdsfile, "sample.id")), collapse="\t"))
     writeLines(txt, ofile)
 
 
@@ -1202,11 +1204,13 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
+    if (is.character(gdsfile))
+        stopifnot(length(gdsfile)==1L)
     stopifnot(is.character(out.fn), length(out.fn)==1L, !is.na(out.fn))
     stopifnot(is.logical(multi.row), length(multi.row)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (multi.row)
-        stop("'multi.row=TRUE' is reserved for future implementation.")
+        stop("'multi.row=TRUE' is not implemented yet.")
 
     if (verbose)
     {
@@ -1271,77 +1275,11 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
     outf <- file(bedfn, "w+b")
     on.exit(close(outf), add=TRUE)
     writeBin(as.raw(c(0x6C, 0x1B, 0x01)), outf)
-
-    # using genotypes or dosages
-    gv <- .has_geno(gdsfile)
-    if (gv)
-    {
-        nm <- "$dosage_alt"
-        ploidy <- .dim(gdsfile)[1L]
-    } else {
-        nm <- .has_dosage(gdsfile)
-        if (verbose)
-            .cat("    using ", sQuote(nm))
-        ploidy <- getOption("seqarray.ploidy", 2L)[1L]
-    }
-    if (is.na(ploidy))
-        stop("'ploidy' is not known.")
-    else if (ploidy != 2L)
-        stop("'ploidy' should be 2 for diploidy.")
-    # call C function
-    seqApply(gdsfile, nm, .cfunction("FC_GDS2BED"), as.is=outf,
+    seqApply(gdsfile, "$dosage", .cfunction("FC_GDS2BED"), as.is=outf,
         .useraw=TRUE, .progress=verbose)
 
     if (verbose) .cat("Done.\n", date())
 
     # output
     invisible(normalizePath(c(famfn, bimfn, bedfn)))
-}
-
-
-
-#######################################################################
-# Create a SeqArray GDS file
-#
-
-seqEmptyFile <- function(outfn, sample.id=character(), verbose=TRUE)
-{
-    #check
-    stopifnot(is.character(outfn), length(outfn)==1L)
-    stopifnot(is.vector(sample.id))
-    stopifnot(is.logical(verbose), length(verbose)==1L)
-
-    # create a new GDS file
-    f <- createfn.gds(outfn)
-    on.exit({ if (!is.null(f)) closefn.gds(f) }, add=TRUE)
-    if (verbose)
-        .cat("Output: ", sQuote(outfn))
-    put.attr.gdsn(f$root, "FileFormat", "SEQ_ARRAY")
-    put.attr.gdsn(f$root, "FileVersion", "v1.0")
-    addfolder.gdsn(f, "description")
-
-    # add sample.id
-    add.gdsn(f, "sample.id", sample.id, compress="LZMA_ra", closezip=TRUE)
-
-    # add basic site information
-    add.gdsn(f, "variant.id", integer())
-    add.gdsn(f, "position", integer())
-    add.gdsn(f, "chromosome", character())
-    add.gdsn(f, "allele", character())
-
-    # add folders
-    addfolder.gdsn(f, "genotype")
-    addfolder.gdsn(f, "phase")
-    nd <- addfolder.gdsn(f, "annotation")
-    add.gdsn(nd, "id", character())
-    add.gdsn(nd, "qual", double(), storage="float")
-    n <- add.gdsn(nd, "filter", integer(), storage="int32")
-    put.attr.gdsn(n, "R.class", "factor")
-    put.attr.gdsn(n, "R.levels", c("PASS"))
-    put.attr.gdsn(n, "Description", c("All filters passed"))
-    addfolder.gdsn(nd, "info")
-    addfolder.gdsn(nd, "format")
-    addfolder.gdsn(f, "sample.annotation")
-
-    invisible()
 }

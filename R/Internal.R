@@ -116,14 +116,14 @@ process_count <- 1L
 #
 .has_geno <- function(gdsfile)
 {
-    exist.gdsn(gdsfile, "genotype/data")
+    .Call(SEQ_TestNode, gdsfile, "genotype/data")
 }
 
 .has_dosage <- function(gdsfile)
 {
     nm <- getOption("seqarray.node_ds", "annotation/format/DS")
     nm2 <- paste0(nm, "/data")
-    if (!exist.gdsn(gdsfile, nm2))
+    if (!.Call(SEQ_TestNode, gdsfile, nm2))
         stop("No ", sQuote("genotype/data"), " or ", sQuote(nm2), ".")
     nm
 }

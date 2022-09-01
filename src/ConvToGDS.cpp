@@ -26,40 +26,6 @@ using namespace std;
 using namespace SeqArray;
 
 
-static inline unsigned char g2b(C_UInt8 g)
-{
-	return (g<=2) ? g : 3;
-}
-static inline unsigned char g2b(int g)
-{
-	return (0<=g && g<=2) ? g : 3;
-}
-static inline unsigned char g2b(double g)
-{
-	return R_FINITE(g) ? g2b((int)round(g)) : 3;
-}
-
-template<typename TYPE>
-	static void geno_to_raw(C_UInt8 *outp, const TYPE *s, size_t n4, size_t n4r)
-{
-	static const C_UInt8 cvt[4] = { 3, 2, 0, 1 };
-	for (; n4 > 0; n4--)
-	{
-		C_UInt8 b = 0;
-		b |= cvt[g2b(*s++)];       b |= cvt[g2b(*s++)] << 2;
-		b |= cvt[g2b(*s++)] << 4;  b |= cvt[g2b(*s++)] << 6;
-		*outp++ = b;
-	}
-	if (n4r > 0)
-	{
-		C_UInt8 b = 0;
-		for (size_t i=0; i < n4r; i++)
-			b |= cvt[g2b(*s++)] << (2*i);
-		*outp++ = b;
-	}
-}
-
-
 extern "C"
 {
 // ======================================================================
@@ -142,21 +108,28 @@ COREARRAY_DLL_EXPORT SEXP FC_GDS2BED(SEXP ds)
 	size_t n  = XLENGTH(ds);
 	size_t n4 = n/4, n4r = n%4;
 	SEXP rv_ans = PROTECT(NEW_RAW(n4 + (n4r>0 ? 1 : 0)));
-	C_UInt8 *outp = (C_UInt8*)RAW(rv_ans);
+	C_UInt8 *p = (C_UInt8*)RAW(rv_ans);
+	C_UInt8 *s = (C_UInt8*)RAW(ds);
 	// convert
-	switch (TYPEOF(ds))
+	static const C_UInt8 cvt[4] = { 0, 2, 3, 1 };
+	for (; n4 > 0; n4--)
 	{
-	case RAWSXP:
-		geno_to_raw<C_UInt8>(outp, (C_UInt8*)RAW(ds), n4, n4r);
-		break;
-	case INTSXP:
-		geno_to_raw<int>(outp, INTEGER(ds), n4, n4r);
-		break;
-	case REALSXP:
-		geno_to_raw<double>(outp, REAL(ds), n4, n4r);
-		break;
-	default:
-		Rf_error("dosage should be raw, integer or double.");
+		C_UInt8 b = 0;
+		b |= ((*s < 3) ? cvt[*s] : 1);      s++;
+		b |= ((*s < 3) ? cvt[*s] : 1) << 2; s++;
+		b |= ((*s < 3) ? cvt[*s] : 1) << 4; s++;
+		b |= ((*s < 3) ? cvt[*s] : 1) << 6; s++;
+		*p++ = b;
+	}
+	if (n4r > 0)
+	{
+		C_UInt8 b = 0;
+		for (size_t i=0; i < n4r; i++)
+		{
+			b |= ((*s < 3) ? cvt[*s] : 1) << (2*i);
+			s++;
+		}
+		*p++ = b;
 	}
 	// output
 	UNPROTECT(1);
