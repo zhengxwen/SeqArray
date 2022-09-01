@@ -27,10 +27,3 @@ ByteCompile: TRUE
 URL: http://github.com/zhengxwen/SeqArray
 BugReports: http://github.com/zhengxwen/SeqArray/issues
 biocViews: Infrastructure, DataRepresentation, Sequencing, Genetics
-NeedsCompilation: yes
-Packaged: 2022-09-01 04:25:05 UTC; sts
-Author: Xiuwen Zheng [aut, cre] (<https://orcid.org/0000-0002-1390-0708>),
-  Stephanie Gogarten [aut],
-  David Levine [ctb],
-  Cathy Laurie [ctb]
-Maintainer: Xiuwen Zheng <zhengx@u.washington.edu>
