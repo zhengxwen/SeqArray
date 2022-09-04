@@ -66,7 +66,7 @@ static const string VAR_NUM_ALLELE("$num_allele");
 static const string VAR_REF_ALLELE("$ref");
 static const string VAR_ALT_ALLELE("$alt");
 static const string VAR_CHROM_POS("$chrom_pos");
-static const string VAR_CHROM_POS2("$chrom_pos");
+static const string VAR_CHROM_POS2("$chrom_pos2");
 static const string VAR_CHROM_POS_ALLELE("$chrom_pos_allele");
 static const string VAR_SAMPLE_INDEX("$sample_index");
 static const string VAR_VARIANT_INDEX("$variant_index");
@@ -469,6 +469,33 @@ static SEXP get_alt_allele(CFileInfo &File, TVarMap &Var, void *param)
 }
 
 /// get the combination of chromosome and position ($chrom_pos)
+static SEXP get_chrom_pos(CFileInfo &File, TVarMap &Var, void *param)
+{
+	int n = File.VariantSelNum();
+	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
+	if (n > 0)
+	{
+		CChromIndex &Chrom = File.Chromosome();
+		TSelection &Sel = File.Selection();
+		const int *pos = &File.Position()[0];
+		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		size_t p = 0, i = Sel.varStart;
+		char buf[1024] = { 0 };
+		for (; n > 0; i++)
+		{
+			if (*s++)
+			{
+				snprintf(buf, sizeof(buf), "%s:%d", Chrom[i].c_str(), pos[i]);
+				SET_STRING_ELT(rv_ans, p++, mkChar(buf));
+				n--;
+			}
+		}
+	}
+	UNPROTECT(1);
+	return rv_ans;
+}
+
+/// get the combination of chromosome and position ($chrom_pos2)
 static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 {
 	int n = File.VariantSelNum();
@@ -1000,6 +1027,10 @@ COREARRAY_DLL_LOCAL TVarMap &VarGetStruct(CFileInfo &File, const string &name)
 		} else if (name == VAR_ALT_ALLELE)
 		{
 			vm.Init(File, VAR_ALLELE, get_alt_allele);
+			CHECK_VARIANT_ONE_DIMENSION
+		} else if (name == VAR_CHROM_POS)
+		{
+			vm.Init(File, VAR_CHROM, get_chrom_pos);
 			CHECK_VARIANT_ONE_DIMENSION
 		} else if (name == VAR_CHROM_POS2)
 		{

@@ -320,7 +320,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
             nVariant <- nVariant + objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
         }
     } else {
-        variant.id <- variant2.id <- seqGetData(flist[[1L]], "$chrom_pos")
+        variant.id <- variant2.id <- seqGetData(flist[[1L]], "$chrom_pos2")
         if (verbose)
         {
             cat(sprintf("    [%-2d] %s (%s variant%s)\n", 1L, basename(gds.fn[1L]),
@@ -328,7 +328,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         }
         for (i in seq_along(flist)[-1L])
         {
-            s <- seqGetData(flist[[i]], "$chrom_pos")
+            s <- seqGetData(flist[[i]], "$chrom_pos2")
             if (verbose)
             {
                 cat(sprintf("    [%-2d] %s (%s variant%s)\n", i,
@@ -367,7 +367,7 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         varidx <- vector("list", length(flist))
         for (i in seq_along(flist))
         {
-            varidx[[i]] <- match(seqGetData(flist[[i]], "$chrom_pos"),
+            varidx[[i]] <- match(seqGetData(flist[[i]], "$chrom_pos2"),
                 variant.id)
             if (is.unsorted(varidx[[i]], strictly=TRUE))
                 stop("File ", i, ": chromosomes and positions are unsorted.")

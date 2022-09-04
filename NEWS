@@ -1,10 +1,14 @@
-CHANGES IN VERSION 1.37.3
+CHANGES IN VERSION 1.37.4
 -------------------------
 
 UTILITIES
 
     o `seqGDS2VCF()` does not output the FORMAT column if there is no selected
       sample (e.g., site-only VCF files)
+
+    o `seqGetData(, "$chrom_pos2")` is similar to `seqGetData(, "$chrom_pos")`
+      except the duplicates with the suffix ("_1", "_2" or >2)
+
 
 NEW FEATURES
 
