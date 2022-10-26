@@ -7,7 +7,7 @@
     Subset and merge the variant unit(s).
 }
 \usage{
-seqUnitCreate(idx, desp)
+seqUnitCreate(idx, desp=NULL)
 seqUnitSubset(units, i)
 seqUnitMerge(ut1, ut2)
 }

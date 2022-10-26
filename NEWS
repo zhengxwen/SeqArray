@@ -1,21 +1,4 @@
-CHANGES IN VERSION 1.37.4
--------------------------
-
-UTILITIES
-
-    o `seqGDS2VCF()` does not output the FORMAT column if there is no selected
-      sample (e.g., site-only VCF files)
-
-    o `seqGetData(, "$chrom_pos2")` is similar to `seqGetData(, "$chrom_pos")`
-      except the duplicates with the suffix ("_1", "_2" or >2)
-
-
-NEW FEATURES
-
-    o `seqEmptyFile()` outputs an empty GDS file
-
-
-CHANGES IN VERSION 1.37.2
+CHANGES IN VERSION 1.38.0
 -------------------------
 
 UTILITIES
@@ -25,10 +8,18 @@ UTILITIES
     o `seqAlleleCount()` and `seqGetAF_AC_Missing()` return NA instead of zero
       when all genotypes are missing at a site
 
+    o `seqGDS2VCF()` does not output the FORMAT column if there is no selected
+      sample (e.g., site-only VCF files)
+
+    o `seqGetData(, "$chrom_pos2")` is similar to `seqGetData(, "$chrom_pos")`
+      except the duplicates with the suffix ("_1", "_2" or >2)
+
 NEW FEATURES
 
     o `seqGDS2BED()` can convert to PLINK BED files with the best-guess
       genotypes when there are only numeric dosages in the GDS file
+
+    o `seqEmptyFile()` outputs an empty GDS file
 
 
 CHANGES IN VERSION 1.36.2

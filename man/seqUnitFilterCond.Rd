@@ -33,7 +33,8 @@ indices).
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqUnitApply}}, \code{\link{seqUnitFilterCond}}
+    \code{\link{seqUnitApply}}, \code{\link{seqUnitCreate}},
+    \code{\link{seqUnitSubset}}, \code{\link{seqUnitMerge}}
 }
 
 \examples{

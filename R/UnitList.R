@@ -103,8 +103,7 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
             n <- length(idx) - sum(x)
             .cat("Remove ", .pretty(n), " unit", .plural(n))
         }
-        units$desp <- units$desp[x, ]
-        units$index <- units$index[x]
+        units <- seqUnitSubset(units, x)
     }
     units
 }
@@ -172,7 +171,7 @@ seqUnitSlidingWindows <- function(gdsfile, win.size=5000L, win.shift=2500L,
 #######################################################################
 # Create, subset and merge the units
 #
-seqUnitCreate <- function(idx, desp)
+seqUnitCreate <- function(idx, desp=NULL)
 {
     # check
     stopifnot(is.list(idx))
@@ -220,7 +219,14 @@ seqUnitSubset <- function(units, i)
     }
 
     # output
-    units$desp <- units$desp[i, ]
+    v <- units$desp[i, ]
+    if (!is.data.frame(v))  # if only one column
+    {
+        v <- data.frame(v)
+        names(v) <- names(units$desp)
+    }
+    rownames(v) <- NULL
+    units$desp <- v
     units$index <- units$index[i]
     units
 }
