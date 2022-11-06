@@ -1106,15 +1106,15 @@ static const char *time_str(double s)
 	{
 		static char buffer[64];
 		if (s < S_MIN)
-			sprintf(buffer, "%.0fs", s);
+			snprintf(buffer, sizeof(buffer), "%.0fs", s);
 		else if (s < S_HOUR)
-			sprintf(buffer, "%.1fm", s/S_MIN);
+			snprintf(buffer, sizeof(buffer), "%.1fm", s/S_MIN);
 		else if (s < S_DAY)
-			sprintf(buffer, "%.1fh", s/S_HOUR);
+			snprintf(buffer, sizeof(buffer), "%.1fh", s/S_HOUR);
 		else if (s < S_YEAR)
-			sprintf(buffer, "%.1fd", s/S_DAY);
+			snprintf(buffer, sizeof(buffer), "%.1fd", s/S_DAY);
 		else
-			sprintf(buffer, "%.1f years", s/S_YEAR);
+			snprintf(buffer, sizeof(buffer), "%.1f years", s/S_YEAR);
 		return buffer;
 	} else
 		return "---";
@@ -1306,17 +1306,25 @@ void CProgressStdOut::ShowProgress()
 		{
 			char buffer[512];
 			s = difftime(_last_time, _start_time);
-			int n = sprintf(buffer, "\r[%s] 100%%, completed, %s", bar, time_str(s));
+			int n = snprintf(buffer, sizeof(buffer),
+				"\r[%s] 100%%, completed, %s", bar, time_str(s));
 			if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-				sprintf(buffer+n, " (process %d)", *R_Process_Index);
+			{
+				snprintf(buffer+n, sizeof(buffer)-n, " (process %d)",
+					*R_Process_Index);
+			}
 			Rprintf("%s\n", buffer);
 		} else if ((interval >= 5) || (vCounter <= 0))
 		{
 			char buffer[512];
 			_last_time = now;
-			int n = sprintf(buffer, "\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+			int n = snprintf(buffer, sizeof(buffer),
+				"\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
 			if ((vCounter>0) && R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-				n += sprintf(buffer+n, " (process %d)", *R_Process_Index);
+			{
+				n += snprintf(buffer+n, sizeof(buffer)-n, " (process %d)",
+					*R_Process_Index);
+			}
 			strcpy(buffer+n, "    ");
 			Rprintf("%s", buffer);
 		}

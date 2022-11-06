@@ -179,7 +179,7 @@ inline static void _Line_Append_Geno_Raw(C_UInt8 val)
 inline static void _Line_Append(double val)
 {
 	if (R_FINITE(val))
-		pLine += sprintf(pLine, "%g", val);
+		pLine += snprintf(pLine, 32, "%g", val);
 	else
 		*pLine++ = '.';
 }

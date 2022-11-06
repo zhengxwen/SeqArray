@@ -1397,7 +1397,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 		#ifndef __GNUC_PATCHLEVEL__
 		#   define __GNUC_PATCHLEVEL__    0
 		#endif
-		sprintf(buf_compiler, "GNUG_v%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+		snprintf(buf_compiler, sizeof(buf_compiler), "GNUG_v%d.%d.%d",
+			__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 		SET_STRING_ELT(Compiler, 1, mkChar(buf_compiler));
 	#endif
 
