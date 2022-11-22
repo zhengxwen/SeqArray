@@ -42,52 +42,41 @@ to create a \code{SeqVarGDSClass} object.
 \section{Accessors}{
 	In the following code snippets \code{x} is a SeqVarGDSClass object. 
 	\describe{
-		\item{}{
-			\code{granges(x)}:
+		\item{\code{granges(x)}}{
 				Returns the chromosome and position of variants as a
 				\code{GRanges} object.  Names correspond to the variant.id.
 		}
-		\item{}{
-			\code{ref(x)}:
+		\item{\code{ref(x)}}{
 				Returns the reference alleles as a \code{\link{DNAStringSet}}.
 		}
-		\item{}{
-			\code{alt(x)}:
+		\item{\code{alt(x)}}{
 			Returns the alternate alleles as a \code{\link{DNAStringSetList}}.
 		}
-		\item{}{
-			\code{qual(x)}:
+		\item{\code{qual(x)}}{
 			Returns the quality scores.
 		}
-		\item{}{
-			\code{filt(x)}:
+		\item{\code{filt(x)}}{
 			Returns the filter data.
 		}
-		\item{}{
-			\code{fixed(x)}:
+		\item{\code{fixed(x)}}{
 			Returns the fixed fields (ref, alt, qual, filt).
 		}
-		\item{}{
-			\code{header(x)}:
+		\item{\code{header(x)}}{
 			Returns the header as a \code{\link{DataFrameList}}.
 		}
-		\item{}{
-			\code{rowRanges(x)}:
+		\item{\code{rowRanges(x)}}{
 			Returns a \code{GRanges} object with metadata.
 		}
-		\item{}{
-			\code{colData(x)}:
+		\item{\code{colData(x)}}{
 			Returns a \code{DataFrame} with sample identifiers and any
 			information in the 'sample.annotation' node.
 		}
-		\item{}{
-			\code{info(x, info=NULL)}:
+		\item{\code{info(x, info=NULL)}}{
 			Returns the info fields as a \code{DataFrame}. \code{info} is a
 			character vector with the names of fields to return (default is to
 			return all).
 		}
-		\item{}{
-			\code{geno(x, geno=NULL)}:
+		\item{\code{geno(x, geno=NULL)}}{
 			Returns the geno (format) fields as a \code{SimpleList}. \code{geno}
 			is a character vector with the names of fields to return (default
 			is to return all).
@@ -100,9 +89,8 @@ to create a \code{SeqVarGDSClass} object.
 \section{Coercion methods}{
 	In the following code snippets \code{x} is a SeqVarGDSClass object.
 	\describe{
-		\item{}{
+		\item{.}{
 			\code{seqAsVCF(x, chr.prefix="", info=NULL, geno=NULL)}:
-			
 		}
 	}
 }
