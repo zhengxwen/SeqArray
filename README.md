@@ -155,26 +155,6 @@ seqClose(f)
 | [...](https://rdrr.io/bioc/SeqArray/man/) |   |
 
 
-## Benchmarks
-
-### 1. Reading genotypes in random sample subsets (BioC release 3.8 vs 3.4)
-
-(the number of samples is ~100k)
-
-![](vignettes/benchmark_rand_samp.svg)
-
-*(BioC3.8: gdsfmt_v1.18.1, SeqArray_v1.22.6; BioC3.4: gdsfmt_v1.10.1, SeqArray_v1.14.1)*
-
-### 2. Reading annotation data via blocking
-
-`seqBlockApply()` was unexpectedly slow using version ≤ v1.26.2.
-
-See: [https://github.com/zhengxwen/SeqArray/issues/59](https://github.com/zhengxwen/SeqArray/issues/59).
-
-
-*(update in progress ...)*
-
-
 ## File Format Conversion
 
 [gds2bgen](https://github.com/zhengxwen/gds2bgen): Format conversion from BGEN to GDS
