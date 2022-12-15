@@ -77,12 +77,6 @@ R CMD INSTALL SeqArray_latest.tar.gz
 
 
 
-## SeqArray Genotype File Downloads
-
-* [1000 Genomes Project](https://gds-stat.s3.amazonaws.com/download/1000g/index.html)
-
-
-
 ## Examples
 
 ```R
@@ -158,6 +152,13 @@ seqClose(f)
 ## File Format Conversion
 
 [gds2bgen](https://github.com/zhengxwen/gds2bgen): Format conversion from BGEN to GDS
+
+
+## SeqArray GDS File Downloads
+
+* [HapMap Project Phase 2 (release 23)](https://gds-stat.s3.amazonaws.com/download/hapmap/index.html)
+
+* [1000 Genomes Project](https://gds-stat.s3.amazonaws.com/download/1000g/index.html)
 
 
 ## See Also
