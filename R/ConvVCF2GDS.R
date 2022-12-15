@@ -606,8 +606,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (!inherits(vcf.fn, "connection"))
         {
             .cat("    file(s):")
-            .cat("        ", basename(vcf.fn), " (",
-                .pretty_size(file.size(vcf.fn)), ")")
+            for (fn in vcf.fn)
+            {
+                .cat("        ", basename(fn), " (", .pretty_size(
+                    file.size(fn)), ")")
+            }
         } else {
             .cat("    [connection object]")
         }
