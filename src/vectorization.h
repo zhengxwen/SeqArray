@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2020    Xiuwen Zheng
+// Copyright (C) 2016-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -23,7 +23,7 @@
  *	\file     vectorization.h
  *	\author   Xiuwen Zheng [zhengx@u.washington.edu]
  *	\version  1.0
- *	\date     2016-2020
+ *	\date     2016-2022
  *	\brief    compiler optimization with vectorization
  *	\details
 **/
@@ -330,6 +330,10 @@ COREARRAY_DLL_DEFAULT void vec_i8_cnt_dosage_alt2(const int8_t *p,
 /// shifting *p right by 2 bits, assuming p is 2-byte aligned
 COREARRAY_DLL_DEFAULT void vec_u8_shr_b2(uint8_t *p, size_t n);
 
+/// *p |= (*s) << nbit
+COREARRAY_DLL_DEFAULT void vec_u8_or_shl(uint8_t *p, size_t n,
+	const uint8_t *s, const uint8_t nbit);
+
 
 
 // ===========================================================
@@ -377,6 +381,14 @@ COREARRAY_DLL_DEFAULT void vec_i32_shr_b2(int32_t *p, size_t n);
 
 /// bounds checking, return 0 if fails
 COREARRAY_DLL_DEFAULT int vec_i32_bound_check(const int32_t *p, size_t n, int bound);
+
+/// *p |= (*s) << nbit
+COREARRAY_DLL_DEFAULT void vec_i32_or_shl(int32_t *p, size_t n,
+	const int32_t *s, const uint8_t nbit);
+
+/// *p |= (*s) << nbit
+COREARRAY_DLL_DEFAULT void vec_i32_or_shl2(int32_t *p, size_t n,
+	const uint8_t *s, const uint8_t nbit);
 
 
 

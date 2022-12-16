@@ -221,14 +221,9 @@ int CApply_Variant_Geno::_ReadGenoData(int *Base)
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
 			GDS_Iter_Position(Node, &it, (Index+i)*SiteCount);
-			read_geno(it, (C_UInt8*)ExtPtr.get(), pSampSel);
-
-			C_UInt8 shift = i * 2;
-			C_UInt8 *s = (C_UInt8*)ExtPtr.get();
-			int *p = Base;
-			for (ssize_t n=CellCount; n > 0; n--)
-				*p++ |= int(*s++) << shift;
-
+			C_UInt8 *buf = (C_UInt8*)ExtPtr.get();
+			read_geno(it, buf, pSampSel);
+			vec_i32_or_shl2(Base, CellCount, buf, i*2); // shift left = i*2
 			missing = (missing << 2) | bit_mask;
 		}
 
@@ -262,14 +257,9 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
 		{
 			GDS_Iter_Position(Node, &it, (Index+i)*SiteCount);
-			read_geno(it, (C_UInt8*)ExtPtr.get(), pSampSel);
-
-			C_UInt8 shift = i * 2;
-			C_UInt8 *s = (C_UInt8*)ExtPtr.get();
-			C_UInt8 *p = Base;
-			for (ssize_t n=CellCount; n > 0; n--)
-				*p++ |= (*s++) << shift;
-
+			C_UInt8 *buf = (C_UInt8*)ExtPtr.get();
+			read_geno(it, buf, pSampSel);
+			vec_u8_or_shl(Base, CellCount, buf, i*2); // shift left = i*2
 			missing = (missing << 2) | bit_mask;
 		}
 

@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2020    Xiuwen Zheng
+// Copyright (C) 2016-2022    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -892,6 +892,26 @@ void vec_u8_shr_b2(uint8_t *p, size_t n)
 }
 
 
+/// *p |= (*s) << nbit
+void vec_u8_or_shl(uint8_t *p, size_t n, const uint8_t *s, const uint8_t nbit)
+{
+#ifdef COREARRAY_SIMD_SSE2
+	if (n >= 16)
+	{
+		const __m128i mask = _mm_set1_epi8(((uint8_t)0xFF) >> nbit);
+		for (; n >= 16; n-=16, p+=16, s+=16)
+		{
+			__m128i pv = _mm_loadu_si128((__m128i const*)p);
+			__m128i sv = _mm_loadu_si128((__m128i const*)s);
+			__m128i  v = _mm_slli_epi16(sv & mask, nbit);
+			_mm_storeu_si128((__m128i*)p, pv | v);
+		}
+	}
+#endif
+	// tail
+	for (; n > 0; n--) *p++ |= (*s++) << nbit;
+}
+
 
 // ===========================================================
 // functions for int16
@@ -1618,6 +1638,72 @@ int vec_i32_bound_check(const int32_t *p, size_t n, int bound)
 			return 0;
 	}
 	return -1;
+}
+
+
+/// *p |= (*s) << nbit
+COREARRAY_DLL_DEFAULT void vec_i32_or_shl(int32_t *p, size_t n,
+	const int32_t *s, const uint8_t nbit)
+{
+#ifdef COREARRAY_SIMD_SSE2
+	for (; n >= 4; n-=4, p+=4, s+=4)
+	{
+		__m128i pv = _mm_loadu_si128((__m128i const*)p);
+		__m128i sv = _mm_loadu_si128((__m128i const*)s);
+		__m128i  v = _mm_slli_epi32(sv, nbit);
+		_mm_storeu_si128((__m128i*)p, pv | v);
+	}
+#endif
+	// tail
+	for (; n > 0; n--) *p++ |= (*s++) << nbit;
+}
+
+
+/// *p |= (*s) << nbit
+COREARRAY_DLL_DEFAULT void vec_i32_or_shl2(int32_t *p, size_t n,
+	const uint8_t *s, const uint8_t nbit)
+{
+#ifdef COREARRAY_SIMD_SSE2
+	if (n >= 16)
+	{
+		const __m128i zero = _mm_setzero_si128();
+		const __m128i mask = _mm_set1_epi8(((uint8_t)0xFF) >> nbit);
+		for (; n >= 16; n-=16, s+=16)
+		{
+			__m128i sv4 = _mm_loadu_si128((__m128i const*)s) & mask;
+			// low 8 uint8
+			__m128i s_l = _mm_unpacklo_epi8(sv4, zero); // uint8 => uint16 (low)
+			{ 	// 1st 4 int
+				__m128i s = _mm_unpacklo_epi16(s_l, zero); // uint16 => uint32
+				__m128i pv = _mm_loadu_si128((__m128i const*)p);
+				_mm_storeu_si128((__m128i*)p, pv | _mm_slli_epi32(s, nbit));
+				p += 4;
+			}
+			{ 	// 2nd 4 int
+				__m128i s = _mm_unpackhi_epi16(s_l, zero); // uint16 => uint32
+				__m128i pv = _mm_loadu_si128((__m128i const*)p);
+				_mm_storeu_si128((__m128i*)p, pv | _mm_slli_epi32(s, nbit));
+				p += 4;
+			}
+			// high 8 uint8
+			__m128i s_h = _mm_unpackhi_epi8(sv4, zero); // uint8 => uint16 (high)
+			{ 	// 1st 4 int
+				__m128i s = _mm_unpacklo_epi16(s_h, zero); // uint16 => uint32
+				__m128i pv = _mm_loadu_si128((__m128i const*)p);
+				_mm_storeu_si128((__m128i*)p, pv | _mm_slli_epi32(s, nbit));
+				p += 4;
+			}
+			{ 	// 2nd 4 int
+				__m128i s = _mm_unpackhi_epi16(s_h, zero); // uint16 => uint32
+				__m128i pv = _mm_loadu_si128((__m128i const*)p);
+				_mm_storeu_si128((__m128i*)p, pv | _mm_slli_epi32(s, nbit));
+				p += 4;
+			}
+		}
+	}
+#endif
+	// tail
+	for (; n > 0; n--) *p++ |= (*s++) << nbit;
 }
 
 
