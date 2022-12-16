@@ -151,18 +151,17 @@ seqClose(f)
 
 ## File Format Conversion
 
-[gds2bgen](https://github.com/zhengxwen/gds2bgen): Format conversion from BGEN to GDS
+* [seqVCF2GDS()](https://rdrr.io/bioc/SeqArray/man/seqVCF2GDS.html): Format conversion from VCF to GDS
+* [gds2bgen](https://github.com/zhengxwen/gds2bgen): Format conversion from BGEN to GDS
 
 
 ## SeqArray GDS File Downloads
 
 * [HapMap Project Phase 2 (release 23)](https://gds-stat.s3.amazonaws.com/download/hapmap/index.html)
-
 * [1000 Genomes Project](https://gds-stat.s3.amazonaws.com/download/1000g/index.html)
 
 
 ## See Also
 
-[JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): Data manipulation of whole-genome sequencing variant data in Julia
-
-[PySeqArray](https://github.com/CoreArray/PySeqArray): Data manipulation of whole-genome sequencing variant data in Python
+* [JSeqArray.jl](https://github.com/CoreArray/JSeqArray.jl): Data manipulation of whole-genome sequencing variant data in Julia
+* [PySeqArray](https://github.com/CoreArray/PySeqArray): Data manipulation of whole-genome sequencing variant data in Python

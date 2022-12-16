@@ -605,11 +605,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         .cat("Variant Call Format (VCF) Import:")
         if (!inherits(vcf.fn, "connection"))
         {
-            .cat("    file(s):")
-            for (fn in vcf.fn)
+            sz <- file.size(vcf.fn)
+            if (length(vcf.fn) == 1L)
+                .cat("    file:")
+            else
+                .cat("    files: [", .pretty_size(sum(sz)), " totally]")
+            for (i in seq_along(vcf.fn))
             {
-                .cat("        ", basename(fn), " (", .pretty_size(
-                    file.size(fn)), ")")
+                .cat("        ", basename(vcf.fn[i]), " (",
+                    .pretty_size(sz[i]), ")")
             }
         } else {
             .cat("    [connection object]")
