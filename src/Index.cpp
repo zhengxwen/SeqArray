@@ -1120,6 +1120,18 @@ static const char *time_str(double s)
 		return "---";
 }
 
+static const char *datetime_str()
+{
+	static char date_buffer[96];
+	time_t rawtime;
+	time(&rawtime);
+	struct tm *p = localtime(&rawtime);
+	snprintf(date_buffer, sizeof(date_buffer), "%04d-%02d-%02d %02d:%02d:%02d",
+		p->tm_year+1900, p->tm_mon+1, p->tm_mday,
+		p->tm_hour, p->tm_min, p->tm_sec);
+	return date_buffer;
+}
+
 
 CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 {
@@ -1231,20 +1243,25 @@ void CProgress::ShowProgress()
 			int n = vCounter / PROGRESS_LINE_NUM;
 			n = (n / 10) + (n % 10 ? 1 : 0);
 			string s(n, '.');
+			const char *dt = datetime_str();
 			if (NewLine)
 			{
 				if (vCounter > 0)
-					ConnPutText(File, "[:%s (%dk lines)]", s.c_str(), vCounter/1000);
-				else
-					ConnPutText(File, "[: (0 line)]");
+				{
+					ConnPutText(File, "[:%s (%dk lines)] %s", s.c_str(),
+						vCounter/1000, dt);
+				} else
+					ConnPutText(File, "[: (0 line)] %s", dt);
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 				ConnPutText(File, "\n");
 			} else {
 				if (vCounter > 0)
-					ConnPutText(File, "\r[:%s (%dk lines)]", s.c_str(), vCounter/1000);
-				else
-					ConnPutText(File, "\r[: (0 line)]");
+				{
+					ConnPutText(File, "\r[:%s (%dk lines)] %s", s.c_str(),
+						vCounter/1000, dt);
+				} else
+					ConnPutText(File, "\r[: (0 line)] %s", dt);
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 					ConnPutText(File, " (process %d)", *R_Process_Index);
 			}
