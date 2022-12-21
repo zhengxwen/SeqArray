@@ -37,7 +37,7 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     \item{fmt.import}{characters, the variable name(s) in the FORMAT field
         for import; or \code{NULL} for all variables}
     \item{genotype.var.name}{the ID for genotypic data in the FORMAT column;
-        "GT" by default, VCFv4.0}
+        "GT" by default (in VCF v4)}
     \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
         chromosome which should be ignored, like "chr"; it is not
         case-sensitive}

@@ -22,8 +22,13 @@ takes lots of memory when the compression method \code{"LZMA_RA.max"},
 \code{"Ultra"} or \code{"UltraMax"} is specified. So users could call
 \code{seqVCF2GDS(, storage.option="ZIP_RA")} first, and then recompress the
 GDS file with a higher compression option, e.g., \code{"UltraMax"}.
-\code{seqRecompress()} takes much less memory, since it recompresses data in
-a GDS node each time.
+\code{seqRecompress()} takes much less memory than \code{seqVCF2GDS()},
+since it recompresses data in a GDS node each time.
+
+    \code{"UltraMax"} might be not better than \code{"Ultra"}, and its behavior
+is similar to \code{xz -9 --extreme}: use a slower variant of the selected
+compression preset level (-9) to hopefully get a little bit better compression
+ratio, but with bad luck this can also make it worse.
 
     \code{ls.gdsn(gdsfile, include.hidden=TRUE, recursive=TRUE)} returns a list
 of GDS nodes to be re-compressed, and users can specify the excluded nodes in
