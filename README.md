@@ -6,9 +6,6 @@ SeqArray: Data Management of Large-scale Whole-genome Sequence Variant Calls
 
 [![Availability](http://www.bioconductor.org/shields/availability/release/SeqArray.svg)](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 [![Years-in-BioC](http://www.bioconductor.org/shields/years-in-bioc/SeqArray.svg)](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
-[![Build Status](https://travis-ci.org/zhengxwen/SeqArray.png)](https://travis-ci.org/zhengxwen/SeqArray)
-[![Build status](https://ci.appveyor.com/api/projects/status/noil0942el3iohqs?svg=true)](https://ci.appveyor.com/project/zhengxwen/seqarray)
-[![codecov.io](https://codecov.io/github/zhengxwen/SeqArray/coverage.svg?branch=master)](https://codecov.io/github/zhengxwen/SeqArray?branch=master)
 
 
 ## Features
