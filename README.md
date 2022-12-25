@@ -6,6 +6,7 @@ SeqArray: Data Management of Large-scale Whole-genome Sequence Variant Calls
 
 [![Availability](http://www.bioconductor.org/shields/availability/release/SeqArray.svg)](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
 [![Years-in-BioC](http://www.bioconductor.org/shields/years-in-bioc/SeqArray.svg)](http://www.bioconductor.org/packages/release/bioc/html/SeqArray.html)
+[![R](https://github.com/zhengxwen/SeqArray/actions/workflows/r.yml/badge.svg)](https://github.com/zhengxwen/SeqArray/actions/workflows/r.yml)
 
 
 ## Features
