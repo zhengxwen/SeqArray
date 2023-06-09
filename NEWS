@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.40.1
+-------------------------
+
+BUG FIXES
+
+    o `seqAddValue(gdsfile, varnm="position")` works correctly
+
+
 CHANGES IN VERSION 1.40.0
 -------------------------
 

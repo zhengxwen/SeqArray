@@ -32,7 +32,7 @@
     if (anyDuplicated(val))
         stop("'val' should be unique.")
     if (nsamp>0L && length(val)!=nsamp)
-        stop("length(val) should be ", nsamp)
+        stop("length(val) should be ", nsamp, ", but received ", length(val))
     if (length(desp))
         warning("'desp' is not used.")
     n <- add.gdsn(gdsfile, "sample.id", val, compress=compress, closezip=TRUE,
@@ -52,7 +52,7 @@
     if (anyDuplicated(val))
         stop("'val' should be unique.")
     if (nvar>0L && length(val)!=nvar)
-        stop("length(val) should be ", nvar)
+        stop("length(val) should be ", nvar, ", but received ", length(val))
     if (length(desp))
         warning("'desp' is not used.")
     n <- add.gdsn(gdsfile, "variant.id", val, compress=compress, closezip=TRUE,
@@ -70,7 +70,7 @@
     stopifnot(replace)
     stopifnot(is.vector(val), is.numeric(val))
     if (length(val) != nvar)
-        stop("length(val) should be ", nvar)
+        stop("length(val) should be ", nvar, ", but received ", length(val))
     if (length(desp))
         warning("'desp' is not used.")
     n <- add.gdsn(gdsfile, "position", as.integer(val), compress=compress,
@@ -81,14 +81,14 @@
     TRUE
 }
 
-# modify position
-.r_position <- function(gdsfile, val, replace, nvar, desp, compress, verbose,
+# modify chromosome
+.r_chrom <- function(gdsfile, val, replace, nvar, desp, compress, verbose,
     verbose.attr)
 {
     stopifnot(replace)
     stopifnot(is.vector(val), is.character(val) | is.numeric(val))
     if (length(val) != nvar)
-        stop("length(val) should be ", nvar)
+        stop("length(val) should be ", nvar, ", but received ", length(val))
     if (length(desp))
         warning("'desp' is not used.")
     n <- add.gdsn(gdsfile, "chromosome", val, compress=compress, closezip=TRUE,
@@ -108,7 +108,7 @@
     stopifnot(replace)
     stopifnot(is.vector(val), is.character(val))
     if (length(val) != nvar)
-        stop("length(val) should be ", nvar)
+        stop("length(val) should be ", nvar, ", but received ", length(val))
     if (length(desp))
         warning("'desp' is not used.")
     n <- add.gdsn(gdsfile, "allele", val, compress=compress, closezip=TRUE,
@@ -371,7 +371,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
                 compress, verbose, verbose.attr),
         "position"   = .r_position(gdsfile, val, replace, nvar, desp,
                 compress, verbose, verbose.attr),
-        "chromosome" = .r_position(gdsfile, val, replace, nvar, desp,
+        "chromosome" = .r_chrom(gdsfile, val, replace, nvar, desp,
                 compress, verbose, verbose.attr),
         "allele"     = .r_allele(gdsfile, val, replace, nvar, desp,
                 compress, verbose, verbose.attr),
