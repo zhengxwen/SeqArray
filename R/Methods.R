@@ -34,6 +34,13 @@ seqOpen <- function(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
                 gds.fn), "\n",
                 "Or use SeqArray::seqSNP2GDS() for converting SNP GDS to SeqArray GDS.")
         }
+        if (identical(at$FileFormat, "SC_ARRAY"))
+        {
+            closefn.gds(ans)
+            stop(sprintf(
+                "'%s' is a SCArray GDS file, please use SCArray::scOpen().",
+                gds.fn))
+        }
         if (!identical(at$FileFormat, "SEQ_ARRAY"))
         {
             closefn.gds(ans)
