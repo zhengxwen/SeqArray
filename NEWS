@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.42.0
+-------------------------
+
+UTILITIES
+
+    o new option 'write.rsid' in `seqGDS2BED()`
+
+
 CHANGES IN VERSION 1.40.1
 -------------------------
 
@@ -17,7 +25,7 @@ CHANGES IN VERSION 1.38.0
 
 UTILITIES
 
-    o new option 'ext_nbyte' in seqGet2bGeno()
+    o new option 'ext_nbyte' in `seqGet2bGeno()`
 
     o `seqAlleleCount()` and `seqGetAF_AC_Missing()` return NA instead of zero
       when all genotypes are missing at a site

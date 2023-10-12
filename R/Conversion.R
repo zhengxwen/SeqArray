@@ -1198,13 +1198,15 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 # Convert a SeqArray GDS file to a PLINK BED file
 #
 
-seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
+seqGDS2BED <- function(gdsfile, out.fn,
+    write.rsid=c("auto", "annot_id", "chr_pos"), multi.row=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(out.fn), length(out.fn)==1L, !is.na(out.fn))
     stopifnot(is.logical(multi.row), length(multi.row)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    write.rsid <- match.arg(write.rsid)
     if (multi.row)
         stop("'multi.row=TRUE' is reserved for future implementation.")
 
@@ -1247,11 +1249,27 @@ seqGDS2BED <- function(gdsfile, out.fn, multi.row=FALSE, verbose=TRUE)
 
     # bim file
     n <- .seldim(gdsfile)[3L]
-    s <- seqGetData(gdsfile, "$alt")
-    s[s == ""] <- "0"
+    # rs id
+    if (write.rsid == "annot_id")
+    {
+        rsid <- seqGetData(gdsfile, "annotation/id")
+        rsid[is.na(rsid)] <- ""
+    } else if (write.rsid == "chr_pos")
+    {
+        rsid <- seqGetData(gdsfile, "$chrom_pos_allele")
+        rsid[is.na(rsid)] <- ""
+    } else {
+        rsid <- seqGetData(gdsfile, "annotation/id")
+        rsid[is.na(rsid)] <- ""
+        x <- rsid %in% c("", ".")
+        if (any(x))
+            rsid[x] <- seqGetData(gdsfile, "$chrom_pos_allele")[x]
+    }
+    # ref, alt
+    s <- seqGetData(gdsfile, "$alt"); s[s == ""] <- "0"
     bim <- data.frame(
         chr = seqGetData(gdsfile, "chromosome"),
-        var = seqGetData(gdsfile, "annotation/id"),
+        var = rsid,
         mrg = rep(0L, n),
         pos = seqGetData(gdsfile, "position"),
         alt1 = gsub(",", "/", s, fixed=TRUE),
