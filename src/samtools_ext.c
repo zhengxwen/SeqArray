@@ -72,8 +72,7 @@ static size_t bzfile_write(const void *ptr, size_t size, size_t nitems,
 }
 
 
-
-/// Applied digest function
+/// Create a bgzip connection object
 SEXP SEQ_bgzip_create(SEXP filename)
 {
 	init_bgzf();
