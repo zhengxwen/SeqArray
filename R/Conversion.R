@@ -1199,7 +1199,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
 #
 
 seqGDS2BED <- function(gdsfile, out.fn,
-    write.rsid=c("auto", "annot_id", "chr_pos"), multi.row=FALSE, verbose=TRUE)
+    write.rsid=c("auto", "annot_id", "chr_pos_ref_alt"), multi.row=FALSE,
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
@@ -1254,16 +1255,19 @@ seqGDS2BED <- function(gdsfile, out.fn,
     {
         rsid <- seqGetData(gdsfile, "annotation/id")
         rsid[is.na(rsid)] <- ""
-    } else if (write.rsid == "chr_pos")
+    } else if (write.rsid == "chr_pos_ref_alt")
     {
-        rsid <- seqGetData(gdsfile, "$chrom_pos_allele")
+        rsid <- gsub(":|,", "_", seqGetData(gdsfile, "$chrom_pos_allele"))
         rsid[is.na(rsid)] <- ""
     } else {
         rsid <- seqGetData(gdsfile, "annotation/id")
         rsid[is.na(rsid)] <- ""
         x <- rsid %in% c("", ".")
         if (any(x))
-            rsid[x] <- seqGetData(gdsfile, "$chrom_pos_allele")[x]
+        {
+            rsid[x] <- gsub(":|,", "_",
+                seqGetData(gdsfile, "$chrom_pos_allele")[x])
+        }
     }
     # ref, alt
     s <- seqGetData(gdsfile, "$alt"); s[s == ""] <- "0"

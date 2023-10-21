@@ -9,7 +9,7 @@
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
     compress.annotation="LZMA_RA", chr.conv=TRUE, optimize=TRUE, digest=TRUE,
     parallel=FALSE, verbose=TRUE)
-seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos"),
+seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos_ref_alt"),
     multi.row=FALSE, verbose=TRUE)
 }
 \arguments{
@@ -39,10 +39,10 @@ seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos"),
         the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details}
     \item{write.rsid}{\code{"annot_id"}: use the node "annotation/id" for the
-        variant IDs; \code{"chr_pos"}: use
-        \code{seqGetData(, "$chrom_pos_allele")}; \code{"auto"}: use
+        variant IDs; \code{"chr_pos_ref_alt"}: use the format
+        \code{"chrom_position_ref_alt"}; \code{"auto"}: use
         "annotation/id" for the variant IDs if it is not a blank string or ".",
-        otherwise use "$chrom_pos_allele"}
+        otherwise use \code{"chrom_position_ref_alt"}}
     \item{multi.row}{if \code{TRUE}, a multiallelic site is converted to
         multiple rows in PLINK bim and bed files}
     \item{verbose}{if \code{TRUE}, show information}
