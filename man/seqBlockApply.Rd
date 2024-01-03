@@ -61,6 +61,9 @@ associated with these variables.
 \code{"$dosage_alt"} returns a RAW/INTEGER matrix for the dosages of alternative
 allele without distinguishing different alternative alleles.
 
+\code{"$dosage_sp"} returns a sparse matrix (dgCMatrix) for the dosages of
+alternative allele without distinguishing different alternative alleles.
+
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
@@ -106,18 +109,10 @@ the high-speed memory instead of disk.
 # get 'variant.id'
 head(variant.id <- seqGetData(f, "variant.id"))
 
-
 # set sample and variant filters
 set.seed(100)
 seqSetFilter(f, sample.id=samp.id[c(2,4,6,8,10)],
     variant.id=sample(variant.id, 10))
-
-# read
-seqApply(f, "genotype", FUN=print, margin="by.variant")
-seqApply(f, "genotype", FUN=print, margin="by.variant", .useraw=TRUE)
-
-seqApply(f, "genotype", FUN=print, margin="by.sample")
-seqApply(f, "genotype", FUN=print, margin="by.sample", .useraw=TRUE)
 
 # read in block
 seqGetData(f, "$dosage")
