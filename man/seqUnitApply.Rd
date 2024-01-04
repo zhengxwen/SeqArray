@@ -54,6 +54,9 @@ associated with these variables.
 \code{"$dosage_alt"} returns a RAW/INTEGER matrix for the dosages of alternative
 allele without distinguishing different alternative alleles.
 
+\code{"$dosage_sp"} returns a sparse matrix (dgCMatrix) for the dosages of
+alternative allele without distinguishing different alternative alleles.
+
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
