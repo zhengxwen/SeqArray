@@ -31,11 +31,12 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
     \code{\link{seqSetFilter}} can be used to define a subset of data for
 the export.
 
-    If the filename extension is "gz", the gzip compression algorithm is used
-to compress the output data. When the Rsamtools package is installed and
-\code{use_Rsamtools=TRUE}, the exported file utilizes the bgzf format
-(\link[Rsamtools:zip]{bgzip}, a variant of gzip format) allowing for fast
-indexing.
+    If the filename extension is "gz" or "bgz", the gzip compression algorithm
+will be used to compress the output data. When the Rsamtools package is
+installed and \code{use_Rsamtools=TRUE}, the exported file utilizes the bgzf
+format (\link[Rsamtools:zip]{bgzip}, a variant of gzip format) allowing for
+fast indexing. \code{bzfile} or \code{xzfile} will be used, if the filename
+extension is "bz" or "xz".
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,

@@ -77,11 +77,20 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     outfmt <- 1L
     if (!inherits(vcf.fn, "connection"))
     {
-        ext <- substring(vcf.fn, nchar(vcf.fn)-2L)
-        if (ext == ".gz")
+        # get the file extension
+        pos <- regexpr("\\.([[:alnum:]]+)$", vcf.fn)
+        ext <- ifelse(pos > -1L, substring(vcf.fn, pos+1L), "")
+        if (ext %in% c("gz", "bgz"))
         {
             if (.Platform$OS.type == "windows")
+            {
+                if (isTRUE(use_Rsamtools))
+                {
+                    warning("Rsamtools is not used on Windows.",
+                        immediate.=TRUE)
+                }
                 use_Rsamtools <- FALSE
+            }
             if (isTRUE(use_Rsamtools) && requireNamespace("Rsamtools"))
             {
                 ofile <- .Call(SEQ_bgzip_create, vcf.fn)
@@ -95,11 +104,11 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
                 ofile <- gzfile(vcf.fn, "wb")
                 outfmt <- 3L
             }
-        } else if (ext == ".bz")
+        } else if (ext == "bz")
         {
             ofile <- bzfile(vcf.fn, "wb")
             outfmt <- 4L
-        } else if (ext == ".xz")
+        } else if (ext == "xz")
         {
             ofile <- xzfile(vcf.fn, "wb")
             outfmt <- 5L
