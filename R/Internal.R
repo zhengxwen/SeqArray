@@ -857,7 +857,7 @@ process_count <- 1L
 #######################################################################
 # Get the unique data frame
 #
-.DigestCode <- function(node, algo=TRUE, verbose=TRUE)
+.DigestCode <- function(node, algo=TRUE, verbose=TRUE, indent=TRUE)
 {
     if (!is.null(node))
     {
@@ -868,7 +868,7 @@ process_count <- 1L
             h <- digest.gdsn(node, algo=algo, action="add")
             if (verbose)
             {
-                s <- paste0("  [", algo, ": ", h, "]")
+                s <- paste0(ifelse(indent, "  ", ""), "[", algo, ": ", h, "]")
                 if (.crayon()) s <- crayon::blurred(s)
                 cat(s, "\n", sep="")
             }

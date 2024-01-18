@@ -1,9 +1,13 @@
-CHANGES IN VERSION 1.43.1
+CHANGES IN VERSION 1.43.2
 -------------------------
 
 UTILITIES
 
     o update the help files of `seqBlockApply()` and `seqUnitApply()`
+
+    o detect the output filename extension in `seqGDS2VCF()` without
+      considering the case of the characters, supporting .gz, .bgz, .bz and .xz
+      as a filename extension
 
 
 CHANGES IN VERSION 1.42.0
