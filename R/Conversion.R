@@ -1111,13 +1111,16 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         }, split="none", tmp.fn=ptmpfn, nsamp=nrow(famD), psplit=psplit,
             cp=compress.annotation)
 
-        if (verbose) cat("        merging files ...")
-        lapply(ptmpfn, function(fn) {
+        if (verbose) cat("        merging files ... [")
+        lapply(seq_along(ptmpfn), function(i)
+        {
+            cat(ifelse(i>1L, ",", ""), i, sep="")
+            fn <- ptmpfn[i]
             f <- openfn.gds(fn)
             on.exit({ closefn.gds(f); unlink(fn, force=TRUE) })
             append.gdsn(n1, index.gdsn(f, "data"))
         })
-        if (verbose) cat(" [Done]\n      ")
+        if (verbose) cat(" Done]\n      ")
     }
     readmode.gdsn(n1)
     .DigestCode(n1, digest, verbose)

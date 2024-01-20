@@ -1222,6 +1222,8 @@ void CProgress::ShowProgress()
 			else
 				s = R_NaN;
 			p *= 100;
+			// if completed
+			if (vCounter >= vTotalCount) s = difftime(now, _start_time);
 
 			// show
 			if (NewLine)
