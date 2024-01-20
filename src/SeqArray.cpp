@@ -316,7 +316,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 						last_I = I;
 					}
 				}
-				if (if_warn && warn_flag) warning(WARN_SEL_INDEX);
+				if (if_warn && warn_flag) warning("%s", WARN_SEL_INDEX);
 				// set values
 				memset((void*)pArray, 0, Count);
 				pI = INTEGER(samp_sel);
@@ -343,7 +343,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 						last_I = I;
 					}
 				}
-				if (if_warn && warn_flag) warning(WARN_SEL_INDEX);
+				if (if_warn && warn_flag) warning("%s", WARN_SEL_INDEX);
 				// get the current index
 				vector<int> Idx;
 				Idx.reserve(Cnt);
@@ -601,7 +601,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 							if_warn = true;
 					}
 				}
-				if (if_warn && warn_flag) warning(WARN_SEL_INDEX);
+				if (if_warn && warn_flag) warning("%s", WARN_SEL_INDEX);
 				// set the structure of selected variants
 				Sel.varTrueNum = num;
 				Sel.varStart = st;
@@ -1482,9 +1482,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Debug(SEXP gdsfile)
 		TSelection::TSampStruct *p = Sel.GetStructSample();
 		while (p->length > 0)
 		{
-			Rprintf("    start: %d, length: %d, sel: %p\n", p->offset/ploidy,
-				p->length/ploidy, p->sel);
-			p ++;
+			Rprintf("    start: %d, length: %d, sel: %p\n",
+				int(p->offset/ploidy), int(p->length/ploidy), p->sel);
+			p++;
 		}
 
 		Rprintf("Selected variants:\n");

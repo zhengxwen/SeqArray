@@ -9,6 +9,8 @@ UTILITIES
       considering the case of the characters, supporting .gz, .bgz, .bz and .xz
       as a filename extension
 
+    o fix the compiler warning: -Wformat-security
+
 
 CHANGES IN VERSION 1.42.0
 -------------------------

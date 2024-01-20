@@ -1511,7 +1511,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					// it is in the list of INFO variables
 					if (pI->used)
 					{
-						Rf_warning("LINE: %d, ignore duplicated INFO ID (%s).",
+						Rf_warning("LINE: %lld, ignore duplicated INFO ID (%s).",
 							VCF_LineNum, cell.c_str());
 						continue;
 					}
@@ -1901,7 +1901,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		GDS_SetError(buf);
 		has_error = true;
 	});
-	if (has_error) error(GDS_GetError());
+	if (has_error) error("%s", GDS_GetError());
 
 	// output
 	return rv_ans;

@@ -968,7 +968,7 @@ static int digest_data_type = -1;
 	{ \
 		DL_FUNC f =  R_FindSymbol(#name, pkg_digest, NULL); \
 		if (!f) \
-			error("No function '%s' in the %s package", #name, pkg_digest); \
+			Rf_error("No function '%s' in the %s package", #name, pkg_digest); \
 		memcpy(&name, &f, sizeof(f)); \
 	}
 
@@ -1035,7 +1035,7 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 		else if (Rf_isString(Data))
 			digest_data_type = 5;
 		else if (!Rf_isNull(Data))
-			error("Not support data type.");
+			Rf_error("Not support data type.");
 	}
 	switch (digest_data_type)
 	{
@@ -1111,7 +1111,7 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSxV(SEXP dosage)
 	if (!Rf_isNull(dosage))
 	{
 		size_t n = Rf_xlength(dosage);
-		if (n > geno_nrow*4) Rf_error(ERR_PACKED_GENO_N);
+		if (n > geno_nrow*4) Rf_error("%s", ERR_PACKED_GENO_N);
 		switch (TYPEOF(dosage))
 		{
 		case RAWSXP:
@@ -1124,7 +1124,7 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSxV(SEXP dosage)
 			packed_geno_SxV<double>(p, REAL(dosage), n);
 			break;
 		default:
-			Rf_error(ERR_PACKED_GENO_TYPE);
+			Rf_error("%s", ERR_PACKED_GENO_TYPE);
 		}
 	} else {
 		memset(p, 0xFF, geno_nrow);
@@ -1141,7 +1141,7 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoVxS(SEXP dosage)
 	if (!Rf_isNull(dosage))
 	{
 		size_t n = Rf_xlength(dosage);
-		if (n != geno_ncol) Rf_error(ERR_PACKED_GENO_N);
+		if (n != geno_ncol) Rf_error("%s", ERR_PACKED_GENO_N);
 		switch (TYPEOF(dosage))
 		{
 		case RAWSXP:
@@ -1154,7 +1154,7 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoVxS(SEXP dosage)
 			packed_geno_VxS<double>(p, REAL(dosage), n, geno_nrow, bit_shift);
 			break;
 		default:
-			Rf_error(ERR_PACKED_GENO_TYPE);
+			Rf_error("%s", ERR_PACKED_GENO_TYPE);
 		}
 	} else {
 		packed_geno_VxS_missing(p, geno_ncol, geno_nrow, bit_shift);
