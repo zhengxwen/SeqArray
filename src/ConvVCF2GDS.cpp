@@ -1511,8 +1511,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					// it is in the list of INFO variables
 					if (pI->used)
 					{
-						Rf_warning("LINE: %lld, ignore duplicated INFO ID (%s).",
-							VCF_LineNum, cell.c_str());
+						Rf_warning("LINE: %ld, ignore duplicated INFO ID (%s).",
+							(long int)VCF_LineNum, cell.c_str());
 						continue;
 					}
 
