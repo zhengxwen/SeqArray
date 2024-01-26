@@ -11,6 +11,8 @@ UTILITIES
 
     o fix the compiler warning: -Wformat-security
 
+    o new option 'include.pheno=TRUE' in `seqBED2GDS()`
+
 
 CHANGES IN VERSION 1.42.0
 -------------------------

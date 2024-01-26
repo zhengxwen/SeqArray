@@ -775,7 +775,8 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 
 seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     compress.geno="LZMA_RA", compress.annotation="LZMA_RA", chr.conv=TRUE,
-    optimize=TRUE, digest=TRUE, parallel=FALSE, verbose=TRUE)
+    include.pheno=TRUE, optimize=TRUE, digest=TRUE, parallel=FALSE,
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(bed.fn), length(bed.fn)==1L)
@@ -793,6 +794,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
     stopifnot(is.logical(chr.conv), length(chr.conv)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
+    stopifnot(is.logical(include.pheno), length(include.pheno)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     pnum <- .NumParallel(parallel)
@@ -833,7 +835,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     } else {
         sample.id <- paste(famD$FamilyID, famD$InvID, sep="-")
         if (length(unique(sample.id)) != dim(famD)[1])
-            stop("IDs in PLINK BED are not unique!")
+            stop("Sample IDs in PLINK BED are not unique!")
     }
     if (verbose)
     {
@@ -1168,26 +1170,35 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     if (verbose) cat("    sample.annotation\n")
     n <- addfolder.gdsn(dstfile, "sample.annotation")
 
-    n1 <- add.gdsn(n, "family", famD$FamilyID, compress=compress.annotation,
-        closezip=TRUE)
-    .DigestCode(n1, digest, FALSE)
+    if (isTRUE(include.pheno))
+    {
+        if (verbose) cat("        family, ")
+        n1 <- add.gdsn(n, "family", famD$FamilyID, compress=compress.annotation,
+            closezip=TRUE)
+        .DigestCode(n1, digest, FALSE)
 
-    n1 <- add.gdsn(n, "father", famD$PatID, compress=compress.annotation,
-        closezip=TRUE)
-    .DigestCode(n1, digest, FALSE)
+        if (verbose) cat("father, ")
+        n1 <- add.gdsn(n, "father", famD$PatID, compress=compress.annotation,
+            closezip=TRUE)
+        .DigestCode(n1, digest, FALSE)
 
-    n1 <- add.gdsn(n, "mother", famD$MatID, compress=compress.annotation,
-        closezip=TRUE)
-    .DigestCode(n1, digest, FALSE)
+        if (verbose) cat("mother, ")
+        n1 <- add.gdsn(n, "mother", famD$MatID, compress=compress.annotation,
+            closezip=TRUE)
+        .DigestCode(n1, digest, FALSE)
 
-    sex <- rep("", length(sample.id))
-    sex[famD$Sex==1L] <- "M"; sex[famD$Sex==2L] <- "F"
-    n1 <- add.gdsn(n, "sex", sex, compress=compress.annotation, closezip=TRUE)
-    .DigestCode(n1, digest, FALSE)
+        if (verbose) cat("sex, ")
+        sex <- rep("", length(sample.id))
+        sex[famD$Sex==1L] <- "M"; sex[famD$Sex==2L] <- "F"
+        n1 <- add.gdsn(n, "sex", sex, compress=compress.annotation,
+            closezip=TRUE)
+        .DigestCode(n1, digest, FALSE)
 
-    n1 <- add.gdsn(n, "phenotype", famD$Pheno, compress=compress.annotation,
-        closezip=TRUE)
-    .DigestCode(n1, digest, FALSE)
+        if (verbose) cat("phenotype\n")
+        n1 <- add.gdsn(n, "phenotype", famD$Pheno, compress=compress.annotation,
+            closezip=TRUE)
+        .DigestCode(n1, digest, FALSE)
+    }
 
     ##################################################
     # optimize access efficiency

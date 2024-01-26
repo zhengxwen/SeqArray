@@ -7,8 +7,8 @@
 }
 \usage{
 seqBED2GDS(bed.fn, fam.fn, bim.fn, out.gdsfn, compress.geno="LZMA_RA",
-    compress.annotation="LZMA_RA", chr.conv=TRUE, optimize=TRUE, digest=TRUE,
-    parallel=FALSE, verbose=TRUE)
+    compress.annotation="LZMA_RA", chr.conv=TRUE, include.pheno=TRUE,
+    optimize=TRUE, digest=TRUE, parallel=FALSE, verbose=TRUE)
 seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos_ref_alt"),
     multi.row=FALSE, verbose=TRUE)
 }
@@ -28,6 +28,8 @@ seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos_ref_alt"),
         \code{add.gdsn}}
     \item{chr.conv}{if \code{TRUE}, convert numeric chromosome codes 23 to X,
         24 to Y, 25 to XY, and 26 to MT}
+    \item{include.pheno}{if \code{TRUE}, add 'family', 'father', 'mother',
+        'sex' and 'phenotype' in the FAM file to the output GDS file}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
