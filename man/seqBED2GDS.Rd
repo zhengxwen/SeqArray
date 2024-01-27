@@ -29,7 +29,9 @@ seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos_ref_alt"),
     \item{chr.conv}{if \code{TRUE}, convert numeric chromosome codes 23 to X,
         24 to Y, 25 to XY, and 26 to MT}
     \item{include.pheno}{if \code{TRUE}, add 'family', 'father', 'mother',
-        'sex' and 'phenotype' in the FAM file to the output GDS file}
+        'sex' and 'phenotype' in the FAM file to the output GDS file;
+        \code{FALSE} for no phenotype; or a character vector to specify which
+        of the family, father, mother, sex and phenotype variables to be added}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",

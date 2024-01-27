@@ -794,7 +794,22 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
     stopifnot(is.logical(chr.conv), length(chr.conv)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
-    stopifnot(is.logical(include.pheno), length(include.pheno)==1L)
+    stopifnot(is.logical(include.pheno) | is.character(include.pheno))
+    nm_pheno <- c("family", "father", "mother", "sex", "phenotype")
+    if (is.logical(include.pheno))
+    {
+        if (!isTRUE(include.pheno) && !isFALSE(include.pheno))
+            stop("'include.pheno' should be TRUE, FALSE or a character vector.")
+        include.pheno <- if (include.pheno) nm_pheno else character()
+    }
+    if (is.character(include.pheno))
+    {
+        if (!all(include.pheno %in% nm_pheno))
+        {
+            stop("'include.pheno' should be one of ",
+                paste(nm_pheno, collapse=", "), ".")
+        }
+    }
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     pnum <- .NumParallel(parallel)
@@ -1170,35 +1185,45 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     if (verbose) cat("    sample.annotation\n")
     n <- addfolder.gdsn(dstfile, "sample.annotation")
 
-    if (isTRUE(include.pheno))
+    if (length(include.pheno) && verbose) cat("       ")
+    if ("family" %in% include.pheno)
     {
-        if (verbose) cat("        family, ")
+        if (verbose) cat(" family")
         n1 <- add.gdsn(n, "family", famD$FamilyID, compress=compress.annotation,
             closezip=TRUE)
         .DigestCode(n1, digest, FALSE)
-
-        if (verbose) cat("father, ")
+    }
+    if ("father" %in% include.pheno)
+    {
+        if (verbose) cat(" father")
         n1 <- add.gdsn(n, "father", famD$PatID, compress=compress.annotation,
             closezip=TRUE)
         .DigestCode(n1, digest, FALSE)
-
-        if (verbose) cat("mother, ")
+    }
+    if ("mother" %in% include.pheno)
+    {
+        if (verbose) cat(" mother")
         n1 <- add.gdsn(n, "mother", famD$MatID, compress=compress.annotation,
             closezip=TRUE)
         .DigestCode(n1, digest, FALSE)
-
-        if (verbose) cat("sex, ")
+    }
+    if ("sex" %in% include.pheno)
+    {
+        if (verbose) cat(" sex")
         sex <- rep("", length(sample.id))
         sex[famD$Sex==1L] <- "M"; sex[famD$Sex==2L] <- "F"
         n1 <- add.gdsn(n, "sex", sex, compress=compress.annotation,
             closezip=TRUE)
         .DigestCode(n1, digest, FALSE)
-
-        if (verbose) cat("phenotype\n")
+    }
+    if ("phenotype" %in% include.pheno)
+    {
+        if (verbose) cat(" phenotype")
         n1 <- add.gdsn(n, "phenotype", famD$Pheno, compress=compress.annotation,
             closezip=TRUE)
         .DigestCode(n1, digest, FALSE)
     }
+    if (length(include.pheno) && verbose) cat("\n")
 
     ##################################################
     # optimize access efficiency
