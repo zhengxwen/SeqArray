@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2022    Xiuwen Zheng
+// Copyright (C) 2013-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -20,16 +20,14 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include "Index.h"
-
-#include <Rinternals.h>
-#include <R_ext/Rdynload.h>
-
 #include <set>
 #include <algorithm>
-
 #include "ReadByVariant.h"
 #include "ReadBySample.h"
 #include <ctype.h>
+
+#include <Rinternals.h>
+#include <R_ext/Rdynload.h>
 
 
 

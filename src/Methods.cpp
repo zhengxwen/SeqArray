@@ -2,7 +2,7 @@
 //
 // Methods.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2015-2022    Xiuwen Zheng
+// Copyright (C) 2015-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -19,9 +19,9 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
+#include "Index.h"
 #include <Rdefines.h>
 #include <R_ext/Rdynload.h>
-#include "Index.h"
 
 using namespace SeqArray;
 

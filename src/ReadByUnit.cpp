@@ -22,12 +22,6 @@
 #include "Index.h"
 
 
-namespace SeqArray
-{
-
-}
-
-
 extern "C"
 {
 using namespace SeqArray;
