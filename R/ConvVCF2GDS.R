@@ -780,7 +780,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 ptmpfn=ptmpfn, psplit=psplit, num_array=num_array)
 
             if (verbose)
-                cat("    Done (", date(), ").\n", sep="")
+                cat("    >>> Done (", date(), ") <<<\n", sep="")
 
         } else {
             pnum <- 1L
@@ -794,8 +794,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     gfile <- createfn.gds(out.fn)
     on.exit({ if (!is.null(gfile)) closefn.gds(gfile) }, add=TRUE)
-    if (verbose)
-        cat("Output:\n    ", out.fn, "\n", sep="")
 
     put.attr.gdsn(gfile$root, "FileFormat", "SEQ_ARRAY")
     put.attr.gdsn(gfile$root, "FileVersion", "v1.0")
@@ -923,6 +921,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # VCF INFO
 
     varInfo <- addfolder.gdsn(varAnnot, "info")
+    if (verbose) { prefix <- " "; cat("    INFO:") }
 
     if (!is.null(header$info))
     {
@@ -937,7 +936,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             header$info <- header$info[!flag, ]
         }
 
-        if (nrow(header$info) > 0L)
+        if (NROW(header$info) > 0L)
         {
             int_type <- integer(nrow(header$info))
             int_num  <- suppressWarnings(as.integer(header$info$Number))
@@ -999,6 +998,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 # add
                 if (import.flag[i])
                 {
+                    if (verbose)
+                    {
+                        cat(prefix, header$info$ID[i], sep="")
+                        prefix <- ","
+                    }
                     node <- .AddVar(storage.option, varInfo, header$info$ID[i],
                         storage=mode, valdim=initdim)
                     put.attr.gdsn(node, "Number", header$info$Number[i])
@@ -1023,6 +1027,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             header$info$import.flag <- import.flag
         }
     }
+    if (verbose) cat("\n")
 
 
     ##################################################
@@ -1030,6 +1035,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     # add the FORMAT field
     varFormat <- addfolder.gdsn(varAnnot, "format")
+    if (verbose) { prefix <- " "; cat("    FORMAT:") }
 
     if (!is.null(header$format))
     {
@@ -1083,6 +1089,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         # add
         if (import.flag[i])
         {
+            if (verbose)
+            {
+                cat(prefix, header$format$ID[i], sep="")
+                prefix <- ","
+            }
             node <- addfolder.gdsn(varFormat, header$format$ID[i])
             put.attr.gdsn(node, "Number", header$format$Number[i])
             put.attr.gdsn(node, "Type", header$format$Type[i])
@@ -1100,6 +1111,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         header$format$int_num  <- as.integer(int_num)
         header$format$import.flag <- import.flag
     }
+    if (verbose) cat("\n")
 
 
     ##################################################
@@ -1111,6 +1123,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     ##################################################
     # sync file
     sync.gds(gfile)
+    if (verbose)
+        cat("Output:\n    ", out.fn, "\n", sep="")
 
 
     ##################################################
