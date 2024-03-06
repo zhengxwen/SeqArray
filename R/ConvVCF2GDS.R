@@ -1175,7 +1175,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                         raise.error = raise.error, filter.levels = filterlevels,
                         start = start, count = count,
                         chr.prefix = ignore.chr.prefix,
-                        progfile = progfile,
+                        progfile = progfile, use.file = TRUE,
                         verbose = verbose),
                     linecnt, new.env())
 
@@ -1202,7 +1202,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     raise.error = raise.error, filter.levels = filterlevels,
                     start = start, count = count,
                     chr.prefix = ignore.chr.prefix,
-                    progfile = progfile,
+                    progfile = progfile, use.file = FALSE,
                     verbose = verbose),
                 linecnt, new.env())
 

@@ -1169,6 +1169,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		SEXP ChrPrefix = RGetListElement(param, "chr.prefix");
 		// progress file
 		SEXP progfile = RGetListElement(param, "progfile");
+		// file or connection object
+		bool usefile = Rf_asLogical(RGetListElement(param, "use.file")) == TRUE;
 		// verbose
 		// bool Verbose = (LOGICAL(RGetListElement(param, "verbose"))[0] == TRUE);
 
@@ -1320,7 +1322,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		InitText();
 
-		if (!Rf_isNull(progfile))
+		if (usefile)
 		{
 			while (!VCF_EOF())
 			{

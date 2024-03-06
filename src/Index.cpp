@@ -1093,7 +1093,7 @@ bool CVarApplyList::CallNext()
 // ===========================================================
 
 static const int PROGRESS_BAR_CHAR_NUM = 50;
-static const int PROGRESS_LINE_NUM = 100000;
+static const int PROGRESS_LINE_NUM = 10000;
 
 static const double S_MIN  =  60;
 static const double S_HOUR =  60 * S_MIN;
@@ -1243,7 +1243,7 @@ void CProgress::ShowProgress()
 			}
 		} else {
 			int n = vCounter / PROGRESS_LINE_NUM;
-			n = (n / 10) + (n % 10 ? 1 : 0);
+			n = (n / 100) + (n % 100 ? 1 : 0);
 			string s(n, '.');
 			const char *dt = datetime_str();
 			if (NewLine)
