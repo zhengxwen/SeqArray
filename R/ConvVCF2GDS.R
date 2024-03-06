@@ -1135,17 +1135,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         filterlevels <- header$filter$ID
         linecnt <- double(1L)
 
+        # progress file
+        progfile <- file(paste0(out.fn, ".progress"), "wt")
+        cat(">>> ", out.fn, " <<<\n", file=progfile, sep="")
+        infile <- NULL
+        on.exit({
+            close(progfile)
+            unlink(paste0(out.fn, ".progress"), force=TRUE)
+            if (!is.null(infile)) close(infile)
+        }, add=TRUE)
+
         if (!inherits(vcf.fn, "connection"))
         {
-            progfile <- file(paste0(out.fn, ".progress"), "wt")
-            cat(out.fn, ":\n", file=progfile, sep="")
-
-            infile <- NULL
-            on.exit({
-                close(progfile)
-                unlink(paste0(out.fn, ".progress"), force=TRUE)
-                if (!is.null(infile)) close(infile)
-            }, add=TRUE)
 
             for (i in seq_along(vcf.fn))
             {
@@ -1201,7 +1202,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     raise.error = raise.error, filter.levels = filterlevels,
                     start = start, count = count,
                     chr.prefix = ignore.chr.prefix,
-                    progfile = NULL,
+                    progfile = progfile,
                     verbose = verbose),
                 linecnt, new.env())
 

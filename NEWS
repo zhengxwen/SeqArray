@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.43.4
+-------------------------
+
+UTILITIES
+
+    o tweak the display of progress information in `seqVCF2GDS()`
+
+
 CHANGES IN VERSION 1.42.1
 -------------------------
 
