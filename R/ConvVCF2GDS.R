@@ -1136,8 +1136,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         linecnt <- double(1L)
 
         # progress file
-        progfile <- file(paste0(out.fn, ".progress"), "wt")
+        prog_fn <- paste0(out.fn, ".progress")
+        progfile <- file(prog_fn, "wt")
         cat(">>> ", out.fn, " <<<\n", file=progfile, sep="")
+        if (verbose)
+            cat("    [Progress Info: ", basename(prog_fn), "]\n", sep="")
         infile <- NULL
         on.exit({
             close(progfile)
