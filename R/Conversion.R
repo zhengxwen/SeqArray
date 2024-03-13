@@ -782,10 +782,11 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     stopifnot(is.character(bed.fn), length(bed.fn)==1L)
     if (missing(fam.fn) && missing(bim.fn))
     {
-        bed.fn <- gsub("\\.bed$", "", bed.fn, ignore.case=TRUE)
-        fam.fn <- paste0(bed.fn, ".fam")
-        bim.fn <- paste0(bed.fn, ".bim")
-        bed.fn <- paste0(bed.fn, ".bed")
+        fn <- gsub("\\.bed$", "", bed.fn, ignore.case=TRUE)
+        fam.fn <- paste0(fn, ".fam")
+        bim.fn <- paste0(fn, ".bim")
+        if (!grepl("\\.bed$", bed.fn, ignore.case=TRUE))
+            bed.fn <- paste0(fn, ".bed")
     }
     stopifnot(is.character(fam.fn), length(fam.fn)==1L)
     stopifnot(is.character(bim.fn), length(bim.fn)==1L)

@@ -13,10 +13,12 @@ seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos_ref_alt"),
     multi.row=FALSE, verbose=TRUE)
 }
 \arguments{
-    \item{bed.fn}{the file name of binary file, genotype information}
-    \item{fam.fn}{the file name of first six columns of \code{".ped"}}
-    \item{bim.fn}{the file name of extended MAP file:
-        two extra columns = allele names}
+    \item{bed.fn}{the file name of PLINK binary file, genotype information}
+    \item{fam.fn}{the file name of first six columns of \code{".ped"}, sample
+        or family information; if missing, determine the file name using
+        \code{bed.fn}}
+    \item{bim.fn}{the file name of extended MAP file with 6 columns, variant
+        information; if missing, determine the file name using \code{bed.fn}}
     \item{gdsfile}{character (a GDS file name), or
         a \code{\link{SeqVarGDSClass}} object}
     \item{out.gdsfn}{the file name, output a file of SeqArray format}
