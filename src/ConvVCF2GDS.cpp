@@ -2,7 +2,7 @@
 //
 // ConvVCF2GDS.cpp: format conversion from VCF to GDS
 //
-// Copyright (C) 2013-2020    Xiuwen Zheng
+// Copyright (C) 2013-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1040,8 +1040,22 @@ using namespace SeqArray;
 // Get the number of lines in a VCF file
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead)
+static const char *datetime_str()
 {
+	static char date_buffer[96];
+	time_t rawtime;
+	time(&rawtime);
+	struct tm *p = localtime(&rawtime);
+	snprintf(date_buffer, sizeof(date_buffer), "%04d-%02d-%02d %02d:%02d:%02d",
+		p->tm_year+1900, p->tm_mon+1, p->tm_mday,
+		p->tm_hour, p->tm_min, p->tm_sec);
+	return date_buffer;
+}
+
+COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
+	SEXP Verbose)
+{
+	const bool verbose = Rf_asLogical(Verbose) == TRUE;
 	Init_VCF_Buffer(File);
 
 	if (Rf_asLogical(SkipHead) == TRUE)
@@ -1062,11 +1076,21 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead)
 
 	// get the number of left lines
 	C_Int64 n = 0;
+	int m0 = 0, m1 = 0;
 	while (!VCF_EOF())
 	{
 		n ++;
+		if (verbose && ((++m0) >= 20000))
+		{
+			m0 = 0;
+			Rprintf(".");
+			if ((++m1) % 50 == 0)
+				Rprintf("  %lldK [%s]\n", n/1000, datetime_str());
+		}
 		SkipLine();
 	}
+	if (verbose)
+		Rprintf("%s%lld lines [%s]\n", m1>0 ? "    " : "", n, datetime_str());
 
 	Done_VCF_Buffer();
 	return ScalarReal(n);

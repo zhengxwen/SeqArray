@@ -38,7 +38,7 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
-seqVCF_Header <- function(vcf.fn, getnum=FALSE)
+seqVCF_Header <- function(vcf.fn, getnum=FALSE, verbose=TRUE)
 {
     # check
     if (!inherits(vcf.fn, "connection"))
@@ -49,6 +49,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
         ilist <- 1L
     }
     stopifnot(is.logical(getnum), length(getnum)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
 
     #########################################################
     # open the vcf file
@@ -115,7 +116,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE)
                     if (isTRUE(getnum))
                     {
                         nVariant <- nVariant + length(s) +
-                            .Call(SEQ_VCF_NumLines, infile, FALSE)
+                            .Call(SEQ_VCF_NumLines, infile, FALSE, verbose)
                     }
                 }
                 break
@@ -580,11 +581,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     if (!inherits(vcf.fn, "connection"))
     {
         if (is.null(header))
-            header <- seqVCF_Header(vcf.fn)
+            header <- seqVCF_Header(vcf.fn, verbose=FALSE)
     } else {
         if (is.null(header))
         {
-            header <- seqVCF_Header(vcf.fn)
+            header <- seqVCF_Header(vcf.fn, verbose=FALSE)
             samp.id <- header$sample.id
         } else
             samp.id <- seqVCF_SampID(vcf.fn)

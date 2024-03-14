@@ -5,6 +5,9 @@ UTILITIES
 
     o tweak the display of progress information in `seqVCF2GDS()`
 
+    o `seqVCF_Header(, getnum=TRUE, verbose=TRUE)` to show the progress
+      information for scanning the file
+
 
 CHANGES IN VERSION 1.42.1
 -------------------------

@@ -5,12 +5,14 @@
     Parses the meta-information lines of a VCF or BCF file.
 }
 \usage{
-seqVCF_Header(vcf.fn, getnum=FALSE)
+seqVCF_Header(vcf.fn, getnum=FALSE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name of VCF or BCF format;
         or a \code{\link{connection}} object for VCF format}
     \item{getnum}{if \code{TRUE}, return the total number of variants}
+    \item{verbose}{when \code{getnum=TRUE} and \code{verbose=TRUE}, show
+        the progress information for scanning the file}
 }
 \value{
     Return a list (with a class name "SeqVCFHeaderClass", S3 object):
