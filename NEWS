@@ -6,7 +6,15 @@ UTILITIES
     o tweak the display of progress information in `seqVCF2GDS()`
 
     o `seqVCF_Header(, getnum=TRUE, verbose=TRUE)` to show the progress
-      information for scanning the file
+      information for scanning the VCF file
+
+    o new `seqGetData(, "$dosage_alt2")` and `seqGetData(, "$dosage_sp2")` for
+      sex chromosomes, when the alleles are partially missing
+
+BUG FIXES
+
+    o `seqGetData(, "$dosage_alt")` and `seqGetData(, "$dosage_sp")` work
+      correctly when the ploidy is >2 and there are missing alleles
 
 
 CHANGES IN VERSION 1.42.1

@@ -2,7 +2,7 @@
 //
 // ReadByVariant.h: Read data variant by variant
 //
-// Copyright (C) 2013-2022    Xiuwen Zheng
+// Copyright (C) 2013-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -131,10 +131,14 @@ public:
 	void ReadDosage(int *Base);
 	/// read dosages of alternative alleles in 32-bit integer
 	void ReadDosageAlt(int *Base);
+	/// read dosages of alternative alleles in 32-bit integer, allowing partial missing
+	void ReadDosageAlt_p(int *Base);
 	/// read dosages in unsigned 8-bit intetger
 	void ReadDosage(C_UInt8 *Base);
 	/// read dosages of alternative alleles in unsigned 8-bit intetger
 	void ReadDosageAlt(C_UInt8 *Base);
+	/// read dosages of alternative alleles in unsigned 8-bit intetger, allowing partial missing
+	void ReadDosageAlt_p(C_UInt8 *Base);
 };
 
 

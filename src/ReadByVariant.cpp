@@ -2,7 +2,7 @@
 //
 // ReadByVariant.cpp: Read data variant by variant
 //
-// Copyright (C) 2013-2022    Xiuwen Zheng
+// Copyright (C) 2013-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -391,7 +391,6 @@ void CApply_Variant_Dosage::ReadDosage(int *Base)
 {
 	int *p = (int *)ExtPtr2.get();
 	int missing = _ReadGenoData(p);
-
 	// count the number of reference allele
 	if (Ploidy == 2) // diploid
 	{
@@ -417,7 +416,6 @@ void CApply_Variant_Dosage::ReadDosageAlt(int *Base)
 {
 	int *p = (int *)ExtPtr2.get();
 	int missing = _ReadGenoData(p);
-
 	// count the number of reference allele
 	if (Ploidy == 2) // diploid
 	{
@@ -428,13 +426,39 @@ void CApply_Variant_Dosage::ReadDosageAlt(int *Base)
 			int cnt = 0;
 			for (int m=Ploidy; m > 0; m--, p++)
 			{
-				if (*p != 0)
+				if (*p == missing)
+				{
+					cnt = NA_INTEGER;
+				} else if (*p != 0)
 				{
 					if (cnt != NA_INTEGER) cnt ++;
-				} else if (*p == missing)
-					cnt = NA_INTEGER;
+				}
 			}
 			*Base ++ = cnt;
+		}
+	}
+}
+
+void CApply_Variant_Dosage::ReadDosageAlt_p(int *Base)
+{
+	int *p = (int *)ExtPtr2.get();
+	int missing = _ReadGenoData(p);
+	// count the number of reference allele
+	/*
+	if (Ploidy == 2) // diploid
+	{
+		vec_i32_cnt_dosage_alt2_p(p, Base, SampNum, 0, missing, NA_INTEGER);
+	} else */ {
+		for (int n=SampNum; n > 0; n--)
+		{
+			int cnt = 0, non_miss = Ploidy;
+			for (int m=Ploidy; m > 0; m--, p++)
+			{
+				if (*p == missing)
+					non_miss --;
+				else if (*p != 0) cnt ++;
+			}
+			*Base ++ = (non_miss > 0) ? cnt : NA_INTEGER;
 		}
 	}
 }
@@ -443,14 +467,13 @@ void CApply_Variant_Dosage::ReadDosage(C_UInt8 *Base)
 {
 	C_UInt8 *p = (C_UInt8 *)ExtPtr2.get();
 	C_UInt8 missing = _ReadGenoData(p);
-
 	// count the number of reference allele
 	if (Ploidy == 2) // diploid
 	{
 		vec_i8_cnt_dosage2((int8_t *)p, (int8_t *)Base, SampNum, 0,
 			missing, NA_RAW);
 	} else {
-		C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
+		const C_UInt8 *p = (const C_UInt8 *)ExtPtr.get();
 		for (int n=SampNum; n > 0; n--)
 		{
 			C_UInt8 cnt = 0;
@@ -471,26 +494,51 @@ void CApply_Variant_Dosage::ReadDosageAlt(C_UInt8 *Base)
 {
 	C_UInt8 *p = (C_UInt8 *)ExtPtr2.get();
 	C_UInt8 missing = _ReadGenoData(p);
-
 	// count the number of reference allele
 	if (Ploidy == 2) // diploid
 	{
 		vec_i8_cnt_dosage_alt2((int8_t *)p, (int8_t *)Base, SampNum, 0,
 			missing, NA_RAW);
 	} else {
-		C_UInt8 *p = (C_UInt8 *)ExtPtr.get();
 		for (int n=SampNum; n > 0; n--)
 		{
 			C_UInt8 cnt = 0;
 			for (int m=Ploidy; m > 0; m--, p++)
 			{
-				if (*p != 0)
+				if (*p == missing)
+				{
+					cnt = NA_RAW;
+				} else if (*p != 0)
 				{
 					if (cnt != NA_RAW) cnt ++;
-				} else if (*p == missing)
-					cnt = NA_RAW;
+				}
 			}
 			*Base ++ = cnt;
+		}
+	}
+}
+
+void CApply_Variant_Dosage::ReadDosageAlt_p(C_UInt8 *Base)
+{
+	C_UInt8 *p = (C_UInt8 *)ExtPtr2.get();
+	C_UInt8 missing = _ReadGenoData(p);
+	// count the number of reference allele
+	/*
+	if (Ploidy == 2) // diploid
+	{
+		vec_i8_cnt_dosage_alt2_p((int8_t *)p, (int8_t *)Base, SampNum, 0,
+			missing, NA_RAW);
+	} else */ {
+		for (int n=SampNum; n > 0; n--)
+		{
+			C_UInt8 cnt = 0, non_miss = Ploidy;
+			for (int m=Ploidy; m > 0; m--, p++)
+			{
+				if (*p == missing)
+					non_miss --;
+				else if (*p != 0) cnt ++;
+			}
+			*Base ++ = (non_miss > 0) ? cnt : NA_RAW;
 		}
 	}
 }
