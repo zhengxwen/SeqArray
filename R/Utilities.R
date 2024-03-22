@@ -336,6 +336,14 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 ans <- FUN(gdsfile, ...)
         }
 
+        if (is.function(.combine))
+        {
+            if (length(formals(args(.combine))) == 1L)
+                .combine(ans)
+            else
+                ans <- .combine(NULL, ans)
+        }
+
     } else if (inherits(cl, "cluster"))
     {
         ## multiple processes with a predefined cluster
