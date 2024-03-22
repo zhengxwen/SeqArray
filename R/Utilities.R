@@ -455,7 +455,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 # open the file
                 if (is.character(gds))
                     gds <- seqOpen(gds, allow.duplicate=TRUE)
-                # save interally
+                # save internally
                 .packageEnv$gfile <- gds
                 .packageEnv$sample.sel <- memDecompress(sel_sample, type="gzip")
                 .packageEnv$variant.sel <- memDecompress(sel_variant, type="gzip")
