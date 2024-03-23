@@ -888,7 +888,7 @@ void vec_i8_cnt_dosage_alt2_p(const int8_t *p, int8_t *out, size_t n,
 
 		__m128i b0 = _mm_cmpeq_epi8(v0, miss16);
 		__m128i b1 = _mm_cmpeq_epi8(v1, miss16);
-		__m128i bb = _mm_and_si128(v0, v1);
+		__m128i bb = _mm_and_si128(b0, b1);
 
 		__m128i c = two16;
 		c = _mm_add_epi8(c, _mm_or_si128(b0, _mm_cmpeq_epi8(v0, val16)));
