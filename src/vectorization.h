@@ -380,7 +380,7 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage2(const int32_t *p,
 COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2(const int32_t *p,
 	int32_t *out, size_t n, int32_t val, int32_t missing, int32_t missing_substitute);
 
-/// assuming 'out' is 4-byte aligned, output (p[0]!=val) + (p[1]!=val) allowing partial missing
+/// output (p[0]!=val) + (p[1]!=val) allowing partial missing
 COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2_p(const int32_t *p,
 	int32_t *out, size_t n, int32_t val, int32_t missing, int32_t missing_substitute);
 
