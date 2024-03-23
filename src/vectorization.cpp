@@ -1703,10 +1703,9 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2_p(const int32_t *p,
 	const __m128i miss4 = _mm_set1_epi32(missing);
 	const __m128i sub4  = _mm_set1_epi32(missing_substitute);
 	const __m128i two4  = _mm_set1_epi32(2);
-	const __m128i zero  = _mm_setzero_si128();
 	for (; n >= 4; n-=4)
 	{
-		__m128i v, w;
+		__m128i v;
 		v = MM_LOADU_128((__m128i const*)p); p += 4;
 		__m128i v0 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,2,0));
 		__m128i v1 = _mm_shuffle_epi32(v, _MM_SHUFFLE(0,0,3,1));
@@ -1722,8 +1721,8 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2_p(const int32_t *p,
 		__m128i bb = _mm_and_si128(v0, v1);
 
 		__m128i c = two4;
-		c = _mm_add_epi32(c, _mm_or_si128(b0, _mm_cmpeq_epi32(v0, zero)));
-		c = _mm_add_epi32(c, _mm_or_si128(b1, _mm_cmpeq_epi32(v1, zero)));
+		c = _mm_add_epi32(c, _mm_or_si128(b0, _mm_cmpeq_epi32(v0, val4)));
+		c = _mm_add_epi32(c, _mm_or_si128(b1, _mm_cmpeq_epi32(v1, val4)));
 		c = _mm_or_si128(_mm_and_si128(bb, sub4), _mm_andnot_si128(bb, c));
 
 		_mm_storeu_si128((__m128i *)out, c);
