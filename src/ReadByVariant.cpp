@@ -444,11 +444,10 @@ void CApply_Variant_Dosage::ReadDosageAlt_p(int *Base)
 	int *p = (int *)ExtPtr2.get();
 	int missing = _ReadGenoData(p);
 	// count the number of reference allele
-	/*
 	if (Ploidy == 2) // diploid
 	{
 		vec_i32_cnt_dosage_alt2_p(p, Base, SampNum, 0, missing, NA_INTEGER);
-	} else */ {
+	} else {
 		for (int n=SampNum; n > 0; n--)
 		{
 			int cnt = 0, non_miss = Ploidy;
@@ -523,12 +522,11 @@ void CApply_Variant_Dosage::ReadDosageAlt_p(C_UInt8 *Base)
 	C_UInt8 *p = (C_UInt8 *)ExtPtr2.get();
 	C_UInt8 missing = _ReadGenoData(p);
 	// count the number of reference allele
-	/*
 	if (Ploidy == 2) // diploid
 	{
 		vec_i8_cnt_dosage_alt2_p((int8_t *)p, (int8_t *)Base, SampNum, 0,
 			missing, NA_RAW);
-	} else */ {
+	} else {
 		for (int n=SampNum; n > 0; n--)
 		{
 			C_UInt8 cnt = 0, non_miss = Ploidy;

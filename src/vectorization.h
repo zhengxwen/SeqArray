@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2022    Xiuwen Zheng
+// Copyright (C) 2016-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -23,7 +23,7 @@
  *	\file     vectorization.h
  *	\author   Xiuwen Zheng [zhengx@u.washington.edu]
  *	\version  1.0
- *	\date     2016-2022
+ *	\date     2016-2024
  *	\brief    compiler optimization with vectorization
  *	\details
 **/
@@ -321,6 +321,10 @@ COREARRAY_DLL_DEFAULT void vec_i8_cnt_dosage2(const int8_t *p,
 COREARRAY_DLL_DEFAULT void vec_i8_cnt_dosage_alt2(const int8_t *p,
 	int8_t *out, size_t n, int8_t val, int8_t missing, int8_t missing_substitute);
 
+/// output (p[0]!=val) + (p[1]!=val) allowing partial missing
+COREARRAY_DLL_DEFAULT void vec_i8_cnt_dosage_alt2_p(const int8_t *p,
+	int8_t *out, size_t n, int8_t val, int8_t missing, int8_t missing_substitute);
+
 
 
 // ===========================================================
@@ -374,6 +378,10 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage2(const int32_t *p,
 
 /// assuming 'out' is 4-byte aligned, output (p[0]!=val) + (p[1]!=val) or missing_substitute
 COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2(const int32_t *p,
+	int32_t *out, size_t n, int32_t val, int32_t missing, int32_t missing_substitute);
+
+/// assuming 'out' is 4-byte aligned, output (p[0]!=val) + (p[1]!=val) allowing partial missing
+COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2_p(const int32_t *p,
 	int32_t *out, size_t n, int32_t val, int32_t missing, int32_t missing_substitute);
 
 /// shifting *p right by 2 bits, assuming p is 4-byte aligned
