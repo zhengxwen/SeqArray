@@ -1718,7 +1718,7 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2_p(const int32_t *p,
 		v1 = _mm_unpacklo_epi64(v1, w1);
 		__m128i b0 = _mm_cmpeq_epi32(v0, miss4);
 		__m128i b1 = _mm_cmpeq_epi32(v1, miss4);
-		__m128i bb = _mm_and_si128(v0, v1);
+		__m128i bb = _mm_and_si128(b0, b1);
 
 		__m128i c = two4;
 		c = _mm_add_epi32(c, _mm_or_si128(b0, _mm_cmpeq_epi32(v0, val4)));
