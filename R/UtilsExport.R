@@ -184,7 +184,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     on.exit({ closefn.gds(outfile) })
 
     if (verbose)
-        cat("Export to '", out.fn, "'\n", sep="")
+        cat("Export to ", sQuote(out.fn), ":\n", sep="")
 
     # copy folders and attributes
     put.attr.gdsn(outfile$root, val=gdsfile$root)
