@@ -7,7 +7,7 @@ by \code{seqSetFilter()}.
 }
 \usage{
 seqExport(gdsfile, out.fn, info.var=NULL, fmt.var=NULL, samp.var=NULL,
-    optimize=TRUE, digest=TRUE, verbose=TRUE)
+    optimize=TRUE, digest=TRUE, verbose=TRUE, verbose.clean=NA)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -24,6 +24,9 @@ seqExport(gdsfile, out.fn, info.var=NULL, fmt.var=NULL, samp.var=NULL,
         "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
         if TRUE or a digest algorithm is specified}
     \item{verbose}{if \code{TRUE}, show information}
+    \item{verbose.clean}{when \code{verbose.clean=NA}, set it to \code{verbose};
+        whether display information when calling \code{cleanup.gds} or not;
+        only applicable when \code{optimize=TRUE}}
 }
 \value{
     Return the file name of GDS format with an absolute path.
@@ -31,7 +34,7 @@ seqExport(gdsfile, out.fn, info.var=NULL, fmt.var=NULL, samp.var=NULL,
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}
+    \code{\link{seqVCF2GDS}}, \code{\link{cleanup.gds}}
 }
 
 \examples{

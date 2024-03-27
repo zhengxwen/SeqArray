@@ -11,7 +11,7 @@
 # Export to a GDS file
 #
 seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
-    samp.var=NULL, optimize=TRUE, digest=TRUE, verbose=TRUE)
+    samp.var=NULL, optimize=TRUE, digest=TRUE, verbose=TRUE, verbose.clean=NA)
 {
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(is.character(out.fn), length(out.fn)==1L)
@@ -23,6 +23,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    stopifnot(is.logical(verbose.clean), length(verbose.clean)==1L)
+    if (is.na(verbose.clean)) verbose.clean <- verbose
 
     #######################################################################
 
@@ -331,9 +333,9 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     # optimize access efficiency
     if (optimize)
     {
-        if (verbose)
+        if (verbose.clean)
             cat("Optimize the access efficiency ...\n")
-        cleanup.gds(out.fn, verbose=verbose)
+        cleanup.gds(out.fn, verbose=verbose.clean)
     }
 
     # output
