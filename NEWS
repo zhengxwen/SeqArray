@@ -12,8 +12,8 @@ UTILITIES
       sex chromosomes, when the alleles are partially missing (e.g., genotypes
       on chromosome X for males)
 
-    o new 'verbose.clean' in `seqExport()` to control the level of information
-      display
+    o new 'verbose.clean' in `seqExport()` to control how much information to
+      be displayed
 
 
 CHANGES IN VERSION 1.42.3

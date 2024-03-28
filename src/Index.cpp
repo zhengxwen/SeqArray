@@ -1231,13 +1231,13 @@ void CProgress::ShowProgress()
 				ConnPutText(File, "[%s] %2.0f%%, %s %s", bar, p,
 					vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d)", *R_Process_Index);
+					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
 				ConnPutText(File, "\n");
 			} else {
 				ConnPutText(File, "\r[%s] %2.0f%%, %s %s", bar, p,
 					vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d)", *R_Process_Index);
+					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
 				ConnPutText(File, "    ");
 				if (vCounter >= vTotalCount) ConnPutText(File, "\n");
 			}
@@ -1255,7 +1255,7 @@ void CProgress::ShowProgress()
 				} else
 					ConnPutText(File, "[: (0 line)] %s", dt);
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d)", *R_Process_Index);
+					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
 				ConnPutText(File, "\n");
 			} else {
 				if (vCounter > 0)
@@ -1265,7 +1265,7 @@ void CProgress::ShowProgress()
 				} else
 					ConnPutText(File, "\r[: (0 line)] %s", dt);
 				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d)", *R_Process_Index);
+					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
 			}
 		}
 		(*File->fflush)(File);
@@ -1329,8 +1329,8 @@ void CProgressStdOut::ShowProgress()
 				"\r[%s] 100%%, completed, %s", bar, time_str(s));
 			if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 			{
-				snprintf(buffer+n, sizeof(buffer)-n, " (process %d)",
-					*R_Process_Index);
+				snprintf(buffer+n, sizeof(buffer)-n, " (process %d/%d)",
+					*R_Process_Index, *R_Process_Count);
 			}
 			Rprintf("%s\n", buffer);
 		} else if ((interval >= 5) || (vCounter <= 0))
@@ -1341,8 +1341,8 @@ void CProgressStdOut::ShowProgress()
 				"\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
 			if ((vCounter>0) && R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 			{
-				n += snprintf(buffer+n, sizeof(buffer)-n, " (process %d)",
-					*R_Process_Index);
+				n += snprintf(buffer+n, sizeof(buffer)-n, " (process %d/%d)",
+					*R_Process_Index, *R_Process_Count);
 			}
 			strcpy(buffer+n, "    ");
 			Rprintf("%s", buffer);

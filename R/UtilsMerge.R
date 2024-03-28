@@ -274,9 +274,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
 
     if (verbose)
     {
-        cat(date(), "\n", sep="")
-        cat(sprintf("Preparing merging %d GDS files:\n",
-            length(gds.fn)))
+        .cat(sprintf("Preparing merging %d GDS files (%s):", length(gds.fn),
+            date()))
     }
 
     # open all GDS files
