@@ -19,9 +19,9 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Index.h"
 #include <set>
 #include <algorithm>
+#include "Index.h"
 #include "ReadByVariant.h"
 #include "ReadBySample.h"
 

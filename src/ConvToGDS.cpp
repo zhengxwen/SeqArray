@@ -19,8 +19,8 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Index.h"
 #include <vector>
+#include "Index.h"
 
 using namespace std;
 using namespace SeqArray;

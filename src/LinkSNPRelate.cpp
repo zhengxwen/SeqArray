@@ -21,7 +21,6 @@
 
 #include "ReadByVariant.h"
 #include "ReadBySample.h"
-
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 

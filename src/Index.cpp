@@ -19,9 +19,8 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
+#include <cstdio>
 #include "Index.h"
-#include <stdio.h>
-#include <string.h>
 
 using namespace std;
 

@@ -19,11 +19,11 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Index.h"
-#include "vectorization.h"
 #include <vector>
 #include <set>
 #include <algorithm>
+#include "Index.h"
+#include "vectorization.h"
 
 
 // 1: load format field except GT

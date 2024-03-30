@@ -23,18 +23,16 @@
 #ifndef _HEADER_SEQ_INDEX_
 #define _HEADER_SEQ_INDEX_
 
-#include <R_GDS_CPP.h>
-#include <dTrait.h>
-
 #include <string>
 #include <vector>
 #include <list>
 #include <map>
 #include <set>
 #include <ctime>
-
 #include <cctype>
 #include <cstring>
+#include <dTrait.h>
+#include <R_GDS_CPP.h>
 #include "vectorization.h"
 
 

@@ -19,13 +19,12 @@
 // along with SeqArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include "Index.h"
 #include <set>
 #include <algorithm>
+#include <ctype.h>
+#include "Index.h"
 #include "ReadByVariant.h"
 #include "ReadBySample.h"
-#include <ctype.h>
-
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
