@@ -340,8 +340,6 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         {
             if (length(formals(args(.combine))) == 1L)
                 .combine(ans)
-            else
-                ans <- .combine(NULL, ans)
         }
 
     } else if (inherits(cl, "cluster"))
