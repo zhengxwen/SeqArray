@@ -1085,12 +1085,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 			m0 = 0;
 			Rprintf(".");
 			if ((++m1) % 50 == 0)
-				Rprintf("  %lldK [%s]\n", n/1000, datetime_str());
+				Rprintf("  %ldK [%s]\n", (long int)n/1000, datetime_str());
 		}
 		SkipLine();
 	}
 	if (verbose)
-		Rprintf("%s%lld lines [%s]\n", m1>0 ? "    " : "", n, datetime_str());
+	{
+		Rprintf("%s%ld lines [%s]\n", m1>0 ? "    " : "", (long int)n,
+			datetime_str());
+	}
 
 	Done_VCF_Buffer();
 	return ScalarReal(n);
