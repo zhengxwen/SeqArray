@@ -2,7 +2,7 @@
 //
 // samtools_ext: the functions interacting with Rsamtools
 //
-// Copyright (C) 2017-2019    Xiuwen Zheng
+// Copyright (C) 2017-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -43,7 +43,7 @@ static int (*bgzf_close)(BGZF *fp) = NULL;
 static ssize_t (*bgzf_write)(BGZF *fp, const void *data, ssize_t length) = NULL;
 
 
-static void init_bgzf()
+static void init_bgzf(void)
 {
 	PKG_LOAD(bgzf_open);
 	PKG_LOAD(bgzf_close);
