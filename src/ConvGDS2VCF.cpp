@@ -801,7 +801,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Di_WrtFmt(SEXP X)
 		}
 	#else
 		static const __m128i ten = _mm_set1_epi8(10);
-		static const __m128i na  = _mm_set1_epi8(0xFF);
+		static const __m128i na  = _mm_set1_epi8(-1);
 		static const __m128i char_zero = _mm_set1_epi8('0');
 		static const __m128i char_na = _mm_set1_epi8('.');
 

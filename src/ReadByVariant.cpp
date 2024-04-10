@@ -343,7 +343,7 @@ void CApply_Variant_Geno::ReadGenoData(int *Base)
 void CApply_Variant_Geno::ReadGenoData(C_UInt8 *Base)
 {
 	C_UInt8 missing = _ReadGenoData(Base);
-	vec_i8_replace((C_Int8*)Base, CellCount, missing, NA_RAW);
+	vec_i8_replace((C_Int8*)Base, CellCount, missing, (C_Int8)NA_RAW);
 }
 
 
@@ -470,7 +470,7 @@ void CApply_Variant_Dosage::ReadDosage(C_UInt8 *Base)
 	if (Ploidy == 2) // diploid
 	{
 		vec_i8_cnt_dosage2((int8_t *)p, (int8_t *)Base, SampNum, 0,
-			missing, NA_RAW);
+			missing, (C_Int8)NA_RAW);
 	} else {
 		const C_UInt8 *p = (const C_UInt8 *)ExtPtr.get();
 		for (int n=SampNum; n > 0; n--)
@@ -497,7 +497,7 @@ void CApply_Variant_Dosage::ReadDosageAlt(C_UInt8 *Base)
 	if (Ploidy == 2) // diploid
 	{
 		vec_i8_cnt_dosage_alt2((int8_t *)p, (int8_t *)Base, SampNum, 0,
-			missing, NA_RAW);
+			missing, (C_Int8)NA_RAW);
 	} else {
 		for (int n=SampNum; n > 0; n--)
 		{
@@ -525,7 +525,7 @@ void CApply_Variant_Dosage::ReadDosageAlt_p(C_UInt8 *Base)
 	if (Ploidy == 2) // diploid
 	{
 		vec_i8_cnt_dosage_alt2_p((int8_t *)p, (int8_t *)Base, SampNum, 0,
-			missing, NA_RAW);
+			missing, (C_Int8)NA_RAW);
 	} else {
 		for (int n=SampNum; n > 0; n--)
 		{

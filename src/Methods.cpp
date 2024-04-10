@@ -121,7 +121,7 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 	switch (TYPEOF(Geno))
 	{
 	case RAWSXP:
-		n_miss = vec_i8_count((char*)RAW(Geno), n, NA_RAW); break;
+		n_miss = vec_i8_count((const char*)RAW(Geno), n, (char)NA_RAW); break;
 	case INTSXP:
 		n_miss = vec_i32_count(INTEGER(Geno), n, NA_INTEGER); break;
 	case REALSXP:
@@ -247,7 +247,7 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_DS_SampVariant(SEXP DS, SEXP sum, SEXP tmp)
 	case RAWSXP:
 		{
 			const Rbyte *pG = RAW(DS), MISSING=NA_RAW;
-			n_miss = vec_i8_count((char*)pG, n, NA_RAW);
+			n_miss = vec_i8_count((const char*)pG, n, (char)NA_RAW);
 			for (int j=0; j < m; j++)
 				for (int i=0; i < num_samp; i++)
 					if (*pG++ == MISSING) pT[i]++;
@@ -334,7 +334,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 	{
 	case 2:
 		if (TYPEOF(Geno) == RAWSXP)
-			vec_i8_count3((const char*)RAW(Geno), N, 0, 1, NA_RAW, &n1, &n2, &n3);
+			vec_i8_count3((const char*)RAW(Geno), N, 0, 1, (char)NA_RAW, &n1, &n2, &n3);
 		else
 			vec_i32_count3(INTEGER(Geno), N, 0, 1, NA_INTEGER, &n1, &n2, &n3);
 		n3 = N - n3;
@@ -348,7 +348,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_List(SEXP List)
 
 	case 1:
 		if (TYPEOF(Geno) == RAWSXP)
-			vec_i8_count2((const char*)RAW(Geno), N, 0, NA_RAW, &n1, &n2);
+			vec_i8_count2((const char*)RAW(Geno), N, 0, (char)NA_RAW, &n1, &n2);
 		else
 			vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &n1, &n2);
 		n2 = N - n2;
@@ -401,7 +401,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Ref(SEXP Geno)
 	const size_t N = XLENGTH(Geno);
 	size_t n, m;
 	if (TYPEOF(Geno) == RAWSXP)
-		vec_i8_count2((const char*)RAW(Geno), N, 0, NA_RAW, &m, &n);
+		vec_i8_count2((const char*)RAW(Geno), N, 0, (char)NA_RAW, &m, &n);
 	else
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &m, &n);
 	n = N - n;
@@ -471,7 +471,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 	if (A < nAllele)
 	{
 		if (TYPEOF(Geno) == RAWSXP)
-			vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
+			vec_i8_count2((const char*)RAW(Geno), N, A, (char)NA_RAW, &m, &n);
 		else
 			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
 		n = N - n;
@@ -540,7 +540,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 		if (TYPEOF(Geno) == RAWSXP)
 		{
 			if (A < 255)
-				vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
+				vec_i8_count2((const char*)RAW(Geno), N, A, (char)NA_RAW, &m, &n);
 			else
 				n = N;
 		} else
@@ -605,7 +605,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Ref(SEXP Geno)
 	const size_t N = XLENGTH(Geno);
 	size_t n, m;
 	if (TYPEOF(Geno) == RAWSXP)
-		vec_i8_count2((const char*)RAW(Geno), N, 0, NA_RAW, &m, &n);
+		vec_i8_count2((const char*)RAW(Geno), N, 0, (char)NA_RAW, &m, &n);
 	else
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &m, &n);
 	if (AFreq_Minor)
@@ -660,7 +660,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 	{
 		size_t n, m;
 		if (TYPEOF(Geno) == RAWSXP)
-			vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
+			vec_i8_count2((const char*)RAW(Geno), N, A, (char)NA_RAW, &m, &n);
 		else
 			vec_i32_count2(INTEGER(Geno), N, A, NA_INTEGER, &m, &n);
 		if (AFreq_Minor)
@@ -730,7 +730,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 		{
 			if (A < 255)
 			{
-				vec_i8_count2((const char*)RAW(Geno), N, A, NA_RAW, &m, &n);
+				vec_i8_count2((const char*)RAW(Geno), N, A, (char)NA_RAW, &m, &n);
 				if (AFreq_Minor)
 				{
 					size_t m0 = N - n - m;  // allele count for alternative
@@ -891,7 +891,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Geno(SEXP Geno)
 	const size_t N = XLENGTH(Geno);
 	size_t n0, nmiss;
 	if (TYPEOF(Geno) == RAWSXP)
-		vec_i8_count2((const char*)RAW(Geno), N, 0, NA_RAW, &n0, &nmiss);
+		vec_i8_count2((const char*)RAW(Geno), N, 0, (char)NA_RAW, &n0, &nmiss);
 	else
 		vec_i32_count2(INTEGER(Geno), N, 0, NA_INTEGER, &n0, &nmiss);
 	size_t n = N - nmiss;
