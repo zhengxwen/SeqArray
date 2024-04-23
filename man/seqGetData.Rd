@@ -42,9 +42,13 @@ associated with these variables.
 
 \code{"$dosage_alt"} returns a RAW/INTEGER matrix for the dosages of alternative
 allele without distinguishing different alternative alleles.
+\code{"$dosage_alt2"} allow the alleles are partially missing (e.g., genotypes
+on chromosome X for males)
 
 \code{"$dosage_sp"} returns a sparse matrix (dgCMatrix) for the dosages of
 alternative allele without distinguishing different alternative alleles.
+\code{"$dosage_sp2"} allow the alleles are partially missing (e.g., genotypes
+on chromosome X for males)
 
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.

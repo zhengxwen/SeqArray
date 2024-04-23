@@ -45,7 +45,6 @@ namespace SeqArray
 static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
 // variable list
-static const string VAR_GENO("genotype");
 static const string VAR_SAMP_ID("sample.id");
 static const string VAR_POSITION("position");
 static const string VAR_CHROM("chromosome");
@@ -241,7 +240,7 @@ static SEXP get_dosage(CFileInfo &File, TVarMap &Var, void *param)
 	if ((nSample > 0) && (nVariant > 0))
 	{
 		// initialize GDS genotype Node
-		CApply_Variant_Dosage NodeVar(File, false, false);
+		CApply_Variant_Dosage NodeVar(File, false, false, false);
 		if (!get_geno_is_i32(P, NodeVar))
 		{
 			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
@@ -275,7 +274,7 @@ static SEXP get_dosage_alt(CFileInfo &File, TVarMap &Var, void *param)
 	if ((nSample > 0) && (nVariant > 0))
 	{
 		// initialize GDS genotype Node
-		CApply_Variant_Dosage NodeVar(File, false, true);
+		CApply_Variant_Dosage NodeVar(File, false, true, false);
 		if (!get_geno_is_i32(P, NodeVar))
 		{
 			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
@@ -309,7 +308,7 @@ static SEXP get_dosage_alt2(CFileInfo &File, TVarMap &Var, void *param)
 	if ((nSample > 0) && (nVariant > 0))
 	{
 		// initialize GDS genotype Node
-		CApply_Variant_Dosage NodeVar(File, false, true);
+		CApply_Variant_Dosage NodeVar(File, false, true, true);
 		if (!get_geno_is_i32(P, NodeVar))
 		{
 			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
@@ -350,7 +349,7 @@ static SEXP get_dosage_sp(CFileInfo &File, TVarMap &Var, void *param)
 	if ((nSample > 0) && (nVariant > 0))
 	{
 		// initialize GDS genotype Node
-		CApply_Variant_Dosage NodeVar(File, false, true);
+		CApply_Variant_Dosage NodeVar(File, false, true, false);
 		const bool isI32 = NodeVar.NeedIntType();
 		// dgCMatrix@x, @i, @p
 		SEXP x_r, i_r;
@@ -449,7 +448,7 @@ static SEXP get_dosage_sp2(CFileInfo &File, TVarMap &Var, void *param)
 	if ((nSample > 0) && (nVariant > 0))
 	{
 		// initialize GDS genotype Node
-		CApply_Variant_Dosage NodeVar(File, false, true);
+		CApply_Variant_Dosage NodeVar(File, false, true, true);
 		const bool isI32 = NodeVar.NeedIntType();
 		// dgCMatrix@x, @i, @p
 		SEXP x_r, i_r;
@@ -1234,7 +1233,7 @@ COREARRAY_DLL_LOCAL TVarMap &VarGetStruct(CFileInfo &File, const string &name)
 		// invalid variable name
 		{
 			throw ErrSeqArray(
-				"'%s' is not a valid variable name, and see ?seqGetData.",
+				"'%s' is not a valid variable name. See ?seqGetData",
 				name.c_str());
 		}
 

@@ -29,6 +29,33 @@ using namespace Vectorization;
 
 static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
+// variable list
+static const string VAR_SAMP_ID("sample.id");
+static const string VAR_POSITION("position");
+static const string VAR_CHROM("chromosome");
+static const string VAR_ID("variant.id");
+static const string VAR_ALLELE("allele");
+static const string VAR_ANNOT_ID("annotation/id");
+static const string VAR_ANNOT_QUAL("annotation/qual");
+static const string VAR_ANNOT_FILTER("annotation/filter");
+static const string VAR_GENOTYPE("genotype");
+static const string VAR_PHASE("phase");
+
+// variable list: internally generated
+static const string VAR_DOSAGE("$dosage");
+static const string VAR_DOSAGE_ALT("$dosage_alt");
+static const string VAR_DOSAGE_ALT2("$dosage_alt2");
+static const string VAR_DOSAGE_SP("$dosage_sp");
+static const string VAR_DOSAGE_SP2("$dosage_sp2");
+static const string VAR_NUM_ALLELE("$num_allele");
+static const string VAR_REF_ALLELE("$ref");
+static const string VAR_ALT_ALLELE("$alt");
+static const string VAR_CHROM_POS("$chrom_pos");
+static const string VAR_CHROM_POS2("$chrom_pos2");
+static const string VAR_CHROM_POS_ALLELE("$chrom_pos_allele");
+static const string VAR_SAMPLE_INDEX("$sample_index");
+static const string VAR_VARIANT_INDEX("$variant_index");
+
 
 // =====================================================================
 // Object for reading basic variables variant by variant
@@ -351,11 +378,11 @@ void CApply_Variant_Geno::ReadGenoData(C_UInt8 *Base)
 // =====================================================================
 // Object for reading genotypes variant by variant
 
-CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw, bool alt):
-	CApply_Variant_Geno(File, use_raw)
+CApply_Variant_Dosage::CApply_Variant_Dosage(CFileInfo &File, int use_raw,
+	bool alt, bool alt2): CApply_Variant_Geno(File, use_raw)
 {
 	fVarType = ctDosage;
-	IsAlt = alt;
+	IsAlt = alt; IsAlt2 = alt2;
 	ExtPtr2.reset(sizeof(int)*CellCount);
 	VarDosage = NULL;
 }
@@ -365,11 +392,23 @@ void CApply_Variant_Dosage::ReadData(SEXP val)
 	switch (TYPEOF(val))
 	{
 		case INTSXP:
-			if (IsAlt) ReadDosageAlt(INTEGER(val)); else ReadDosage(INTEGER(val));
-			break;
+			{
+				int *p = INTEGER(val);
+				if (IsAlt)
+					if (IsAlt2) ReadDosageAlt_p(p); else ReadDosageAlt(p);
+				else
+					ReadDosage(p);
+				break;
+			}
 		case RAWSXP:
-			if (IsAlt) ReadDosageAlt(RAW(val)); else ReadDosage(RAW(val));
-			break;
+			{
+				C_UInt8 *p = RAW(val);
+				if (IsAlt)
+					if (IsAlt2) ReadDosageAlt_p(p); else ReadDosageAlt(p);
+				else
+					ReadDosage(p);
+				break;
+			}
 		default:
 			throw ErrSeqArray("Invalid type (%d) in CApply_Variant_Dosage::ReadData()",
 				(int)TYPEOF(val));
@@ -944,22 +983,22 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			// the path of GDS variable
 			string s = CHAR(STRING_ELT(var_name, i));
 
-			if (s=="variant.id" || s=="allele" || s=="annotation/id" ||
-				s=="annotation/qual" || s=="annotation/filter")
+			if (s==VAR_ID || s==VAR_ALLELE || s==VAR_ANNOT_ID ||
+				s==VAR_ANNOT_QUAL || s==VAR_ANNOT_FILTER)
 			{
 				NodeList.push_back(
 					new CApply_Variant_Basic(File, s.c_str()));
-			} else if (s == "position")
+			} else if (s == VAR_POSITION)
 			{
 				NodeList.push_back(new CApply_Variant_Pos(File));
-			} else if (s == "chromosome")
+			} else if (s == VAR_CHROM)
 			{
 				NodeList.push_back(new CApply_Variant_Chrom(File));
-			} else if (s == "genotype")
+			} else if (s == VAR_GENOTYPE)
 			{
 				NodeList.push_back(
 					new CApply_Variant_Geno(File, use_raw_flag));
-			} else if (s == "phase")
+			} else if (s == VAR_PHASE)
 			{
 				NodeList.push_back(
 					new CApply_Variant_Phase(File, use_raw_flag!=FALSE));
@@ -971,22 +1010,24 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			{
 				NodeList.push_back(
 					new CApply_Variant_Format(File, s.c_str()));
-			} else if (s == "$dosage")
+			} else if (s == VAR_DOSAGE)
 			{
 				NodeList.push_back(
-					new CApply_Variant_Dosage(File, use_raw_flag, false));
-			} else if (s == "$dosage_alt")
+					new CApply_Variant_Dosage(File, use_raw_flag, false, false));
+			} else if (s == VAR_DOSAGE_ALT)
 			{
 				NodeList.push_back(
-					new CApply_Variant_Dosage(File, use_raw_flag, true));
-			} else if (s == "$num_allele")
+					new CApply_Variant_Dosage(File, use_raw_flag, true, false));
+			} else if (s == VAR_DOSAGE_ALT2)
+			{
+				NodeList.push_back(
+					new CApply_Variant_Dosage(File, use_raw_flag, true, true));
+			} else if (s == VAR_NUM_ALLELE)
 			{
 				NodeList.push_back(new CApply_Variant_NumAllele(File));
 			} else {
 				throw ErrSeqArray(
-					"'%s' is not a standard variable name, and the standard format:\n"
-					"    variant.id, position, chromosome, allele, annotation/id, annotation/qual, annotation/filter\n"
-					"    annotation/info/VARIABLE_NAME', annotation/format/VARIABLE_NAME, etc",
+					"'%s' is not a valid variable name. See ?seqApply",
 					s.c_str());
 			}
 		}

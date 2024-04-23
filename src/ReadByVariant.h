@@ -120,9 +120,11 @@ protected:
 	SEXP VarDosage;        ///< dosage R object
 	VEC_AUTO_PTR ExtPtr2;  ///< a pointer to the additional buffer for dosages
 	bool IsAlt;            ///< if true, ReadData() returns the dosage of alternative alleles
+	bool IsAlt2;           ///< if IsAlt=true && IsAlt2==true, ReadData() returns
+	                       ///  the dosage of alternative alleles allowing partially missing
 public:
 	/// constructor
-	CApply_Variant_Dosage(CFileInfo &File, int use_raw, bool alt);
+	CApply_Variant_Dosage(CFileInfo &File, int use_raw, bool alt, bool alt2);
 
 	virtual void ReadData(SEXP val);
 	virtual SEXP NeedRData(int &nProtected);

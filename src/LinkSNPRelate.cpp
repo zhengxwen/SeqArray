@@ -2,7 +2,7 @@
 //
 // LinkSNPRelate.cpp: C interface for the SNPRelate package
 //
-// Copyright (C) 2015-2018    Xiuwen Zheng
+// Copyright (C) 2015-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -128,7 +128,7 @@ static void SNPRelate_SnpRead(C_Int32 SnpStart, C_Int32 SnpCount,
 	CApply_Variant_Dosage *Obj = (CApply_Variant_Dosage*)(Param->Object);
 	if (!Obj)
 	{
-		Obj = new CApply_Variant_Dosage(GetFileInfo(Param->SeqGDSFile), true, false);
+		Obj = new CApply_Variant_Dosage(GetFileInfo(Param->SeqGDSFile), true, false, false);
 		Param->Object = Obj;
 		Param->GenoBuffer = new C_UInt8[Obj->SampNum];
 		Param->Index = 0;
@@ -205,7 +205,7 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			Param->GenoBuffer = new C_UInt8[SIZE];
 		} else {
 			CApply_Variant_Dosage *Obj = new CApply_Variant_Dosage(
-				GetFileInfo(Param->SeqGDSFile), true, false);
+				GetFileInfo(Param->SeqGDSFile), true, false, false);
 			Param->Object = Obj;
 			size_t SIZE = (Obj->SampNum) * (Obj->Ploidy);
 			Param->GenoBuffer = new C_UInt8[SIZE];
