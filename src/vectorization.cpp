@@ -1826,6 +1826,7 @@ size_t vec_f64_num_notfinite(const double p[], size_t n)
 
 const char *vec_char_find_CRLF(const char *p, size_t n)
 {
+/*
 #ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
@@ -1879,7 +1880,7 @@ tail:
 #endif
 
 #endif
-
+*/
 	// tail
 	for (; n > 0; n--, p++)
 		if (*p=='\n' || *p=='\r') break;
