@@ -35,8 +35,12 @@
     n <- .AddVar(storage.option, varFolder, basename(varnm), storage=storage)
     .append_gds(n, flist, varnm, verbose)
     .DigestCode(n, digest, verbose)
-    if (nVariant != objdesp.gdsn(n)$dim)
-        warning(sprintf("Invalid number of variants in '%s'.", varnm), immediate.=TRUE)
+    dm <- objdesp.gdsn(n)$dim
+    if (length(dm)!=1L || nVariant!=dm)
+    {
+        stop(sprintf("Invalid number of variants in '%s' (%s).", varnm,
+            paste(dm, collapse="x")))
+    }
     n
 }
 
