@@ -196,7 +196,7 @@
 # modify annotation/filter
 .r_annot_flt <- function(gdsfile, val, replace, nvar, compress, verbose)
 {
-    stopifnot(is.vector(val), length(val)==nvar)
+    stopifnot(is.vector(val) || is.factor(val), length(val)==nvar)
     if (!is.null(index.gdsn(gdsfile, "annotation/filter", silent=TRUE)))
         stopifnot(replace)
     n <- add.gdsn(index.gdsn(gdsfile, "annotation"), "filter", val,
