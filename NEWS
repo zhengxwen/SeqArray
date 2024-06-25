@@ -6,6 +6,12 @@ BUG FIXES
     o `seqMerge()` should internally use "chr_position_ref_alt" to distinguish
       the variants in different files
 
+    o `seqAddValue(, varnm="annotation/filter")` should work with a factor
+      variable
+
+    o `seqAddValue(, varnm="variant.id")` can reset the variant IDs with a
+      different number of the variants
+
 
 CHANGES IN VERSION 1.44.0
 -------------------------

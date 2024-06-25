@@ -51,8 +51,8 @@
     stopifnot(is.vector(val), is.character(val) | is.numeric(val))
     if (anyDuplicated(val))
         stop("'val' should be unique.")
-    if (nvar>0L && length(val)!=nvar)
-        stop("length(val) should be ", nvar, ", but received ", length(val))
+    # if (nvar>0L && length(val)!=nvar)
+    #     stop("length(val) should be ", nvar, ", but received ", length(val))
     if (length(desp))
         warning("'desp' is not used.")
     n <- add.gdsn(gdsfile, "variant.id", val, compress=compress, closezip=TRUE,
