@@ -1,6 +1,10 @@
 CHANGES IN VERSION 1.44.1
 -------------------------
 
+UTILITIES
+
+    o new option 'numvariant' in `seqEmptyFile()`
+
 BUG FIXES
 
     o `seqMerge()` should internally use "chr_position_ref_alt" to distinguish

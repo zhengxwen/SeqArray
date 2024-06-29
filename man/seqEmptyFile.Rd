@@ -5,11 +5,12 @@
     Create a new empty GDS file.
 }
 \usage{
-seqEmptyFile(outfn, sample.id=character(), verbose=TRUE)
+seqEmptyFile(outfn, sample.id=character(), numvariant=1L, verbose=TRUE)
 }
 \arguments{
     \item{outfn}{the output file name for a GDS file}
     \item{sample.id}{a list of sample IDs}
+    \item{numvariant}{the number of variants}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
