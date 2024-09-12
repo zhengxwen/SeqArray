@@ -1,3 +1,14 @@
+CHANGES IN VERSION 1.44.2
+-------------------------
+
+BUG FIXES
+
+    o fix `seqAddValue(, val=vector("list", NUM_VARIANT))`
+
+    o fix the ploidy returned from `seqVCF_Header()`, when there are genotypes
+      of males and females on Chromosome X
+
+
 CHANGES IN VERSION 1.44.1
 -------------------------
 

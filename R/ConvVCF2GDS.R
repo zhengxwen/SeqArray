@@ -234,17 +234,22 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, verbose=TRUE)
 
     if (length(geno.text))
     {
-        txt <- unlist(sapply(geno.text, function(s) {
-            scan(text=s, what=character(), sep=":", quiet=TRUE, nmax=1) },
-            simplify=TRUE, USE.NAMES=FALSE))
+        txt <- unlist(vapply(geno.text, function(s) {
+            scan(text=s, what="", sep=":", quiet=TRUE, nmax=1L) },
+            "", USE.NAMES=FALSE))
         if (any(grepl(",", txt, fixed=TRUE)))
         {
             ploidy <- NA_integer_
         } else {
-            num <- sapply(strsplit(txt, "[|/]"), function(x) length(x) )
-            num[txt %in% "."] <- NA_integer_
-            tab <- table(num)
-            ploidy <- as.integer(names(which.max(tab)))
+            num <- lengths(strsplit(txt, "[|/]"))
+            ploidy <- max(num)
+            if (ploidy > 2L)
+            {
+                if (sum(num<=2L) >= sum(num>2L))
+                    ploidy <- 2L
+                else
+                    ploidy <- ((ploidy+1L) %/% 2L) * 2L
+            }
         }
     } else
         ploidy <- NA_integer_

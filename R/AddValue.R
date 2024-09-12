@@ -305,8 +305,10 @@
         stopifnot(length(val) == nvar)
         val <- lapply(val, function(x) unlist(x, use.names=FALSE))
         ns <- lengths(val)
-        n <- add.gdsn(node, nm, unlist(val, use.names=FALSE),
-            compress=compress, closezip=TRUE, replace=TRUE)
+        val <- unlist(val, use.names=FALSE)
+        if (is.null(val)) val <- logical()
+        n <- add.gdsn(node, nm, val, compress=compress, closezip=TRUE,
+            replace=TRUE)
         st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
         nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
             compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
