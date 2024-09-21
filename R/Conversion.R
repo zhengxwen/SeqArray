@@ -903,6 +903,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     dstfile <- createfn.gds(out.gdsfn)
     # close the file at the end
     on.exit({ closefn.gds(dstfile) }, add=TRUE)
+    if (verbose)
+        cat("    Output:\n        ", out.gdsfn, "\n", sep="")
 
     put.attr.gdsn(dstfile$root, "FileFormat", "SEQ_ARRAY")
     put.attr.gdsn(dstfile$root, "FileVersion", "v1.0")
