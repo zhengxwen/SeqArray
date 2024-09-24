@@ -1282,8 +1282,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 	if (!Rf_isString(var_name))
 		error("'var.name' should be character.");
 	const int nlen = RLength(var_name);
-	if (nlen <= 0)
-		error("'length(var.name)' should be > 0.");
 	// .useraw
 	if (TYPEOF(UseRaw) != LGLSXP)
 		error("'.useraw' must be logical.");
@@ -1302,6 +1300,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 		if (!Rf_isEnvironment(Env) && !Rf_isVectorList(Env))
 			error("'envir' should be an environment and list object.");
 	}
+	// if var.name = character()
+	if (nlen <= 0) return R_NilValue;
 
 	COREARRAY_TRY
 		// File information

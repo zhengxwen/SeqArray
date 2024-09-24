@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.45.4
+-------------------------
+
+UTILITIES
+
+    o `seqGetData()` return NULL, if 'var.name=character()'
+
+
 CHANGES IN VERSION 1.44.2
 -------------------------
 

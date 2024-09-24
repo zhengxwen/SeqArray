@@ -10,7 +10,8 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
-    \item{var.name}{a variable name or a character vector, see details}
+    \item{var.name}{a variable name or a character vector, see details;
+        if \code{character()}, return \code{NULL}}
     \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
         genotypes and dosages; \code{FALSE}, use INTEGER; \code{NA}, use RAW
         for small numbers instead of INTEGER if possible; 0xFF is missing value

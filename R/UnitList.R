@@ -253,7 +253,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
     stopifnot(inherits(units, "SeqUnitListClass"))
-    stopifnot(is.character(var.name), length(var.name)>0L)
+    stopifnot(is.character(var.name))
     FUN <- match.fun(FUN)
     stopifnot(length(units) > 0L)
     as.is <- match.arg(as.is)
