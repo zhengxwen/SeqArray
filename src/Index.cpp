@@ -2,7 +2,7 @@
 //
 // Index.cpp: Indexing Objects
 //
-// Copyright (C) 2016-2022    Xiuwen Zheng
+// Copyright (C) 2016-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -108,7 +108,7 @@ void CIndex::Init(PdContainer Obj, const char *varname)
 		if (Values[i] > val_max) val_max = Values[i];
 
 	if (if_neg_val && varname)
-		warning(ERR_INDEX_VALUE, varname);
+		Rf_warning(ERR_INDEX_VALUE, varname);
 }
 
 void CIndex::InitOne(int num)
@@ -338,7 +338,7 @@ void CGenoIndex::Init(PdContainer Obj, const char *varname)
 	AccSum = 0;
 	AccIndex = AccOffset = 0;
 	if (if_neg_val && varname)
-		warning(ERR_INDEX_VALUE, varname);
+		Rf_warning(ERR_INDEX_VALUE, varname);
 }
 
 void CGenoIndex::GetInfo(size_t pos, C_Int64 &Sum, C_UInt8 &Value)
@@ -1383,7 +1383,7 @@ COREARRAY_DLL_LOCAL size_t RLength(SEXP val)
 COREARRAY_DLL_LOCAL SEXP RGetListElement(SEXP list, const char *name)
 {
 	SEXP elmt = R_NilValue;
-	SEXP names = getAttrib(list, R_NamesSymbol);
+	SEXP names = Rf_getAttrib(list, R_NamesSymbol);
 	size_t n = RLength(names);
 	for (size_t i = 0; i < n; i++)
 	{
@@ -1462,7 +1462,7 @@ COREARRAY_DLL_LOCAL void RAppendGDS(PdAbstractArray Node, SEXP Val)
 			for (R_xlen_t i=0; i < n; i++)
 			{
 				SEXP s = STRING_ELT(Val, i);
-				if (s != NA_STRING) buf[i] = translateCharUTF8(s);
+				if (s != NA_STRING) buf[i] = Rf_translateCharUTF8(s);
 			}
 			GDS_Array_AppendData(Node, n, &buf[0], svStrUTF8);
 		}

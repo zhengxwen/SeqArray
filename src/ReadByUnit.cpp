@@ -2,7 +2,7 @@
 //
 // ReadByUnit.cpp: Read data variant by units of selected variants
 //
-// Copyright (C) 2019    Xiuwen Zheng
+// Copyright (C) 2019-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -37,7 +37,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Unit_SlidingWindows(SEXP Pos, SEXP Idx,
 	int winstart = Rf_asInteger(WinStart);
 	int duprmflag = Rf_asLogical(DupFlag);
 	if (duprmflag == NA_LOGICAL)
-		error("'dup.rm' must be TRUE or FALSE.");
+		Rf_error("'dup.rm' must be TRUE or FALSE.");
 	int *tmp = INTEGER(Tmp);
 
 	// get the total number of windows

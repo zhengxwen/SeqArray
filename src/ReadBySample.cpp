@@ -2,7 +2,7 @@
 //
 // ReadBySample.cpp: Read data sample by sample
 //
-// Copyright (C) 2015-2017    Xiuwen Zheng
+// Copyright (C) 2015-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -336,10 +336,10 @@ void CVarApplyBySample::ReadGenoData(C_UInt8 *Base)
 		if (NumOfBits == 2)
 		{
 			if (GenoCellCnt[i] > 4)
-				warning("RAW type may not be sufficient to store genotypes.");
+				Rf_warning("RAW type may not be sufficient to store genotypes.");
 		} else {
 			if (GenoCellCnt[i] > 1)
-				warning("RAW type may not be sufficient to store genotypes.");
+				Rf_warning("RAW type may not be sufficient to store genotypes.");
 		}
 
 		/// the left bits
@@ -387,7 +387,7 @@ void CVarApplyBySample::ReadData(SEXP Val)
 			vector<string> buffer(CellCount);
 			GDS_Array_ReadDataEx(Node, st, cn, SelPtr, &buffer[0], svStrUTF8);
 			for (size_t i=0; i < buffer.size(); i++)
-				SET_STRING_ELT(Val, i, mkChar(buffer[i].c_str()));
+				SET_STRING_ELT(Val, i, Rf_mkChar(buffer[i].c_str()));
 		}
 	}
 }
@@ -491,7 +491,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 {
 	int use_raw_flag = Rf_asLogical(use_raw);
 	if (use_raw_flag == NA_LOGICAL)
-		error("'.useraw' must be TRUE or FALSE.");
+		Rf_error("'.useraw' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
 
@@ -579,7 +579,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 
 		// ===============================================================
 		// rho
-		if (!isEnvironment(rho))
+		if (!Rf_isEnvironment(rho))
 			throw ErrSeqArray("'rho' should be an environment");
 
 
@@ -654,11 +654,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			}
 
 			// call R function
-			SEXP val = eval(R_fcall, rho);
+			SEXP val = Rf_eval(R_fcall, rho);
 			switch (DatType)
 			{
 			case 1:
-				SET_ELEMENT(rv_ans, ans_index, duplicate(val)); break;
+				SET_ELEMENT(rv_ans, ans_index, Rf_duplicate(val)); break;
 			case 2:
 				INTEGER(rv_ans)[ans_index] = Rf_asInteger(val); break;
 			case 3:

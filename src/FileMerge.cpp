@@ -2,7 +2,7 @@
 //
 // FileMerge.cpp: GDS file merging
 //
-// Copyright (C) 2016-2020    Xiuwen Zheng
+// Copyright (C) 2016-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -184,7 +184,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeGeno(SEXP num, SEXP varidx, SEXP files,
 						if ((0 <= v) && (v < nAllele))
 							*p = map[v];
 						else if (v != NA_INTEGER)
-							warning("Genotype in File(%d), out of range.", j+1);
+							Rf_warning("Genotype in File(%d), out of range.", j+1);
 					}
 				} else
 					vec_int32_set(pGeno, size, NA_INTEGER);
@@ -349,7 +349,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_MergeInfo(SEXP num, SEXP varidx, SEXP files,
 				if (info_idx)
 					GDS_Array_AppendData(info_idx, 1, &ZERO, svInt32);
 				else
-					GDS_R_Append(info_var, ScalarInteger(NA_INTEGER));
+					GDS_R_Append(info_var, Rf_ScalarInteger(NA_INTEGER));
 			}
 		}
 

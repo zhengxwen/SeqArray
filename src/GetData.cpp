@@ -131,7 +131,7 @@ static SEXP get_chrom(CFileInfo &File, TVarMap &Var, void *param)
 		TSelection &Sel = File.Selection();
 		C_BOOL *s = Sel.pVariant + Sel.varStart;
 		size_t p = 0, i = Sel.varStart;
-		SEXP lastR = mkChar("");
+		SEXP lastR = Rf_mkChar("");
 		string lastS;
 		for (; n > 0; i++)
 		{
@@ -141,7 +141,7 @@ static SEXP get_chrom(CFileInfo &File, TVarMap &Var, void *param)
 				if (ss != lastS)
 				{
 					lastS = ss;
-					lastR = mkChar(ss.c_str());
+					lastR = Rf_mkChar(ss.c_str());
 				}
 				SET_STRING_ELT(rv_ans, p++, lastR);
 				n--;
@@ -243,14 +243,14 @@ static SEXP get_dosage(CFileInfo &File, TVarMap &Var, void *param)
 		CApply_Variant_Dosage NodeVar(File, false, false, false);
 		if (!get_geno_is_i32(P, NodeVar))
 		{
-			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
+			rv_ans = PROTECT(Rf_allocMatrix(RAWSXP, nSample, nVariant));
 			C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
 			do {
 				NodeVar.ReadDosage(base);
 				base += nSample;
 			} while (NodeVar.Next());
 		} else {
-			rv_ans = PROTECT(allocMatrix(INTSXP, nSample, nVariant));
+			rv_ans = PROTECT(Rf_allocMatrix(INTSXP, nSample, nVariant));
 			int *base = INTEGER(rv_ans);
 			do {
 				NodeVar.ReadDosage(base);
@@ -277,14 +277,14 @@ static SEXP get_dosage_alt(CFileInfo &File, TVarMap &Var, void *param)
 		CApply_Variant_Dosage NodeVar(File, false, true, false);
 		if (!get_geno_is_i32(P, NodeVar))
 		{
-			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
+			rv_ans = PROTECT(Rf_allocMatrix(RAWSXP, nSample, nVariant));
 			C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
 			do {
 				NodeVar.ReadDosageAlt(base);
 				base += nSample;
 			} while (NodeVar.Next());
 		} else {
-			rv_ans = PROTECT(allocMatrix(INTSXP, nSample, nVariant));
+			rv_ans = PROTECT(Rf_allocMatrix(INTSXP, nSample, nVariant));
 			int *base = INTEGER(rv_ans);
 			do {
 				NodeVar.ReadDosageAlt(base);
@@ -311,14 +311,14 @@ static SEXP get_dosage_alt2(CFileInfo &File, TVarMap &Var, void *param)
 		CApply_Variant_Dosage NodeVar(File, false, true, true);
 		if (!get_geno_is_i32(P, NodeVar))
 		{
-			rv_ans = PROTECT(allocMatrix(RAWSXP, nSample, nVariant));
+			rv_ans = PROTECT(Rf_allocMatrix(RAWSXP, nSample, nVariant));
 			C_UInt8 *base = (C_UInt8 *)RAW(rv_ans);
 			do {
 				NodeVar.ReadDosageAlt_p(base);
 				base += nSample;
 			} while (NodeVar.Next());
 		} else {
-			rv_ans = PROTECT(allocMatrix(INTSXP, nSample, nVariant));
+			rv_ans = PROTECT(Rf_allocMatrix(INTSXP, nSample, nVariant));
 			int *base = INTEGER(rv_ans);
 			do {
 				NodeVar.ReadDosageAlt_p(base);
@@ -572,7 +572,7 @@ static SEXP get_ref_allele(CFileInfo &File, TVarMap &Var, void *param)
 			const char *p = buffer[i].c_str();
 			size_t m = 0;
 			for (const char *s=p; *s!=',' && *s!=0; s++) m++;
-			SET_STRING_ELT(rv_ans, k++, mkCharLen(p, m));
+			SET_STRING_ELT(rv_ans, k++, Rf_mkCharLen(p, m));
 		}
 	}
 	UNPROTECT(1);
@@ -595,7 +595,7 @@ static SEXP get_alt_allele(CFileInfo &File, TVarMap &Var, void *param)
 			const char *p = buffer[i].c_str();
 			for (; *p!=',' && *p!=0;) p++;
 			if (*p == ',') p++;
-			SET_STRING_ELT(rv_ans, k++, mkChar(p));
+			SET_STRING_ELT(rv_ans, k++, Rf_mkChar(p));
 		}
 	}
 	UNPROTECT(1);
@@ -620,7 +620,7 @@ static SEXP get_chrom_pos(CFileInfo &File, TVarMap &Var, void *param)
 			if (*s++)
 			{
 				snprintf(buf, sizeof(buf), "%s:%d", Chrom[i].c_str(), pos[i]);
-				SET_STRING_ELT(rv_ans, p++, mkChar(buf));
+				SET_STRING_ELT(rv_ans, p++, Rf_mkChar(buf));
 				n--;
 			}
 		}
@@ -655,11 +655,11 @@ static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 				{
 					dup ++;
 					snprintf(p1, sizeof(buf1), "%s:%d_%d", chr, pos[i], dup);
-					SET_STRING_ELT(rv_ans, p++, mkChar(p1));
+					SET_STRING_ELT(rv_ans, p++, Rf_mkChar(p1));
 				} else {
 					char *tmp;
 					tmp = p1; p1 = p2; p2 = tmp;
-					SET_STRING_ELT(rv_ans, p++, mkChar(p2));
+					SET_STRING_ELT(rv_ans, p++, Rf_mkChar(p2));
 					dup = 0;
 				}
 				n--;
@@ -695,7 +695,7 @@ static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 			for (char *p=(char*)allele; *p; p++)
 				if (*p == ',') *p = '_';
 			snprintf(strbuf, sizeof(strbuf), "%s:%d_%s", chr, pos, allele);
-			SET_STRING_ELT(rv_ans, k++, mkChar(strbuf));
+			SET_STRING_ELT(rv_ans, k++, Rf_mkChar(strbuf));
 		}
 	}
 	UNPROTECT(1);
@@ -1280,25 +1280,25 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 {
 	// var.name
 	if (!Rf_isString(var_name))
-		error("'var.name' should be character.");
+		Rf_error("'var.name' should be character.");
 	const int nlen = RLength(var_name);
 	// .useraw
 	if (TYPEOF(UseRaw) != LGLSXP)
-		error("'.useraw' must be logical.");
+		Rf_error("'.useraw' must be logical.");
 	const int use_raw = Rf_asLogical(UseRaw);
 	// .padNA
 	const int padNA = Rf_asLogical(PadNA);
 	if (padNA == NA_LOGICAL)
-		error("'.padNA' must be TRUE or FALSE.");
+		Rf_error("'.padNA' must be TRUE or FALSE.");
 	// .tolist
 	const int tolist = Rf_asLogical(ToList);
 	if (tolist == NA_LOGICAL)
-		error("'.tolist' must be TRUE or FALSE.");
+		Rf_error("'.tolist' must be TRUE or FALSE.");
 	// .envir
 	if (!Rf_isNull(Env))
 	{
 		if (!Rf_isEnvironment(Env) && !Rf_isVectorList(Env))
-			error("'envir' should be an environment and list object.");
+			Rf_error("'envir' should be an environment and list object.");
 	}
 	// if var.name = character()
 	if (nlen <= 0) return R_NilValue;
@@ -1319,9 +1319,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 					VarGetData(File, CHAR(STRING_ELT(var_name, i)), use_raw,
 					padNA, tolist, Env));
 			}
-			SEXP nm = getAttrib(var_name, R_NamesSymbol);
+			SEXP nm = Rf_getAttrib(var_name, R_NamesSymbol);
 			if (nm == R_NilValue) nm = var_name;
-			setAttrib(rv_ans, R_NamesSymbol, nm);
+			Rf_setAttrib(rv_ans, R_NamesSymbol, nm);
 			UNPROTECT(1);
 		}
 	COREARRAY_CATCH
@@ -1338,24 +1338,24 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 	// bsize
 	int bsize = Rf_asInteger(RGetListElement(param, "bsize"));
 	if (bsize < 1)
-		error("'bsize' must be >= 1.");
+		Rf_error("'bsize' must be >= 1.");
 	// .useraw
 	SEXP pam_use_raw = RGetListElement(param, "useraw");
 	if (!Rf_isLogical(pam_use_raw))
-		error("'.useraw' must be TRUE, FALSE or NA.");
+		Rf_error("'.useraw' must be TRUE, FALSE or NA.");
 	int use_raw_flag = Rf_asLogical(pam_use_raw);
 	// .padNA
 	int padNA = Rf_asLogical(RGetListElement(param, "padNA"));
 	if (padNA == NA_LOGICAL)
-		error("'.padNA' must be TRUE or FALSE.");
+		Rf_error("'.padNA' must be TRUE or FALSE.");
 	// .tolist
 	int tolist = Rf_asLogical(RGetListElement(param, "tolist"));
 	if (tolist == NA_LOGICAL)
-		error("'.tolist' must be TRUE or FALSE.");
+		Rf_error("'.tolist' must be TRUE or FALSE.");
 	// .progress
 	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
 	if (prog_flag == NA_LOGICAL)
-		error("'.progress' must be TRUE or FALSE.");
+		Rf_error("'.progress' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
 
@@ -1410,7 +1410,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		}
 
 		// rho environment
-		if (!isEnvironment(rho))
+		if (!Rf_isEnvironment(rho))
 			throw ErrSeqArray("'rho' should be an environment");
 
 		// var.index
@@ -1509,7 +1509,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 						use_raw_flag, padNA, tolist, rho));
 				}
 				// call R function
-				call_val = eval(R_fcall, rho);
+				call_val = Rf_eval(R_fcall, rho);
 
 			} else {
 				R_call_param = VarGetData(File, CHAR(STRING_ELT(var_name, 0)),
@@ -1525,7 +1525,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 				}
 
 				// call R function
-				call_val = eval(R_fcall, rho);
+				call_val = Rf_eval(R_fcall, rho);
 			}
 
 			// store data

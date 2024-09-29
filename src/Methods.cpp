@@ -103,7 +103,7 @@ static void get_ds_n_m(SEXP DS, int &n, int &m)
 {
 	n = XLENGTH(DS); m = 1;
 	SEXP dm = GET_DIM(DS);
-	if (!isNull(dm))
+	if (!Rf_isNull(dm))
 	{
 		if (XLENGTH(dm) != 2)
 			throw ErrSeqArray("# of dimensions should be 2 for dosages.");
@@ -129,7 +129,7 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_PerVariant(SEXP Geno)
 	default:
 		throw ErrSeqArray(ERR_DS_TYPE);
 	}
-	return ScalarReal((n > 0) ? (double(n_miss) / n) : R_NaN);
+	return Rf_ScalarReal((n > 0) ? (double(n_miss) / n) : R_NaN);
 }
 
 /// Calculate the missing rate per sample
@@ -229,7 +229,7 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_SampVariant(SEXP Geno, SEXP sum)
 		}
 	}
 
-	return ScalarReal((double)n / (num_ploidy*num_sample));
+	return Rf_ScalarReal((double)n / (num_ploidy*num_sample));
 }
 
 /// Calculate the missing rate per sample and variant
@@ -279,7 +279,7 @@ COREARRAY_DLL_EXPORT SEXP FC_Missing_DS_SampVariant(SEXP DS, SEXP sum, SEXP tmp)
 	for (int i=0; i < num_samp; i++)
 		pS[i] += (pT[i] > 0) ? 1 : 0;
 
-	return ScalarReal((n > 0) ? (double(n_miss) / n) : R_NaN);
+	return Rf_ScalarReal((n > 0) ? (double(n_miss) / n) : R_NaN);
 }
 
 
@@ -409,9 +409,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Ref(SEXP Geno)
 	{
 		double p = double(m) / n;
 		if (AFreq_Minor && p>0.5) p = 1 - p;
-		return ScalarReal(p);
+		return Rf_ScalarReal(p);
 	} else
-		return ScalarReal(R_NaN);
+		return Rf_ScalarReal(R_NaN);
 }
 
 #define GET_SUM_NUM(TYPE, TYPEPTR, START, NA_VAL, N)  \
@@ -452,9 +452,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Ref(SEXP DS)
 	{
 		double p = 1 - sum * m / (num * AFreq_Ploidy);
 		if (AFreq_Minor && p>0.5) p = 1 - p;
-		return ScalarReal(p);
+		return Rf_ScalarReal(p);
 	} else
-		return ScalarReal(R_NaN);
+		return Rf_ScalarReal(R_NaN);
 }
 
 /// Get allele frequency
@@ -481,9 +481,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Index(SEXP List)
 	{
 		double p = double(m) / n;
 		if (AFreq_Minor && p>0.5) p = 1 - p;
-		return ScalarReal(p);
+		return Rf_ScalarReal(p);
 	} else
-		return ScalarReal(R_NaN);
+		return Rf_ScalarReal(R_NaN);
 }
 
 /// Get allele frequency
@@ -495,11 +495,11 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Index(SEXP List)
 	if (A == 0) return FC_AF_DS_Ref(DS);
 
 	const int nAllele = Rf_asInteger(VECTOR_ELT(List, 1));
-	if (A >= nAllele) return ScalarReal(R_NaN);
+	if (A >= nAllele) return Rf_ScalarReal(R_NaN);
 
 	int n, m;
 	get_ds_n_m(DS, n, m);
-	if (A > m) return ScalarReal(R_NaN);
+	if (A > m) return Rf_ScalarReal(R_NaN);
 
 	double sum=0;
 	int num = 0, nrow = n/m;
@@ -519,9 +519,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Index(SEXP List)
 	{
 		double p = sum / (num * AFreq_Ploidy);
 		if (AFreq_Minor && p>0.5) p = 1 - p;
-		return ScalarReal(p);
+		return Rf_ScalarReal(p);
 	} else
-		return ScalarReal(R_NaN);
+		return Rf_ScalarReal(R_NaN);
 }
 
 /// Get allele frequency
@@ -552,9 +552,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_Allele(SEXP List)
 	{
 		double p = double(m) / n;
 		if (AFreq_Minor && p>0.5) p = 1 - p;
-		return ScalarReal(p);
+		return Rf_ScalarReal(p);
 	} else
-		return ScalarReal(R_NaN);
+		return Rf_ScalarReal(R_NaN);
 }
 
 /// Get allele frequency
@@ -591,9 +591,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Allele(SEXP List)
 	{
 		double p = sum / (num * AFreq_Ploidy);
 		if (AFreq_Minor && p>0.5) p = 1 - p;
-		return ScalarReal(p);
+		return Rf_ScalarReal(p);
 	} else
-		return ScalarReal(R_NaN);
+		return Rf_ScalarReal(R_NaN);
 }
 
 
@@ -613,7 +613,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Ref(SEXP Geno)
 		size_t m0 = N - n - m;  // allele count for alternative
 		if (m0 < m) m = m0;
 	}
-	return ScalarInteger((n < N) ? (int)m : NA_INTEGER);
+	return Rf_ScalarInteger((n < N) ? (int)m : NA_INTEGER);
 }
 
 /// Get reference allele count from dosage
@@ -640,9 +640,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Ref(SEXP DS)
 		double totac = double(num * AFreq_Ploidy) / m;
 		double ac = totac - sum;
 		if (AFreq_Minor && ac>0.5*totac) ac = totac - ac;
-		return ScalarReal(ac);
+		return Rf_ScalarReal(ac);
 	} else
-		return ScalarReal(NA_REAL);
+		return Rf_ScalarReal(NA_REAL);
 }
 
 /// Get allele count from the reference allele index
@@ -672,7 +672,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Index(SEXP List)
 	} else
 		ans = NA_INTEGER;
 	
-	return ScalarInteger(ans);
+	return Rf_ScalarInteger(ans);
 }
 
 /// Get allele count from dosage and the reference allele index
@@ -684,11 +684,11 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Index(SEXP List)
 	if (A == 0) return FC_AC_DS_Ref(DS);
 
 	const int nAllele = Rf_asInteger(VECTOR_ELT(List, 1));
-	if (A >= nAllele) return ScalarReal(R_NaN);
+	if (A >= nAllele) return Rf_ScalarReal(R_NaN);
 
 	int n, m;
 	get_ds_n_m(DS, n, m);
-	if (A > m) return ScalarReal(R_NaN);
+	if (A > m) return Rf_ScalarReal(R_NaN);
 
 	double sum=0;
 	int num = 0, nrow = n/m;
@@ -708,9 +708,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Index(SEXP List)
 	{
 		double sum2 = num * AFreq_Ploidy - sum;
 		if (AFreq_Minor && sum>sum2) sum = sum2;
-		return ScalarReal(sum);
+		return Rf_ScalarReal(sum);
 	} else
-		return ScalarReal(NA_REAL);
+		return Rf_ScalarReal(NA_REAL);
 }
 
 /// Get allele count for a given allele
@@ -749,7 +749,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_Allele(SEXP List)
 		}
 	}
 
-	return ScalarInteger(ans);
+	return Rf_ScalarInteger(ans);
 }
 
 /// Get allele count
@@ -786,9 +786,9 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Allele(SEXP List)
 	{
 		double sum2 = num * AFreq_Ploidy - sum;
 		if (AFreq_Minor && sum>sum2) sum = sum2;
-		return ScalarReal(sum);
+		return Rf_ScalarReal(sum);
 	} else
-		return ScalarReal(NA_REAL);
+		return Rf_ScalarReal(NA_REAL);
 }
 
 
@@ -1016,7 +1016,7 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestDone(SEXP Algo)
 	}
 	*p = 0;
 
-	return mkString(buffer);
+	return Rf_mkString(buffer);
 }
 
 /// Applied digest function
@@ -1027,7 +1027,7 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 		if (TYPEOF(Data) == RAWSXP)
 			digest_data_type = 0;
 		else if (TYPEOF(Data) == INTSXP)
-			digest_data_type = !inherits(Data, "factor") ? 1 : 2;
+			digest_data_type = !Rf_inherits(Data, "factor") ? 1 : 2;
 		else if (Rf_isLogical(Data))
 			digest_data_type = 3;
 		else if (Rf_isReal(Data))
@@ -1048,7 +1048,7 @@ COREARRAY_DLL_EXPORT SEXP FC_DigestScan(SEXP Data)
 		case 2:
 			{
 				int *p = INTEGER(Data);
-				SEXP ls = getAttrib(Data, R_LevelsSymbol);
+				SEXP ls = Rf_getAttrib(Data, R_LevelsSymbol);
 				int nls = LENGTH(ls);
 				for (size_t n=XLENGTH(Data); n > 0; n--, p++)
 				{

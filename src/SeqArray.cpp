@@ -313,7 +313,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 						last_I = I;
 					}
 				}
-				if (if_warn && warn_flag) warning("%s", WARN_SEL_INDEX);
+				if (if_warn && warn_flag) Rf_warning("%s", WARN_SEL_INDEX);
 				// set values
 				memset((void*)pArray, 0, Count);
 				pI = INTEGER(samp_sel);
@@ -340,7 +340,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceSample2(SEXP gdsfile, SEXP samp_sel,
 						last_I = I;
 					}
 				}
-				if (if_warn && warn_flag) warning("%s", WARN_SEL_INDEX);
+				if (if_warn && warn_flag) Rf_warning("%s", WARN_SEL_INDEX);
 				// get the current index
 				vector<int> Idx;
 				Idx.reserve(Cnt);
@@ -598,7 +598,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceVariant2(SEXP gdsfile, SEXP var_sel,
 							if_warn = true;
 					}
 				}
-				if (if_warn && warn_flag) warning("%s", WARN_SEL_INDEX);
+				if (if_warn && warn_flag) Rf_warning("%s", WARN_SEL_INDEX);
 				// set the structure of selected variants
 				Sel.varTrueNum = num;
 				Sel.varStart = st;
@@ -986,8 +986,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetSpace(SEXP gdsfile, SEXP UseRaw)
 		SET_ELEMENT(rv_ans, 1, tmp);
 
 		PROTECT(tmp = NEW_CHARACTER(2));
-			SET_STRING_ELT(tmp, 0, mkChar("sample.sel"));
-			SET_STRING_ELT(tmp, 1, mkChar("variant.sel"));
+			SET_STRING_ELT(tmp, 0, Rf_mkChar("sample.sel"));
+			SET_STRING_ELT(tmp, 1, Rf_mkChar("variant.sel"));
 		SET_NAMES(rv_ans, tmp);
 
 		UNPROTECT(4);
@@ -1115,7 +1115,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
 				p += split[Process_Index-1];
 			for (; ans_n > 0; ans_n--) *p++ = TRUE;
 		} else {
-			rv_ans = ScalarInteger(ans_n);
+			rv_ans = Rf_ScalarInteger(ans_n);
 		}
 
 	COREARRAY_CATCH
@@ -1184,7 +1184,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectionX(SEXP gdsfile, SEXP index, SEXP spl
 			p += blsize * job_idx;
 			for (; n > 0; n--) *p++ = TRUE;
 		} else {
-			rv_ans = ScalarInteger(n);
+			rv_ans = Rf_ScalarInteger(n);
 		}
 
 	COREARRAY_CATCH
@@ -1231,14 +1231,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 				INTEGER(S32)[2] = File.VariantSelNum();
 
 			SEXP tmp = PROTECT(NEW_CHARACTER(2));
-				SET_STRING_ELT(tmp, 0, mkChar("dim"));
-				SET_STRING_ELT(tmp, 1, mkChar("seldim"));
+				SET_STRING_ELT(tmp, 0, Rf_mkChar("dim"));
+				SET_STRING_ELT(tmp, 1, Rf_mkChar("seldim"));
 				SET_NAMES(rv_ans, tmp);
 			UNPROTECT(4);
 
 		} else {
 			PdGDSObj var = GDS_Node_Path(Root, vn.c_str(), TRUE);
-			rv_ans = ScalarInteger(GDS_Array_GetTotalCount(var));
+			rv_ans = Rf_ScalarInteger(GDS_Array_GetTotalCount(var));
 		}
 
 	COREARRAY_CATCH
@@ -1378,16 +1378,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 		SET_NAMES(rv_ans, nm);
 
 		// the number of logical cores
-		SET_ELEMENT(rv_ans, 0, ScalarInteger(GDS_Mach_GetNumOfCores()));
-		SET_STRING_ELT(nm, 0, mkChar("num.logical.core"));
+		SET_ELEMENT(rv_ans, 0, Rf_ScalarInteger(GDS_Mach_GetNumOfCores()));
+		SET_STRING_ELT(nm, 0, Rf_mkChar("num.logical.core"));
 
 		// compiler
 		SEXP Compiler = PROTECT(NEW_CHARACTER(2));
 		nProtect ++;
 		SET_ELEMENT(rv_ans, 1, Compiler);
-		SET_STRING_ELT(nm, 1, mkChar("compiler"));
+		SET_STRING_ELT(nm, 1, Rf_mkChar("compiler"));
 	#ifdef __VERSION__
-		SET_STRING_ELT(Compiler, 0, mkChar(__VERSION__));
+		SET_STRING_ELT(Compiler, 0, Rf_mkChar(__VERSION__));
 	#endif
 	#ifdef __GNUC__
 		char buf_compiler[128] = { 0 };
@@ -1396,7 +1396,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 		#endif
 		snprintf(buf_compiler, sizeof(buf_compiler), "GNUG_v%d.%d.%d",
 			__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-		SET_STRING_ELT(Compiler, 1, mkChar(buf_compiler));
+		SET_STRING_ELT(Compiler, 1, Rf_mkChar(buf_compiler));
 	#endif
 
 		// compiler flags
@@ -1452,9 +1452,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_System()
 		SEXP SIMD = PROTECT(NEW_CHARACTER(ss.size()));
 		nProtect ++;
 		SET_ELEMENT(rv_ans, 2, SIMD);
-		SET_STRING_ELT(nm, 2, mkChar("compiler.flag"));
+		SET_STRING_ELT(nm, 2, Rf_mkChar("compiler.flag"));
 		for (int i=0; i < (int)ss.size(); i++)
-			SET_STRING_ELT(SIMD, i, mkChar(ss[i].c_str()));
+			SET_STRING_ELT(SIMD, i, Rf_mkChar(ss[i].c_str()));
 
 		UNPROTECT(nProtect);
 
@@ -1518,7 +1518,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Progress(SEXP Count, SEXP NProc)
 		CProgressStdOut *obj = new CProgressStdOut(TotalCount, nproc, true);
 		rv_ans = PROTECT(R_MakeExternalPtr(obj, R_NilValue, R_NilValue));
 		R_RegisterCFinalizerEx(rv_ans, free_progress, TRUE);
-		Rf_setAttrib(rv_ans, R_ClassSymbol, mkString("SeqClass_Progress"));
+		Rf_setAttrib(rv_ans, R_ClassSymbol, Rf_mkString("SeqClass_Progress"));
 		UNPROTECT(1);
 	COREARRAY_CATCH
 }
@@ -1533,7 +1533,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 	COREARRAY_TRY
 		CProgressStdOut *obj = (CProgressStdOut*)R_ExternalPtrAddr(ref);
 		if (obj) obj->Forward(v);
-		rv_ans = ScalarReal(obj->Counter());
+		rv_ans = Rf_ScalarReal(obj->Counter());
 	COREARRAY_CATCH
 }
 

@@ -6,6 +6,15 @@ UTILITIES
     o `seqGetData()` return NULL, if 'var.name=character()'
 
 
+CHANGES IN VERSION 1.44.3
+-------------------------
+
+UTILITIES
+
+    o update the C codes according to '_R_USE_STRICT_R_HEADERS_=true' &
+      '_R_CXX_USE_NO_REMAP_=true'
+
+
 CHANGES IN VERSION 1.44.2
 -------------------------
 

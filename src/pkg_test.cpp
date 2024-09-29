@@ -2,7 +2,7 @@
 //
 // pkg_test.cpp: package testing with C/C++ codes
 //
-// Copyright (C) 2016-2017    Xiuwen Zheng
+// Copyright (C) 2016-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -45,7 +45,7 @@ SEXP test_array_popcnt64(SEXP v1, SEXP v2)
 {
 	int n = XLENGTH(v1);
 	if (n != XLENGTH(v2))
-		error("error in 'test_popcnt64'.");
+		Rf_error("error in 'test_popcnt64'.");
 	int *s1 = INTEGER(v1), *s2 = INTEGER(v2);
 	SEXP rv_ans = NEW_INTEGER(n);
 	int *p = INTEGER(rv_ans);
@@ -63,7 +63,7 @@ SEXP test_byte_count(SEXP val, SEXP start)
 	int st = Rf_asInteger(start) - 1;
 	int8_t *p = (int8_t *)RAW(val);
 	int n = XLENGTH(val);
-	return ScalarInteger(vec_i8_cnt_nonzero(p + st, n - st));
+	return Rf_ScalarInteger(vec_i8_cnt_nonzero(p + st, n - st));
 }
 
 
@@ -74,7 +74,7 @@ SEXP test_int8_replace(SEXP val, SEXP start, SEXP find, SEXP substitute)
 	int v2 = Rf_asInteger(substitute);
 	int n = XLENGTH(val);
 
-	SEXP rv_ans = duplicate(val);
+	SEXP rv_ans = Rf_duplicate(val);
 	int8_t *p = (int8_t *)RAW(rv_ans);
 	vec_i8_replace(p + st, n - st, v1, v2);
 
@@ -88,7 +88,7 @@ SEXP test_int32_count(SEXP val, SEXP start, SEXP find)
 	int fd = Rf_asInteger(find);
 	int *p = INTEGER(val);
 	int n = XLENGTH(val);
-	return ScalarInteger(vec_i32_count(p + st, n - st, fd));
+	return Rf_ScalarInteger(vec_i32_count(p + st, n - st, fd));
 }
 
 
@@ -98,7 +98,7 @@ SEXP test_i8_count(SEXP val, SEXP start, SEXP find)
 	char fd = RAW(find)[0];
 	char *p = (char*)RAW(val);
 	int n = XLENGTH(val);
-	return ScalarInteger(vec_i8_count(p + st, n - st, fd));
+	return Rf_ScalarInteger(vec_i8_count(p + st, n - st, fd));
 }
 
 
@@ -185,7 +185,7 @@ SEXP test_int32_replace(SEXP val, SEXP start, SEXP find, SEXP substitute)
 	int v2 = Rf_asInteger(substitute);
 	int n = XLENGTH(val);
 
-	SEXP rv_ans = duplicate(val);
+	SEXP rv_ans = Rf_duplicate(val);
 	int *p = INTEGER(rv_ans);
 	vec_i32_replace(p + st, n - st, v1, v2);
 

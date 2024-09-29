@@ -2,7 +2,7 @@
 //
 // ConvToGDS.cpp: format conversion
 //
-// Copyright (C) 2015-2018    Xiuwen Zheng
+// Copyright (C) 2015-2024    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -87,7 +87,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 		// 'readBin(File, raw(), 3)'
 		SEXP R_Read_Call = PROTECT(
 			LCONS(ReadBinFun, LCONS(File,
-			LCONS(NEW_RAW(0), LCONS(ScalarInteger(nPack), R_NilValue)))));
+			LCONS(NEW_RAW(0), LCONS(Rf_ScalarInteger(nPack), R_NilValue)))));
 
 		vector<C_UInt8> dstgeno(nGeno);
 		static const C_UInt8 cvt1[4] = { 1, 3, 1, 0 };
@@ -99,7 +99,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 		for (int i=0; i < n; i++)
 		{
 			// read genotypes
-			SEXP val = eval(R_Read_Call, Rho);
+			SEXP val = Rf_eval(R_Read_Call, Rho);
 			unsigned char *srcgeno = (unsigned char *)RAW(val);
 
 			// unpacked

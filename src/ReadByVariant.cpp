@@ -83,7 +83,7 @@ void CApply_Variant_Basic::ReadData(SEXP val)
 	{
 		string s;
 		GDS_Array_ReadData(Node, &st, &one, &s, svStrUTF8);
-		SET_STRING_ELT(val, 0, mkChar(s.c_str()));
+		SET_STRING_ELT(val, 0, Rf_mkChar(s.c_str()));
 	}
 }
 
@@ -138,14 +138,14 @@ void CApply_Variant_Chrom::ReadData(SEXP val)
 	const string &s1 = (*ChromIndex)[Position];
 	const char *s2 = CHAR(STRING_ELT(val, 0));
 	if (s1 != s2)
-		SET_STRING_ELT(val, 0, mkChar(s1.c_str()));
+		SET_STRING_ELT(val, 0, Rf_mkChar(s1.c_str()));
 }
 
 SEXP CApply_Variant_Chrom::NeedRData(int &nProtected)
 {
 	if (VarNode == NULL)
 	{
-		VarNode = PROTECT(mkString(""));
+		VarNode = PROTECT(Rf_mkString(""));
 		nProtected ++;
 	}
 	return VarNode;
@@ -278,7 +278,7 @@ C_UInt8 CApply_Variant_Geno::_ReadGenoData(C_UInt8 *Base)
 		if (NumIndexRaw > 4)
 		{
 			NumIndexRaw = 4;
-			warning("RAW type may not be sufficient to store genotypes.");
+			Rf_warning("RAW type may not be sufficient to store genotypes.");
 		}
 
 		for (C_UInt8 i=1; i < NumIndexRaw; i++)
@@ -329,7 +329,7 @@ SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
 	{
 		if (VarIntGeno == NULL)
 		{
-			VarIntGeno = PROTECT(allocMatrix(INTSXP, Ploidy, SampNum));
+			VarIntGeno = PROTECT(Rf_allocMatrix(INTSXP, Ploidy, SampNum));
 			nProtected ++;
 			SET_DIMNAMES(VarIntGeno, R_Geno_Dim2_Name);
 		}
@@ -337,7 +337,7 @@ SEXP CApply_Variant_Geno::NeedRData(int &nProtected)
 	} else {
 		if (VarRawGeno == NULL)
 		{
-			VarRawGeno = PROTECT(allocMatrix(RAWSXP, Ploidy, SampNum));
+			VarRawGeno = PROTECT(Rf_allocMatrix(RAWSXP, Ploidy, SampNum));
 			nProtected ++;
 			SET_DIMNAMES(VarRawGeno, R_Geno_Dim2_Name);
 		}
@@ -722,7 +722,7 @@ void CApply_Variant_Info::ReadData(SEXP val)
 			vector<string> buffer(XLENGTH(val));
 			GDS_Array_ReadData(Node, st, cnt, &buffer[0], svStrUTF8);
 			for (size_t i=0; i < buffer.size(); i++)
-				SET_STRING_ELT(val, i, mkChar(buffer[i].c_str()));
+				SET_STRING_ELT(val, i, Rf_mkChar(buffer[i].c_str()));
 		}
 	}
 }
@@ -820,7 +820,7 @@ void CApply_Variant_Format::ReadData(SEXP val)
 			vector<string> buffer(XLENGTH(val));
 			GDS_Array_ReadDataEx(Node, st, cnt, SelPtr, &buffer[0], svStrUTF8);
 			for (size_t i=0; i < buffer.size(); i++)
-				SET_STRING_ELT(val, i, mkChar(buffer[i].c_str()));
+				SET_STRING_ELT(val, i, Rf_mkChar(buffer[i].c_str()));
 		}
 	}
 }
@@ -843,8 +843,8 @@ SEXP CApply_Variant_Format::NeedRData(int &nProtected)
 
 		SEXP name_list = PROTECT(NEW_LIST(2));
 		SEXP tmp = PROTECT(NEW_CHARACTER(2));
-		SET_STRING_ELT(tmp, 0, mkChar("sample"));
-		SET_STRING_ELT(tmp, 1, mkChar("index"));
+		SET_STRING_ELT(tmp, 0, Rf_mkChar("sample"));
+		SET_STRING_ELT(tmp, 1, Rf_mkChar("index"));
 		SET_NAMES(name_list, tmp);
 		SET_DIMNAMES(ans, name_list);
 		UNPROTECT(2);
@@ -921,16 +921,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 {
 	SEXP pam_use_raw = RGetListElement(param, "useraw");
 	if (!Rf_isLogical(pam_use_raw))
-		error("'.useraw' must be TRUE, FALSE or NA.");
+		Rf_error("'.useraw' must be TRUE, FALSE or NA.");
 	int use_raw_flag = Rf_asLogical(pam_use_raw);
 
 	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
 	if (prog_flag == NA_LOGICAL)
-		error("'.progress' must be TRUE or FALSE.");
+		Rf_error("'.progress' must be TRUE or FALSE.");
 
 	int dup_flag = Rf_asLogical(RGetListElement(param, "list_dup"));
 	if (dup_flag == NA_LOGICAL)
-		error("'.list_dup' must be TRUE or FALSE.");
+		Rf_error("'.list_dup' must be TRUE or FALSE.");
 
 	COREARRAY_TRY
 
@@ -1082,7 +1082,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 
 		// ===========================================================
 		// rho
-		if (!isEnvironment(rho))
+		if (!Rf_isEnvironment(rho))
 			throw ErrSeqArray("'rho' should be an environment");
 
 
@@ -1159,13 +1159,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			}
 
 			// call R function
-			SEXP val = eval(R_fcall, rho);
+			SEXP val = Rf_eval(R_fcall, rho);
 
 			// store data
 			switch (DatType)
 			{
 			case 1:  // list
-				if (dup_flag) val = duplicate(val);
+				if (dup_flag) val = Rf_duplicate(val);
 				SET_ELEMENT(rv_ans, ans_index, val);
 				break;
 			case 2:  // integer

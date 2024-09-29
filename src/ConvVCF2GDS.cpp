@@ -1096,7 +1096,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 	}
 
 	Done_VCF_Buffer();
-	return ScalarReal(n);
+	return Rf_ScalarReal(n);
 }
 
 
@@ -1109,9 +1109,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
 	SEXP multiple)
 {
 	int num = Rf_asInteger(pnum);
-	if (num <= 0) error("'pnum' should be > 0.");
+	if (num <= 0) Rf_error("'pnum' should be > 0.");
 	int multi = Rf_asInteger(multiple);
-	if (multi < 0) error("'multiple' should be > 0.");
+	if (multi < 0) Rf_error("'multiple' should be > 0.");
 	if (multi == 0) multi = 1;
 	SEXP ans = PROTECT(NEW_LIST(2));
 	SEXP start_array = PROTECT(NEW_NUMERIC(num));
@@ -1683,7 +1683,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					if (it == format_missing.end())
 					{
 						format_missing.insert(cell);
-						warning("Unknown FORMAT ID '%s' is ignored (it should be defined in the meta-information lines).",
+						Rf_warning("Unknown FORMAT ID '%s' is ignored (it should be defined in the meta-information lines).",
 							cell.c_str());
 					}
 				} else {
@@ -1898,7 +1898,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		// set returned value: levels(filter)
 		PROTECT(rv_ans = NEW_CHARACTER(filter_list.size()));
 		for (int i=0; i < (int)filter_list.size(); i++)
-			SET_STRING_ELT(rv_ans, i, mkChar(filter_list[i].c_str()));
+			SET_STRING_ELT(rv_ans, i, Rf_mkChar(filter_list[i].c_str()));
 		nProtected ++;
 
 		REAL(line_cnt)[0] = variant_index;
@@ -1930,7 +1930,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		GDS_SetError(buf);
 		has_error = true;
 	});
-	if (has_error) error("%s", GDS_GetError());
+	if (has_error) Rf_error("%s", GDS_GetError());
 
 	// output
 	return rv_ans;

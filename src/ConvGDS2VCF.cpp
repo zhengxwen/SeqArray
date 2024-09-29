@@ -469,7 +469,7 @@ inline static void ExportHead(SEXP X)
 inline static void ExportInfoFormat(SEXP X, size_t info_st)
 {
 	// variable list
-	SEXP VarNames = getAttrib(X, R_NamesSymbol);
+	SEXP VarNames = Rf_getAttrib(X, R_NamesSymbol);
 
 	//====  INFO  ====//
 
@@ -528,7 +528,7 @@ inline static void ExportInfoFormat(SEXP X, size_t info_st)
 	{
 		// name, "fmt.*"
 		SEXP D = VECTOR_ELT(X, i + cnt_info + info_st);
-		if (!isNull(D))
+		if (!Rf_isNull(D))
 		{
 			if (i > 0 || info_st > 6)
 				*pLine++ = ':';
@@ -569,7 +569,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
 				tmp.push_back('\"');
 			}
 		}
-		SET_STRING_ELT(ans, i, mkChar(tmp.c_str()));
+		SET_STRING_ELT(ans, i, Rf_mkChar(tmp.c_str()));
 	}
 
 	UNPROTECT(2);
