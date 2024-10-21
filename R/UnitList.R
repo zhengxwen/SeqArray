@@ -180,6 +180,7 @@ seqUnitCreate <- function(idx, desp=NULL)
         stopifnot(length(idx) == nrow(desp))
     if (is.null(desp))
         desp <- data.frame(id=seq_along(idx))
+    rownames(desp) <- NULL
     for (i in seq_along(idx))
     {
         k <- idx[[i]]
