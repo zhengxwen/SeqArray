@@ -18,7 +18,7 @@ The SeqArray package is built on top of [Genomic Data Structure (GDS)](https://g
 
 ## Bioconductor:
 
-Release Version: v1.44.0
+Release Version: v1.46.0
 
 [http://www.bioconductor.org/packages/SeqArray](http://www.bioconductor.org/packages/SeqArray)
 
