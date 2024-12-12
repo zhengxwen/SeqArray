@@ -1837,7 +1837,7 @@ const char *vec_char_find_CRLF(const char *p, size_t n)
 	const __m128i mask1 = _mm_set1_epi8('\n');
 	const __m128i mask2 = _mm_set1_epi8('\r');
 
-#   ifdef COREARRAY_SIMD_AVX2
+#ifdef COREARRAY_SIMD_AVX2
 
 	// header 2, 32-byte aligned
 	if ((n >= 16) && ((size_t)p & 0x10))
@@ -1870,7 +1870,7 @@ const char *vec_char_find_CRLF(const char *p, size_t n)
 		}
 	}
 
-#   endif
+#endif
 
 	for (; n >= 16; n-=16, p+=16)
 	{
