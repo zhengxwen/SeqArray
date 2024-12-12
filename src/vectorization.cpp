@@ -1826,7 +1826,6 @@ size_t vec_f64_num_notfinite(const double p[], size_t n)
 
 const char *vec_char_find_CRLF(const char *p, size_t n)
 {
-/*
 #ifdef COREARRAY_SIMD_SSE2
 
 	// header 1, 16-byte aligned
@@ -1847,24 +1846,31 @@ const char *vec_char_find_CRLF(const char *p, size_t n)
 		__m128i c1 = _mm_cmpeq_epi8(v, mask1);
 		__m128i c2 = _mm_cmpeq_epi8(v, mask2);
 		if (_mm_movemask_epi8(_mm_or_si128(c1, c2)))
-			goto tail;
+		{
+			for (; n > 0; n--, p++)
+				if (*p=='\n' || *p=='\r') break;
+			return p;
+		}
 		n -= 16; p += 16;
 	}
 
 	// body, AVX2
 	const __m256i mask3 = _mm256_set1_epi8('\n');
 	const __m256i mask4 = _mm256_set1_epi8('\r');
-
 	for (; n >= 32; n-=32, p+=32)
 	{
 		__m256i v = _mm256_load_si256((__m256i const*)p);
 		__m256i c1 = _mm256_cmpeq_epi8(v, mask3);
 		__m256i c2 = _mm256_cmpeq_epi8(v, mask4);
 		if (_mm256_movemask_epi8(_mm256_or_si256(c1, c2)))
-			goto tail;
+		{
+			for (; n > 0; n--, p++)
+				if (*p=='\n' || *p=='\r') break;
+			return p;
+		}
 	}
 
-#endif
+#   endif
 
 	for (; n >= 16; n-=16, p+=16)
 	{
@@ -1875,16 +1881,11 @@ const char *vec_char_find_CRLF(const char *p, size_t n)
 			break;
 	}
 
-#ifdef COREARRAY_SIMD_AVX2
-tail:
 #endif
 
-#endif
-*/
 	// tail
 	for (; n > 0; n--, p++)
 		if (*p=='\n' || *p=='\r') break;
-
 	return p;
 }
 
