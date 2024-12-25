@@ -1093,7 +1093,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 		{
 			m0 = 0;
 			Rprintf(".");
-			if (CheckInterrupt()) Rf_error("User interrupt.");
+			if (CheckInterrupt()) Rf_error("Interrupted by the user.");
 			if ((++m1) % 50 == 0)
 				Rprintf("  %ldK [%s]\n", (long int)n/1000, datetime_str());
 		}
