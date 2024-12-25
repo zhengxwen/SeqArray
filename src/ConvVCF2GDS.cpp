@@ -1036,6 +1036,15 @@ extern "C"
 {
 using namespace SeqArray;
 
+static void chkIntFn(void *dummy) { R_CheckUserInterrupt(); }
+
+static bool CheckInterrupt()
+{
+	// this will call the above in a top-level context so it won't longjmp-out of your context
+	return (R_ToplevelExec(chkIntFn, NULL) == FALSE);
+}
+
+
 // ===========================================================
 // Get the number of lines in a VCF file
 // ===========================================================
@@ -1084,6 +1093,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 		{
 			m0 = 0;
 			Rprintf(".");
+			if (CheckInterrupt()) Rf_error("User interrupt.");
 			if ((++m1) % 50 == 0)
 				Rprintf("  %ldK [%s]\n", (long int)n/1000, datetime_str());
 		}
