@@ -5,12 +5,17 @@
     Parses the meta-information lines of a VCF or BCF file.
 }
 \usage{
-seqVCF_Header(vcf.fn, getnum=FALSE, verbose=TRUE)
+seqVCF_Header(vcf.fn, getnum=FALSE, parallel=FALSE, verbose=TRUE)
 }
 \arguments{
     \item{vcf.fn}{the file name of VCF or BCF format;
         or a \code{\link{connection}} object for VCF format}
     \item{getnum}{if \code{TRUE}, return the total number of variants}
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
+        processing), a numeric value indicating the number of cores, or a
+        cluster object for parallel processing; \code{parallel} is passed to
+        the argument \code{cl} in \code{\link{seqParallel}}, see
+        \code{\link{seqParallel}} for more details}
     \item{verbose}{when \code{getnum=TRUE} and \code{verbose=TRUE}, show
         the progress information for scanning the file}
 }
@@ -36,6 +41,10 @@ seqVCF_Header(vcf.fn, getnum=FALSE, verbose=TRUE)
 \code{Number} -- the number of elements, see the webpage of the 1000 Genomes
 Project; \code{Type} -- data type; \code{Description} -- a variable
 description.
+
+    If multiple cores are used to get the total number of variants, the
+Rsamtools package should be installed, and the indexing file (i.e., .csi or
+.tbi) should be available along with \code{vcf.fn}.
 }
 
 \references{

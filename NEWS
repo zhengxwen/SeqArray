@@ -1,3 +1,14 @@
+CHANGES IN VERSION 1.46.1
+-------------------------
+
+UTILITIES
+
+    o `seqVCF_Header()` allows multiple cores to calculate the total number of
+      variants when 'getnum=TRUE' (the Rsamtools package should be installed);
+      `seqVCF2GDS()` is faster when obtaining the number of variants for
+      splitting files.
+
+
 CHANGES IN VERSION 1.46.0
 -------------------------
 

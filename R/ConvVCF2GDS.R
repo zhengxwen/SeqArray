@@ -38,7 +38,37 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
-seqVCF_Header <- function(vcf.fn, getnum=FALSE, verbose=TRUE)
+.count_vcf_samtools <- function(fn, parallel)
+{
+    if (!requireNamespace("Rsamtools", quietly=TRUE))
+        stop("Rsamtools should be installed when 'parallel' is not FALSE.")
+    idxfn <- paste0(fn, ".csi")
+    if (!file.exists(idxfn))
+    {
+        idxfn <- paste0(fn, ".tbi")
+        if (!file.exists(idxfn))
+            stop("The indexing file should exist (either .csi or .tbi) when 'parallel' is used.")
+    }
+    f <- Rsamtools::TabixFile(fn, idxfn)
+    open(f)
+    s <- Rsamtools::seqnamesTabix(f)
+    close(f)
+    # generate Granges object
+    each <- 5000000L
+    p <- (seq_len(100L)-1L) * each + 1L
+    ir <- IRanges::IRanges(p, width=each)
+    gr <- GenomicRanges::GRanges(rep(s, each=length(ir)), rep(ir, length(s)))
+    lst <- seqParApply(parallel, 1:length(gr),
+        FUN=function(i, vcffn, idxfn, gr)
+        {
+            f <- Rsamtools::TabixFile(vcffn, idxfn)
+            open(f); on.exit(close(f))
+            unlist(Rsamtools::countTabix(f, param=gr[i,]), use.names=FALSE)
+        }, vcffn=fn, idxfn=idxfn, gr=gr)
+    do.call(sum, lst)
+}
+
+seqVCF_Header <- function(vcf.fn, getnum=FALSE, parallel=FALSE, verbose=TRUE)
 {
     # check
     if (!inherits(vcf.fn, "connection"))
@@ -50,6 +80,8 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, verbose=TRUE)
     }
     stopifnot(is.logical(getnum), length(getnum)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (getnum)
+        njobs <- .NumParallel(parallel)
 
     #########################################################
     # open the vcf file
@@ -115,8 +147,14 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, verbose=TRUE)
                     }
                     if (isTRUE(getnum))
                     {
-                        nVariant <- nVariant + length(s) +
-                            .Call(SEQ_VCF_NumLines, infile, FALSE, verbose)
+                        if (njobs > 1L)
+                        {
+                            nVariant <- nVariant +
+                                .count_vcf_samtools(vcf.fn[i], parallel)
+                        } else {
+                            nVariant <- nVariant + length(s) +
+                                .Call(SEQ_VCF_NumLines, infile, FALSE, verbose)
+                        }
                     }
                 }
                 break
@@ -722,11 +760,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         }
 
         # get the number of variants in each VCF file
-        num_array <- unlist(seqParApply(parallel, vcf.fn, function(fn)
+        num_array <- vapply(vcf.fn, function(fn)
         {
-            library(SeqArray, quietly=TRUE, verbose=FALSE)
-            seqVCF_Header(fn, getnum=TRUE)$num.variant
-        }))
+            seqVCF_Header(fn, getnum=TRUE, parallel=parallel)$num.variant
+        }, 0L)
         num_var <- sum(num_array)
 
         if (start < 1L)
