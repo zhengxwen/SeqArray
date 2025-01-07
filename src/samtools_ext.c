@@ -34,7 +34,7 @@ static const char *pkg_samtools = "Rsamtools";
 #define PKG_LOAD(name)	{ \
 		DL_FUNC f = R_FindSymbol(#name, pkg_samtools, NULL); \
 		if (!f) \
-			error("No function '%s' in the %s package", #name, pkg_samtools); \
+			Rf_error("No function '%s' in the %s package", #name, pkg_samtools); \
 		memcpy(&name, &f, sizeof(f)); \
 	}
 
@@ -67,7 +67,7 @@ static size_t bzfile_write(const void *ptr, size_t size, size_t nitems,
 	BGZF *fp = (BGZF *)con->private;
 	/* uses 'unsigned' for len */
 	if ((double) size * (double) nitems > UINT_MAX)
-		error("too large a block specified");
+		Rf_error("too large a block specified");
 	return (*bgzf_write)(fp, ptr, (unsigned int)(size*nitems)) / size;
 }
 
@@ -82,7 +82,7 @@ SEXP SEQ_bgzip_create(SEXP filename)
 	SEXP r_con = R_new_custom_connection(fn, "wb", "bgzip_file", &con);
 	BGZF *bz = (*bgzf_open)(R_ExpandFileName(fn), "wb");
 	if (!bz)
-		error("Cannot open '%s'.", fn);
+		Rf_error("Cannot open '%s'.", fn);
 
 	con->private = bz;
 	con->isopen = TRUE;

@@ -7,6 +7,9 @@
 #
 
 
+# Create a bgzf file
+.bgzf_create <- function(fn) .Call(SEQ_bgzip_create, fn)
+
 
 #######################################################################
 # Convert a SeqArray GDS file to a VCF file
@@ -93,7 +96,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             }
             if (isTRUE(use_Rsamtools) && requireNamespace("Rsamtools"))
             {
-                ofile <- .Call(SEQ_bgzip_create, vcf.fn)
+                ofile <- .bgzf_create(vcf.fn)
                 outfmt <- 2L
             } else {
                 if (verbose)
