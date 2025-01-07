@@ -755,6 +755,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     {
         if (verbose)
         {
+            cat("    # of cores/jobs: ", pnum, "\n", sep="")
             cat("    calculating the total number of variants ...\n")
             flush.console()
         }
