@@ -756,7 +756,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (verbose)
         {
             cat("    # of cores/jobs: ", pnum, "\n", sep="")
-            cat("    calculating the total number of variants ...\n")
+            cat("    calculating the total number of variants")
+            if (requireNamespace("Rsamtools", quietly=TRUE))
+                cat(" using Rsamtools")
+            cat(" ...\n")
             flush.console()
         }
 
