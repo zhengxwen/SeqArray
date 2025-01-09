@@ -38,10 +38,13 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
-.count_vcf_samtools <- function(fn, parallel)
+.count_vcf_samtools <- function(fn, parallel=FALSE)
 {
+    # check
+    stopifnot(is.character(fn), length(fn)==1L, !is.na(fn))
     if (!requireNamespace("Rsamtools", quietly=TRUE))
         stop("Rsamtools should be installed when 'parallel' is not FALSE.")
+    # check the indexing file
     idxfn <- paste0(fn, ".csi")
     if (!file.exists(idxfn))
     {
@@ -49,23 +52,41 @@
         if (!file.exists(idxfn))
             stop("The indexing file should exist (either .csi or .tbi) when 'parallel' is used.")
     }
-    f <- Rsamtools::TabixFile(fn, idxfn)
-    open(f)
-    s <- Rsamtools::seqnamesTabix(f)
-    close(f)
-    # generate Granges object
-    each <- 5000000L
-    p <- (seq_len(100L)-1L) * each + 1L
-    ir <- IRanges::IRanges(p, width=each)
-    gr <- GenomicRanges::GRanges(rep(s, each=length(ir)), rep(ir, length(s)))
-    lst <- seqParApply(parallel, 1:length(gr),
-        FUN=function(i, vcffn, idxfn, gr)
+    # process
+    pnum <- .NumParallel(parallel)
+    if (pnum<=1L || isTRUE(file.size(fn) <= 67108864L))
+    {
+        # if file size <= 64MB
+        f <- Rsamtools::TabixFile(fn, idxfn)
+        open(f)
+        on.exit(close(f))
+        unlist(Rsamtools::countTabix(f), use.names=FALSE)
+    } else {
+        f <- Rsamtools::TabixFile(fn, idxfn)
+        open(f)
+        s <- Rsamtools::seqnamesTabix(f)
+        close(f)
+        # generate Granges object
+        if (length(s) < pnum)
         {
-            f <- Rsamtools::TabixFile(vcffn, idxfn)
-            open(f); on.exit(close(f))
-            unlist(Rsamtools::countTabix(f, param=gr[i,]), use.names=FALSE)
-        }, vcffn=fn, idxfn=idxfn, gr=gr)
-    do.call(sum, lst)
+            each <- 5000000L
+            p <- (seq_len(100L)-1L) * each + 1L
+            r <- IRanges::IRanges(p, width=each)
+            gr <- GenomicRanges::GRanges(rep(s, each=length(r)),
+                rep(r, length(s)))
+        } else {
+            gr <- GenomicRanges::GRanges(s, IRanges::IRanges(1L, 2^29))
+        }
+        # parallel
+        lst <- seqParApply(parallel, 1:length(gr),
+            FUN=function(i, vcffn, idxfn, gr)
+            {
+                f <- Rsamtools::TabixFile(vcffn, idxfn)
+                open(f); on.exit(close(f))
+                unlist(Rsamtools::countTabix(f, param=gr[i,]), use.names=FALSE)
+            }, vcffn=fn, idxfn=idxfn, gr=gr)
+        do.call(sum, lst)
+    }
 }
 
 seqVCF_Header <- function(vcf.fn, getnum=FALSE, parallel=FALSE, verbose=TRUE)
@@ -766,7 +787,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         # get the number of variants in each VCF file
         num_array <- vapply(vcf.fn, function(fn)
         {
-            seqVCF_Header(fn, getnum=TRUE, parallel=parallel)$num.variant
+            v <- seqVCF_Header(fn, getnum=TRUE, parallel=parallel, verbose=FALSE)
+            v$num.variant
         }, 0L)
         num_var <- sum(num_array)
 
