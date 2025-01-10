@@ -9,8 +9,9 @@
 seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", scenario=c("general", "imputation"),
-    reference=NULL, start=1L, count=-1L, optimize=TRUE, raise.error=TRUE,
-    digest=TRUE, parallel=FALSE, verbose=TRUE)
+    reference=NULL, start=1L, count=-1L, variant_count=NA_integer_,
+    optimize=TRUE, raise.error=TRUE, digest=TRUE, parallel=FALSE,
+    verbose=TRUE)
 seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", scenario=c("general", "imputation"),
@@ -50,6 +51,11 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     \item{start}{the starting variant if importing part of VCF files}
     \item{count}{the maximum count of variant if importing part of VCF files,
         -1 indicates importing to the end}
+    \item{variant_count}{\code{NA_integer_} (default) or a numeric vector
+        specifying the numbers of variants in the VCF file(s) in \code{vcf.fn};
+        only applicable when multiple cores are used; if the number of variants
+        is known, the conversion can skip counting the variants before
+        splitting the file(s); \code{variant_count} could be an approximate}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
