@@ -783,13 +783,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (verbose)
         {
             cat("    # of cores/jobs: ", pnum, "\n", sep="")
-            cat("    calculating the total number of variants")
-            if (!isFALSE(use_Rsamtools))
+            a <- variant_count < 0L
+            if (length(a) < length(vcf.fn)) a[length(vcf.fn)] <- NA
+            if (anyNA(a) || any(a, na.rm=TRUE))
             {
-                if (requireNamespace("Rsamtools", quietly=TRUE))
-                    cat(" using Rsamtools")
+                cat("    calculating the total number of variants")
+                if (!isFALSE(use_Rsamtools))
+                {
+                    if (requireNamespace("Rsamtools", quietly=TRUE))
+                        cat(" using Rsamtools")
+                }
+                cat(" ...\n")
             }
-            cat(" ...\n")
             flush.console()
         }
 
@@ -833,6 +838,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
                 flush.console()
             }
+            # unlimit the last one
+            psplit[[2L]][length(psplit[[2L]])] <- -1L
 
             # conversion in parallel
             seqParallel(parallel, NULL, FUN = function(
