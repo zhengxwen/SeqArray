@@ -10,8 +10,8 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", scenario=c("general", "imputation"),
     reference=NULL, start=1L, count=-1L, variant_count=NA_integer_,
-    optimize=TRUE, raise.error=TRUE, digest=TRUE, parallel=FALSE,
-    verbose=TRUE)
+    optimize=TRUE, raise.error=TRUE, digest=TRUE, use_Rsamtools=NA,
+    parallel=FALSE, verbose=TRUE)
 seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ignore.chr.prefix="chr", scenario=c("general", "imputation"),
@@ -63,6 +63,12 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
         if TRUE or a digest algorithm is specified}
+    \item{use_Rsamtools}{only applicable when multiple cores are used;
+        \code{use_Rsamtools} is passed to \code{\link{seqVCF_Header}} to get
+        the total number of variants;
+        \code{NA}: using Rsamtools when it is installed; \code{FALSE}: not use
+        the Rsamtools package; \code{TRUE}: to use Rsamtools, if it is not
+        installed, the function fails}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
         processing), a numeric value indicating the number of cores, or a
         cluster object for parallel processing; \code{parallel} is passed to
