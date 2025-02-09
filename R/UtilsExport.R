@@ -216,7 +216,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra.index"))
             copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra"))
         } else  # TODO
-            stop("Not implemented in 'genotype/extra.index', please contact the author.")
+            warning("Not implemented in 'genotype/extra.index'.")
         sync.gds(outfile)
     } else {
         if (verbose) cat("    genotype\n")
@@ -233,7 +233,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             copyto.gdsn(node, index.gdsn(gdsfile, "phase/extra.index"))
             copyto.gdsn(node, index.gdsn(gdsfile, "phase/extra"))
         } else  # TODO
-            stop("Not implemented in 'phase/extra.index', please contact the author.")
+            warning("Not implemented in 'phase/extra.index'.")
         sync.gds(outfile)
     } else {
         if (verbose) cat("    phase\n")
@@ -377,7 +377,7 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
     {
         node_compress <- fmt_compress <- idx_compress <- ""
     } else {
-        stop("Not implemented.")
+        stop("Not implemented 'compress'.")
     }
 
     # open the file
