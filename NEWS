@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.47.4
+-------------------------
+
+UTILITIES
+
+    o new
+
+
 CHANGES IN VERSION 1.46.2
 -------------------------
 
@@ -11,7 +19,7 @@ UTILITIES
     o new 'variant_count' in `seqVCF2GDS()` to specify the number of variants
       in the VCF file when it is known or an approximation is known; it is only
       applicable when multiple cores are used. If 'variant_count' is specified,
-      counting the number of variants will be skipped.
+      counting the total number of variants will be skipped.
 
 
 CHANGES IN VERSION 1.46.0

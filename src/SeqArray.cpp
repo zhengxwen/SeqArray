@@ -1363,6 +1363,30 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ClearVarMap(SEXP gdsfile)
 
 
 // ===========================================================
+// List encoding and decoding
+// ===========================================================
+
+/*
+COREARRAY_DLL_EXPORT SEXP SEQ_ListEncode(SEXP obj)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		File.VarMap().clear();
+	COREARRAY_CATCH
+}
+
+
+COREARRAY_DLL_EXPORT SEXP SEQ_ListDecode(SEXP val, SEXP code)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		File.VarMap().clear();
+	COREARRAY_CATCH
+}
+*/
+
+
+// ===========================================================
 // Get system configuration
 // ===========================================================
 
