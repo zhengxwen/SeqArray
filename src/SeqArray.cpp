@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2024    Xiuwen Zheng
+// Copyright (C) 2013-2025    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1366,24 +1366,67 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ClearVarMap(SEXP gdsfile)
 // List encoding and decoding
 // ===========================================================
 
-/*
+static void xListEnum(SEXP obj, vector<C_UInt32> &out)
+{
+	const C_UInt32 LIST_FLAG = 0x80000000;
+	if (Rf_isNewList(obj))
+	{
+		const R_len_t n = Rf_length(obj);
+		out.push_back(LIST_FLAG | n);
+		for (R_len_t i=0; i < n; i++)
+			xListEnum(VECTOR_ELT(obj, i), out);
+	} else {
+		const R_len_t n = Rf_isNull(obj) ? 0 : Rf_length(obj);
+		out.push_back(n);
+	}
+}
+
 COREARRAY_DLL_EXPORT SEXP SEQ_ListEncode(SEXP obj)
 {
 	COREARRAY_TRY
-		CFileInfo &File = GetFileInfo(gdsfile);
-		File.VarMap().clear();
+		vector<C_UInt32> I;
+		xListEnum(obj, I);
+		if (!I.empty())
+		{
+			const size_t n = I.size();
+			bool use_i32 = false;
+			for (size_t i=0; i < n; i++)
+				if ((I[i] & 0x7FFFFFFF) > 0x7F) { use_i32 = true; break; }
+			if (use_i32)
+			{
+				rv_ans = NEW_INTEGER(I.size());
+				memcpy(INTEGER(rv_ans), &I[0], I.size()*sizeof(int));
+			} else {
+				rv_ans = NEW_RAW(I.size());
+				C_UInt8 *p = RAW(rv_ans);
+				for (size_t i=0; i < n; i++)
+				{
+					C_UInt32 v = I[i];
+					p[i] = (v & 0x80000000) ? (v | 0x80) : v;
+				}
+			}
+		}
 	COREARRAY_CATCH
 }
 
+
+static int xTreeCodeCount(size_t n, int *p)
+{
+	
+}
+
+static int xTreeCodeCount(size_t n, C_UInt8 *p)
+{
+}
 
 COREARRAY_DLL_EXPORT SEXP SEQ_ListDecode(SEXP val, SEXP code)
 {
-	COREARRAY_TRY
-		CFileInfo &File = GetFileInfo(gdsfile);
-		File.VarMap().clear();
-	COREARRAY_CATCH
+	if (!Rf_isVectorAtomic(val))
+		Rf_error("Not supported type of the input.");
+	if (TYPEOF(code) != RAWSXP)
+		Rf_error("Not supported type of the tree code.");
+	return R_NilValue;
 }
-*/
 
 
 // ===========================================================
