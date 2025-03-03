@@ -40,7 +40,7 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     \item{genotype.var.name}{the ID for genotypic data in the FORMAT column;
         "GT" by default (in VCF v4)}
     \item{ignore.chr.prefix}{a vector of character, indicating the prefix of
-        chromosome which should be ignored, like "chr"; it is not
+        chromosome which should be ignored, e.g., \code{"chr"}; it is not
         case-sensitive}
     \item{scenario}{"general": use float32 to store floating-point numbers
         (by default); "imputation": use packedreal16 to store DS and GP in the
