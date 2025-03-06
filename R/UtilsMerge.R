@@ -1037,16 +1037,18 @@ seqResetVariantID <- function(gds.fn, set=NULL, digest=TRUE, optimize=TRUE,
                 cleanup.gds(fn, verbose=FALSE)
             if (verbose)
             {
-                cat("    set new variant id: ", v[1L], " ... ", v[length(v)],
-                    " [", length(v), "]\n", sep="")
+                cat("    set new variant id: ",
+                    .pretty(v[1L]), " ... ", .pretty(v[length(v)]),
+                    " [n=", .pretty(length(v)), "]\n", sep="")
             }
         } else {
             n <- n + len
             seqClose(f)
             if (verbose)
             {
-                cat("\n    skip variant id: ", v[1L], " ... ", v[length(v)],
-                    " [", length(v), "]\n", sep="")
+                cat("\n    skip variant id: ",
+                    .pretty(v[1L]), " ... ", .pretty(v[length(v)]),
+                    " [n=", length(v), "]\n", sep="")
             }
         }
     }
