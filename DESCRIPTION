@@ -1,6 +1,6 @@
 Package: SeqArray
 Type: Package
-Title: Data Management of Large-Scale Whole-Genome Sequence Variant Calls
+Title: Data management of large-scale whole-genome sequence variant calls using GDS files
 Version: 1.47.4
 Date: 2025-02-05
 Depends: R (>= 3.5.0), gdsfmt (>= 1.31.1)

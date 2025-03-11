@@ -1,4 +1,4 @@
-SeqArray: Data Management of Large-scale Whole-genome Sequence Variant Calls
+SeqArray: Data management of large-scale whole-genome sequence variant calls using GDS files
 ===
 
 ![GPLv3](http://www.gnu.org/graphics/gplv3-88x31.png)
