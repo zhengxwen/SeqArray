@@ -626,8 +626,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (is.null(samp.id))
             {
                 samp.id <- seqVCF_SampID(vcf.fn[i])
-                if (length(samp.id) <= 0L)
-                    message("No sample in '", vcf.fn[i], "'")
+                # if (length(samp.id) <= 0L)
+                #     message("No sample in '", vcf.fn[i], "'")
             } else {
                 tmp <- seqVCF_SampID(vcf.fn[i])
                 if (length(samp.id) != length(tmp))
@@ -700,7 +700,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (!is.character(storage.tmp))
             storage.tmp <- "customized"
         .cat("    compression method: ", storage.tmp)
-        .cat("    # of samples: ", length(header$sample.id))
         if (identical(scenario, "imputation"))
         {
             cat("    scenario: imputation\n")
