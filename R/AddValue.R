@@ -175,7 +175,7 @@
 }
 
 # modify annotation/qual
-.r_annot_qual <- function(gdsfile, val, replace, nvar, compress, verbose)
+.r_annot_qual <- function(gdsfile, val, replace, nvar, compress, use_float32, verbose)
 {
     stopifnot(is.vector(val), length(val)==nvar)
     if (!is.numeric(val))
@@ -185,7 +185,9 @@
     }
     if (!is.null(index.gdsn(gdsfile, "annotation/qual", silent=TRUE)))
         stopifnot(replace)
-    n <- add.gdsn(index.gdsn(gdsfile, "annotation"), "qual", val,
+    st <- storage.mode(val)
+    if (is.double(val) && isTRUE(use_float32)) st <- "float32"
+    n <- add.gdsn(index.gdsn(gdsfile, "annotation"), "qual", val, storage=st,
         compress=compress, closezip=TRUE, replace=replace)
     .DigestCode(n, TRUE, FALSE)
     if (verbose)
@@ -227,7 +229,7 @@
 
 # add annotation/info/VARNAME
 .r_annot_info_sub <- function(gdsfile, varnm, val, replace, nvar, desp,
-    compress, packed, packed.idx, verbose, verbose.attr)
+    compress, use_float32, packed, packed.idx, verbose, verbose.attr)
 {
     n <- index.gdsn(gdsfile, varnm, silent=TRUE)
     if (!is.null(n))
@@ -268,17 +270,24 @@
             stopifnot(length(val) == nvar)
         else if (is.matrix(val))
             stopifnot(ncol(val) == nvar)
-        if (packed && isvec && any(is.na(val)))
+        hasNA <- anyNA(val)
+        if (packed && isvec && hasNA)
         {
+            st <- storage.mode(val)
+            if (is.logical(val)) st <- "bit1"
+            if (is.double(val) && isTRUE(use_float32)) st <- "float32"
             x <- !is.na(val)
-            n <- add.gdsn(node, nm, val[x], compress=compress, closezip=TRUE,
+            n <- add.gdsn(node, nm, val[x], storage=st, compress=compress, closezip=TRUE,
                 replace=TRUE)
             nidx <- add.gdsn(node, paste0("@", nm), x, storage="bit1",
                 compress=compress, closezip=TRUE, replace=TRUE,
                 visible=FALSE)
             num <- "."
         } else {
-            n <- add.gdsn(node, nm, val, compress=compress, closezip=TRUE,
+            st <- storage.mode(val)
+            if (is.logical(val) && !hasNA) st <- "bit1"
+            if (is.double(val) && isTRUE(use_float32)) st <- "float32"
+            n <- add.gdsn(node, nm, val, storage=st, compress=compress, closezip=TRUE,
                 replace=TRUE)
             nidx <- index.gdsn(node, paste0("@", nm), silent=TRUE)
             if (!is.null(nidx)) delete.gdsn(nidx)
@@ -306,8 +315,11 @@
         val <- lapply(val, function(x) unlist(x, use.names=FALSE))
         ns <- lengths(val)
         val <- unlist(val, use.names=FALSE)
-        if (is.null(val)) val <- logical()
-        n <- add.gdsn(node, nm, val, compress=compress, closezip=TRUE,
+        if (is.null(val)) val <- integer()
+        st <- storage.mode(val)
+        if (is.logical(val) && !anyNA(val)) st <- "bit1"
+        if (is.double(val) && isTRUE(use_float32)) st <- "float32"
+        n <- add.gdsn(node, nm, val, storage=st, compress=compress, closezip=TRUE,
             replace=TRUE)
         st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
         nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
@@ -337,7 +349,7 @@
 # Add or modify values in a GDS file
 #
 seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
-    compress="LZMA_RA", packed=TRUE, packed.idx=TRUE, verbose=TRUE,
+    compress="LZMA_RA", packed=TRUE, packed.idx=TRUE, use_float32=TRUE, verbose=TRUE,
     verbose.attr=TRUE)
 {
     # check
@@ -348,6 +360,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
     stopifnot(is.character(compress), length(compress)==1L)
     stopifnot(is.logical(packed), length(packed)==1L)
     stopifnot(is.logical(packed.idx), length(packed.idx)==1L)
+    stopifnot(is.logical(use_float32), length(use_float32)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     stopifnot(is.logical(verbose.attr), length(verbose.attr)==1L)
 
@@ -382,7 +395,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
         "annotation/id"   = .r_annot_id(gdsfile, val, replace, nvar,
                 compress, verbose),
         "annotation/qual" = .r_annot_qual(gdsfile, val, replace, nvar,
-                compress, verbose),
+                compress, use_float32, verbose),
         "annotation/filter" = .r_annot_flt(gdsfile, val, replace, nvar,
                 compress, verbose),
         "annotation/info"   = .r_annot_info(gdsfile),
@@ -401,7 +414,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
         if (nchar(varnm) <= 16L)
             stop("Invalid 'varnm'.")
         .r_annot_info_sub(gdsfile, varnm, val, replace, nvar, desp, compress,
-            packed, packed.idx, verbose, verbose.attr)
+            use_float32, packed, packed.idx, verbose, verbose.attr)
     } else
         stop("Invalid `varnm`.")
 

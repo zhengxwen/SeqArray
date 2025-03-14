@@ -7,6 +7,9 @@ UTILITIES
 
     o new argument 'start' in `seqResetVariantID()`
 
+    o `seqAddValue()`: use bit1 for a logical vector; new argument 'use_float32' for
+      storing double
+
 
 CHANGES IN VERSION 1.46.2
 -------------------------

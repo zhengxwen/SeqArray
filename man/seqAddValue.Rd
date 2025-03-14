@@ -5,9 +5,8 @@
     Add or modify the values in a GDS file with hash code
 }
 \usage{
-seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE,
-    compress="LZMA_RA", packed=TRUE, packed.idx=TRUE, verbose=TRUE,
-    verbose.attr=TRUE)
+seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE, compress="LZMA_RA",
+    packed=TRUE, packed.idx=TRUE, use_float32=TRUE, verbose=TRUE, verbose.attr=TRUE)
 }
 \arguments{
     \item{gdsfile}{character for file name, or a \code{\link{SeqVarGDSClass}}
@@ -26,6 +25,8 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE,
     \item{packed}{\code{TRUE}, pack data if there is any missing value}
     \item{packed.idx}{\code{TRUE}, store the index variable using integers with
         the fewest bits if possible}
+    \item{use_float32}{if \code{TRUE}, use 32 bits instead of 64 bits to store
+        floating numeric values (i.e., \code{double})}
     \item{verbose}{if \code{TRUE}, show information}
     \item{verbose.attr}{if \code{TRUE}, show attribute information in a GDS
         node}
@@ -60,6 +61,7 @@ table(seqGetData(f, "chromosome"))
 # annotation info
 seqAddValue(f, "annotation/info/folder", NULL)  # add a new folder
 seqAddValue(f, "annotation/info/folder/val", 1:1348, "random number")
+seqAddValue(f, "annotation/info/folder/logical", rep(c(TRUE, FALSE), length.out=1348))
 seqAddValue(f, "annotation/info/folder/packed", c(rep(2L, 1000), rep(NA, 348)))
 seqAddValue(f, "annotation/info/newff",
     data.frame(x=1:1348, y=rep("s", 1348), stringsAsFactors=FALSE),
