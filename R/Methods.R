@@ -652,9 +652,11 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     {
         if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
+            on.exit(seqFilterPop(gdsfile))  # in case if it fails
             # C call, by.variant
             rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
+            on.exit()
         } else {
             rv <- seqParallel(parallel, gdsfile,
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)

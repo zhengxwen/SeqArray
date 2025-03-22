@@ -15,6 +15,10 @@ UTILITIES
 
     o new argument 'digest' in `seqRecompress()` to add MD5 hash codes
 
+BUG FIXES
+
+    o `seqBlockApply()` should recover the filter when the user-specified function fails
+
 
 CHANGES IN VERSION 1.46.2
 -------------------------
