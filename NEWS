@@ -10,6 +10,11 @@ UTILITIES
     o `seqAddValue()`: use bit1 for a logical vector; new argument 'use_float32' for
       storing double
 
+    o use `crayon::silver()` instead of `crayon::blurred()` in the display since
+      RStudio blurs the screen output
+
+    o new argument 'digest' in `seqRecompress()` to add MD5 hash codes
+
 
 CHANGES IN VERSION 1.46.2
 -------------------------

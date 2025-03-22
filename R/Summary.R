@@ -61,7 +61,7 @@
             if (.crayon())
             {
                 if (identical(ans, NA))
-                    s <- crayon::blurred(s)
+                    s <- crayon::silver(s)
                 else if (identical(ans, FALSE))
                     s <- crayon::bold(s)
             }

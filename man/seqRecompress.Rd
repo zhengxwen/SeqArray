@@ -6,7 +6,7 @@
 }
 \usage{
 seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax", "none"),
-    exclude=character(), optimize=TRUE, verbose=TRUE)
+    exclude=character(), optimize=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gds.fn}{the file name of SeqArray file}
@@ -14,6 +14,8 @@ seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax", "non
     \item{exclude}{a list of GDS nodes to be excluded, see details}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link{cleanup.gds}}}
+    \item{digest}{a logical value (TRUE/FALSE), whether adding md5 hash codes to
+        the GDS file}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{

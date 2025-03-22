@@ -347,10 +347,13 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 # Recompress the GDS file
 #
 seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
-    "UltraMax", "none"), exclude=character(), optimize=TRUE, verbose=TRUE)
+    "UltraMax", "none"), exclude=character(), optimize=TRUE, digest=TRUE, verbose=TRUE)
 {
+    # check
     stopifnot(is.character(gds.fn), length(gds.fn)==1L)
     stopifnot(is.character(exclude))
+    stopifnot(is.logical(optimize), length(optimize)==1L, !is.na(optimize))
+    stopifnot(is.logical(digest), length(digest)==1L, !is.na(digest))
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     compress <- match.arg(compress)
@@ -418,13 +421,17 @@ seqRecompress <- function(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra",
                     cat(sprintf("\t(inflated %.1f%%)", -v))
             }
             # digest
-            if (!is.null(get.attr.gdsn(n)$md5))
+            if (digest)
             {
                 digest.gdsn(n, algo="md5", action="add")
                 if (verbose)
                     cat("  MD5:", get.attr.gdsn(n)$md5, "\n", sep="")
-            } else if (verbose)
-                cat("\n")
+            } else {
+                s <- setdiff(c("md5", "sha1", "sha256", "sha384", "sha512"),
+                    names(get.attr.gdsn(n)))
+                if (length(s)) delete.attr.gdsn(n, s)
+                if (verbose) cat("\n")
+            }
         }
     }
 

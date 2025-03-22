@@ -193,7 +193,7 @@ process_count <- 1L
 .append_gds <- function(target.node, gdslist, varname, verbose)
 {
     s <- "."
-    if (.crayon()) s <- crayon::blurred(s)
+    if (.crayon()) s <- crayon::silver(s)
     .MergeNodeAttr(target.node, gdslist, varname)
     for (i in seq_along(gdslist))
     {
@@ -869,7 +869,7 @@ process_count <- 1L
             if (verbose)
             {
                 s <- paste0(ifelse(indent, "  ", ""), "[", algo, ": ", h, "]")
-                if (.crayon()) s <- crayon::blurred(s)
+                if (.crayon()) s <- crayon::silver(s)
                 cat(s, "\n", sep="")
             }
         } else if (verbose)

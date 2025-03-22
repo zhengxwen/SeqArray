@@ -50,7 +50,7 @@
     digest, verbose)
 {
     h <- "."
-    if (.crayon()) h <- crayon::blurred(h)
+    if (.crayon()) h <- crayon::silver(h)
 
     for (i in seq_along(varnm))
     {
@@ -162,7 +162,7 @@
         if (verbose)
         {
             cat("        ", varnm[i], " ", sep="")
-            cat(if (.crayon()) crayon::blurred("[") else "[")
+            cat(if (.crayon()) crayon::silver("[") else "[")
         }
         idx <- 0L
         for (j in seq_along(flist))
@@ -203,7 +203,7 @@
                 if (verbose)
                 {
                     h <- paste0(ifelse(j > 1L, ",", ""), j)
-                    if (.crayon()) h <- crayon::blurred(h)
+                    if (.crayon()) h <- crayon::silver(h)
                     cat(h)
                     flush(stdout()); flush.console()
                 }
@@ -242,7 +242,7 @@
         readmode.gdsn(n4)
         readmode.gdsn(n5)
         if (verbose)
-            cat(if (.crayon()) crayon::blurred("]") else "]")
+            cat(if (.crayon()) crayon::silver("]") else "]")
         .DigestCode(n4, digest, verbose)
         .DigestCode(n5, digest, FALSE)
 
