@@ -2,7 +2,7 @@
 //
 // Index.cpp: Indexing Objects
 //
-// Copyright (C) 2016-2024    Xiuwen Zheng
+// Copyright (C) 2016-2025    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -931,6 +931,14 @@ vector<C_Int32> &CFileInfo::Position()
 		GDS_Array_ReadData(N, NULL, NULL, &_Position[0], svInt32);
 	}
 	return _Position;
+}
+
+void CFileInfo::ClearPosition()
+{
+	if (!_Root)
+		throw ErrSeqArray(ERR_FILE_ROOT);
+	_Position.clear();
+	std::vector<C_Int32>().swap(_Position);
 }
 
 CGenoIndex &CFileInfo::GenoIndex()

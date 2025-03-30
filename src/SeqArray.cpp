@@ -2,7 +2,7 @@
 //
 // SeqArray.cpp: the C++ codes for the SeqArray package
 //
-// Copyright (C) 2013-2024    Xiuwen Zheng
+// Copyright (C) 2013-2025    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1363,6 +1363,29 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ClearVarMap(SEXP gdsfile)
 
 
 // ===========================================================
+// Clear VarMap in a GDS file
+// ===========================================================
+
+COREARRAY_DLL_EXPORT SEXP SEQ_BufferPosition(SEXP gdsfile, SEXP clear)
+{
+	int clear_flag = Rf_asLogical(clear);
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		if (clear_flag == 1)  // TRUE
+		{
+			File.ClearPosition();
+			rv_ans = R_NilValue;
+		} else {
+			vector<C_Int32> &pos = File.Position();
+			SEXP n = Rf_ScalarInteger(pos.size());  // # of positions
+			rv_ans = R_MakeExternalPtr(&pos[0], R_NilValue, n);
+		}
+	COREARRAY_CATCH
+}
+
+
+
+// ===========================================================
 // Get system configuration
 // ===========================================================
 
@@ -1653,7 +1676,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
 		CALL(SEQ_IntAssign, 2),             CALL(SEQ_AppendFill, 3),
-		CALL(SEQ_ClearVarMap, 1),
+		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_BufferPosition, 2),
 
 		CALL(SEQ_bgzip_create, 1),
 		CALL(SEQ_ToVCF_Init, 6),            CALL(SEQ_ToVCF_Done, 0),

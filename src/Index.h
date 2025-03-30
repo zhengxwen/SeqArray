@@ -2,7 +2,7 @@
 //
 // Index.h: Indexing Objects
 //
-// Copyright (C) 2016-2022    Xiuwen Zheng
+// Copyright (C) 2016-2025    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -414,6 +414,8 @@ public:
 	void ResetChromosome();
 	/// return _Position which has been initialized
 	vector<C_Int32> &Position();
+	/// clear the buffer for variant positions
+	void ClearPosition();
 
 	/// return _GenoIndex which has been initialized
 	CGenoIndex &GenoIndex();
