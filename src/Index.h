@@ -76,6 +76,8 @@ class ErrSeqArray;
 template<typename TYPE> class COREARRAY_DLL_LOCAL C_RLE
 {
 public:
+	friend class CChromIndex;
+
 	/// constructor
 	C_RLE()
 	{
@@ -249,15 +251,15 @@ public:
 
 	typedef vector<TRange> TRangeList;
 
+	/// map to TRangeList from chromosome coding
+	map<string, TRangeList> Map;
+
 	/// constructor
 	CChromIndex();
-
 	/// clear
 	void Clear();
-
 	/// represent chromosome codes as a RLE object in Map
 	void AddChrom(PdGDSFolder Root);
-
 	/// the total length of a TRangeList object
 	size_t RangeTotalLength(const TRangeList &RngList);
 
@@ -265,9 +267,10 @@ public:
 	inline bool Empty() const { return Map.empty(); }
 	/// return chromosome coding with the index 
 	inline const string &operator [](size_t idx) { return RleChr[idx]; }
-
-	/// map to TRangeList from chromosome coding
-	map<string, TRangeList> Map;
+	/// return the RLE representation of chromosome: value
+	inline vector<string> &RLE_Values() { return RleChr.Values; }
+	/// return the RLE representation of chromosome: length
+	inline vector<C_UInt32> &RLE_Lengths() { return RleChr.Lengths; }
 
 protected:
 	/// indexing chromosome
