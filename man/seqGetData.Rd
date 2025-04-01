@@ -38,7 +38,8 @@ components) with a class name \code{SeqVarDataList}.
 \code{"annotation/format/@VARIABLE_NAME"} are used to obtain the index
 associated with these variables.
 
-\code{"$chromosome"} returns chromosome codes in an object of \code{S4Vectors::Rle}.
+\code{"$chromosome"} returns chromosome codes in an object of
+\code{S4Vectors::Rle}.
 
 \code{"$dosage"} is also allowed for the dosages of reference allele (integer:
 0, 1, 2 and NA for diploid genotypes).

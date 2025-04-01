@@ -7,8 +7,8 @@ UTILITIES
 
     o new argument 'start' in `seqResetVariantID()`
 
-    o `seqAddValue()`: use bit1 for a logical vector; new argument 'use_float32' for
-      storing double
+    o `seqAddValue()`: use bit1 for a logical vector; new argument
+      'use_float32' for storing double
 
     o use `crayon::silver()` instead of `crayon::blurred()` in the display since
       RStudio blurs the screen output
@@ -20,7 +20,8 @@ UTILITIES
 
 BUG FIXES
 
-    o `seqBlockApply()` should recover the filter when the user-specified function fails
+    o `seqBlockApply()` should recover the filter when the user-specified
+      function fails
 
 
 CHANGES IN VERSION 1.46.2
