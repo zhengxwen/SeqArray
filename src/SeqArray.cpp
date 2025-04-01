@@ -1386,36 +1386,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BufferPosition(SEXP gdsfile, SEXP clear)
 
 
 // ===========================================================
-// Get RLE-coded chromosome
-// ===========================================================
-
-COREARRAY_DLL_EXPORT SEXP SEQ_Get_ChromRLE(SEXP gdsfile)
-{
-	COREARRAY_TRY
-		CFileInfo &File = GetFileInfo(gdsfile);
-		CChromIndex &Chrom = File.Chromosome();
-		vector<string> &V = Chrom.RLE_Values();
-		vector<C_UInt32> &L = Chrom.RLE_Lengths();
-		if (V.size() != L.size())
-			throw ErrSeqArray("Invalid RLE of chromosome!");
-		rv_ans = PROTECT(NEW_LIST(2));
-		SEXP l = NEW_INTEGER(L.size());
-		SET_ELEMENT(rv_ans, 0, l);
-		memcpy(INTEGER(l), &L[0], sizeof(int)*L.size());
-		SEXP v = NEW_CHARACTER(V.size());
-		SET_ELEMENT(rv_ans, 1, v);
-		for (size_t i=0; i < V.size(); i++)
-		{
-			string &s = V[i];
-			SET_STRING_ELT(v, i, Rf_mkCharLen(&s[0], s.size()));
-		}
-		UNPROTECT(1);
-	COREARRAY_CATCH
-}
-
-
-
-// ===========================================================
 // Get system configuration
 // ===========================================================
 
@@ -1713,7 +1683,6 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_IntAssign, 2),             CALL(SEQ_AppendFill, 3),
 		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_BufferPosition, 2),
-		CALL(SEQ_Get_ChromRLE, 1),
 
 		CALL(SEQ_bgzip_create, 1),
 		CALL(SEQ_ToVCF_Init, 6),            CALL(SEQ_ToVCF_Done, 0),

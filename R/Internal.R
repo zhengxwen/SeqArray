@@ -256,17 +256,6 @@ process_count <- 1L
 
 
 #######################################################################
-# Get RLE-coded chromosome
-#
-.get_chromosome_rle <- function(gdsfile)
-{
-    v <- .Call(SEQ_Get_ChromRLE, gdsfile)
-    structure(list(lengths=v[[1L]], values=v[[2L]]), class="rle")
-}
-
-
-
-#######################################################################
 # Open and close a connection,
 # Please always call '.close_conn' after '.open_bin' and '.open_text'
 
