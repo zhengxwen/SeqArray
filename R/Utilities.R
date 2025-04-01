@@ -9,9 +9,14 @@
 
 #######################################################################
 
+# R expressions called in C internally
+lang_eval <- list(
+    new_rle = quote(new("Rle", values=values, lengths=lengths))
+)
+
 .onLoad <- function(lib, pkg)
 {
-    .Call(SEQ_Pkg_Init, .dim_name, process_count, process_index)
+    .Call(SEQ_Pkg_Init, .dim_name, process_count, process_index, lang_eval)
     TRUE
 }
 

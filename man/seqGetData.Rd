@@ -99,6 +99,7 @@ head(variant.id <- seqGetData(f, "variant.id"))
 
 # get 'chromosome'
 table(seqGetData(f, "chromosome"))
+seqGetData(f, "$chromosome")
 
 # get 'allele'
 head(seqGetData(f, "allele"))

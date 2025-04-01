@@ -1596,20 +1596,26 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 // Initialize R objects when the package is loaded
 // ===========================================================
 
+extern SEXP LANG_NEW_RLE;
+
 COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt,
-	SEXP proc_idx)
+	SEXP proc_idx, SEXP lang_eval)
 {
+	// .dim_name
 	R_Geno_Dim2_Name = VECTOR_ELT(dim_name, 0);
 	R_Geno_Dim3_Name = VECTOR_ELT(dim_name, 1);
 	R_Dosage_Name = VECTOR_ELT(dim_name, 2);
 	R_Data_Name = VECTOR_ELT(dim_name, 3);
 	R_Data_Dim2_Name = VECTOR_ELT(dim_name, 4);
 	R_Data_ListClass = VECTOR_ELT(dim_name, 5);
+	// process_count, process_index
 	R_Process_Count = INTEGER(proc_cnt);
 	R_Process_Index = INTEGER(proc_idx);
+	// lang_eval
+	LANG_NEW_RLE = VECTOR_ELT(lang_eval, 0);
+	// return
 	return R_NilValue;
 }
-
 
 
 
@@ -1675,7 +1681,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
-		CALL(SEQ_Pkg_Init, 3),
+		CALL(SEQ_Pkg_Init, 4),
 		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
 		CALL(SEQ_ExternalName2, 2),         CALL(SEQ_ExternalName3, 3),
 		CALL(SEQ_ExternalName4, 4),         CALL(SEQ_ExternalName5, 5),
