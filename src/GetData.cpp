@@ -2,7 +2,7 @@
 //
 // GetData.cpp: Get data from a SeqArray GDS file
 //
-// Copyright (C) 2015-2024    Xiuwen Zheng
+// Copyright (C) 2015-2025    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -58,6 +58,7 @@ static const string VAR_GENO_INDEX("@genotype");
 static const string VAR_PHASE("phase");
 
 // variable list: internally generated
+static const string VAR_CHROM_RLE("$chromosome");
 static const string VAR_DOSAGE("$dosage");
 static const string VAR_DOSAGE_ALT("$dosage_alt");
 static const string VAR_DOSAGE_ALT2("$dosage_alt2");
@@ -122,6 +123,38 @@ static SEXP get_position(CFileInfo &File, TVarMap &Var, void *param)
 
 /// get chromosome from 'chromosome'
 static SEXP get_chrom(CFileInfo &File, TVarMap &Var, void *param)
+{
+	int n = File.VariantSelNum();
+	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
+	if (n > 0)
+	{
+		CChromIndex &Chrom = File.Chromosome();
+		TSelection &Sel = File.Selection();
+		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		size_t p = 0, i = Sel.varStart;
+		SEXP lastR = Rf_mkChar("");
+		string lastS;
+		for (; n > 0; i++)
+		{
+			if (*s++)
+			{
+				const string &ss = Chrom[i];
+				if (ss != lastS)
+				{
+					lastS = ss;
+					lastR = Rf_mkChar(ss.c_str());
+				}
+				SET_STRING_ELT(rv_ans, p++, lastR);
+				n--;
+			}
+		}
+	}
+	UNPROTECT(1);
+	return rv_ans;
+}
+
+/// get RLE-coded chromosome from '$chromosome'
+static SEXP get_chrom_rle(CFileInfo &File, TVarMap &Var, void *param)
 {
 	int n = File.VariantSelNum();
 	SEXP rv_ans = PROTECT(NEW_CHARACTER(n));
@@ -1141,7 +1174,11 @@ COREARRAY_DLL_LOCAL TVarMap &VarGetStruct(CFileInfo &File, const string &name)
 		} else
 		// ===========================================================
 		// internally generated variables
-		if (name == VAR_DOSAGE)
+		if (name == VAR_CHROM_RLE)
+		{
+			vm.Init(File, VAR_CHROM, get_chrom_rle);
+			CHECK_VARIANT_ONE_DIMENSION
+		} else if (name == VAR_DOSAGE)
 		{
 			vm.Func = get_dosage;
 		} else if (name == VAR_DOSAGE_ALT)

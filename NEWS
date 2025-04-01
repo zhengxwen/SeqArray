@@ -15,6 +15,9 @@ UTILITIES
 
     o new argument 'digest' in `seqRecompress()` to add MD5 hash codes
 
+    o `seqGetData(, "$chromosome")` returns chromosome codes in an object of
+      'S4Vectors::Rle'
+
 BUG FIXES
 
     o `seqBlockApply()` should recover the filter when the user-specified function fails
