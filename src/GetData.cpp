@@ -855,11 +855,50 @@ static SEXP get_list(SEXP len, SEXP val, size_t elmsize, bool is_factor)
 				memcpy(RAW(vv), &RAW(val)[pt], nn);
 				break;
 			default:
-				throw ErrSeqArray("Not support data type for .tolist=TRUE.");
+				throw ErrSeqArray("Not support data type when '.tolist=TRUE'.");
 			}
 			pt += nn;
 		}
 	}
+	return rv_ans;
+}
+
+
+// .List_IRanges_value
+extern "C" SEXP OBJ_CompressedList = NULL;
+
+/// convert to a compressed list in IRanges
+static SEXP get_list2(SEXP len, SEXP val, bool is_factor)
+{
+	// get data type
+	int type_idx = -1;
+	switch (TYPEOF(val))
+	{
+		case LGLSXP:  type_idx = 0; break;
+		case INTSXP:  type_idx = 1; break;
+		case REALSXP: type_idx = 2; break;
+		case STRSXP:  type_idx = 3; break;
+		case RAWSXP:  type_idx = 4; break;
+		default:
+			throw ErrSeqArray("Not support data type when '.tolist=NA'.");
+	}
+	if (is_factor) type_idx = 5;
+	// new object
+	SEXP rv_ans = Rf_duplicate(VECTOR_ELT(OBJ_CompressedList, type_idx));
+	PROTECT(rv_ans);
+	// set @unlistData (OBJ_CompressedList[6]="unlistData")
+	R_do_slot_assign(rv_ans, VECTOR_ELT(OBJ_CompressedList, 6), val);
+	// get @partitioning (OBJ_CompressedList[7]="partitioning")
+	SEXP pt = R_do_slot(rv_ans, VECTOR_ELT(OBJ_CompressedList, 7));
+	// set @partitioning@end (OBJ_CompressedList[8]="end")
+	const int n = Rf_length(len);
+	SEXP end = PROTECT(NEW_INTEGER(n));
+	const int *s = INTEGER(len);
+	int *p = INTEGER(end), ed = 0;
+	for (int i=0; i < n; i++) p[i] = (ed += s[i]);
+	R_do_slot_assign(pt, VECTOR_ELT(OBJ_CompressedList, 8), end);
+	UNPROTECT(1);
+	// output
 	return rv_ans;
 }
 
@@ -969,11 +1008,14 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 			default:
 				throw ErrSeqArray("Not support data type for .padNA=TRUE.");
 			}
-		} else if (P->tolist)
+		} else if (P->tolist)  // TRUE or NA
 		{
 			// convert to a list
 			size_t d2 = (Var.NDim < 2) ? 1 : dimcnt[1];
-			rv_ans = get_list(I32, val, d2, is_factor);
+			if ((P->tolist == TRUE) || (d2 != 1))
+				rv_ans = get_list(I32, val, d2, is_factor);
+			else
+				rv_ans = get_list2(I32, val, is_factor);
 		} else {
 			// create `list(length, data)`
 			rv_ans = PROTECT(NEW_LIST(2));
@@ -1369,9 +1411,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_GetData(SEXP gdsfile, SEXP var_name, SEXP UseRaw,
 	if (padNA == NA_LOGICAL)
 		Rf_error("'.padNA' must be TRUE or FALSE.");
 	// .tolist
+	if (!Rf_isLogical(ToList) || Rf_length(ToList)!=1)
+		Rf_error("'.tolist' must be TRUE, FALSE or NA.");
 	const int tolist = Rf_asLogical(ToList);
-	if (tolist == NA_LOGICAL)
-		Rf_error("'.tolist' must be TRUE or FALSE.");
 	// .envir
 	if (!Rf_isNull(Env))
 	{

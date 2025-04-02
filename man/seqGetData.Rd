@@ -19,7 +19,9 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
     \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the
         number of data points for each variant is not greater than 1}
     \item{.tolist}{if \code{TRUE}, return a list of vectors instead of the
-        structure \code{list(length, data)} for variable-length data}
+        structure \code{list(length, data)} for variable-length data; \code{NA}
+        , return a compressed \code{List} defined in \pkg{IRanges} when it is
+        applicable}
     \item{.envir}{\code{NULL}, an environment object, a list or a
         \code{data.frame}}
 }
@@ -145,6 +147,10 @@ seqGetData(f, "annotation/info/AA", .padNA=FALSE)
 
 # or return a simplified vector
 seqGetData(f, "annotation/info/AA", .padNA=TRUE)
+
+# return a compressed list (CharacterList)
+seqGetData(f, "annotation/info/AA", .padNA=FALSE, .tolist=NA)
+
 
 # get annotation/format/DP, a variable-length dataset
 seqGetData(f, "annotation/format/DP")

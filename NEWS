@@ -1,22 +1,27 @@
 CHANGES IN VERSION 1.48.0
 -------------------------
 
-UTILITIES
-
-    o Tweak display in `seqResetVariantID()`
-
-    o new argument 'start' in `seqResetVariantID()`
+NEW FEATURES
 
     o `seqAddValue()`: use bit1 for a logical vector; new argument
       'use_float32' for storing double
 
-    o use `crayon::silver()` instead of `crayon::blurred()` in the display since
-      RStudio blurs the screen output
+    o new argument 'start' in `seqResetVariantID()`
 
     o new argument 'digest' in `seqRecompress()` to add MD5 hash codes
 
     o `seqGetData(, "$chromosome")` returns chromosome codes in an object of
       'S4Vectors::Rle'
+
+    o `seqGetData(, .tolist=NA)` returns an extended list defined in IRanges
+      (e.g., IntegerList) when it is applicable
+
+UTILITIES
+
+    o Tweak display in `seqResetVariantID()`
+
+    o use `crayon::silver()` instead of `crayon::blurred()` in the display since
+      RStudio blurs the screen output
 
 BUG FIXES
 

@@ -1567,9 +1567,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 // ===========================================================
 
 extern SEXP LANG_NEW_RLE;
+extern SEXP OBJ_CompressedList;
 
 COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt,
-	SEXP proc_idx, SEXP lang_eval)
+	SEXP proc_idx, SEXP lang_eval, SEXP list_val)
 {
 	// .dim_name
 	R_Geno_Dim2_Name = VECTOR_ELT(dim_name, 0);
@@ -1583,6 +1584,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt,
 	R_Process_Index = INTEGER(proc_idx);
 	// lang_eval
 	LANG_NEW_RLE = VECTOR_ELT(lang_eval, 0);
+	// Compressed Lists in IRanges
+	OBJ_CompressedList = list_val;
 	// return
 	return R_NilValue;
 }
@@ -1651,7 +1654,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
-		CALL(SEQ_Pkg_Init, 4),
+		CALL(SEQ_Pkg_Init, 5),
 		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
 		CALL(SEQ_ExternalName2, 2),         CALL(SEQ_ExternalName3, 3),
 		CALL(SEQ_ExternalName4, 4),         CALL(SEQ_ExternalName5, 5),

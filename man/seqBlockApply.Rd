@@ -40,7 +40,9 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
     \item{.padNA}{\code{TRUE}, pad a variable-length vector with NA if the
         number of data points for each variant is not greater than 1}
     \item{.tolist}{if \code{TRUE}, return a list of vectors instead of the
-        structure \code{list(length, data)} for variable-length data}
+        structure \code{list(length, data)} for variable-length data; \code{NA}
+        , return a compressed \code{List} defined in \pkg{IRanges} when it is
+        applicable}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{...}{optional arguments to \code{FUN}}
 }

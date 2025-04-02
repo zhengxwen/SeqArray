@@ -36,8 +36,8 @@ importFrom(utils, read.table, flush.console, write.table, str, tail,
 
 importFrom(S4Vectors, DataFrame, SimpleList)
 importClassesFrom(IRanges, IRanges)
-importFrom(IRanges, IRanges, IntegerList, NumericList, CharacterList,
-    DataFrameList)
+importFrom(IRanges, IRanges, LogicalList, IntegerList, NumericList,
+    CharacterList, RawList, FactorList, DataFrameList)
 importClassesFrom(GenomicRanges, GRanges, GRangesList)
 importFrom(GenomicRanges, GRanges)
 importMethodsFrom(GenomicRanges, granges)
