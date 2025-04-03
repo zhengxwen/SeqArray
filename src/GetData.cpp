@@ -826,7 +826,10 @@ static SEXP get_list(SEXP len, SEXP val, size_t elmsize, bool is_factor)
 			}
 			vv = ZeroLen;
 		} else {
-			vv = Rf_allocVector(TYPEOF(val), nn);
+			if (elmsize <= 1)
+				vv = Rf_allocVector(TYPEOF(val), nn);
+			else
+				vv = Rf_allocMatrix(TYPEOF(val), elmsize, psel[i]);
 			if (is_factor)
 			{
 				SET_CLASS(vv, GET_CLASS(val));
@@ -866,6 +869,24 @@ static SEXP get_list(SEXP len, SEXP val, size_t elmsize, bool is_factor)
 
 // .List_IRanges_value
 extern "C" SEXP OBJ_CompressedList = NULL;
+// as(, "List")
+extern "C" SEXP LANG_AS_LIST = NULL;
+
+/// create a S4Vectors::List object
+inline static SEXP as_s4vectors_list(SEXP x)
+{
+	// LANG_AS_LIST = quote(as(object, "List"))
+	SEXP epr = PROTECT(LANG_AS_LIST);
+	// set parameters
+	SETCADR(epr, x);   // parameter: object
+	// call
+	SEXP rv = PROTECT(Rf_eval(epr, R_GlobalEnv));
+	// free
+	SETCADR(epr, R_NilValue);   // parameter: object
+	// output
+	UNPROTECT(2);
+	return rv;
+}
 
 /// convert to a compressed list in IRanges
 static SEXP get_list2(SEXP len, SEXP val, bool is_factor)
@@ -1013,8 +1034,11 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 			// convert to a list
 			size_t d2 = (Var.NDim < 2) ? 1 : dimcnt[1];
 			if ((P->tolist == TRUE) || (d2 != 1))
+			{
 				rv_ans = get_list(I32, val, d2, is_factor);
-			else
+				if (P->tolist == NA_INTEGER)
+					rv_ans = as_s4vectors_list(rv_ans);
+			} else
 				rv_ans = get_list2(I32, val, is_factor);
 		} else {
 			// create `list(length, data)`

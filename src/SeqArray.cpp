@@ -1567,6 +1567,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 // ===========================================================
 
 extern SEXP LANG_NEW_RLE;
+extern SEXP LANG_AS_LIST;
 extern SEXP OBJ_CompressedList;
 
 COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt,
@@ -1584,6 +1585,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt,
 	R_Process_Index = INTEGER(proc_idx);
 	// lang_eval
 	LANG_NEW_RLE = VECTOR_ELT(lang_eval, 0);
+	LANG_AS_LIST = VECTOR_ELT(lang_eval, 1);
 	// Compressed Lists in IRanges
 	OBJ_CompressedList = list_val;
 	// return

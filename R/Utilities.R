@@ -11,7 +11,8 @@
 
 # R expressions called in C internally
 .lang_eval <- list(
-    new_rle = quote(new("Rle", values=values, lengths=lengths))
+    new_rle = quote(new("Rle", values=values, lengths=lengths)),
+    as_List = quote(as(object, "List"))
 )
 
 # Compressed Lists in IRanges
