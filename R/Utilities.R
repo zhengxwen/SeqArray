@@ -16,8 +16,12 @@
 
 # Compressed Lists in IRanges
 .List_IRanges_value <- list(
-    LogicalList(), IntegerList(), NumericList(),
-    CharacterList(), RawList(), FactorList(),
+    logical   = LogicalList(),
+    integer   = IntegerList(),
+    numeric   = NumericList(),
+    character = CharacterList(),
+    raw       = RawList(),
+    factor    = FactorList(),
     "unlistData", "partitioning", "end"
 )
 

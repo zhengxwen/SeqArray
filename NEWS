@@ -16,6 +16,9 @@ NEW FEATURES
     o `seqGetData(, .tolist=NA)` returns an extended list defined in IRanges
       (e.g., IntegerList) when it is applicable
 
+    o `seqListVarData(, useList=TRUE)` returns an extended list defined in
+      IRanges
+
 UTILITIES
 
     o Tweak display in `seqResetVariantID()`

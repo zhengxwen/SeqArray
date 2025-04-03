@@ -540,12 +540,33 @@ seqNewVarData <- function(len, data)
     rv
 }
 
-seqListVarData <- function(obj)
+seqListVarData <- function(obj, useList=FALSE)
 {
     # check
-    stopifnot(inherits(obj, "SeqVarDataList"))
-    # call
-    .Call(SEQ_ListVarData, obj$length, obj$data)
+    stopifnot(is(obj, "SeqVarDataList") || is(obj, "CompressedAtomicList"))
+    # process
+    if (is(obj, "SeqVarDataList"))
+    {
+        if (isTRUE(useList))
+        {
+            classname <- class(obj$data)[1L]
+            ans <- .List_IRanges_value[[classname]]
+            if (is.null(ans))
+                stop("No type found: ", classname)
+            ans@unlistData <- obj$data
+            ans@partitioning@end <- cumsum(obj$length)
+            ans
+        } else {
+            # call
+            .Call(SEQ_ListVarData, obj$length, obj$data)
+        }
+    } else {
+        # it is CompressedAtomicList
+        if (isTRUE(useList)) return(obj)
+        # call
+        len <- diff(c(0L, obj@partitioning@end))
+        .Call(SEQ_ListVarData, len, obj@unlistData)
+    }
 }
 
 
