@@ -772,12 +772,18 @@ seqSummary <- function(gdsfile, varname=NULL,
 
 
 #######################################################################
-# summarize
+# Digest to generate hash code
 #
 seqDigest <- function(gdsfile, varname, algo=c("md5"), verbose=FALSE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    if (is.character(gdsfile))
+    {
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    }
     stopifnot(is.character(varname), length(varname)==1L)
     algo <- match.arg(algo)
 
@@ -793,7 +799,7 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"), verbose=FALSE)
 
 
 #######################################################################
-# summarize
+# Get system information
 #
 seqSystem <- function()
 {

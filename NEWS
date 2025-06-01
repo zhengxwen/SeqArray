@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.49.1
+-------------------------
+
+UTILITIES
+
+    o `seqDigest()` allows a GDS file name in the first argument
+
+
 CHANGES IN VERSION 1.48.0
 -------------------------
 

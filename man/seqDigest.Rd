@@ -8,7 +8,7 @@
 seqDigest(gdsfile, varname, algo=c("md5"), verbose=FALSE)
 }
 \arguments{
-    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object or a GDS file name}
     \item{varname}{the variable name(s), see details}
     \item{algo}{the digest hash algorithm: "md5"}
     \item{verbose}{if \code{TRUE}, show progress information}

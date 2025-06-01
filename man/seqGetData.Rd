@@ -9,7 +9,7 @@ seqGetData(gdsfile, var.name, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
     .envir=NULL)
 }
 \arguments{
-    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object or a GDS file name}
     \item{var.name}{a variable name or a character vector, see details;
         if \code{character()}, return \code{NULL}}
     \item{.useraw}{\code{TRUE}, force to use RAW instead of INTEGER for
