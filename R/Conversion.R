@@ -577,17 +577,17 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
     n <- .AddVar(storage.option, dstfile, "variant.id", s, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
-    # add position
-    if (verbose) cat("    position")
-    s <- read.gdsn(index.gdsn(srcfile, "snp.position"))
-    n <- .AddVar(storage.option, dstfile, "position", s, closezip=TRUE)
-    .DigestCode(n, digest, verbose)
-
     # add chromosome
     if (verbose) cat("    chromosome")
     s <- read.gdsn(index.gdsn(srcfile, "snp.chromosome"))
     s <- as.character(s)
     n <- .AddVar(storage.option, dstfile, "chromosome", s, closezip=TRUE)
+    .DigestCode(n, digest, verbose)
+
+    # add position
+    if (verbose) cat("    position")
+    s <- read.gdsn(index.gdsn(srcfile, "snp.position"))
+    n <- .AddVar(storage.option, dstfile, "position", s, closezip=TRUE)
     .DigestCode(n, digest, verbose)
 
     # add allele
@@ -927,12 +927,6 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         compress=compress.annotation, closezip=TRUE)
     .DigestCode(n, digest, verbose, FALSE)
 
-    # add position
-    if (verbose) cat("    position  ")
-    n <- add.gdsn(dstfile, "position", bimD$pos, storage="int32",
-        compress=compress.annotation, closezip=TRUE)
-    .DigestCode(n, digest, verbose, FALSE)
-
     # add chromosome
     if (verbose) cat("    chromosome  ")
     n <- add.gdsn(dstfile, "chromosome", bimD$chr, storage="string",
@@ -940,6 +934,12 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     .DigestCode(n, digest, verbose, FALSE)
     # RLE-coded chromosome
     .optim_chrom(dstfile)
+
+    # add position
+    if (verbose) cat("    position  ")
+    n <- add.gdsn(dstfile, "position", bimD$pos, storage="int32",
+        compress=compress.annotation, closezip=TRUE)
+    .DigestCode(n, digest, verbose, FALSE)
 
     # add allele
     if (verbose) cat("    allele  ")
@@ -1408,8 +1408,8 @@ seqEmptyFile <- function(outfn, sample.id=character(), numvariant=1L,
 
     # add basic site information
     add.gdsn(f, "variant.id", seq_len(numvariant))
-    add.gdsn(f, "position", integer(numvariant))
     add.gdsn(f, "chromosome", character(numvariant))
+    add.gdsn(f, "position", integer(numvariant))
     add.gdsn(f, "allele", character(numvariant))
 
     # add folders

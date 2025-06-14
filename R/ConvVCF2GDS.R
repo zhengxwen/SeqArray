@@ -928,12 +928,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # add variant.id
     .AddVar(storage.option, gfile, "variant.id", storage="int32")
 
+    # add chromosome
+    .AddVar(storage.option, gfile, "chromosome", storage="string")
+
     # add position
     # TODO: need to check whether position can be stored in 'int32'
     .AddVar(storage.option, gfile, "position", storage="int32")
-
-    # add chromosome
-    .AddVar(storage.option, gfile, "chromosome", storage="string")
 
     # add allele
     .AddVar(storage.option, gfile, "allele", storage="string")
