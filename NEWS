@@ -1,9 +1,14 @@
-CHANGES IN VERSION 1.49.1
+CHANGES IN VERSION 1.49.3
 -------------------------
 
 UTILITIES
 
     o `seqDigest()` allows a GDS file name in the first argument
+
+    o a new option 'parallel' in `seqDigest()`
+
+    o `seqVCF2GDS()` and `seqBED2GDS()`: save the gds node 'chromosome'
+      before 'position'
 
 
 CHANGES IN VERSION 1.48.0

@@ -774,7 +774,8 @@ seqSummary <- function(gdsfile, varname=NULL,
 #######################################################################
 # Digest to generate hash code
 #
-seqDigest <- function(gdsfile, varname, algo=c("md5"), verbose=FALSE)
+seqDigest <- function(gdsfile, varname, algo=c("md5"), parallel=FALSE,
+    verbose=FALSE)
 {
     # check
     if (is.character(gdsfile))
@@ -786,13 +787,27 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"), verbose=FALSE)
     }
     stopifnot(is.character(varname), length(varname)==1L)
     algo <- match.arg(algo)
+    njobs <- .NumParallel(parallel)
+    parallel <- .McoreParallel(parallel)
 
     if (requireNamespace("digest", quietly=TRUE))
     {
-        .cfunction("FC_DigestInit")(algo)
-        seqApply(gdsfile, varname, FUN=.cfunction("FC_DigestScan"),
-            margin="by.variant", as.is="none", .useraw=NA, .progress=verbose)
-        .cfunction("FC_DigestDone")(algo)
+        ans <- seqParallel(parallel, gdsfile, split="by.variant",
+            FUN = function(f, varname, algo, verbose)
+            {
+                # initialize
+                .cfunction("FC_DigestInit")(algo)
+                # scan
+                seqApply(gdsfile, varname, FUN=.cfunction("FC_DigestScan"),
+                    margin="by.variant", as.is="none", .useraw=NA,
+                    .progress=verbose && (process_index==1L))
+                # return a string
+                .cfunction("FC_DigestDone")(algo)
+            },
+            varname=varname, algo=algo, verbose=verbose)
+        # output
+        if (njobs > 1L) ans <- digest(ans, algo=algo)
+        ans
     } else
         stop("The digest package is not installed.")
 }
