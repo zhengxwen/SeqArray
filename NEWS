@@ -10,6 +10,9 @@ UTILITIES
     o `seqVCF2GDS()` and `seqBED2GDS()`: save the gds node 'chromosome'
       before 'position'
 
+    o `seqAddValue(, varnm="annotation/filter", desp=...)` adds 'Description'
+      via the argument 'desp'
+
 
 CHANGES IN VERSION 1.48.0
 -------------------------

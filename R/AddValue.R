@@ -196,13 +196,22 @@
 }
 
 # modify annotation/filter
-.r_annot_flt <- function(gdsfile, val, replace, nvar, compress, verbose)
+.r_annot_flt <- function(gdsfile, val, replace, nvar, desp, compress, verbose)
 {
     stopifnot(is.vector(val) || is.factor(val), length(val)==nvar)
     if (!is.null(index.gdsn(gdsfile, "annotation/filter", silent=TRUE)))
         stopifnot(replace)
     n <- add.gdsn(index.gdsn(gdsfile, "annotation"), "filter", val,
         compress=compress, closezip=TRUE, replace=replace)
+    if (length(desp))
+    {
+        put.attr.gdsn(n, "Description", desp)
+        if (is.factor(val) && nlevels(val)!=length(desp))
+        {
+            warning("'desp' should have the same length as 'nlevels(val)' ",
+                "to provide all description for the FILTER categories.")
+        }
+    }
     .DigestCode(n, TRUE, FALSE)
     if (verbose)
         print(n, attribute=TRUE)
@@ -397,7 +406,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
         "annotation/qual" = .r_annot_qual(gdsfile, val, replace, nvar,
                 compress, use_float32, verbose),
         "annotation/filter" = .r_annot_flt(gdsfile, val, replace, nvar,
-                compress, verbose),
+                desp, compress, verbose),
         "annotation/info"   = .r_annot_info(gdsfile),
         "annotation/format" = .r_annot_fmt(gdsfile),
         FALSE
