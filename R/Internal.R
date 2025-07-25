@@ -140,6 +140,7 @@ process_count <- 1L
     isTRUE(flag) && requireNamespace("crayon", quietly=TRUE)
 }
 
+.tm <- function() strftime(Sys.time(), "%Y-%m-%d %H:%M:%S")
 
 
 #######################################################################

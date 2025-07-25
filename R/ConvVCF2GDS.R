@@ -596,6 +596,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(use_Rsamtools), length(use_Rsamtools)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
 
     pnum <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
@@ -612,7 +613,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (length(variant_count) != length(vcf.fn))
             stop("'variant_count' and 'vcf.fn' should have the same length.")
     }
-    if (verbose) cat(date(), "\n", sep="")
+    if (verbose && show_timeheader) .cat("##< ", .tm())
 
     genotype.storage <- "bit2"
 
@@ -781,7 +782,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     {
         if (verbose)
         {
-            cat("    # of cores/jobs: ", pnum, "\n", sep="")
+            .cat("    # of cores/jobs: ", pnum)
             a <- variant_count < 0L
             if (length(a) < length(vcf.fn)) a[length(vcf.fn)] <- NA
             if (anyNA(a) || any(a, na.rm=TRUE))
@@ -821,7 +822,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (start+count > num_var+1L)
             stop("Invalid 'count'.")
         if (verbose)
-            cat("    # of variants: ", .pretty(count), "\n", sep="")
+            .cat("    # of variants: ", .pretty(count))
 
         if (count >= pnum)
         {
@@ -831,7 +832,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             psplit <- .file_split(count, pnum, start)
             if (verbose)
             {
-                cat(sprintf("    >>> writing to %d files: <<<\n", pnum))
+                .cat("    >>> writing to ", pnum, " files: <<<")
                 cat(sprintf("        %s\t[%s .. %s]\n", basename(ptmpfn),
                     .pretty(psplit[[1L]]),
                     .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
@@ -865,7 +866,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 ptmpfn=ptmpfn, psplit=psplit, variant_count=variant_count)
 
             if (verbose)
-                cat("    >>> Done (", date(), ") <<<\n", sep="")
+                .cat("    >>> Done (", .tm(), ") <<<")
 
         } else {
             pnum <- 1L
@@ -1221,15 +1222,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         linecnt <- double(1L)
 
         # progress file
-        prog_fn <- paste0(out.fn, ".progress")
+        prog_fn <- paste0(out.fn, ".progress.txt")
         progfile <- file(prog_fn, "wt")
         cat(">>> ", out.fn, " <<<\n", file=progfile, sep="")
         if (verbose)
-            cat("    [Progress Info: ", basename(prog_fn), "]\n", sep="")
+            .cat("    [Progress Info: ", basename(prog_fn), "]")
         infile <- NULL
         on.exit({
             close(progfile)
-            unlink(paste0(out.fn, ".progress"), force=TRUE)
+            unlink(prog_fn, force=TRUE)
             if (!is.null(infile)) close(infile)
         }, add=TRUE)
 
@@ -1403,20 +1404,14 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # optimize access efficiency
 
     if (verbose)
-    {
-        cat("Done.\n")
-        cat(date(), "\n", sep="")
-    }
+        if (optimize) .cat("Done.  # ", .tm()) else cat("Done.\n")
     if (optimize)
     {
         if (verbose)
-        {
             cat("Optimize the access efficiency ...\n")
-            flush.console()
-        }
         cleanup.gds(out.fn, verbose=verbose)
-        if (verbose) cat(date(), "\n", sep="")
     }
+    if (verbose && show_timeheader) .cat("##> ", .tm())
 
     # output
     invisible(normalizePath(out.fn))
