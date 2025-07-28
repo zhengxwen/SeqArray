@@ -1383,8 +1383,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		// parse the context
 
 		// progress information
-		CProgress Progress(variant_index - variant_start + 1, variant_count,
-			progfile, true);
+		CProgress Progress(variant_count, progfile, false);
 
 		while (!VCF_EOF())
 		{

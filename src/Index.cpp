@@ -1129,27 +1129,26 @@ static const char *time_str(double s)
 
 static const char *datetime_str()
 {
-	static char date_buffer[96];
+	static char buffer[96];
 	time_t rawtime;
 	time(&rawtime);
 	struct tm *p = localtime(&rawtime);
-	snprintf(date_buffer, sizeof(date_buffer), "%04d-%02d-%02d %02d:%02d:%02d",
+	snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d %02d:%02d:%02d",
 		p->tm_year+1900, p->tm_mon+1, p->tm_mday,
 		p->tm_hour, p->tm_min, p->tm_sec);
-	return date_buffer;
+	return buffer;
 }
 
 
-CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
+CProgress::CProgress(C_Int64 count, SEXP Rconn, bool verbose)
 {
 	vTotalCount = count;
-	vCounter = (start >= 0) ? start : 0;
+	vCounter = 0;
 	double percent;
-	File = NULL;
-	if (conn && !Rf_isNull(conn))
-		File = R_GetConnection(conn);
-	FwdCnt = 0;
-	NewLine = newline;
+	OutFile = NULL;
+	if (Rconn && !Rf_isNull(Rconn))
+		OutFile = R_GetConnection(Rconn);
+	Verbose = verbose;
 
 	if (count > 0)
 	{
@@ -1167,19 +1166,17 @@ CProgress::CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline)
 	}
 
 	time_t s; time(&s);
-	_start_time = s;
+	_start_time = _last_time = s;
 	_timer.reserve(128);
 	_timer.push_back(pair<double, time_t>(percent, s));
 
 	ShowProgress();
 }
 
-CProgress::~CProgress()
-{ }
+CProgress::~CProgress() { }
 
 void CProgress::Forward(C_Int64 Inc)
 {
-	FwdCnt++;
 	vCounter += Inc;
 	if (vTotalCount > 0 && vCounter > vTotalCount)
 		vCounter = vTotalCount;
@@ -1187,14 +1184,14 @@ void CProgress::Forward(C_Int64 Inc)
 	{
 		if (vTotalCount > 0)
 		{
-			while (vCounter >= _hit)
+			while (_hit <= vCounter)
 			{
 				_start += _step;
 				_hit = (C_Int64)(_start);
 			}
 			if (_hit > vTotalCount) _hit = vTotalCount;
 		} else {
-			while (vCounter >= _hit) _hit += PROGRESS_LINE_NUM;
+			while (_hit <= vCounter) _hit += PROGRESS_LINE_NUM;
 		}
 		ShowProgress();
 	}
@@ -1202,158 +1199,99 @@ void CProgress::Forward(C_Int64 Inc)
 
 void CProgress::ShowProgress()
 {
-	if (File)
+	if (!OutFile && !Verbose) return;  // no output
+	if (vTotalCount > 0)
 	{
-		if (vTotalCount > 0)
-		{
-			char bar[PROGRESS_BAR_CHAR_NUM + 1];
-			double p = (double)vCounter / vTotalCount;
-			int n = (int)round(p * PROGRESS_BAR_CHAR_NUM);
-			memset(bar, '.', sizeof(bar));
-			memset(bar, '=', n);
-			if ((vCounter > 0) && (n < PROGRESS_BAR_CHAR_NUM))
-				bar[n] = '>';
-			bar[PROGRESS_BAR_CHAR_NUM] = 0;
-
-			// ETC: estimated time to complete
-			n = (int)_timer.size() - 20;  // 20% as a sliding window size
-			if (n < 0) n = 0;
-			time_t now; time(&now);
-			_timer.push_back(pair<double, time_t>(p, now));
-
-			// in seconds
-			double s = difftime(now, _timer[n].second);
-			double diff = p - _timer[n].first;
-			if (diff > 0)
-				s = s / diff * (1 - p);
-			else
-				s = R_NaN;
-			p *= 100;
-			// if completed
-			if (vCounter >= vTotalCount) s = difftime(now, _start_time);
-
-			// show
-			if (NewLine)
-			{
-				ConnPutText(File, "[%s] %2.0f%%, %s %s", bar, p,
-					vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
-				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
-				ConnPutText(File, "\n");
-			} else {
-				ConnPutText(File, "\r[%s] %2.0f%%, %s %s", bar, p,
-					vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
-				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
-				ConnPutText(File, "    ");
-				if (vCounter >= vTotalCount) ConnPutText(File, "\n");
-			}
-		} else {
-			int n = vCounter / PROGRESS_LINE_NUM;
-			n = (n / 100) + (n % 100 ? 1 : 0);
-			string s(n, '.');
-			const char *dt = datetime_str();
-			if (NewLine)
-			{
-				if (vCounter > 0)
-				{
-					ConnPutText(File, "[:%s (%dk lines)] %s", s.c_str(),
-						vCounter/1000, dt);
-				} else
-					ConnPutText(File, "[: (0 line)] %s", dt);
-				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
-				ConnPutText(File, "\n");
-			} else {
-				if (vCounter > 0)
-				{
-					ConnPutText(File, "\r[:%s (%dk lines)] %s", s.c_str(),
-						vCounter/1000, dt);
-				} else
-					ConnPutText(File, "\r[: (0 line)] %s", dt);
-				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					ConnPutText(File, " (process %d/%d)", *R_Process_Index, *R_Process_Count);
-			}
-		}
-		(*File->fflush)(File);
-	}
-}
-
-
-CProgressStdOut::CProgressStdOut(C_Int64 count, int nproc, bool verbose):
-	CProgress(0, count, NULL, false)
-{
-	if (count < 0)
-		throw ErrSeqArray("%s, 'count' should be greater than zero.", __func__);
-	_last_time = _timer.back().second;
-	NProcess = (nproc > 0) ? nproc : 1;
-	Verbose = verbose;
-	ShowProgress();
-}
-
-void CProgressStdOut::ShowProgress()
-{
-	if (Verbose && (vTotalCount > 0))
-	{
+		// progress bar to be displayed
 		char bar[PROGRESS_BAR_CHAR_NUM + 1];
+		memset(bar, '.', PROGRESS_BAR_CHAR_NUM);
+		bar[PROGRESS_BAR_CHAR_NUM] = 0;
 		double p = (double)vCounter / vTotalCount;
 		int n = (int)round(p * PROGRESS_BAR_CHAR_NUM);
-		memset(bar, '.', sizeof(bar));
 		memset(bar, '=', n);
-		if ((vCounter > 0) && (n < PROGRESS_BAR_CHAR_NUM))
-			bar[n] = '>';
-		bar[PROGRESS_BAR_CHAR_NUM] = 0;
+		if ((vCounter > 0) && (n < PROGRESS_BAR_CHAR_NUM)) bar[n] = '>';
 
 		// ETC: estimated time to complete
-		n = (int)_timer.size() - 20;  // 20% as a sliding window size
+		n = (int)_timer.size() - 20;  // ~20% as a sliding window size
 		if (n < 0) n = 0;
 		time_t now; time(&now);
 		_timer.push_back(pair<double, time_t>(p, now));
-
 		// in seconds
-		double interval = difftime(now, _last_time);
 		double s = difftime(now, _timer[n].second);
 		double diff = p - _timer[n].first;
 		if (diff > 0)
-		{
 			s = s / diff * (1 - p);
-			if ((NProcess > 1) && (FwdCnt > 0) && (FwdCnt <= NProcess))
-			{
-				// correction based on beta distribution beta(FwdCnt, NProcess+1-FwdCnt)
-				s = s / (NProcess + 1) * FwdCnt * 2;
-			}			
-		} else
+		else
 			s = R_NaN;
 		p *= 100;
+		// if completed
+		if (vCounter >= vTotalCount) s = difftime(now, _start_time);
 
-		// show
-		_last_time = now;
-		if (vCounter >= vTotalCount)
+		// output to a file / R connection
+		if (OutFile)
 		{
-			char buffer[512];
-			s = difftime(_last_time, _start_time);
-			int n = snprintf(buffer, sizeof(buffer),
-				"\r[%s] 100%%, completed, %s", bar, time_str(s));
+			ConnPutText(OutFile, "[%s] %2.0f%%, %s %s", bar, p,
+				vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
 			if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
 			{
-				snprintf(buffer+n, sizeof(buffer)-n, " (process %d/%d)",
+				ConnPutText(OutFile, " (process %d/%d)",
 					*R_Process_Index, *R_Process_Count);
 			}
-			Rprintf("%s\n", buffer);
-		} else if ((interval >= 5) || (vCounter <= 0))
-		{
-			char buffer[512];
-			_last_time = now;
-			int n = snprintf(buffer, sizeof(buffer),
-				"\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
-			if ((vCounter>0) && R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-			{
-				n += snprintf(buffer+n, sizeof(buffer)-n, " (process %d/%d)",
-					*R_Process_Index, *R_Process_Count);
-			}
-			strcpy(buffer+n, "    ");
-			Rprintf("%s", buffer);
+			ConnPutText(OutFile, "\n");
+			(*OutFile->fflush)(OutFile);
 		}
+
+		// output to stdout
+		if (Verbose)
+		{
+			char buf[512];
+			if (vCounter >= vTotalCount)
+			{
+				int n = snprintf(buf, sizeof(buf),
+					"\r[%s] %2.0f%%, completed, %s", bar, p, time_str(s));
+				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+				{
+					snprintf(buf+n, sizeof(buf)-n, " (process %d/%d)",
+						*R_Process_Index, *R_Process_Count);
+				}
+				Rprintf("%s\n", buf);
+			} else {
+				double interval = difftime(now, _last_time);  // in seconds
+				if ((interval >= 5) || (vCounter <= 0))
+				{
+					_last_time = now;
+					int n = snprintf(buf, sizeof(buf),
+						"\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
+					if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+					{
+						n += snprintf(buf+n, sizeof(buf)-n, " (process %d/%d)",
+							*R_Process_Index, *R_Process_Count);
+					}
+					strcpy(buf+n, "    ");
+					Rprintf("%s", buf);
+				}
+			}
+		}
+
+	} else if (OutFile)
+	{
+		int n = vCounter / PROGRESS_LINE_NUM;
+		n = (n / 100) + (n % 100 ? 1 : 0);
+		string s(n, '.');
+		const char *dt = datetime_str();
+		if (vCounter > 0)
+		{
+			ConnPutText(OutFile, "[:%s (%dk lines)] %s", s.c_str(),
+				vCounter/1000, dt);
+		} else
+			ConnPutText(OutFile, "[: (0 line)] %s", dt);
+		if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+		{
+			ConnPutText(OutFile, " (process %d/%d)",
+				*R_Process_Index, *R_Process_Count);
+		}
+		ConnPutText(OutFile, "\n");
+		(*OutFile->fflush)(OutFile);
 	}
 }
 

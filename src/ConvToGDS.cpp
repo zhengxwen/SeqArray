@@ -70,8 +70,6 @@ extern "C"
 COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 	SEXP ReadBinFun, SEXP Rho, SEXP ProgConn)
 {
-	bool newline = Rf_asInteger(ProgConn) > 2;
-
 	COREARRAY_TRY
 
 		PdAbstractArray Mat = GDS_R_SEXP2Obj(GenoNode, FALSE);
@@ -94,7 +92,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ConvBED2GDS(SEXP GenoNode, SEXP Num, SEXP File,
 		static const C_UInt8 cvt2[4] = { 1, 3, 0, 0 };
 
 		// progress object
-		CProgress progress(0, n, ProgConn, newline);
+		CProgress progress(n, ProgConn, false);
 
 		for (int i=0; i < n; i++)
 		{

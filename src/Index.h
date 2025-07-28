@@ -599,11 +599,11 @@ public:
 class COREARRAY_DLL_LOCAL CProgress
 {
 public:
-	CProgress(C_Int64 start, C_Int64 count, SEXP conn, bool newline);
-	virtual ~CProgress();
+	CProgress(C_Int64 count, SEXP Rconn, bool verbose);
+	~CProgress();
 
 	void Forward(C_Int64 Inc=1);
-	virtual void ShowProgress();
+	void ShowProgress();
 
 	inline C_Int64 Counter() const { return vCounter; }
 	inline C_Int64 TotalCount() const { return vTotalCount; }
@@ -611,25 +611,14 @@ public:
 protected:
 	C_Int64 vTotalCount;  ///< the total number
 	C_Int64 vCounter;     ///< the current counter
-	Rconnection File;     ///< R connection
+	Rconnection OutFile;  ///< R connection output
+	bool Verbose;         ///< whether display on stdout via Rprintf()
 	C_Int64 FwdCnt;       ///< the number of calling Forward()
 	time_t _start_time;   ///< the starting time
-	bool NewLine;
+	time_t _last_time;    ///< last saved time for calculating the interval
 	double _start, _step;
 	C_Int64 _hit;
 	vector< pair<double, time_t> > _timer;
-};
-
-class COREARRAY_DLL_LOCAL CProgressStdOut: public CProgress
-{
-public:
-	CProgressStdOut(C_Int64 count, int nproc, bool verbose);
-	virtual void ShowProgress();
-
-protected:
-	time_t _last_time;
-	int NProcess;
-	bool Verbose;
 };
 
 

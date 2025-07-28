@@ -1524,7 +1524,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Debug(SEXP gdsfile)
 
 static void free_progress(SEXP ref)
 {
-    CProgressStdOut *obj = (CProgressStdOut*)R_ExternalPtrAddr(ref);
+    CProgress *obj = (CProgress*)R_ExternalPtrAddr(ref);
     if (obj) delete obj;
 }
 
@@ -1538,7 +1538,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Progress(SEXP Count, SEXP NProc)
 	if (nproc <= 0)
 		Rf_error(".seqProgress(): the number of processes should be > 0.");
 	COREARRAY_TRY
-		CProgressStdOut *obj = new CProgressStdOut(TotalCount, nproc, true);
+		CProgress *obj = new CProgress(TotalCount, NULL, true);
 		rv_ans = PROTECT(R_MakeExternalPtr(obj, R_NilValue, R_NilValue));
 		R_RegisterCFinalizerEx(rv_ans, free_progress, TRUE);
 		Rf_setAttrib(rv_ans, R_ClassSymbol, Rf_mkString("SeqClass_Progress"));
@@ -1554,7 +1554,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 		Rf_error("the object should be created by .seqProgress()");
 	C_Int64 v = (C_Int64)Rf_asReal(inc);
 	COREARRAY_TRY
-		CProgressStdOut *obj = (CProgressStdOut*)R_ExternalPtrAddr(ref);
+		CProgress *obj = (CProgress*)R_ExternalPtrAddr(ref);
 		if (obj) obj->Forward(v);
 		rv_ans = Rf_ScalarReal(obj->Counter());
 	COREARRAY_CATCH
