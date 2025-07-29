@@ -384,6 +384,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     } else if (inherits(cl, "cluster"))
     {
         ## multiple processes with a predefined cluster
+        njobs <- length(cl)  # in case, .McoreParallel() changes cl
 
         st_fname <- NULL
         if (isTRUE(.status_file))
