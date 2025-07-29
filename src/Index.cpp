@@ -21,6 +21,7 @@
 
 #include <cstdio>
 #include "Index.h"
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -1198,6 +1199,12 @@ void CProgress::Forward(C_Int64 Inc)
 	}
 }
 
+static bool file_exists(const string &fname)
+{
+	struct stat sb;
+	return (stat(fname.c_str(), &sb) == 0);
+}
+
 void CProgress::ShowProgress()
 {
 	if (!OutFile && !Verbose) return;  // no output
@@ -1245,6 +1252,17 @@ void CProgress::ShowProgress()
 		// output to stdout
 		if (Verbose)
 		{
+			// check whether display based on the status files
+			if (R_Process_Count && (*R_Process_Count > 1) &&
+				R_Process_Index && (*R_Process_Index > 1) &&
+				(vCounter < vTotalCount))
+			{
+				if (R_Process_StatusFName.size() < *R_Process_Count) return;
+				const int idx = (*R_Process_Index) - 1;
+				for (int i=0; i < idx; i++)
+					if (file_exists(R_Process_StatusFName[i])) return;
+			}
+			// display
 			char buf[512];
 			if (vCounter >= vTotalCount)
 			{
@@ -1311,6 +1329,7 @@ SEXP R_Data_ListClass = R_NilValue;
 
 int* R_Process_Count = NULL;
 int* R_Process_Index = NULL;
+vector<string> R_Process_StatusFName;
 
 
 

@@ -1284,14 +1284,29 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ResetChrom(SEXP gdsfile)
 
 
 // ===========================================================
-// Get system configuration
+// Initialize the process variables
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_IntAssign(SEXP Dst, SEXP Src)
+COREARRAY_DLL_EXPORT SEXP SEQ_InitProcess(SEXP proc_idx, SEXP idx,
+	SEXP proc_cnt, SEXP cnt, SEXP status_fname)
 {
-	INTEGER(Dst)[0] = Rf_asInteger(Src);
-//	void *p = INTEGER(Dst);
-//	Rprintf("addr: %p, val: %d\n", p, Rf_asInteger(Src));
+	// process_index
+	INTEGER(proc_idx)[0] = Rf_asInteger(idx);
+	// process_count
+	INTEGER(proc_cnt)[0] = Rf_asInteger(cnt);
+	// process_status_fname
+	R_Process_StatusFName.clear();
+	if (Rf_isString(status_fname))
+	{
+		const int n = Rf_length(status_fname);
+		R_Process_StatusFName.resize(n);
+		for (int i=0; i < n; i++)
+		{
+			SEXP s = STRING_ELT(status_fname, i);
+			R_Process_StatusFName[i] = Rf_translateChar(s);
+		}
+	}
+	// return
 	return R_NilValue;
 }
 
@@ -1686,7 +1701,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
-		CALL(SEQ_IntAssign, 2),             CALL(SEQ_AppendFill, 3),
+		CALL(SEQ_InitProcess, 5),           CALL(SEQ_AppendFill, 3),
 		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_BufferPosition, 2),
 
 		CALL(SEQ_bgzip_create, 1),

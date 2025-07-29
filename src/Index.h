@@ -636,6 +636,7 @@ extern SEXP R_Data_ListClass;
 
 extern int* R_Process_Count;
 extern int* R_Process_Index;
+extern vector<string> R_Process_StatusFName;
 
 
 // ===========================================================

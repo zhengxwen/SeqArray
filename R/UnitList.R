@@ -272,8 +272,9 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
 
     # initialize internally
     .clear_varmap(gdsfile)
-    .Call(SEQ_IntAssign, process_index, 1L)
-    .Call(SEQ_IntAssign, process_count, 1L)
+    .init_proc()
+
+    .Call(SEQ_InitProcess, process_index, 1L, process_count, 1L, NULL)
 
     # get the number of workers
     njobs <- .NumParallel(parallel)
@@ -354,10 +355,8 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
                 on.exit(stopCluster(parallel), add=TRUE)
         }
         # initialize internally
-        clusterApply(parallel, 1:njobs, function(i, njobs) {
-            .Call(SEQ_IntAssign, process_index, i)
-            .Call(SEQ_IntAssign, process_count, njobs)
-        }, njobs=njobs)
+        clusterApply(parallel, 1:njobs,
+            function(i, njobs) .init_proc(i, njobs), njobs=njobs)
 
         # progress information
         progress <- if (.progress) .seqProgress(length(units$index), njobs) else NULL

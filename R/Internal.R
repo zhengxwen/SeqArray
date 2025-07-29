@@ -145,12 +145,14 @@ process_count <- 1L
 
 .tm <- function() strftime(Sys.time(), "%Y-%m-%d %H:%M:%S")
 
-.process_verbose <- function(verbose)
+.process_verbose <- function(verbose, to_delete=TRUE)
 {
     fn <- .packageEnv$process_status_fname[process_index]
     if (is.character(fn) && (length(fn)==1L))
     {
         attr(fn, "verbose") <- isTRUE(verbose)
+        # delete the file after the job is done if to_delete is TRUE
+        attr(fn, "delete") <- isTRUE(to_delete)
         fn
     } else
         isTRUE(verbose)

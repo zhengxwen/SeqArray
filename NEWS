@@ -1,3 +1,12 @@
+CHANGES IN VERSION 1.49.4
+-------------------------
+
+NEW FEATURES
+
+    o new '.status_file' in `seqParallel()` for controlling the display of the
+      status of child processes
+
+
 CHANGES IN VERSION 1.49.3
 -------------------------
 

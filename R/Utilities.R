@@ -279,6 +279,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 # Apply functions in parallel
 #
 
+# get the temporary file names for showing the status of child processes
 .get_status_files <- function(njobs)
 {
     tempfile(
@@ -287,6 +288,13 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         tmpdir=".", fileext=".txt")
 }
 
+# initialize the internal variables for child processes
+.init_proc <- function(idx=1L, cnt=1L, fname=NULL)
+{
+    .Call(SEQ_InitProcess, process_index, idx, process_count, cnt, fname)
+}
+
+# call the user-defined function in parallel
 seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
@@ -336,8 +344,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     }
 
     # initialize internally
-    .Call(SEQ_IntAssign, process_index, 1L)
-    .Call(SEQ_IntAssign, process_count, 1L)
+    .init_proc()
 
     # get the number of workers
     njobs <- .NumParallel(cl)
@@ -420,10 +427,12 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 # load the package
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # export to global variables
-                .Call(SEQ_IntAssign, process_index, .proc_idx)
-                .Call(SEQ_IntAssign, process_count, .proc_cnt)
+                .init_proc(.proc_idx, .proc_cnt, .st_fname)
                 .packageEnv$process_status_fname <- .st_fname
-                on.exit(.packageEnv$process_status_fname <- NULL)
+                on.exit({
+                    .init_proc()
+                    .packageEnv$process_status_fname <- NULL
+                })
                 if (is.null(.gds.fn))
                 {
                     # call the user-defined function
@@ -497,8 +506,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 # load the package
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # export to global variables
-                .Call(SEQ_IntAssign, process_index, 0L)
-                .Call(SEQ_IntAssign, process_count, 0L)
+                .init_proc()
                 # open the file
                 if (is.character(gds))
                     gds <- seqOpen(gds, allow.duplicate=TRUE)
@@ -590,8 +598,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             # load the package
             library(SeqArray, quietly=TRUE, verbose=FALSE)
             # export to global variables
-            .Call(SEQ_IntAssign, process_index, .proc_idx)
-            .Call(SEQ_IntAssign, process_count, .proc_cnt)
+            .init_proc(.proc_idx, .proc_cnt, NULL)
 
             if (is.null(.gds.fn))
             {
@@ -676,10 +683,13 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .fun = function(.jobidx, .st_fname, ...)
                 {
                     # export to global variables
-                    .Call(SEQ_IntAssign, process_index, .jobidx)
-                    .Call(SEQ_IntAssign, process_count, njobs)
+                    .init_proc(.jobidx, njobs, .st_fname)
                     .packageEnv$process_status_fname <- .st_fname
-                    on.exit(.packageEnv$process_status_fname <- NULL)
+                    # set exit
+                    on.exit({
+                        .init_proc()
+                        .packageEnv$process_status_fname <- NULL
+                    })
                     if (!is.null(gdsfile))
                     {
                         # set filter
