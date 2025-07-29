@@ -280,12 +280,14 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 #
 
 # get the temporary file names for showing the status of child processes
-.get_status_files <- function(njobs)
+.get_status_filename <- function(njobs)
 {
-    tempfile(
-        pattern=sprintf("_parallel_%d_n%d-%d_", as.integer(Sys.time()),
-        njobs, seq_len(njobs)),
-        tmpdir=".", fileext=".txt")
+    i <- as.integer(Sys.time())
+    if (is.na(i)) i <- 0L
+    i <- (i %% 90000L) + 10000L
+    basename(tempfile(
+        pattern=sprintf("_parallel_%d_n%d-%d_", i, njobs, seq_len(njobs)),
+        tmpdir=".", fileext=".txt"))
 }
 
 # initialize the internal variables for child processes
@@ -386,7 +388,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         st_fname <- NULL
         if (isTRUE(.status_file))
         {
-            st_fname <- .get_status_files(njobs)
+            st_fname <- .get_status_filename(njobs)
             file.create(st_fname, showWarnings=FALSE)
             on.exit(unlink(st_fname, force=TRUE), add=TRUE)
         }
@@ -657,7 +659,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         st_fname <- NULL
         if (isTRUE(.status_file))
         {
-            st_fname <- .get_status_files(njobs)
+            st_fname <- .get_status_filename(njobs)
             file.create(st_fname, showWarnings=FALSE)
             on.exit(unlink(st_fname, force=TRUE), add=TRUE)
         }
