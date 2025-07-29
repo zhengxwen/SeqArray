@@ -293,7 +293,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 # initialize the internal variables for child processes
 .init_proc <- function(idx=1L, cnt=1L, fname=NULL)
 {
-    .Call(SEQ_InitProcess, process_index, idx, process_count, cnt, fname)
+    .Call(SEQ_SetProcess, process_index, idx, process_count, cnt, fname)
 }
 
 # call the user-defined function in parallel

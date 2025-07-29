@@ -274,8 +274,6 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
     .clear_varmap(gdsfile)
     .init_proc()
 
-    .Call(SEQ_InitProcess, process_index, 1L, process_count, 1L, NULL)
-
     # get the number of workers
     njobs <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)

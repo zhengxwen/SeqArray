@@ -1287,7 +1287,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ResetChrom(SEXP gdsfile)
 // Initialize the process variables
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_InitProcess(SEXP proc_idx, SEXP idx,
+COREARRAY_DLL_EXPORT SEXP SEQ_SetProcess(SEXP proc_idx, SEXP idx,
 	SEXP proc_cnt, SEXP cnt, SEXP status_fname)
 {
 	// process_index
@@ -1701,7 +1701,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
-		CALL(SEQ_InitProcess, 5),           CALL(SEQ_AppendFill, 3),
+		CALL(SEQ_SetProcess, 5),           CALL(SEQ_AppendFill, 3),
 		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_BufferPosition, 2),
 
 		CALL(SEQ_bgzip_create, 1),
