@@ -278,10 +278,20 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 #######################################################################
 # Apply functions in parallel
 #
+
+.get_status_files <- function(njobs)
+{
+    tempfile(
+        pattern=sprintf("_parallel_%d_n%d-%d_", as.integer(Sys.time()),
+        njobs, seq_len(njobs)),
+        tmpdir=".", fileext=".txt")
+}
+
 seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
-    .balancing=FALSE, .bl_size=10000L, .bl_progress=FALSE, ...)
+    .balancing=FALSE, .bl_size=10000L, .bl_progress=FALSE,
+    .status_file=FALSE, ...)
 {
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) |
@@ -293,6 +303,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     stopifnot(is.null(.initialize) | is.function(.initialize))
     stopifnot(is.null(.finalize) | is.function(.finalize))
     stopifnot(is.logical(.selection.flag), length(.selection.flag)==1L)
+    stopifnot(is.logical(.status_file), length(.status_file)==1L)
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
     if (isTRUE(.balancing))
     {
@@ -300,6 +311,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             length(.bl_size)==1L, .bl_size > 0L)
         stopifnot(is.logical(.bl_progress), length(.bl_progress)==1L)
     }
+    
 
     if (is.character(.combine))
     {
@@ -329,7 +341,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
     # get the number of workers
     njobs <- .NumParallel(cl)
-    parallel <- .McoreParallel(cl)
+    cl <- .McoreParallel(cl)
     if (njobs <= 1L)
     {
         if (is.function(.initialize)) .initialize(1L, .initparam)
@@ -364,6 +376,14 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     {
         ## multiple processes with a predefined cluster
 
+        st_fname <- NULL
+        if (isTRUE(.status_file))
+        {
+            st_fname <- .get_status_files(njobs)
+            file.create(st_fname, showWarnings=FALSE)
+            on.exit(unlink(st_fname, force=TRUE), add=TRUE)
+        }
+
         if (is.function(.initialize))
         {
             clusterApply(cl, seq_len(njobs), function(i, param)
@@ -391,18 +411,19 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     clusterApply(cl, seq_len(njobs), function(i, param)
                         .finalize(i, param), param=.initparam)
                 }
-            })
+            }, add=TRUE)
 
             ans <- .DynamicClusterCall(cl, length(cl), .fun =
-                function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample, .sel_variant,
-                    FUN, .split, .selection.flag, ...)
+                function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample,
+                    .sel_variant, FUN, .split, .selection.flag, .st_fname, ...)
             {
                 # load the package
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # export to global variables
                 .Call(SEQ_IntAssign, process_index, .proc_idx)
                 .Call(SEQ_IntAssign, process_count, .proc_cnt)
-
+                .packageEnv$process_status_fname <- .st_fname
+                on.exit(.packageEnv$process_status_fname <- NULL)
                 if (is.null(.gds.fn))
                 {
                     # call the user-defined function
@@ -428,10 +449,12 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 if (.selection.flag) FUN(.file, .ss, ...) else FUN(.file, ...)
 
             }, .combinefun=.combine, .proc_cnt=njobs,
-                .gds.fn = if (is.null(attr(cl, "forking"))) gdsfile$filename else gdsfile,
+                .gds.fn = if (is.null(attr(cl, "forking")))
+                    gdsfile$filename else gdsfile,
                 .sel_sample = memCompress(sel$sample.sel, type="gzip"),
                 .sel_variant = memCompress(sel$variant.sel, type="gzip"),
-                FUN = FUN, .split = split, .selection.flag = .selection.flag, ...
+                FUN = FUN, .split = split, .selection.flag = .selection.flag,
+                .st_fname = st_fname, ...
             )
         } else {
             ## load balancing
@@ -624,10 +647,18 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .balancing, .bl_size, .bl_progress, ...))
         }
 
+        st_fname <- NULL
+        if (isTRUE(.status_file))
+        {
+            st_fname <- .get_status_files(njobs)
+            file.create(st_fname, showWarnings=FALSE)
+            on.exit(unlink(st_fname, force=TRUE), add=TRUE)
+        }
+
         if (is.function(.initialize))
             .initialize(NA_integer_, .initparam)
         if (is.function(.finalize))
-            on.exit(.finalize(NA_integer_, .initparam))
+            on.exit(.finalize(NA_integer_, .initparam), add=TRUE)
 
         if (split %in% c("by.variant", "by.sample"))
         {
@@ -641,22 +672,28 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
         if (!isTRUE(.balancing) || split=="none")
         {
-            ans <- .DynamicForkCall(njobs, njobs, .fun = function(.jobidx, ...)
-            {
-                # export to global variables
-                .Call(SEQ_IntAssign, process_index, .jobidx)
-                .Call(SEQ_IntAssign, process_count, njobs)
-                if (!is.null(gdsfile))
+            ans <- .DynamicForkCall(njobs, njobs,
+                .fun = function(.jobidx, .st_fname, ...)
                 {
-                    # set filter
-                    .ss <- .Call(SEQ_SplitSelection, gdsfile, split, .jobidx, njobs,
-                        .selection.flag)
-                    # call the user-defined function
-                    if (.selection.flag) FUN(gdsfile, .ss, ...) else FUN(gdsfile, ...)
-                } else {
-                    FUN(...)
-                }
-            }, .combinefun=.combine, .updatefun=NULL, ...)
+                    # export to global variables
+                    .Call(SEQ_IntAssign, process_index, .jobidx)
+                    .Call(SEQ_IntAssign, process_count, njobs)
+                    .packageEnv$process_status_fname <- .st_fname
+                    on.exit(.packageEnv$process_status_fname <- NULL)
+                    if (!is.null(gdsfile))
+                    {
+                        # set filter
+                        .ss <- .Call(SEQ_SplitSelection, gdsfile, split,
+                            .jobidx, njobs, .selection.flag)
+                        # call the user-defined function
+                        if (.selection.flag)
+                            FUN(gdsfile, .ss, ...)
+                        else
+                            FUN(gdsfile, ...)
+                    } else {
+                        FUN(...)
+                    }
+                }, .combinefun=.combine, .updatefun=NULL, .st_fname=st_fname, ...)
         } else {
             ## load balancing
             # selection indexing

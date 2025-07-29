@@ -1101,6 +1101,7 @@ bool CVarApplyList::CallNext()
 
 static const int PROGRESS_BAR_CHAR_NUM = 50;
 static const int PROGRESS_LINE_NUM = 10000;
+static const int PROGRESS_INTERVAL_SECOND = 10;
 
 static const double S_MIN  =  60;
 static const double S_HOUR =  60 * S_MIN;
@@ -1257,7 +1258,7 @@ void CProgress::ShowProgress()
 				Rprintf("%s\n", buf);
 			} else {
 				double interval = difftime(now, _last_time);  // in seconds
-				if ((interval >= 5) || (vCounter <= 0))
+				if ((vCounter <= 0) || (interval >= PROGRESS_INTERVAL_SECOND))
 				{
 					_last_time = now;
 					int n = snprintf(buf, sizeof(buf),

@@ -924,13 +924,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		Rf_error("'.useraw' must be TRUE, FALSE or NA.");
 	int use_raw_flag = Rf_asLogical(pam_use_raw);
 
-	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
-	if (prog_flag == NA_LOGICAL)
-		Rf_error("'.progress' must be TRUE or FALSE.");
-
 	int dup_flag = Rf_asLogical(RGetListElement(param, "list_dup"));
 	if (dup_flag == NA_LOGICAL)
 		Rf_error("'.list_dup' must be TRUE or FALSE.");
+
+	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
+	if (prog_flag == NA_LOGICAL)
+		Rf_error("'.progress' must be TRUE or FALSE.");
+	SEXP prog_file = RGetListElement(param, "progressfile");
 
 	COREARRAY_TRY
 
@@ -1123,7 +1124,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 		// ===========================================================
 		// for-loop calling
 
-		CProgress progress(nVariant, NULL, prog_flag);
+		CProgress progress(nVariant, prog_file, prog_flag);
 
 		int ans_index = 0;
 		do {

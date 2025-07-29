@@ -16,6 +16,9 @@ process_index <- 1L
 # the number of children processes
 process_count <- 1L
 
+# the list of file names for the status of children processes
+# .packageEnv$process_status_fname <- NULL
+
 ## R objects for class, dimnames ...
 .dim_name <- list(
     geno_dim2 = list(allele=NULL, sample=NULL),
@@ -141,6 +144,18 @@ process_count <- 1L
 }
 
 .tm <- function() strftime(Sys.time(), "%Y-%m-%d %H:%M:%S")
+
+.process_verbose <- function(verbose)
+{
+    fn <- .packageEnv$process_status_fname[process_index]
+    if (is.character(fn) && (length(fn)==1L))
+    {
+        attr(fn, "verbose") <- isTRUE(verbose)
+        fn
+    } else
+        isTRUE(verbose)
+}
+
 
 
 #######################################################################
