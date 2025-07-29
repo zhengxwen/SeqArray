@@ -156,7 +156,10 @@ static SEXP get_chrom(CFileInfo &File, TVarMap &Var, void *param)
 
 // Using the S4Vectors package for RLE-coded chromosome
 
-extern "C" SEXP LANG_NEW_RLE = NULL;
+extern "C"
+{
+	SEXP LANG_NEW_RLE = NULL;
+}
 
 /// create a S4Vectors::Rle object
 inline static SEXP new_s4vectors_rle(const vector<string> &val,
@@ -867,10 +870,13 @@ static SEXP get_list(SEXP len, SEXP val, size_t elmsize, bool is_factor)
 }
 
 
-// .List_IRanges_value
-extern "C" SEXP OBJ_CompressedList = NULL;
-// as(, "List")
-extern "C" SEXP LANG_AS_LIST = NULL;
+extern "C"
+{
+	// .List_IRanges_value
+	SEXP OBJ_CompressedList = NULL;
+	// as(, "List")
+	SEXP LANG_AS_LIST = NULL;
+}
 
 /// create a S4Vectors::List object
 inline static SEXP as_s4vectors_list(SEXP x)
