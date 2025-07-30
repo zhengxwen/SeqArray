@@ -32,8 +32,8 @@ import(gdsfmt)
 importFrom(stats, median, sd)
 importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
     makeCluster, makeForkCluster, mclapply, stopCluster)
-importFrom(utils, read.table, flush.console, write.table, str, tail,
-    type.convert)
+importFrom(utils, capture.output, read.table, flush.console, write.table,
+    str, tail, type.convert)
 importFrom(digest, digest)
 
 importFrom(S4Vectors, DataFrame, SimpleList)

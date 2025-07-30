@@ -42,8 +42,9 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
     \item{.initparam}{parameters passed to \code{.initialize} and
         \code{.initialize}}
     \item{.balancing}{load balancing if \code{TRUE}}
-    \item{.bl_size}{chuck size, the increment for load balancing, 10000 for
-        variants; only applicable if \code{.balancing=TRUE}}
+    \item{.bl_size}{chuck size (# of variants or samples), the increment for
+        load balancing, only applicable if \code{.balancing=TRUE}; if
+        \code{NA_integer_}, automatically determined by the number of cores}
     \item{.bl_progress}{if \code{TRUE} and \code{.balancing=TRUE}, show progress
         information}
     \item{.status_file}{if \code{TRUE}, create empty files for saving the

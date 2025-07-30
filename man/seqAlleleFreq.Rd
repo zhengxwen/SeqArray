@@ -23,7 +23,10 @@ seqGetAF_AC_Missing(gdsfile, minor=FALSE, parallel=seqGetParallel(),
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}
-    \item{balancing}{}
+    \item{balancing}{whether to perform workload balancing or not, only
+        applicable when multiple cores are used; if \code{NA}, use \code{TRUE}
+        as a default until \code{getOption("seqarray.balancing")} is set and
+        not \code{TRUE}}
     \item{verbose}{if \code{TRUE}, show progress information}
 }
 \value{
