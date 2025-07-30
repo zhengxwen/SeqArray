@@ -634,9 +634,16 @@ extern SEXP R_Data_Name;
 extern SEXP R_Data_Dim2_Name;
 extern SEXP R_Data_ListClass;
 
-extern int* R_Process_Count;
+// the index of child process
 extern int* R_Process_Index;
+// the number of child processes
+extern int* R_Process_Count;
+// list of file names for child processes
 extern vector<string> R_Process_StatusFName;
+// the index of block being used currently
+extern int R_Block_Index;
+// the number of blocks, 0 when it is not used
+extern int R_Block_Count;
 
 
 // ===========================================================

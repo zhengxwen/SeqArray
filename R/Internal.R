@@ -29,6 +29,8 @@ process_count <- 1L
     data_class = "SeqVarDataList"
 )
 
+process_balanced_multiple <- 4L
+
 
 #######################################################################
 # Internal C functions

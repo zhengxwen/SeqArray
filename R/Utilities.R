@@ -291,16 +291,33 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 }
 
 # initialize the internal variables for child processes
-.init_proc <- function(idx=1L, cnt=1L, fname=NULL)
+.init_proc <- function(idx=1L, cnt=1L, fname=FALSE)
 {
-    .Call(SEQ_SetProcess, process_index, idx, process_count, cnt, fname)
+    .Call(SEQ_SetProcess, idx, cnt, fname)
+}
+
+# set the block current index and total count
+.set_proc_block <- function(idx=0L, cnt=0L)
+{
+    .Call(SEQ_SetProcessBlock, idx, cnt)
+}
+
+# auto set the block size
+.auto_bl_size <- function(cnt, njobs)
+{
+    m <- getOption("seqarray.balanced_multiple", process_balanced_multiple)
+    if (!is.numeric(m) || length(m)!=1L || !is.finite(m))
+        stop("'seqarray.balanced_multiple' should be a positive number.")
+    n <- as.integer(ceiling(cnt / (njobs * m)))
+    if (n <= 0L) n <- 1L
+    n
 }
 
 # call the user-defined function in parallel
 seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
-    .balancing=FALSE, .bl_size=10000L, .bl_progress=FALSE,
+    .balancing=FALSE, .bl_size=NA_integer_, .bl_progress=FALSE,
     .status_file=FALSE, ...)
 {
     # check
@@ -317,11 +334,9 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
     if (isTRUE(.balancing))
     {
-        stopifnot(is.numeric(.bl_size), is.finite(.bl_size),
-            length(.bl_size)==1L, .bl_size > 0L)
+        stopifnot(is.numeric(.bl_size), length(.bl_size)==1L)
         stopifnot(is.logical(.bl_progress), length(.bl_progress)==1L)
     }
-    
 
     if (is.character(.combine))
     {
@@ -431,6 +446,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # export to global variables
                 .init_proc(.proc_idx, .proc_cnt, .st_fname)
+                .set_proc_block()
                 .packageEnv$process_status_fname <- .st_fname
                 on.exit({
                     .init_proc()
@@ -475,6 +491,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             sel <- seqGetFilter(gdsfile)
             if (split == "by.variant")
             {
+                if (is.na(.bl_size) || (.bl_size<=0L))
+                    .bl_size <- .auto_bl_size(dm[3L], njobs)
                 totnum <- dm[3L] %/% .bl_size
                 if (dm[3L] %% .bl_size) totnum <- totnum + 1L
                 if (totnum < njobs)
@@ -486,6 +504,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 }
                 sel_idx <- which(sel$variant.sel)
             } else {
+                if (is.na(.bl_size) || (.bl_size<=0L))
+                    .bl_size <- .auto_bl_size(dm[2L], njobs)
                 totnum <- dm[2L] %/% .bl_size
                 if (dm[2L] %% .bl_size) totnum <- totnum + 1L
                 if (totnum < njobs)
@@ -503,13 +523,17 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
             updatefun <- function(i) .seqProgForward(progress, .bl_size)
 
-            # initialize
-            clusterCall(cl, fun=function(gds, sel_sample, sel_variant, sel_idx, proglen)
+            # initialize the cluster
+            clusterApply(cl, seq_len(njobs),
+                fun = function(i, njobs, st_fname, totnum,
+                    gds, sel_sample, sel_variant, sel_idx, proglen)
             {
                 # load the package
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
                 # export to global variables
-                .init_proc()
+                .init_proc(i, njobs, st_fname)
+                .set_proc_block(1L, totnum)
+                .packageEnv$process_status_fname <- st_fname
                 # open the file
                 if (is.character(gds))
                     gds <- seqOpen(gds, allow.duplicate=TRUE)
@@ -524,19 +548,24 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     variant.sel = .packageEnv$variant.sel,
                     verbose=FALSE)
                 NULL
-            },  gds = if (is.null(attr(cl, "forking"))) gdsfile$filename else gdsfile,
+            },  njobs = njobs, st_fname = st_fname, totnum = totnum,
+                gds = if (is.null(attr(cl, "forking"))) gdsfile$filename else gdsfile,
                 sel_sample = memCompress(as.raw(sel$sample.sel), type="gzip"),
                 sel_variant = memCompress(as.raw(sel$variant.sel), type="gzip"),
                 sel_idx = sel_idx, proglen = proglen
             )
+            remove(sel)
 
             # finalize
             on.exit({
-                clusterCall(cl, fun=function(gds)
+                clusterCall(cl, fun=function()
                 {
                     if (inherits(.packageEnv$gfile, "SeqVarGDSClass"))
                         seqClose(.packageEnv$gfile)
                     .packageEnv$gfile <- NULL
+                    .packageEnv$process_status_fname <- NULL
+                    .set_proc_block()
+                    .init_proc()
                 })
                 if (is.function(.finalize))
                 {
@@ -549,6 +578,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             ans <- .DynamicClusterCall(cl, totnum, .fun =
                 function(.idx, FUN, .split, .sel_idx, .bl_size, .selection.flag, ...)
             {
+                # set the block index
+                .set_proc_block(.idx, NULL)
                 # set filter
                 .ss <- .Call(SEQ_SplitSelectionX, .packageEnv$gfile, .idx, .split,
                     .sel_idx, .packageEnv$variant.sel, .packageEnv$sample.sel,
@@ -558,10 +589,9 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     FUN(.packageEnv$gfile, .ss, ...)
                 else
                     FUN(.packageEnv$gfile, ...)
-
             }, .combinefun=.combine, .updatefun=updatefun, FUN = FUN,
-                .split = (split=="by.variant"), .sel_idx = sel_idx, .bl_size = .bl_size,
-                .selection.flag = .selection.flag, ...
+                .split = (split=="by.variant"), .sel_idx = sel_idx,
+                .bl_size = .bl_size, .selection.flag = .selection.flag, ...
             )
 
             remove(progress)
@@ -687,6 +717,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 {
                     # export to global variables
                     .init_proc(.jobidx, njobs, .st_fname)
+                    .set_proc_block()
                     .packageEnv$process_status_fname <- .st_fname
                     # set exit
                     on.exit({
@@ -706,13 +737,16 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     } else {
                         FUN(...)
                     }
-                }, .combinefun=.combine, .updatefun=NULL, .st_fname=st_fname, ...)
+                },  .combinefun=.combine, .updatefun=NULL,
+                    .st_fname=st_fname, ...)
         } else {
             ## load balancing
             # selection indexing
             .sel <- seqGetFilter(gdsfile)
             if (split == "by.variant")
             {
+                if (is.na(.bl_size) || (.bl_size<=0L))
+                    .bl_size <- .auto_bl_size(dm[3L], njobs)
                 totnum <- dm[3L] %/% .bl_size
                 if (dm[3L] %% .bl_size) totnum <- totnum + 1L
                 if (totnum < njobs)
@@ -721,10 +755,11 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     if (dm[3L] %% njobs) .bl_size <- .bl_size + 1L
                     totnum <- dm[3L] %/% .bl_size
                     if (dm[3L] %% .bl_size) totnum <- totnum + 1L
-                    # cat("totnum: ", totnum, ", .bl_size: ", .bl_size, "\n", sep="")
                 }
                 .sel_idx <- which(.sel$variant.sel)
             } else {
+                if (is.na(.bl_size) || (.bl_size<=0L))
+                    .bl_size <- .auto_bl_size(dm[2L], njobs)
                 totnum <- dm[2L] %/% .bl_size
                 if (dm[2L] %% .bl_size) totnum <- totnum + 1L
                 if (totnum < njobs)

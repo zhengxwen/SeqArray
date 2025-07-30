@@ -833,13 +833,16 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
 # Allele frequency
 #
 seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
-    parallel=seqGetParallel(), verbose=FALSE)
+    parallel=seqGetParallel(), balancing=NA, verbose=FALSE)
 {
     # check
     stopifnot(is.null(ref.allele) | is.numeric(ref.allele) |
         is.character(ref.allele))
     stopifnot(is.logical(minor), length(minor)==1L)
+    stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.na(balancing))
+        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     if (is.character(gdsfile))
     {
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
@@ -871,7 +874,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                 seqApply(f, c("genotype", "$num_allele"), as.is="list",
                     FUN=.cfunction("FC_AF_List"), .list_dup=FALSE, .useraw=NA,
                     .progress=.process_verbose(pg))
-            }, .status_file=TRUE, pg=verbose)
+            }, .balancing=balancing, .status_file=TRUE, pg=verbose)
     } else if (is.numeric(ref.allele))
     {
         if (length(ref.allele) == 1L)
@@ -885,8 +888,9 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                         seqApply(f, nm, as.is="double", FUN=.cfunction(cn),
                             .useraw=NA,
                             .progress=.process_verbose(pg))
-                    }, .status_file=TRUE, pg=verbose, nm=nm, mi=minor,
-                        pl=ploidy, cn=ifelse(gv, "FC_AF_Ref", "FC_AF_DS_Ref"))
+                    }, .balancing=balancing, .status_file=TRUE,
+                        pg=verbose, nm=nm, mi=minor, pl=ploidy,
+                        cn=ifelse(gv, "FC_AF_Ref", "FC_AF_DS_Ref"))
             } else {
                 seqParallel(parallel, gdsfile, split="by.variant",
                     FUN = function(f, ref, pg, nm, mi, pl, cn)
@@ -895,8 +899,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                         seqApply(f, c(nm, "$num_allele"), as.is="double",
                             FUN=.cfunction(cn), .useraw=NA,
                             .progress=.process_verbose(pg))
-                    }, .status_file=TRUE, ref=ref.allele, pg=verbose, nm=nm,
-                        mi=minor, pl=ploidy,
+                    }, .balancing=balancing, .status_file=TRUE,
+                        ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AF_Index", "FC_AF_DS_Index"))
             }
         } else {
@@ -914,8 +918,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                     seqApply(f, c(nm, "$num_allele"), as.is="double",
                         FUN=.cfunction(cn), .useraw=NA,
                         .progress=.process_verbose(pg))
-                }, .status_file=TRUE, ref=ref.allele, pg=verbose, nm=nm,
-                    mi=minor, pl=ploidy,
+                }, .balancing=balancing, .status_file=TRUE,
+                    ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
                     cn=ifelse(gv, "FC_AF_Index", "FC_AF_DS_Index"))
         }
     } else if (is.character(ref.allele))
@@ -933,8 +937,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                 seqApply(f, c(nm, "allele"), as.is="double",
                     FUN=.cfunction(cn), .useraw=NA,
                     .progress=.process_verbose(pg))
-            }, .status_file=TRUE, ref=ref.allele, pg=verbose, nm=nm,
-                mi=minor, pl=ploidy,
+            }, .balancing=balancing, .status_file=TRUE,
+                ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
                 cn=ifelse(gv, "FC_AF_Allele", "FC_AF_DS_Allele"))
     } else
         stop("Invalid 'ref.allele'.")
@@ -946,11 +950,14 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
 # Allele counts
 #
 seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
-    parallel=seqGetParallel(), verbose=FALSE)
+    parallel=seqGetParallel(), balancing=NA, verbose=FALSE)
 {
     # check
     stopifnot(is.logical(minor), length(minor)==1L)
+    stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.na(balancing))
+        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     if (is.character(gdsfile))
     {
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
@@ -985,7 +992,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                     as.is="list", FUN = .cfunction("FC_AlleleCount"),
                     .useraw=NA, .list_dup=FALSE,
                     .progress=.process_verbose(pg))
-            }, .status_file=TRUE, pg=verbose)
+            }, .balancing=balancing, .status_file=TRUE, pg=verbose)
     } else if (is.numeric(ref.allele))
     {
         if (length(ref.allele) == 1L)
@@ -999,7 +1006,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                         seqApply(f, nm, as.is=tp, FUN=.cfunction(cn),
                             .useraw=NA,
                             .progress=.process_verbose(pg))
-                    }, .status_file=TRUE, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
+                    }, .balancing=balancing, .status_file=TRUE,
+                        pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AC_Ref", "FC_AC_DS_Ref"))
             } else {
                 seqParallel(parallel, gdsfile, split="by.variant",
@@ -1009,7 +1017,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                         seqApply(f, c(nm, "$num_allele"), as.is=tp,
                             FUN=.cfunction(cn), .useraw=NA,
                             .progress=.process_verbose(pg))
-                    }, .status_file=TRUE, ref=ref.allele, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
+                    }, .balancing=balancing, .status_file=TRUE, ref=ref.allele,
+                        pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AC_Index", "FC_AC_DS_Index"))
             }
         } else {
@@ -1027,7 +1036,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                     seqApply(f, c(nm, "$num_allele"), as.is=tp,
                         FUN=.cfunction(cn), .useraw=NA,
                         .progress=.process_verbose(pg))
-                }, .status_file=TRUE, ref=ref.allele, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
+                }, .balancing=balancing, .status_file=TRUE, ref=ref.allele,
+                    pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                     cn=ifelse(gv, "FC_AC_Index", "FC_AC_DS_Index"))
         }
     } else if (is.character(ref.allele))
@@ -1045,7 +1055,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                 seqApply(f, c(nm, "allele"), as.is=tp, FUN=.cfunction(cn),
                     .useraw=NA,
                     .progress=.process_verbose(pg))
-            }, .status_file=TRUE, ref=ref.allele, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
+            }, .balancing=balancing, .status_file=TRUE, ref=ref.allele,
+                pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                 cn=ifelse(gv, "FC_AC_Allele", "FC_AC_DS_Allele"))
     } else
         stop("Invalid 'ref.allele'.")
@@ -1056,6 +1067,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
 #######################################################################
 # Get AF/MAF, AC/MAC and missing rate for variants
 #
+
 # [deprecated]
 .Get_MAF_MAC_Missing <- function(gdsfile, parallel, verbose)
 {
@@ -1065,11 +1077,14 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
 }
 
 seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
-    verbose=FALSE)
+    balancing=NA, verbose=FALSE)
 {
     # check
     stopifnot(is.logical(minor), length(minor)==1L)
+    stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.na(balancing))
+        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
     if (is.character(gdsfile))
@@ -1101,7 +1116,8 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
             seqApply(f, nm, as.is="none", FUN=.cfunction(cn), .useraw=NA,
                 .progress=.process_verbose(pg))
             m3
-        }, .status_file=TRUE, pg=verbose, nm=nm, pl=ploidy, minor=minor,
+        }, .balancing=balancing, .status_file=TRUE,
+            pg=verbose, nm=nm, pl=ploidy, minor=minor,
             cn=ifelse(gv, "FC_AF_AC_MISS_Geno", "FC_AF_AC_MISS_DS"))
 
     # merge

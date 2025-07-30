@@ -8,11 +8,11 @@
 }
 \usage{
 seqAlleleFreq(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
-    verbose=FALSE)
+    balancing=NA, verbose=FALSE)
 seqAlleleCount(gdsfile, ref.allele=0L, minor=FALSE, parallel=seqGetParallel(),
-    verbose=FALSE)
+    balancing=NA, verbose=FALSE)
 seqGetAF_AC_Missing(gdsfile, minor=FALSE, parallel=seqGetParallel(),
-    verbose=FALSE)
+    balancing=NA, verbose=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -23,6 +23,7 @@ seqGetAF_AC_Missing(gdsfile, minor=FALSE, parallel=seqGetParallel(),
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}
+    \item{balancing}{}
     \item{verbose}{if \code{TRUE}, show progress information}
 }
 \value{

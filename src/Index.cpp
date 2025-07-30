@@ -1205,6 +1205,21 @@ static bool file_exists(const string &fname)
 	return (stat(fname.c_str(), &sb) == 0);
 }
 
+static bool if_show_idx_cnt(int &idx, int &cnt)
+{
+	if (R_Block_Count > 0)
+	{
+		idx = R_Block_Index;
+		cnt = R_Block_Count;
+	} else if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+	{
+		idx = *R_Process_Index;
+		cnt = *R_Process_Count;
+	} else
+		return false;
+	return true;
+}
+
 void CProgress::ShowProgress()
 {
 	if (!OutFile && !Verbose) return;  // no output
@@ -1240,11 +1255,9 @@ void CProgress::ShowProgress()
 		{
 			ConnPutText(OutFile, "[%s] %2.0f%%, %s %s", bar, p,
 				vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
-			if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-			{
-				ConnPutText(OutFile, " (process %d/%d)",
-					*R_Process_Index, *R_Process_Count);
-			}
+			int i, m;
+			if (if_show_idx_cnt(i, m))
+				ConnPutText(OutFile, " (%d/%d)", i, m);
 			ConnPutText(OutFile, "\n");
 			(*OutFile->fflush)(OutFile);
 		}
@@ -1268,11 +1281,9 @@ void CProgress::ShowProgress()
 			{
 				int n = snprintf(buf, sizeof(buf),
 					"\r[%s] %2.0f%%, completed, %s", bar, p, time_str(s));
-				if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-				{
-					snprintf(buf+n, sizeof(buf)-n, " (process %d/%d)",
-						*R_Process_Index, *R_Process_Count);
-				}
+				int i, m;
+				if (if_show_idx_cnt(i, m))
+					snprintf(buf+n, sizeof(buf)-n, " (%d/%d)", i, m);
 				Rprintf("%s\n", buf);
 			} else {
 				double interval = difftime(now, _last_time);  // in seconds
@@ -1281,11 +1292,9 @@ void CProgress::ShowProgress()
 					_last_time = now;
 					int n = snprintf(buf, sizeof(buf),
 						"\r[%s] %2.0f%%, ETC: %s", bar, p, time_str(s));
-					if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-					{
-						n += snprintf(buf+n, sizeof(buf)-n, " (process %d/%d)",
-							*R_Process_Index, *R_Process_Count);
-					}
+					int i, m;
+					if (if_show_idx_cnt(i, m))
+						n += snprintf(buf+n, sizeof(buf)-n, " (%d/%d)", i, m);
 					strcpy(buf+n, "    ");
 					Rprintf("%s", buf);
 				}
@@ -1304,11 +1313,9 @@ void CProgress::ShowProgress()
 				vCounter/1000, dt);
 		} else
 			ConnPutText(OutFile, "[: (0 line)] %s", dt);
-		if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
-		{
-			ConnPutText(OutFile, " (process %d/%d)",
-				*R_Process_Index, *R_Process_Count);
-		}
+		int i, m;
+		if (if_show_idx_cnt(i, m))
+			ConnPutText(OutFile, " (%d/%d)", i, m);
 		ConnPutText(OutFile, "\n");
 		(*OutFile->fflush)(OutFile);
 	}
@@ -1327,9 +1334,11 @@ SEXP R_Data_Name      = R_NilValue;
 SEXP R_Data_Dim2_Name = R_NilValue;
 SEXP R_Data_ListClass = R_NilValue;
 
-int* R_Process_Count = NULL;
-int* R_Process_Index = NULL;
-vector<string> R_Process_StatusFName;
+int* R_Process_Index = NULL;  // the index of child process
+int* R_Process_Count = NULL;  // the number of child processes
+vector<string> R_Process_StatusFName;  // list of file names for child processes
+int R_Block_Index = 0;  // the index of block being used currently
+int R_Block_Count = 0;  // the number of blocks, 0 when it is not used
 
 
 

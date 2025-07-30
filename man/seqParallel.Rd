@@ -9,8 +9,8 @@
 seqParallel(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
-    .balancing=FALSE, .bl_size=10000L, .bl_progress=FALSE, .status_file=FALSE,
-    ...)
+    .balancing=FALSE, .bl_size=NA_integer_, .bl_progress=FALSE,
+    .status_file=FALSE, ...)
 seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 }
 \arguments{

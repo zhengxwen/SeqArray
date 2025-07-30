@@ -6,6 +6,11 @@ NEW FEATURES
     o new '.status_file' in `seqParallel()` for controlling the display of the
       status of child processes
 
+    o enhance workload balancing within `seqParallel()`
+
+    o new 'balancing=NA' in `seqAlleleFreq()`, `seqAlleleCount()`,
+      `seqGetAF_AC_Missing()` (using workload balancing by default)
+
 
 CHANGES IN VERSION 1.49.3
 -------------------------

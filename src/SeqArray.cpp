@@ -1287,25 +1287,42 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ResetChrom(SEXP gdsfile)
 // Initialize the process variables
 // ===========================================================
 
-COREARRAY_DLL_EXPORT SEXP SEQ_SetProcess(SEXP proc_idx, SEXP idx,
-	SEXP proc_cnt, SEXP cnt, SEXP status_fname)
+COREARRAY_DLL_EXPORT SEXP SEQ_SetProcess(SEXP proc_idx, SEXP proc_cnt,
+	SEXP status_fname)
 {
 	// process_index
-	INTEGER(proc_idx)[0] = Rf_asInteger(idx);
+	if (!Rf_isNull(proc_idx))
+		*R_Process_Index = Rf_asInteger(proc_idx);
 	// process_count
-	INTEGER(proc_cnt)[0] = Rf_asInteger(cnt);
+	if (!Rf_isNull(proc_cnt))
+		*R_Process_Count = Rf_asInteger(proc_cnt);
 	// process_status_fname
-	R_Process_StatusFName.clear();
-	if (Rf_isString(status_fname))
+	if (!Rf_isNull(status_fname))
 	{
-		const int n = Rf_length(status_fname);
-		R_Process_StatusFName.resize(n);
-		for (int i=0; i < n; i++)
+		R_Process_StatusFName.clear();
+		if (Rf_isString(status_fname))
 		{
-			SEXP s = STRING_ELT(status_fname, i);
-			R_Process_StatusFName[i] = Rf_translateChar(s);
+			const int n = Rf_length(status_fname);
+			R_Process_StatusFName.resize(n);
+			for (int i=0; i < n; i++)
+			{
+				SEXP s = STRING_ELT(status_fname, i);
+				R_Process_StatusFName[i] = Rf_translateChar(s);
+			}
 		}
 	}
+	// return
+	return R_NilValue;
+}
+
+COREARRAY_DLL_EXPORT SEXP SEQ_SetProcessBlock(SEXP blk_idx, SEXP blk_cnt)
+{
+	// block_index
+	if (!Rf_isNull(blk_idx))
+		R_Block_Index = Rf_asInteger(blk_idx);
+	// block_count
+	if (!Rf_isNull(blk_cnt))
+		R_Block_Count = Rf_asInteger(blk_cnt);
 	// return
 	return R_NilValue;
 }
@@ -1701,7 +1718,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
 
-		CALL(SEQ_SetProcess, 5),           CALL(SEQ_AppendFill, 3),
+		CALL(SEQ_SetProcess, 3),            CALL(SEQ_SetProcessBlock, 2),
+		CALL(SEQ_AppendFill, 3),
 		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_BufferPosition, 2),
 
 		CALL(SEQ_bgzip_create, 1),
