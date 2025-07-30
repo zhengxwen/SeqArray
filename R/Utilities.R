@@ -185,7 +185,7 @@ seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
         options(seqarray.multicore=cl)
     } else {
         if (isTRUE(verbose))
-            cat("Disable the user-defined multicore cluster.\n")
+            cat("Disable the pre-defined multicore cluster.\n")
     }
 
     # return nothing

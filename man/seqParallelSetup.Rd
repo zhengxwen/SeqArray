@@ -19,8 +19,8 @@ seqMulticoreSetup(num, type=c("psock", "fork"), verbose=TRUE)
         in the package \code{\link{parallel}}, like \code{\link{makeCluster}}.
         See details}
     \item{num}{the maximum number of cores used for the user-defined multicore
-        setting; FALSE, NA or any value less than 2, to disable the multicore
-        cluster}
+        setting; FALSE, NA or any value less than 2, to disable the pre-defined
+        multicore cluster; see details}
     \item{type}{either PSOCK or Fork cluster setup for the multicore setting,
         the resulting parallel cluster will be used if 'parallel' is a number
         greater than one in associated functions}
@@ -35,6 +35,12 @@ multiple processes created by \code{\link{makeCluster}} are used instead.
 to the value of \code{cluster}.
     Using \code{seqParallelSetup(FALSE)} removes the registered cluster, as
 does stopping the registered cluster.
+
+    \code{seqMulticoreSetup} sets a multicore cluster and can avoid large
+memory usage when forking is used for the number of cores specified in the
+argument \code{'parallel'}. It is recommended to call \code{seqMulticoreSetup}
+before running any memory-intensive functions, as forking within such functions
+can significantly increase memory usage.
 }
 \value{
     \code{seqParallelSetup()} has no return, and \code{seqGetParallel()} returns
