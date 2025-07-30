@@ -841,6 +841,18 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             # unlimit the last one
             psplit[[2L]][length(psplit[[2L]])] <- -1L
 
+            # show information
+            update_info <- function(i)
+            {
+                .cat("        |> ", i, " [", .tm(), " done]")
+                flush.console()
+                NULL
+            }
+            if (!isTRUE(verbose)) update_info <- "none"
+
+            # reset memory before calling parallel
+            gc(FALSE, reset=TRUE, full=TRUE)
+
             # conversion in parallel
             seqParallel(parallel, NULL, FUN = function(
                 vcf.fn, header, storage.option, info.import, fmt.import,
@@ -848,16 +860,31 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 raise.err, ptmpfn, psplit, variant_count)
             {
                 i <- process_index  # the process id, starting from one
-                SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
-                    storage.option=storage.option, info.import=info.import,
-                    fmt.import=fmt.import, genotype.var.name=genotype.var.name,
-                    ignore.chr.prefix=ignore.chr.prefix,
-                    start = psplit[[1L]][i], count = psplit[[2L]][i],
-                    variant_count=variant_count,
-                    optimize=optim, scenario=scenario, raise.error=raise.err,
-                    digest=FALSE, parallel=FALSE, verbose=FALSE)
-                invisible()  # return
-            }, split="none",
+                tryCatch(
+                {
+                    SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
+                        storage.option=storage.option, info.import=info.import,
+                        fmt.import=fmt.import,
+                        genotype.var.name=genotype.var.name,
+                        ignore.chr.prefix=ignore.chr.prefix,
+                        start = psplit[[1L]][i], count = psplit[[2L]][i],
+                        variant_count=variant_count,
+                        optimize=optim, scenario=scenario,
+                        raise.error=raise.err,
+                        digest=FALSE, parallel=FALSE, verbose=FALSE)
+                    i  # return the process index
+                }, error = function(e) {
+                    # capture full traceback
+                    trace <- capture.output({
+                        cat("Error: ", e$message, "\n", sep="")
+                        traceback()
+                    })
+                    con <- file(paste0(ptmpfn[i], ".progress.txt"), open="at")
+                    writeLines(trace, con)
+                    close(con)
+                    stop(e$message)
+                })
+            }, split = "none", .combine = update_info,
                 vcf.fn=vcf.fn, header=header, storage.option=storage.option,
                 info.import=info.import, fmt.import=fmt.import,
                 genotype.var.name=genotype.var.name,
@@ -876,7 +903,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
 
     #######################################################################
-    # create a GDS file
+    # create a new GDS file
 
     gfile <- createfn.gds(out.fn)
     on.exit({ if (!is.null(gfile)) closefn.gds(gfile) }, add=TRUE)

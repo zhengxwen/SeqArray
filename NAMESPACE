@@ -32,7 +32,7 @@ import(gdsfmt)
 importFrom(stats, median, sd)
 importFrom(parallel, clusterApply, clusterApplyLB, clusterCall, detectCores,
     makeCluster, makeForkCluster, mclapply, stopCluster)
-importFrom(utils, capture.output, read.table, flush.console, write.table,
+importFrom(utils, capture.output, flush.console, read.table, write.table,
     str, tail, type.convert)
 importFrom(digest, digest)
 
