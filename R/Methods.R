@@ -728,12 +728,19 @@ seqNumAllele <- function(gdsfile)
 #######################################################################
 # Missing rate
 #
+
+.combine_lst <- function(v1, v2)
+    list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
+
 seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
-    verbose=FALSE)
+    balancing=NA, verbose=FALSE)
 {
     # check
     stopifnot(is.logical(per.variant), length(per.variant)==1L)
+    stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.na(balancing))
+        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     if (is.character(gdsfile))
     {
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
@@ -761,9 +768,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         FUN=.cfunction2("FC_Missing_SampVariant"), y=ssum,
                         .progress=.process_verbose(pg))
                     list(v, ssum)
-                }, .combine=function(v1, v2) {
-                    list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
-                }, .status_file=TRUE, num=dm[2L], pg=verbose)
+                }, .combine=.combine_lst, .balancing=balancing,
+                    .status_file=TRUE, num=dm[2L], pg=verbose)
             sv[[2L]] <- sv[[2L]] / (dm[1L] * dm[3L])
         } else {
             sv <- seqParallel(parallel, gdsfile, split="by.variant",
@@ -776,9 +782,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         y=ssum, z=tmpsum,
                         .progress=.process_verbose(pg))
                     list(v, ssum)
-                }, .combine=function(v1, v2) {
-                    list(c(v1[[1L]], v2[[1L]]), v1[[2L]]+v2[[2L]])
-                }, .status_file=TRUE, num=dm[2L], pg=verbose, nm=nm)
+                }, .combine=.combine_lst, .balancing=balancing,
+                    .status_file=TRUE, num=dm[2L], pg=verbose, nm=nm)
             sv[[2L]] <- sv[[2L]] / dm[3L]
         }
         names(sv) <- c("variant", "sample")
@@ -792,7 +797,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                seqApply(f, nm, as.is="double",
                    FUN=.cfunction("FC_Missing_PerVariant"), .useraw=NA,
                    .progress=.process_verbose(pg))
-            }, .status_file=TRUE, pg=verbose, nm=nm)
+            }, .balancing=balancing, .status_file=TRUE, pg=verbose, nm=nm)
 
     } else {
         dm <- .seldim(gdsfile)
@@ -807,7 +812,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         y=ssum, .useraw=NA,
                         .progress=.process_verbose(pg))
                     ssum
-                }, .status_file=TRUE, .combine="+", num=dm[2L], pg=verbose)
+                }, .balancing=balancing, .status_file=TRUE, .combine="+",
+                    num=dm[2L], pg=verbose)
             sv / (dm[1L] * dm[3L])
         } else {
             sv <- seqParallel(parallel, gdsfile, split="by.variant",
@@ -820,7 +826,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         y=ssum, z=tmpsum, .useraw=NA,
                         .progress=.process_verbose(pg))
                     ssum
-                }, .status_file=TRUE, .combine="+",
+                }, .balancing=balancing, .status_file=TRUE, .combine="+",
                     num=dm[2L], pg=verbose, nm=nm)
             sv / dm[3L]
         }
