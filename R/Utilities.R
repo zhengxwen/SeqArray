@@ -680,7 +680,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         if (getOption("seqarray.nofork", FALSE) || .Platform$OS.type=="windows")
         {
             # no forking on windows
-            cl <- makeCluster(njobs, outfile="")
+            capture.output({ cl <- makeCluster(njobs, outfile="") })
             on.exit(stopCluster(cl))
             return(seqParallel(cl, gdsfile, FUN, split, .combine, .selection.flag,
                 .initialize, .finalize, .initparam,
@@ -713,10 +713,10 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         if (!isTRUE(.balancing) || split=="none")
         {
             ans <- .DynamicForkCall(njobs, njobs,
-                .fun = function(.jobidx, .st_fname, ...)
+                .fun = function(.ji, .idx, .st_fname, ...)
                 {
                     # export to global variables
-                    .init_proc(.jobidx, njobs, .st_fname)
+                    .init_proc(.ji, njobs, .st_fname)
                     .set_proc_block()
                     .packageEnv$process_status_fname <- .st_fname
                     # set exit
@@ -728,7 +728,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     {
                         # set filter
                         .ss <- .Call(SEQ_SplitSelection, gdsfile, split,
-                            .jobidx, njobs, .selection.flag)
+                            .ji, njobs, .selection.flag)
                         # call the user-defined function
                         if (.selection.flag)
                             FUN(gdsfile, .ss, ...)
@@ -741,6 +741,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                     .st_fname=st_fname, ...)
         } else {
             ## load balancing
+
             # selection indexing
             .sel <- seqGetFilter(gdsfile)
             if (split == "by.variant")
@@ -778,16 +779,26 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             .sel <- seqGetFilter(gdsfile, .useraw=TRUE)
             split <- split == "by.variant"
 
+            # export to global variables
+            .packageEnv$process_status_fname <- st_fname
+            on.exit({ .packageEnv$process_status_fname <- NULL }, add=TRUE)
+
             # do parallel
-            ans <- .DynamicForkCall(njobs, totnum, .fun = function(.jobidx, ...)
+            ans <- .DynamicForkCall(njobs, totnum, .fun = function(ji, i, ...)
             {
+                # set the process & block index
+                .init_proc(ji, njobs, NULL)
+                .set_proc_block(i, totnum)
                 # set filter
-                .ss <- .Call(SEQ_SplitSelectionX, gdsfile, .jobidx, split,
+                .ss <- .Call(SEQ_SplitSelectionX, gdsfile, i, split,
                     .sel_idx, .sel$variant.sel, .sel$sample.sel,
                     .bl_size, .selection.flag, .proglen)
                 # call the user-defined function
-                if (.selection.flag) FUN(gdsfile, .ss, ...) else FUN(gdsfile, ...)
-            }, .combinefun=.combine,
+                if (.selection.flag)
+                    FUN(gdsfile, .ss, ...)
+                else
+                    FUN(gdsfile, ...)
+            },  .combinefun=.combine,
                 .updatefun=function(i) .seqProgForward(progress, .bl_size), ...)
 
             remove(progress)

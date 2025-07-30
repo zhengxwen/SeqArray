@@ -635,7 +635,8 @@ process_balanced_multiple <- 4L
         ans <- NULL
 
     jobs <- lapply(seq_len(min(.num, ncore)), function(i)
-        parallel::mcparallel(.fun(i, ...), name=NULL, mc.set.seed=TRUE, silent=FALSE))
+        parallel::mcparallel(.fun(i, i, ...), name=NULL, mc.set.seed=TRUE,
+            silent=FALSE))
     jobsp <- .mc_processID(jobs)
     jobid <- seq_along(jobsp)
     has.errors <- 0L
@@ -688,7 +689,7 @@ process_balanced_multiple <- 4L
                     if (nexti <= .num)
                     {
                         jobid[ji] <- nexti
-                        jobs[[ji]] <- parallel::mcparallel(.fun(nexti, ...),
+                        jobs[[ji]] <- parallel::mcparallel(.fun(ji, nexti, ...),
                             name=NULL, mc.set.seed=TRUE, silent=FALSE)
                         jobsp[ji] <- .mc_processID(jobs[[ji]])
                         nexti <- nexti + 1L
