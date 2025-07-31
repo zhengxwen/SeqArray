@@ -7,7 +7,7 @@ missing rate.
 }
 \usage{
 seqSetFilterCond(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
-    parallel=seqGetParallel(), .progress=FALSE, verbose=TRUE)
+    parallel=seqGetParallel(), balancing=NA, .progress=FALSE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -16,11 +16,15 @@ seqSetFilterCond(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
     \item{mac}{minimum minor reference allele count, or a range of MAC
         \code{mac[1] <= ... < mac[2]}}
     \item{missing.rate}{maximum missing genotype rate}
-    \item{.progress}{if \code{TRUE}, show progress information}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}
+    \item{balancing}{whether to perform workload balancing or not, only
+        applicable when multiple cores are used; if \code{NA}, use \code{TRUE}
+        as a default until \code{getOption("seqarray.balancing")} is set and
+        not \code{TRUE}}
+    \item{.progress}{if \code{TRUE}, show progress information (deprecated)}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

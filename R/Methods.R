@@ -422,7 +422,7 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
 # Set a filter according to specified conditions of MAF, MAC and missing rates
 #
 seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
-    parallel=seqGetParallel(), .progress=FALSE, verbose=TRUE)
+    parallel=seqGetParallel(), balancing=NA, .progress=FALSE, verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -430,13 +430,18 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.numeric(mac), length(mac) %in% 1:2)
     stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
     stopifnot(is.logical(.progress), length(.progress)==1L)
+    stopifnot(is.logical(balancing), length(balancing)==1L)
+    if (is.na(balancing))
+        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     stopifnot(is.logical(verbose), length(verbose)==1L)
     verbose <- .progress || verbose
 
     if (!all(is.na(maf), is.na(mac), is.na(missing.rate)))
     {
-        # get MAF/MAC/missing rate
-        v <- .Get_MAF_MAC_Missing(gdsfile, parallel, verbose)
+        # get MAF, MAC and missing rate
+        v <- seqGetAF_AC_Missing(gdsfile, minor=TRUE, parallel=parallel,
+            balancing=balancing, verbose=verbose)
+        names(v) <- c("maf", "mac", "miss")
         # selection
         sel <- rep(TRUE, length(v$maf))
         # check mac[1] <= ... < mac[2]
@@ -1073,14 +1078,6 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
 #######################################################################
 # Get AF/MAF, AC/MAC and missing rate for variants
 #
-
-# [deprecated]
-.Get_MAF_MAC_Missing <- function(gdsfile, parallel, verbose)
-{
-    v <- seqGetAF_AC_Missing(gdsfile, minor=TRUE, parallel=parallel,
-        verbose=verbose)
-    list(maf=v$af, mac=v$ac, miss=v$miss)
-}
 
 seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     balancing=NA, verbose=FALSE)
