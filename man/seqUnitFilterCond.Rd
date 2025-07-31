@@ -6,7 +6,7 @@
 }
 \usage{
 seqUnitFilterCond(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
-    minsize=1L, parallel=seqGetParallel(), verbose=TRUE)
+    minsize=1L, parallel=seqGetParallel(), balancing=NA, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -22,6 +22,10 @@ seqUnitFilterCond(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
         processing), numeric value or other value; \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}
+    \item{balancing}{whether to perform workload balancing or not, only
+        applicable when multiple cores are used; if \code{NA}, use \code{TRUE}
+        as a default until \code{getOption("seqarray.balancing")} is set and
+        not \code{TRUE}}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

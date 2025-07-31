@@ -10,7 +10,7 @@
 # Filter out the unit variants according to MAF, MAC and missing rates
 #
 seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
-    minsize=1L, parallel=seqGetParallel(), verbose=TRUE)
+    minsize=1L, parallel=seqGetParallel(), balancing=NA, verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -19,7 +19,10 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.numeric(mac), length(mac) %in% 1:2)
     stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
     stopifnot(is.numeric(minsize), length(minsize)==1L, minsize>=0L)
+    stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.na(balancing))
+        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
 
     # save state
     seqSetFilter(gdsfile, variant.sel=unlist(units$index), action="push+set",
@@ -35,8 +38,10 @@ seqUnitFilterCond <- function(gdsfile, units, maf=NaN, mac=1L, missing.rate=NaN,
     # calculate # of ref. allele and missing genotype
     if (verbose)
         cat("Calculating MAF, MAC and missing rates ...\n")
-    # get MAF/MAC/missing rate
-    v <- .Get_MAF_MAC_Missing(gdsfile, parallel, verbose)
+    # get MAF, MAC, missing rate
+    v <- seqGetAF_AC_Missing(gdsfile, minor=TRUE, parallel=parallel,
+        balancing=balancing, verbose=verbose)
+    names(v) <- c("maf", "mac", "miss")
     # show maf, mac and missing rate
     if (verbose)
     {
