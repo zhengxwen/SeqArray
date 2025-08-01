@@ -429,10 +429,10 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.numeric(maf), length(maf) %in% 1:2)
     stopifnot(is.numeric(mac), length(mac) %in% 1:2)
     stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
-    stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(balancing), length(balancing)==1L)
     if (is.na(balancing))
         balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
+    stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     verbose <- .progress || verbose
 
@@ -440,7 +440,7 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
     {
         # get MAF, MAC and missing rate
         v <- seqGetAF_AC_Missing(gdsfile, minor=TRUE, parallel=parallel,
-            balancing=balancing, verbose=verbose)
+            balancing=balancing, verbose=.progress)
         names(v) <- c("maf", "mac", "miss")
         # selection
         sel <- rep(TRUE, length(v$maf))

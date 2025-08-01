@@ -24,8 +24,8 @@ seqSetFilterCond(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
         applicable when multiple cores are used; if \code{NA}, use \code{TRUE}
         as a default until \code{getOption("seqarray.balancing")} is set and
         not \code{TRUE}}
-    \item{.progress}{if \code{TRUE}, show progress information (deprecated)}
-    \item{verbose}{if \code{TRUE}, show information}
+    \item{.progress}{if \code{TRUE}, show progress information}
+    \item{verbose}{if \code{TRUE}, show the number of selected variants}
 }
 \value{
     None.
