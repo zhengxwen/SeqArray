@@ -1265,19 +1265,21 @@ seqGDS2BED <- function(gdsfile, out.fn,
     stopifnot(is.character(out.fn), length(out.fn)==1L, !is.na(out.fn))
     stopifnot(is.logical(multi.row), length(multi.row)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
+
     write.rsid <- match.arg(write.rsid)
     if (multi.row)
         stop("'multi.row=TRUE' is reserved for future implementation.")
 
     if (verbose)
     {
-        .cat(date())
+        if (show_timeheader) .cat("##< ", .tm())
         .cat("SeqArray GDS to PLINK BED:")
     }
     if (is.character(gdsfile))
     {
         if (verbose)
-            .cat("    open ", sQuote(gdsfile))
+            .cat("    open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     }
@@ -1286,6 +1288,7 @@ seqGDS2BED <- function(gdsfile, out.fn,
         dm <- .seldim(gdsfile)
         .cat("    # of samples: ", .pretty(dm[2L]))
         .cat("    # of variants: ", .pretty(dm[3L]))
+        .cat("    [Output]")
     }
 
     # fam file
@@ -1301,7 +1304,7 @@ seqGDS2BED <- function(gdsfile, out.fn,
         fam$pheno <- seqGetData(gdsfile, nm)
     famfn <- paste0(out.fn, ".fam")
     if (verbose)
-        .cat("    fam file: ", sQuote(famfn))
+        .cat("    FAM: ", famfn)
     write.table(fam, file=famfn, quote=FALSE, sep="\t", row.names=FALSE,
         col.names=FALSE)
     remove(fam)
@@ -1339,7 +1342,7 @@ seqGDS2BED <- function(gdsfile, out.fn,
         stringsAsFactors=FALSE)
     bimfn <- paste0(out.fn, ".bim")
     if (verbose)
-        .cat("    bim file: ", sQuote(bimfn))
+        .cat("    BIM: ", bimfn)
     write.table(bim, file=bimfn, quote=FALSE, sep="\t", row.names=FALSE,
         col.names=FALSE)
     remove(bim)
@@ -1347,7 +1350,10 @@ seqGDS2BED <- function(gdsfile, out.fn,
     # bed file
     bedfn <- paste0(out.fn, ".bed")
     if (verbose)
-        .cat("    bed file: ", sQuote(bedfn))
+    {
+        sz <- ceiling(dm[2L] / 4) * dm[3L] + 3L
+        .cat("    BED: ", bedfn, " (", .pretty_size(sz), ")")
+    }
     outf <- file(bedfn, "w+b")
     on.exit(close(outf), add=TRUE)
     writeBin(as.raw(c(0x6C, 0x1B, 0x01)), outf)
@@ -1372,7 +1378,7 @@ seqGDS2BED <- function(gdsfile, out.fn,
     seqApply(gdsfile, nm, .cfunction("FC_GDS2BED"), as.is=outf,
         .useraw=TRUE, .progress=verbose)
 
-    if (verbose) .cat("Done.\n", date())
+    if (verbose && show_timeheader) .cat("Done.\n##> ", .tm())
 
     # output
     invisible(normalizePath(c(famfn, bimfn, bedfn)))

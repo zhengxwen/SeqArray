@@ -173,14 +173,14 @@ process_balanced_multiple <- 4L
 {
     size <- function(x)
     {
-        if (x >= 1024^4)
-            sprintf("%.1fT", x / 1024^4)
-        else if (x >= 1024^3)
-            sprintf("%.1fG", x / 1024^3)
-        else if (x >= 1024^2)
-            sprintf("%.1fM", x / 1024^2)
-        else if (x >= 1024)
-            sprintf("%.1fK", x / 1024)
+        if (x >= 1024^4L)
+            sprintf("%.1fT", x / 1024^4L)
+        else if (x >= 1024^3L)
+            sprintf("%.1fG", x / 1024^3L)
+        else if (x >= 1024^2L)
+            sprintf("%.1fM", x / 1024^2L)
+        else if (x >= 1024L)
+            sprintf("%.1fK", x / 1024L)
         else
             sprintf("%gB", x)
     }
