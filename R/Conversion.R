@@ -816,12 +816,14 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     }
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
+
     pnum <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
 
     if (verbose)
     {
-        cat(date(), "\n", sep="")
+        if (show_timeheader) .cat("##< ", .tm())
         cat("PLINK BED to SeqArray GDS:\n")
     }
 
@@ -1124,7 +1126,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             f <- createfn.gds(tmp.fn[i])
             on.exit(closefn.gds(f))
             # new a gds node
-            vg <- add.gdsn(f, "data", storage="bit1", valdim=c(nsamp, 0L), compress=cp)
+            vg <- add.gdsn(f, "data", storage="bit1", valdim=c(nsamp, 0L),
+                compress=cp)
             # re-position the file
             cnt <- psplit[[2L]][i]
             if (cnt > 0L)
@@ -1235,7 +1238,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     # optimize access efficiency
 
     if (verbose)
-        cat("Done.\n", date(), "\n", sep="")
+        if (optimize) .cat("Done.  # ", .tm()) else cat("Done.\n")
     on.exit()
     closefn.gds(dstfile)
     if (optimize)
@@ -1243,8 +1246,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         if (verbose)
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.gdsfn, verbose=verbose)
-        if (verbose) cat(date(), "\n", sep="")
     }
+    if (verbose && show_timeheader) .cat("Done.\n##> ", .tm())
 
     # output
     invisible(normalizePath(out.gdsfn))
