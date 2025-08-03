@@ -667,7 +667,8 @@ seqApply <- function(gdsfile, var.name, FUN,
 seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     as.is=c("none", "list", "unlist"),
     var.index=c("none", "relative", "absolute"), bsize=1024L, parallel=FALSE,
-    .useraw=FALSE, .padNA=TRUE, .tolist=FALSE, .progress=FALSE, ...)
+    .useraw=FALSE, .padNA=TRUE, .tolist=FALSE, .balancing=FALSE,
+    .progress=FALSE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -676,6 +677,14 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     margin <- match.arg(margin)
     var.index <- match.arg(var.index)
     stopifnot(is.numeric(bsize), length(bsize)==1L)
+    stopifnot(is.logical(.useraw), length(.useraw)==1L)
+    stopifnot(is.logical(.padNA), length(.padNA)==1L)
+    stopifnot(is.logical(.tolist), length(.tolist)==1L)
+    stopifnot(is.logical(.balancing), length(.balancing)==1L)
+    if (is.na(.balancing))
+        .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
+    stopifnot(is.logical(.progress), length(.progress)==1L)
+
     njobs <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
     param <- list(bsize=bsize, useraw=.useraw, padNA=.padNA, tolist=.tolist,
@@ -700,10 +709,12 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
             rv <- seqParallel(parallel, gdsfile,
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
+                    # C call, by.variant
                     .Call(SEQ_BApply_Variant, gdsfile, .vn, .FUN, .as.is,
                         .varidx, .param, new.env())
-                }, split=margin, .vn=var.name, .FUN=FUN, .as.is=as.is,
-                .varidx=var.index, .param=param, ...)
+                }, split=margin, .balancing=.balancing,
+                    .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
+                    .param=param, ...)
         }
     }
 

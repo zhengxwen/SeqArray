@@ -41,7 +41,10 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         two arguments (process_id, param)}
     \item{.initparam}{parameters passed to \code{.initialize} and
         \code{.initialize}}
-    \item{.balancing}{load balancing if \code{TRUE}}
+    \item{.balancing}{whether to perform workload balancing or not, only
+        applicable when multiple cores are used; if \code{NA}, use \code{TRUE}
+        as a default until \code{getOption("seqarray.balancing")} is set and
+        not \code{TRUE}}
     \item{.bl_size}{chuck size (# of variants or samples), the increment for
         load balancing, only applicable if \code{.balancing=TRUE}; if
         \code{NA_integer_}, automatically determined by the number of cores}

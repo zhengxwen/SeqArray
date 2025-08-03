@@ -38,7 +38,8 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         for small numbers instead of INTEGER if possible, it is needed to
         detect data type (RAW or INTEGER) in the user-defined function;
         for genotypes, 0xFF is missing value if RAW is used}
-    \item{.progress}{if \code{TRUE}, show progress information}
+    \item{.progress}{if \code{TRUE}, show progress information; or a file name
+        for updating progress information}
     \item{.list_dup}{internal use only}
     \item{...}{optional arguments to \code{FUN}}
 }

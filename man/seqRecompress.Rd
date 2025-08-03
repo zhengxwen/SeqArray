@@ -5,7 +5,8 @@
     Recompress the SeqArray GDS file.
 }
 \usage{
-seqRecompress(gds.fn, compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax", "none"),
+seqRecompress(gds.fn,
+    compress=c("ZIP", "LZ4", "LZMA", "Ultra", "UltraMax", "none"),
     exclude=character(), optimize=TRUE, digest=TRUE, verbose=TRUE)
 }
 \arguments{

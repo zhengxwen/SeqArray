@@ -9,7 +9,7 @@ margins of genotypes and annotations via blocking.
 seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
     as.is=c("none", "list", "unlist"), var.index=c("none", "relative", "absolute"),
     bsize=1024L, parallel=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
-    .progress=FALSE, ...)
+    .balancing=FALSE, .progress=FALSE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -43,6 +43,10 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
         structure \code{list(length, data)} for variable-length data; \code{NA}
         , return a compressed \code{List} defined in \pkg{IRanges} when it is
         applicable}
+    \item{.balancing}{whether to perform workload balancing or not, only
+        applicable when multiple cores are used; if \code{NA}, use \code{TRUE}
+        as a default until \code{getOption("seqarray.balancing")} is set and
+        not \code{TRUE}}
     \item{.progress}{if \code{TRUE}, show progress information}
     \item{...}{optional arguments to \code{FUN}}
 }
