@@ -25,6 +25,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     stopifnot(is.logical(verbose), length(verbose)==1L)
     stopifnot(is.logical(verbose.clean), length(verbose.clean)==1L)
     if (is.na(verbose.clean)) verbose.clean <- verbose
+    show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
 
     #######################################################################
 
@@ -37,9 +38,9 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             {
                 ss <- .seldim(gdsfile)
                 n <- ifelse(name=="sample.id", ss[2L], ss[3L])
-                cat("    ", name2, " (", .pretty(n), ")", sep="")
+                cat("    ", name2, " (", .pretty(n), ")  ", sep="")
             } else
-                cat("   ", name2)
+                cat("    ", name2, "  ", sep="")
         }
         src <- index.gdsn(gdsfile, name2)
         dst <- add.gdsn(folder, name, storage=src)
@@ -60,7 +61,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 
     cp2 <- function(folder, samp.sel, var.sel, name, show=verbose)
     {
-        if (show) cat("   ", name)
+        if (show) cat("    ", name, "  ", sep="")
 
         dat1 <- index.gdsn(gdsfile, paste(name, "data", sep="/"))
         dat2 <- index.gdsn(gdsfile, paste(name, "~data", sep="/"), silent=TRUE)
@@ -107,7 +108,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 
     cp.phase <- function(folder, samp.sel, var.sel, show=verbose)
     {
-        if (show) cat("    phase")
+        if (show) cat("    phase  ")
         dat1 <- index.gdsn(gdsfile, "phase/data")
         dat2 <- index.gdsn(gdsfile, "phase/~data", silent=TRUE)
 
@@ -139,7 +140,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
 
     cp.info <- function(folder, sel, name, name2, show=verbose)
     {
-        if (show) cat("   ", name2)
+        if (show) cat("    ", name2, "  ", sep="")
         src <- index.gdsn(gdsfile, name2)
         idx <- index.gdsn(gdsfile, .var_path(name2, "@"), silent=TRUE)
 
@@ -186,7 +187,10 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     on.exit({ closefn.gds(outfile) })
 
     if (verbose)
+    {
+        if (show_timeheader) .cat("##< ", .tm())
         cat("Export to ", sQuote(out.fn), ":\n", sep="")
+    }
 
     # copy folders and attributes
     put.attr.gdsn(outfile$root, val=gdsfile$root)
@@ -328,7 +332,8 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     # close the file
     on.exit()
     closefn.gds(outfile)
-    if (verbose) cat("Done.\n")
+    if (verbose)
+        if (optimize) .cat("Done.  # ", .tm()) else cat("Done.\n")
 
     # optimize access efficiency
     if (optimize)
@@ -337,6 +342,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.fn, verbose=verbose.clean)
     }
+    if (verbose && show_timeheader) .cat("##> ", .tm())
 
     # output
     invisible(normalizePath(out.fn))
