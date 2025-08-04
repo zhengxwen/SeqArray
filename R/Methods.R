@@ -688,7 +688,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     njobs <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
     param <- list(bsize=bsize, useraw=.useraw, padNA=.padNA, tolist=.tolist,
-        progress=.progress)
+        progress=.progress, progressfile=NULL)
 
     if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
     {
@@ -701,7 +701,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
         if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
             on.exit(seqFilterPop(gdsfile))  # in case if it fails
-            # C call, by.variant
+            # C call, blocking by variant
             rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
             on.exit()
@@ -709,7 +709,17 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
             rv <- seqParallel(parallel, gdsfile,
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
-                    # C call, by.variant
+                    # check whether has a progress file or not
+                    fn <- .packageEnv$process_status_fname[process_index]
+                    if (is.character(fn))
+                    {
+                        .param$progressfile <- file(fn, "at")
+                        on.exit({
+                            close(.param$progressfile)
+                            unlink(fn, force=TRUE)
+                        })
+                    }
+                    # C call, blocking by variant
                     .Call(SEQ_BApply_Variant, gdsfile, .vn, .FUN, .as.is,
                         .varidx, .param, new.env())
                 }, split=margin, .balancing=.balancing,

@@ -1506,6 +1506,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
 	if (prog_flag == NA_LOGICAL)
 		Rf_error("'.progress' must be TRUE or FALSE.");
+	SEXP prog_file = RGetListElement(param, "progressfile");
 
 	COREARRAY_TRY
 
@@ -1608,7 +1609,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		pEnd = pBase + File.VariantNum();
 
 		// progress object
-		CProgress progress(NumBlock, NULL, prog_flag);
+		CProgress progress(NumBlock, prog_file, prog_flag);
 
 		// for-loop
 		for (int idx=0; idx < NumBlock; idx++)
