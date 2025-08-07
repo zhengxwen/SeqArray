@@ -313,6 +313,72 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     n
 }
 
+# run with a single core
+.run_single_core <- function(gdsfile, FUN, split, .combine, .selection.flag,
+    .initialize, .finalize, .initparam, ...)
+{
+    # initialize
+    if (is.function(.initialize)) .initialize(1L, .initparam)
+    on.exit({
+        if (is.function(.finalize)) .finalize(1L, .initparam)        
+    })
+    # call the user-defined function
+    if (!is.numeric(gdsfile))
+    {
+        if (.selection.flag)
+        {
+            # gdsfile should be GDS file
+            stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+            dm <- .seldim(gdsfile)
+            if (split == "by.variant")
+                ans <- FUN(gdsfile, rep(TRUE, dm[3L]), ...)
+            else if (split == "by.sample")
+                ans <- FUN(gdsfile, rep(TRUE, dm[2L]), ...)
+            else
+                ans <- FUN(gdsfile, NULL, ...)
+        } else {
+            if (is.null(gdsfile))
+                ans <- FUN(...)
+            else
+                ans <- FUN(gdsfile, ...)
+        }
+        # finalize
+        if (is.function(.combine))
+        {
+            if (length(formals(args(.combine))) == 1L)
+                .combine(ans)
+        }
+    } else {
+        # initial values
+        argone <- FALSE
+        if (is.function(.combine))
+            argone <- length(formals(args(.combine))) == 1L
+        is_c_list <-
+            identical(.combine, "unlist") || identical(.combine, "list")
+        ans <- if (is_c_list) vector("list", gdsfile) else NULL
+        # for-loop
+        for (i in seq_len(gdsfile))
+        {
+            v <- FUN(i, ...)  # call
+            if (is.function(.combine))
+            {
+                if (argone)
+                {
+                    .combine(v)
+                } else {
+                    ans <- if (is.null(ans)) v else .combine(ans, v)
+                }
+            } else if (is_c_list)
+            {
+                # assignment NULL would remove it from the list
+                if (!is.null(v)) ans[[i]] <- v
+            }
+        }
+    }
+    # return
+    ans
+}
+
 # call the user-defined function in parallel
 seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
@@ -323,7 +389,16 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) |
         inherits(cl, "cluster") | inherits(cl, "BiocParallelParam"))
-    stopifnot(is.null(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(is.null(gdsfile) | inherits(gdsfile, "SeqVarGDSClass") |
+        is.numeric(gdsfile))
+    if (is.numeric(gdsfile))
+    {
+        if (!is.finite(gdsfile) || gdsfile<1L)
+        {
+            stop("'gdsfile' should be NULL, a SeqVarGDSClass object ",
+                "or a positive integer.")
+        }
+    }
     stopifnot(is.function(FUN))
     split <- match.arg(split)
     stopifnot(is.character(.combine) | is.function(.combine))
@@ -346,10 +421,10 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     }
 
     # check dimension
-    if (is.null(gdsfile))
+    if (is.null(gdsfile) || is.numeric(gdsfile))
     {
         if (split != "none")
-            stop("'split' should be 'none' if 'gdsfile=NULL'.")
+            stop("'split' should be 'none' if 'gdsfile' is NULL or an integer.")
     } else {
         dm <- .seldim(gdsfile)
         if (split == "by.variant")
@@ -368,33 +443,9 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     cl <- .McoreParallel(cl)
     if (njobs <= 1L)
     {
-        if (is.function(.initialize)) .initialize(1L, .initparam)
-        on.exit({
-            if (is.function(.finalize)) .finalize(1L, .initparam)        
-        })
-
-        ## a single process
-        if (.selection.flag)
-        {
-            dm <- .seldim(gdsfile)
-            if (split == "by.variant")
-                ans <- FUN(gdsfile, rep(TRUE, dm[3L]), ...)
-            else if (split == "by.sample")
-                ans <- FUN(gdsfile, rep(TRUE, dm[2L]), ...)
-            else
-                ans <- FUN(gdsfile, NULL, ...)
-        } else {
-            if (is.null(gdsfile))
-                ans <- FUN(...)
-            else
-                ans <- FUN(gdsfile, ...)
-        }
-
-        if (is.function(.combine))
-        {
-            if (length(formals(args(.combine))) == 1L)
-                .combine(ans)
-        }
+        # run with a single core
+        ans <- .run_single_core(gdsfile, FUN, split, .combine, .selection.flag,
+            .initialize, .finalize, .initparam, ...)
 
     } else if (inherits(cl, "cluster"))
     {
@@ -818,9 +869,10 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
 seqParApply <- function(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 {
+    # check
     njobs <- .NumParallel(cl, "cl")
     parallel <- .McoreParallel(cl)
-    stopifnot(is.logical(load.balancing))
+    stopifnot(is.logical(load.balancing), length(load.balancing)==1L)
 
     if (njobs <= 1L)
     {
