@@ -310,6 +310,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     .packageEnv$process_status_fname <- NULL
 }
 
+# get the multiple for balancing jobs, the default is 4
 .get_bl_multiple <- function()
 {
     m <- getOption("seqarray.balancing_multiple", process_balancing_multiple)
@@ -327,7 +328,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     n
 }
 
-.get_totnum_bl_size <- function(njobs, cnt, bl_size)
+# get the number of blocks according to the block size
+.get_nblock_bl_size <- function(njobs, cnt, bl_size)
 {
     if (is.na(bl_size) || (bl_size<=0L))
         bl_size <- .auto_bl_size(cnt, njobs)
@@ -343,18 +345,19 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     c(nblock, bl_size)  # return
 }
 
+# prepare data for load balancing with a GDS file
 .prepare_balancing <- function(gdsfile, njobs, dm, split, .bl_size)
 {
     if (split == "by.variant")
     {
         totcnt <- dm[3L]
-        v <- .get_totnum_bl_size(njobs, totcnt, .bl_size)
+        v <- .get_nblock_bl_size(njobs, totcnt, .bl_size)
         nblock <- v[1L]
         .bl_size <- v[2L]
         ii <- seqGetData(gdsfile, "$variant_index")
     } else {
         totcnt <- dm[2L]
-        v <- .get_totnum_bl_size(njobs, totcnt, .bl_size)
+        v <- .get_nblock_bl_size(njobs, totcnt, .bl_size)
         nblock <- v[1L]
         .bl_size <- v[2L]
         ii <- seqGetData(gdsfile, "$sample_index")
@@ -431,6 +434,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     ans
 }
 
+
 # run with a cluster object
 .run_parallel_cluster <- function(cl, gdsfile, FUN, split, .combine,
     .selection.flag, .initialize, .finalize, .initparam,
@@ -493,22 +497,22 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             }, fc=.finalize, param=.initparam)
         }, add=TRUE)
         # call in parallel
-        ans <- .DynamicClusterCall(cl, totnum, .fun =
-            function(i, .cnt, .gds.fn, .sel, FUN, .split, .selection.flag,
-                .st_fname, ...)
+        if (is.null(gdsfile))
         {
-            # export to global variables
-            .set_proc_block(i, NULL)
-            if (is.null(.gds.fn))
+            ans <- .DynamicClusterCall(cl, totnum, .fun = function(i, FUN, ...)
             {
+                # export to global variables
+                .set_proc_block(i, NULL)
                 # call the user-defined function
-                return(FUN(...))
-            } else if (is.numeric(.gds.fn))
+                FUN(...)
+            }, .combinefun=.combine, FUN = FUN, ...)
+        } else if (inherits(gdsfile, "SeqVarGDSClass"))
+        {
+            ans <- .DynamicClusterCall(cl, totnum, .fun =
+                function(i, .cnt, .gds.fn, .sel, FUN, .split, .selection.flag, ...)
             {
-                # call the user-defined function
-                return(FUN(i, ...))
-            } else if (is.character(.gds.fn))
-            {
+                # export to global variables
+                .set_proc_block(i, NULL)
                 # open the file
                 f <- seqOpen(.gds.fn, allow.duplicate=TRUE)
                 on.exit(seqClose(f))
@@ -521,15 +525,20 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
                     .selection.flag)
                 # call the user-defined function
                 if (.selection.flag) FUN(f, s, ...) else FUN(f, ...)
-            } else {
-                NULL
-            }
-        },  .combinefun=.combine, .cnt=totnum,
-            .gds.fn = if (inherits(gdsfile, "SeqVarGDSClass"))
-                    gdsfile$filename else gdsfile,
-            .sel = sel, FUN = FUN, .split = split,
-            .selection.flag = .selection.flag, .st_fname = st_fname, ...
-        )
+            },  .combinefun=.combine, .cnt=totnum, .gds.fn = gdsfile$filename,
+                .sel = sel, FUN = FUN, .split = split,
+                .selection.flag = .selection.flag, ...
+            )
+        } else {
+            stopifnot(is.numeric(gdsfile))
+            ans <- .DynamicClusterCall(cl, totnum, .fun = function(i, FUN, ...)
+            {
+                # export to global variables
+                .set_proc_block(i, NULL)
+                # call the user-defined function
+                FUN(i, ...)
+            },  .combinefun=.combine, FUN = FUN, ...)
+        }
 
     } else {
         ## load balancing
