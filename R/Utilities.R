@@ -302,6 +302,14 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     .Call(SEQ_SetProcessBlock, idx, cnt)
 }
 
+# finalize the child process by resetting the status
+.done_proc <- function()
+{
+    .init_proc()
+    .set_proc_block()
+    .packageEnv$process_status_fname <- NULL
+}
+
 # auto set the block size
 .auto_bl_size <- function(cnt, njobs)
 {
@@ -312,6 +320,44 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     if (n <= 0L) n <- 1L
     n
 }
+
+.get_totnum_bl_size <- function(njobs, cnt, bl_size)
+{
+    if (is.na(bl_size) || (bl_size<=0L))
+        bl_size <- .auto_bl_size(cnt, njobs)
+    nblock <- cnt %/% bl_size
+    if (cnt %% bl_size) nblock <- nblock + 1L
+    if (nblock < njobs)
+    {
+        bl_size <- cnt %/% njobs
+        if (cnt %% njobs) bl_size <- bl_size + 1L
+        nblock <- cnt %/% bl_size
+        if (cnt %% bl_size) nblock <- nblock + 1L
+    }
+    c(nblock, bl_size)  # return
+}
+
+.prepare_balancing <- function(gdsfile, njobs, dm, split, .bl_size)
+{
+    if (split == "by.variant")
+    {
+        totcnt <- dm[3L]
+        v <- .get_totnum_bl_size(njobs, totcnt, .bl_size)
+        nblock <- v[1L]
+        .bl_size <- v[2L]
+        ii <- seqGetData(gdsfile, "$variant_index")
+    } else {
+        totcnt <- dm[2L]
+        v <- .get_totnum_bl_size(njobs, totcnt, .bl_size)
+        nblock <- v[1L]
+        .bl_size <- v[2L]
+        ii <- seqGetData(gdsfile, "$sample_index")
+    }
+    # return
+    list(totcnt = totcnt, nblock = nblock, bl_size = .bl_size,
+        sel_idx = ii[seq.int(1L, by=.bl_size, length.out=nblock)])
+}
+
 
 # run with a single core
 .run_single_core <- function(gdsfile, FUN, split, .combine, .selection.flag,
@@ -378,6 +424,187 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     # return
     ans
 }
+
+# run with a cluster object
+.run_parallel_cluster <- function(cl, gdsfile, FUN, split, .combine,
+    .selection.flag, .initialize, .finalize, .initparam,
+    .balancing, .bl_size, .bl_progress, .status_file, ...)
+{
+    # number of nodes
+    njobs <- length(cl)
+    st_fname <- NULL
+    if (isTRUE(.status_file))
+    {
+        st_fname <- .get_status_filename(njobs)
+        file.create(st_fname, showWarnings=FALSE)
+        on.exit(unlink(st_fname, force=TRUE))
+    }
+
+    if (split %in% c("by.variant", "by.sample"))
+    {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+        dm <- .seldim(gdsfile)
+        if (split == "by.variant")
+        {
+            if (njobs > dm[3L]) cl <- cl[1L:dm[3L]]
+        } else {
+            if (njobs > dm[2L]) cl <- cl[1L:dm[2L]]
+        }
+        sel <- seqGetFilter(gdsfile, .useraw=TRUE)
+        sel$sample.sel <- memCompress(sel$sample.sel, type="gzip")
+        sel$variant.sel <- memCompress(sel$variant.sel, type="gzip")
+    } else {
+        sel <- list(sample.sel=raw(), variant.sel=raw())
+    }
+
+    # call the user-defined function
+    if (!isTRUE(.balancing) || split=="none")
+    {
+        totnum <- njobs
+        if (is.numeric(gdsfile)) totnum <- as.integer(gdsfile)
+        # initialize the cluster
+        clusterApply(cl, seq_len(njobs),
+            fun = function(i, njobs, st_fname, totnum, init, param)
+        {
+            # load the package
+            library(SeqArray, quietly=TRUE, verbose=FALSE)
+            # export to global variables
+            .init_proc(i, njobs, st_fname)
+            .set_proc_block(0L, totnum)
+            .packageEnv$process_status_fname <- st_fname
+            if (is.function(init)) init(i, param)
+            # return none
+            NULL
+        },  njobs=njobs, st_fname=st_fname,
+            totnum = if (is.numeric(gdsfile)) totnum else 0L,
+            init=.initialize, param=.initparam)
+        # exit call
+        on.exit({
+            clusterApply(cl, seq_len(njobs), fun = function(i, fc, param)
+            {
+                if (is.function(fc)) fc(i, param)
+                .done_proc()
+            }, fc=.finalize, param=.initparam)
+        }, add=TRUE)
+        # call in parallel
+        ans <- .DynamicClusterCall(cl, totnum, .fun =
+            function(i, .cnt, .gds.fn, .sel, FUN, .split, .selection.flag,
+                .st_fname, ...)
+        {
+            # export to global variables
+            .set_proc_block(i, NULL)
+            if (is.null(.gds.fn))
+            {
+                # call the user-defined function
+                return(FUN(...))
+            } else if (is.numeric(.gds.fn))
+            {
+                # call the user-defined function
+                return(FUN(i, ...))
+            } else if (is.character(.gds.fn))
+            {
+                # open the file
+                f <- seqOpen(.gds.fn, allow.duplicate=TRUE)
+                on.exit(seqClose(f))
+                # set filter
+                seqSetFilter(f,
+                    sample.sel = memDecompress(.sel[[1L]], type="gzip"),
+                    variant.sel = memDecompress(.sel[[2L]], type="gzip"),
+                    verbose=FALSE)
+                s <- .Call(SEQ_SplitSelection, f, .split, i, .cnt,
+                    .selection.flag)
+                # call the user-defined function
+                if (.selection.flag) FUN(f, s, ...) else FUN(f, ...)
+            } else {
+                NULL
+            }
+        },  .combinefun=.combine, .cnt=totnum,
+            .gds.fn = if (inherits(gdsfile, "SeqVarGDSClass"))
+                    gdsfile$filename else gdsfile,
+            .sel = sel, FUN = FUN, .split = split,
+            .selection.flag = .selection.flag, .st_fname = st_fname, ...
+        )
+
+    } else {
+        ## load balancing
+
+        # selection indexing
+        v <- .prepare_balancing(gdsfile, njobs, dm, split, .bl_size)
+        .bl_size <- v$bl_size
+        progress <- if (.bl_progress) .seqProgress(v$totcnt, njobs) else NULL
+        updatefun <- function(i) .seqProgForward(progress, .bl_size)
+
+        # initialize the cluster & distribute data
+        clusterApply(cl, seq_len(njobs),
+            fun = function(i, njobs, st_fname, nblock, gdsfn, sel, totcnt,
+                init, param)
+        {
+            # load the package
+            library(SeqArray, quietly=TRUE, verbose=FALSE)
+            # export to global variables
+            .init_proc(i, njobs, st_fname)
+            .set_proc_block(1L, nblock)
+            .packageEnv$process_status_fname <- st_fname
+            # save internally
+            .packageEnv$gfile <- seqOpen(gdsfn, allow.duplicate=TRUE)
+            .packageEnv$sample.sel <- memDecompress(sel[[1L]], type="gzip")
+            .packageEnv$variant.sel <- memDecompress(sel[[2L]], type="gzip")
+            .packageEnv$totcnt <- totcnt
+            # set filter
+            seqSetFilter(.packageEnv$gfile,
+                sample.sel = .packageEnv$sample.sel,
+                variant.sel = .packageEnv$variant.sel,
+                verbose=FALSE)
+            # call
+            if (is.function(init)) init(i, param)
+            NULL
+        },  njobs = njobs, st_fname = st_fname, nblock = v$nblock,
+            gdsfn = gdsfile$filename, sel = sel, totcnt = v$totcnt,
+            init = .initialize, param = .initparam
+        )
+        remove(sel)
+
+        # finalize
+        on.exit({
+            clusterApply(cl, seq_len(njobs), fun = function(i, fc, param)
+            {
+                if (is.function(fc)) fc(i, param)
+                if (inherits(.packageEnv$gfile, "SeqVarGDSClass"))
+                    seqClose(.packageEnv$gfile)
+                .packageEnv$gfile <- NULL
+                .done_proc()
+            }, fc=.finalize, param=.initparam)
+        })
+
+        # do parallel
+        ans <- .DynamicClusterCall(cl, v$nblock, .fun =
+            function(i, FUN, .split, .sel_idx, .bl_size, .selection.flag, ...)
+        {
+            # set the block index
+            .set_proc_block(i, NULL)
+            # set filter
+            s <- .Call(SEQ_SplitSelectionX, .packageEnv$gfile, i, .split,
+                .sel_idx, .packageEnv$variant.sel, .packageEnv$sample.sel,
+                .bl_size, .selection.flag, .packageEnv$totcnt)
+            # call the user-defined function
+            if (.selection.flag)
+                FUN(.packageEnv$gfile, s, ...)
+            else
+                FUN(.packageEnv$gfile, ...)
+        }, .combinefun=.combine, .updatefun=updatefun, FUN = FUN,
+            .split = (split=="by.variant"), .sel_idx = v$sel_idx,
+            .bl_size = .bl_size, .selection.flag = .selection.flag, ...
+        )
+        # close progress object
+        remove(progress)
+    }
+
+    if (is.list(ans) & identical(.combine, "unlist"))
+        ans <- unlist(ans, recursive=FALSE)
+    # return
+    ans
+}
+
 
 # call the user-defined function in parallel
 seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
@@ -449,207 +676,10 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
     } else if (inherits(cl, "cluster"))
     {
-        ## multiple processes with a predefined cluster
-        njobs <- length(cl)  # in case, .McoreParallel() changes cl
-
-        st_fname <- NULL
-        if (isTRUE(.status_file))
-        {
-            st_fname <- .get_status_filename(njobs)
-            file.create(st_fname, showWarnings=FALSE)
-            on.exit(unlink(st_fname, force=TRUE), add=TRUE)
-        }
-
-        if (is.function(.initialize))
-        {
-            clusterApply(cl, seq_len(njobs), function(i, param)
-                .initialize(i, param), param=.initparam)
-        }
-
-        if (split %in% c("by.variant", "by.sample"))
-        {
-            if (split == "by.variant")
-            {
-                if (length(cl) > dm[3L]) cl <- cl[seq_len(dm[3L])]
-            } else {
-                if (length(cl) > dm[2L]) cl <- cl[seq_len(dm[2L])]
-            }
-            sel <- seqGetFilter(gdsfile, .useraw=TRUE)
-        } else {
-            sel <- list(sample.sel=raw(), variant.sel=raw())
-        }
-
-        if (!isTRUE(.balancing) || split=="none")
-        {
-            on.exit({
-                if (is.function(.finalize))
-                {
-                    clusterApply(cl, seq_len(njobs), function(i, param)
-                        .finalize(i, param), param=.initparam)
-                }
-            }, add=TRUE)
-
-            ans <- .DynamicClusterCall(cl, length(cl), .fun =
-                function(.proc_idx, .proc_cnt, .gds.fn, .sel_sample,
-                    .sel_variant, FUN, .split, .selection.flag, .st_fname, ...)
-            {
-                # load the package
-                library(SeqArray, quietly=TRUE, verbose=FALSE)
-                # export to global variables
-                .init_proc(.proc_idx, .proc_cnt, .st_fname)
-                .set_proc_block()
-                .packageEnv$process_status_fname <- .st_fname
-                on.exit({
-                    .init_proc()
-                    .packageEnv$process_status_fname <- NULL
-                })
-                if (is.null(.gds.fn))
-                {
-                    # call the user-defined function
-                    return(FUN(...))
-                } else if (is.character(.gds.fn))
-                {
-                    # open the file
-                    .file <- seqOpen(.gds.fn, allow.duplicate=TRUE)
-                    on.exit(seqClose(.file))
-                } else {
-                    .file <- .gds.fn
-                }
-
-                # set filter
-                seqSetFilter(.file,
-                    sample.sel = memDecompress(.sel_sample, type="gzip"),
-                    variant.sel = memDecompress(.sel_variant, type="gzip"),
-                    verbose=FALSE)
-                .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
-                    .proc_cnt, .selection.flag)
-
-                # call the user-defined function
-                if (.selection.flag) FUN(.file, .ss, ...) else FUN(.file, ...)
-
-            }, .combinefun=.combine, .proc_cnt=njobs,
-                .gds.fn = if (is.null(attr(cl, "forking")))
-                    gdsfile$filename else gdsfile,
-                .sel_sample = memCompress(sel$sample.sel, type="gzip"),
-                .sel_variant = memCompress(sel$variant.sel, type="gzip"),
-                FUN = FUN, .split = split, .selection.flag = .selection.flag,
-                .st_fname = st_fname, ...
-            )
-        } else {
-            ## load balancing
-
-            # selection indexing
-            sel <- seqGetFilter(gdsfile)
-            if (split == "by.variant")
-            {
-                if (is.na(.bl_size) || (.bl_size<=0L))
-                    .bl_size <- .auto_bl_size(dm[3L], njobs)
-                totnum <- dm[3L] %/% .bl_size
-                if (dm[3L] %% .bl_size) totnum <- totnum + 1L
-                if (totnum < njobs)
-                {
-                    .bl_size <- dm[3L] %/% njobs
-                    if (dm[3L] %% njobs) .bl_size <- .bl_size + 1L
-                    totnum <- dm[3L] %/% .bl_size
-                    if (dm[3L] %% .bl_size) totnum <- totnum + 1L
-                }
-                sel_idx <- which(sel$variant.sel)
-            } else {
-                if (is.na(.bl_size) || (.bl_size<=0L))
-                    .bl_size <- .auto_bl_size(dm[2L], njobs)
-                totnum <- dm[2L] %/% .bl_size
-                if (dm[2L] %% .bl_size) totnum <- totnum + 1L
-                if (totnum < njobs)
-                {
-                    .bl_size <- dm[2L] %/% njobs
-                    if (dm[2L] %% njobs) .bl_size <- .bl_size + 1L
-                    totnum <- dm[2L] %/% .bl_size
-                    if (dm[2L] %% .bl_size) totnum <- totnum + 1L
-                }
-                sel_idx <- which(sel$sample.sel)
-            }
-            proglen <- length(sel_idx)
-            progress <- if (.bl_progress) .seqProgress(proglen, njobs) else NULL
-            sel_idx <- sel_idx[seq.int(1L, by=.bl_size, length.out=totnum)]
-
-            updatefun <- function(i) .seqProgForward(progress, .bl_size)
-
-            # initialize the cluster
-            clusterApply(cl, seq_len(njobs),
-                fun = function(i, njobs, st_fname, totnum,
-                    gds, sel_sample, sel_variant, sel_idx, proglen)
-            {
-                # load the package
-                library(SeqArray, quietly=TRUE, verbose=FALSE)
-                # export to global variables
-                .init_proc(i, njobs, st_fname)
-                .set_proc_block(1L, totnum)
-                .packageEnv$process_status_fname <- st_fname
-                # open the file
-                if (is.character(gds))
-                    gds <- seqOpen(gds, allow.duplicate=TRUE)
-                # save internally
-                .packageEnv$gfile <- gds
-                .packageEnv$sample.sel <- memDecompress(sel_sample, type="gzip")
-                .packageEnv$variant.sel <- memDecompress(sel_variant, type="gzip")
-                .packageEnv$proglen <- proglen
-                # set filter
-                seqSetFilter(.packageEnv$gfile,
-                    sample.sel = .packageEnv$sample.sel,
-                    variant.sel = .packageEnv$variant.sel,
-                    verbose=FALSE)
-                NULL
-            },  njobs = njobs, st_fname = st_fname, totnum = totnum,
-                gds = if (is.null(attr(cl, "forking"))) gdsfile$filename else gdsfile,
-                sel_sample = memCompress(as.raw(sel$sample.sel), type="gzip"),
-                sel_variant = memCompress(as.raw(sel$variant.sel), type="gzip"),
-                sel_idx = sel_idx, proglen = proglen
-            )
-            remove(sel)
-
-            # finalize
-            on.exit({
-                clusterCall(cl, fun=function()
-                {
-                    if (inherits(.packageEnv$gfile, "SeqVarGDSClass"))
-                        seqClose(.packageEnv$gfile)
-                    .packageEnv$gfile <- NULL
-                    .packageEnv$process_status_fname <- NULL
-                    .set_proc_block()
-                    .init_proc()
-                })
-                if (is.function(.finalize))
-                {
-                    clusterApply(cl, seq_len(njobs), function(i, param)
-                        .finalize(i, param), param=.initparam)
-                }
-            })
-
-            # do parallel
-            ans <- .DynamicClusterCall(cl, totnum, .fun =
-                function(.idx, FUN, .split, .sel_idx, .bl_size, .selection.flag, ...)
-            {
-                # set the block index
-                .set_proc_block(.idx, NULL)
-                # set filter
-                .ss <- .Call(SEQ_SplitSelectionX, .packageEnv$gfile, .idx, .split,
-                    .sel_idx, .packageEnv$variant.sel, .packageEnv$sample.sel,
-                    .bl_size, .selection.flag, .packageEnv$proglen)
-                # call the user-defined function
-                if (.selection.flag)
-                    FUN(.packageEnv$gfile, .ss, ...)
-                else
-                    FUN(.packageEnv$gfile, ...)
-            }, .combinefun=.combine, .updatefun=updatefun, FUN = FUN,
-                .split = (split=="by.variant"), .sel_idx = sel_idx,
-                .bl_size = .bl_size, .selection.flag = .selection.flag, ...
-            )
-
-            remove(progress)
-        }
-
-        if (is.list(ans) & identical(.combine, "unlist"))
-            ans <- unlist(ans, recursive=FALSE)
+        # multiple processes with a cluster object
+        ans <- .run_parallel_cluster(cl, gdsfile, FUN, split, .combine,
+            .selection.flag, .initialize, .finalize, .initparam,
+            .balancing, .bl_size, .bl_progress, .status_file, ...)
 
     } else if (inherits(cl, "BiocParallelParam"))
     {

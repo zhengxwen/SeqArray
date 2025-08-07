@@ -1123,9 +1123,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelection(SEXP gdsfile, SEXP split,
 
 
 /// split the selected variants according to multiple processes
-COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectionX(SEXP gdsfile, SEXP index, SEXP split,
-	SEXP sel_idx, SEXP sel_variant, SEXP sel_sample, SEXP bl_size, SEXP selection_flag,
-	SEXP totlen)
+COREARRAY_DLL_EXPORT SEXP SEQ_SplitSelectionX(SEXP gdsfile, SEXP index,
+	SEXP split, SEXP sel_idx, SEXP sel_variant, SEXP sel_sample, SEXP bl_size,
+	SEXP selection_flag, SEXP totlen)
 {
 	int job_idx = Rf_asInteger(index) - 1;  // starting from 0
 	const bool split_by_variant = Rf_asLogical(split)==TRUE;
