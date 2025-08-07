@@ -310,12 +310,18 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     .packageEnv$process_status_fname <- NULL
 }
 
+.get_bl_multiple <- function()
+{
+    m <- getOption("seqarray.balancing_multiple", process_balancing_multiple)
+    if (!is.numeric(m) || length(m)!=1L || !is.finite(m))
+        stop("'seqarray.balancing_multiple' should be a positive number.")
+    m
+}
+
 # auto set the block size
 .auto_bl_size <- function(cnt, njobs)
 {
-    m <- getOption("seqarray.balanced_multiple", process_balanced_multiple)
-    if (!is.numeric(m) || length(m)!=1L || !is.finite(m))
-        stop("'seqarray.balanced_multiple' should be a positive number.")
+    m <- .get_bl_multiple()
     n <- as.integer(ceiling(cnt / (njobs * m)))
     if (n <= 0L) n <- 1L
     n
