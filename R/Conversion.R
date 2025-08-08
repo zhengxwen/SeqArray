@@ -1015,7 +1015,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             f <- createfn.gds(tmp.fn[i])
             on.exit({ closefn.gds(f) }, add=TRUE)
             # progress file
-            progfile <- file(paste0(tmp.fn[i], ".progress"), "wt")
+            progfile <- file(paste0(tmp.fn[i], ".progress.txt"), "wt")
             cat(tmp.fn[i], ":\n", file=progfile, sep="")
             on.exit({ close(progfile) }, add=TRUE)
             # new a gds node
@@ -1077,7 +1077,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             })
 
         # delete temporary files
-        unlink(c(ptmpfn, paste0(ptmpfn, ".progress")), force=TRUE)
+        unlink(c(ptmpfn, paste0(ptmpfn, ".progress.txt")), force=TRUE)
         .packageEnv$work_idx <- NULL
         .packageEnv$work_flag <- NULL
         if (verbose && !isFALSE(digest)) cat("    ")
@@ -1255,7 +1255,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.gdsfn, verbose=verbose)
     }
-    if (verbose && show_timeheader) .cat("Done.\n##> ", .tm())
+    if (verbose && show_timeheader) .cat("##> ", .tm())
 
     # output
     invisible(normalizePath(out.gdsfn))
