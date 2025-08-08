@@ -519,6 +519,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(digest) | is.character(digest), length(digest)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
 
     if (is.character(storage.option))
         storage.option <- seqStorageOption(storage.option)
@@ -526,11 +527,13 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
 
     if (verbose)
     {
-        cat(date(), "\n", sep="")
+        if (show_timeheader) .cat("##< ", .tm())
         cat("SNP GDS to SeqArray GDS Format:\n")
     }
 
     # open the SNP GDS
+    if (verbose)
+        .cat("    open ", sQuote(basename(gds.fn)))
     srcfile <- openfn.gds(gds.fn)
     on.exit({ closefn.gds(srcfile) })
 
@@ -761,17 +764,15 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
     # optimize access efficiency
 
     if (verbose)
-    {
-        cat("Done.\n")
-        cat(date(), "\n", sep="")
-    }
+        if (optimize) .cat("Done.  # ", .tm()) else cat("Done.\n")
+    # optimize access efficiency
     if (optimize)
     {
         if (verbose)
             cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.fn, verbose=verbose)
-        if (verbose) cat(date(), "\n", sep="")
     }
+    if (verbose && show_timeheader) .cat("##> ", .tm())
 
     # output
     invisible(normalizePath(out.fn))
