@@ -32,6 +32,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     if (is.character(gdsfile))
     {
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     }
@@ -375,10 +377,11 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     ds.type <- match.arg(ds.type)
+    show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
 
     if (verbose)
     {
-        cat(date(), "\n", sep="")
+        if (show_timeheader) .cat("##< ", .tm())
         if (isTRUE(dosage) | is.character(dosage))
             cat("SeqArray GDS to SNP GDS dosage format:\n")
         else
@@ -388,6 +391,8 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     # if it is a file name
     if (is.character(gdsfile))
     {
+        if (verbose)
+            .cat("    open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit({ seqClose(gdsfile) })
     }
@@ -466,8 +471,8 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
         gGeno <- add.gdsn(gfile, "genotype", storage="bit2",
             valdim=c(length(sampid), 0L), compress=compress.geno)
         put.attr.gdsn(gGeno, "sample.order")
-        seqApply(gdsfile, "$dosage", as.is=gGeno, .useraw=TRUE, .progress=verbose,
-            FUN = .cfunction("FC_GDS2SNP"))
+        seqApply(gdsfile, "$dosage", as.is=gGeno, .useraw=TRUE,
+            .progress=verbose, FUN = .cfunction("FC_GDS2SNP"))
     } else {
         .cfunction("FC_SetNumSamp")(length(sampid))
         gGeno <- add.gdsn(gfile, "genotype", storage=ds.type,
@@ -481,14 +486,16 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     closefn.gds(gfile)
     gfile <- NULL
     if (verbose)
-        cat("Done.\n", date(), "\n", sep="")
+        if (optimize) .cat("Done.  # ", .tm()) else cat("Done.\n")
 
+    # optimize access efficiency
     if (optimize)
     {
-        if (verbose) cat("Optimize the access efficiency ...\n")
+        if (verbose)
+            cat("Optimize the access efficiency ...\n")
         cleanup.gds(out.gdsfn, verbose=verbose)
-        if (verbose) cat(date(), "\n", sep="")
     }
+    if (verbose && show_timeheader) .cat("##> ", .tm())
 
     # output
     invisible(normalizePath(out.gdsfn))
