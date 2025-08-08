@@ -29,7 +29,7 @@ process_count <- 1L
     data_class = "SeqVarDataList"
 )
 
-process_balancing_multiple <- 2L
+process_balancing_multiple <- 3L
 
 
 #######################################################################
