@@ -662,6 +662,8 @@ seqSummary <- function(gdsfile, varname=NULL,
     if (is.character(gdsfile))
     {
         stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))   
     }
@@ -780,6 +782,9 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"), parallel=FALSE,
     # check
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     } else {
@@ -922,11 +927,11 @@ seqCheck <- function(gdsfile, verbose=TRUE)
 {
     stopifnot(inherits(gdsfile, "SeqVarGDSClass") | is.character(gdsfile))
     stopifnot(is.logical(verbose), length(verbose)==1L)
-
-    if (is.character(gdsfile) && length(gdsfile)==1L)
+    if (is.character(gdsfile))
     {
-        if (verbose)
-            cat("Open '", gdsfile, "'\n", sep="")
+        stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit({ seqClose(gdsfile) })
     }

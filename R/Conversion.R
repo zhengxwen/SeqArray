@@ -20,8 +20,6 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
-    if (is.character(gdsfile))
-        stopifnot(length(gdsfile)==1L)
     if (!inherits(vcf.fn, "connection"))
         stopifnot(is.character(vcf.fn), length(vcf.fn)==1L)
     stopifnot(is.null(info.var) | is.character(info.var))
@@ -32,6 +30,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile)==1L)
         if (isTRUE(verbose))
             .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
@@ -391,6 +390,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     # if it is a file name
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile)==1L)
         if (verbose)
             .cat("    open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
@@ -1289,6 +1289,7 @@ seqGDS2BED <- function(gdsfile, out.fn,
     }
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile)==1L)
         if (verbose)
             .cat("    open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)

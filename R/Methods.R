@@ -767,8 +767,12 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.na(balancing))
         balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
+
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     } else {
@@ -875,8 +879,12 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.na(balancing))
         balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
+
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     } else {
@@ -990,8 +998,12 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.na(balancing))
         balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
+
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     } else {
@@ -1111,8 +1123,12 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
         balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
+
     if (is.character(gdsfile))
     {
+        stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
     } else {

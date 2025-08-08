@@ -378,7 +378,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
     {
         stopifnot(length(gdsfile) == 1L)
         if (verbose)
-            cat("Open '", gdsfile, "' ...\n", sep="")
+            .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, readonly=FALSE)
         on.exit(seqClose(gdsfile))
     }
