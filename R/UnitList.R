@@ -320,13 +320,13 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
         if (.IsForking(parallel))
         {
             # forking
-            .packageEnv$gdsfile <- gdsfile
-            .packageEnv$units <- units$index
-            .packageEnv$var.name <- var.name
-            .packageEnv$envir <- .envir
+            .PkgEnv$gdsfile <- gdsfile
+            .PkgEnv$units <- units$index
+            .PkgEnv$var.name <- var.name
+            .PkgEnv$envir <- .envir
             parallel <- parallel::makeForkCluster(njobs)
             on.exit({
-                with(.packageEnv, gdsfile <- units <- var.name <- envir <- NULL)
+                with(.PkgEnv, gdsfile <- units <- var.name <- envir <- NULL)
                 stopCluster(parallel)
             })
         } else {
@@ -339,19 +339,19 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             # distribute the parameters to each node
             clusterCall(parallel, function(fn, ut, vn, ss, env) {
                 f <- SeqArray::seqOpen(fn, allow.duplicate=TRUE)
-                .packageEnv$gdsfile <- f
+                .PkgEnv$gdsfile <- f
                 SeqArray::seqSetFilter(f, sample.sel=ss, verbose=FALSE)
-                .packageEnv$units <- ut
-                .packageEnv$var.name <- vn
-                .packageEnv$envir <- env
+                .PkgEnv$units <- ut
+                .PkgEnv$var.name <- vn
+                .PkgEnv$envir <- env
                 invisible()
             }, fn=gdsfile$filename, ut=units$index, vn=var.name,
                 ss=.Call(SEQ_GetSpaceSample, gdsfile), env=.envir)
             # finalize
             on.exit({
                 clusterCall(parallel, function() {
-                    SeqArray::seqClose(.packageEnv$gdsfile)
-                    with(.packageEnv, gdsfile <- units <- var.name <- envir <- NULL)
+                    SeqArray::seqClose(.PkgEnv$gdsfile)
+                    with(.PkgEnv, gdsfile <- units <- var.name <- envir <- NULL)
                 })
             })
             if (need_cluster)
@@ -370,17 +370,17 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             # chuck size
             n <- .bl_size
             k <- (i - 1L) * n
-            if (k + n > length(.packageEnv$units))
-                n <- length(.packageEnv$units) - k
+            if (k + n > length(.PkgEnv$units))
+                n <- length(.PkgEnv$units) - k
             # temporary
-            f <- .packageEnv$gdsfile
-            vn <- .packageEnv$var.name
-            env <- .packageEnv$envir
+            f <- .PkgEnv$gdsfile
+            vn <- .PkgEnv$var.name
+            env <- .PkgEnv$envir
             rv <- vector("list", n)
             # set variant filter for each sub unit
             for (j in seq_len(n))
             {
-                seqSetFilter(f, variant.sel=.packageEnv$units[[j+k]], verbose=FALSE)
+                seqSetFilter(f, variant.sel=.PkgEnv$units[[j+k]], verbose=FALSE)
                 x <- seqGetData(f, vn, .useraw, .padNA, .tolist, env)
                 v <- FUN(x, ...)
                 if (!is.null(v)) rv[[j]] <- v

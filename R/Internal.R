@@ -9,7 +9,7 @@
 #######################################################################
 # Package-wide variables
 
-.packageEnv <- new.env()
+.PkgEnv <- new.env()
 
 # the index of current children process
 process_index <- 1L
@@ -17,7 +17,7 @@ process_index <- 1L
 process_count <- 1L
 
 # the list of file names for the status of children processes
-# .packageEnv$process_status_fname <- NULL
+# .PkgEnv$process_status_fname <- NULL
 
 ## R objects for class, dimnames ...
 .dim_name <- list(
@@ -149,7 +149,7 @@ process_balancing_multiple <- 3L
 
 .process_verbose <- function(verbose, to_delete=TRUE)
 {
-    fn <- .packageEnv$process_status_fname[process_index]
+    fn <- .PkgEnv$process_status_fname[process_index]
     if (is.character(fn) && (length(fn)==1L))
     {
         attr(fn, "verbose") <- isTRUE(verbose)

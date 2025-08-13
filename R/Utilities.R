@@ -307,7 +307,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 {
     .init_proc()
     .set_proc_block()
-    .packageEnv$process_status_fname <- NULL
+    .PkgEnv$process_status_fname <- NULL
 }
 
 # get the multiple for balancing jobs, the default is 4
@@ -483,7 +483,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             # export to global variables
             .init_proc(i, njobs, st_fname)
             .set_proc_block(0L, totnum)
-            .packageEnv$process_status_fname <- st_fname
+            .PkgEnv$process_status_fname <- st_fname
             if (is.function(init)) init(i, param)
             # return none
             NULL
@@ -561,16 +561,16 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             # export to global variables
             .init_proc(i, njobs, st_fname)
             .set_proc_block(1L, nblock)
-            .packageEnv$process_status_fname <- st_fname
+            .PkgEnv$process_status_fname <- st_fname
             # save internally
-            .packageEnv$gfile <- seqOpen(gdsfn, allow.duplicate=TRUE)
-            .packageEnv$sample.sel <- memDecompress(sel[[1L]], type="gzip")
-            .packageEnv$variant.sel <- memDecompress(sel[[2L]], type="gzip")
-            .packageEnv$totcnt <- totcnt
+            .PkgEnv$gfile <- seqOpen(gdsfn, allow.duplicate=TRUE)
+            .PkgEnv$sample.sel <- memDecompress(sel[[1L]], type="gzip")
+            .PkgEnv$variant.sel <- memDecompress(sel[[2L]], type="gzip")
+            .PkgEnv$totcnt <- totcnt
             # set filter
-            seqSetFilter(.packageEnv$gfile,
-                sample.sel = .packageEnv$sample.sel,
-                variant.sel = .packageEnv$variant.sel,
+            seqSetFilter(.PkgEnv$gfile,
+                sample.sel = .PkgEnv$sample.sel,
+                variant.sel = .PkgEnv$variant.sel,
                 verbose=FALSE)
             # call
             if (is.function(init)) init(i, param)
@@ -586,9 +586,9 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             clusterApply(cl, seq_len(njobs), fun = function(i, fc, param)
             {
                 if (is.function(fc)) fc(i, param)
-                if (inherits(.packageEnv$gfile, "SeqVarGDSClass"))
-                    seqClose(.packageEnv$gfile)
-                .packageEnv$gfile <- NULL
+                if (inherits(.PkgEnv$gfile, "SeqVarGDSClass"))
+                    seqClose(.PkgEnv$gfile)
+                .PkgEnv$gfile <- NULL
                 .done_proc()
             }, fc=.finalize, param=.initparam)
         })
@@ -600,14 +600,14 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             # set the block index
             .set_proc_block(i, NULL)
             # set filter
-            .s <- .Call(SEQ_SplitSelectionX, .packageEnv$gfile, i, .split,
-                .sel_idx, .packageEnv$variant.sel, .packageEnv$sample.sel,
-                .bl_size, .selection.flag, .packageEnv$totcnt)
+            .s <- .Call(SEQ_SplitSelectionX, .PkgEnv$gfile, i, .split,
+                .sel_idx, .PkgEnv$variant.sel, .PkgEnv$sample.sel,
+                .bl_size, .selection.flag, .PkgEnv$totcnt)
             # call the user-defined function
             if (.selection.flag)
-                FUN(.packageEnv$gfile, .s, ...)
+                FUN(.PkgEnv$gfile, .s, ...)
             else
-                FUN(.packageEnv$gfile, ...)
+                FUN(.PkgEnv$gfile, ...)
         }, .combinefun=.combine, .updatefun=updatefun, FUN = FUN,
             .split = (split=="by.variant"), .sel_idx = v$sel_idx,
             .bl_size = .bl_size, .selection.flag = .selection.flag, ...
@@ -655,10 +655,10 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     # export to global variables
     .init_proc(0L, njobs, st_fname)
     .set_proc_block()
-    .packageEnv$process_status_fname <- st_fname
+    .PkgEnv$process_status_fname <- st_fname
     on.exit({
         .done_proc()
-        .packageEnv$process_status_fname <- NULL
+        .PkgEnv$process_status_fname <- NULL
     }, add=TRUE)
 
     # the first argument is NA for forking

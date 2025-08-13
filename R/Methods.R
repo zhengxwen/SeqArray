@@ -710,7 +710,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
                     # check whether has a progress file or not
-                    fn <- .packageEnv$process_status_fname[process_index]
+                    fn <- .PkgEnv$process_status_fname[process_index]
                     if (is.character(fn))
                     {
                         .param$progressfile <- file(fn, "at")

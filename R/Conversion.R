@@ -1000,8 +1000,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             flush.console()
         }
         # working flags
-        .packageEnv$work_idx <- 1L
-        .packageEnv$work_flag <- rep(FALSE, pnum)
+        .PkgEnv$work_idx <- 1L
+        .PkgEnv$work_flag <- rep(FALSE, pnum)
 
         # conversion in parallel
         seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
@@ -1053,13 +1053,13 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             .combine = function(fn_idx)
             {
                 # set TRUE to indicate the file completed
-                .packageEnv$work_flag[fn_idx] <- TRUE
+                .PkgEnv$work_flag[fn_idx] <- TRUE
                 if (verbose && fn_idx==1L)
                     cat("    >>> merging the files: <<<\n")
                 # check whether merging the file or not
-                if (.packageEnv$work_idx == fn_idx)
+                if (.PkgEnv$work_idx == fn_idx)
                 {
-                    while (isTRUE(.packageEnv$work_flag[fn_idx]))
+                    while (isTRUE(.PkgEnv$work_flag[fn_idx]))
                     {
                         if (verbose)
                             cat("       ", basename(ptmpfn[fn_idx]))
@@ -1072,14 +1072,14 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
                         if (verbose) cat("\t[Done]\n")
                         fn_idx <- fn_idx + 1L
                     }
-                    .packageEnv$work_idx <- fn_idx
+                    .PkgEnv$work_idx <- fn_idx
                 }
             })
 
         # delete temporary files
         unlink(c(ptmpfn, paste0(ptmpfn, ".progress.txt")), force=TRUE)
-        .packageEnv$work_idx <- NULL
-        .packageEnv$work_flag <- NULL
+        .PkgEnv$work_idx <- NULL
+        .PkgEnv$work_flag <- NULL
         if (verbose && !isFALSE(digest)) cat("    ")
     }
 
