@@ -72,21 +72,55 @@ seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
 #######################################################################
 # Setup the parallel parameters in SeqArray
 #
+
+.release_pkg_func <- function(env)
+{
+    # release seqarray.parallel
+    cl <- .PkgEnv$seqarray.parallel
+    if (inherits(cl, "cluster"))
+    {
+        .PkgEnv$seqarray.parallel <- NULL
+        parallel::stopCluster(cl)
+    }
+    # release seqarray.multicore
+    cl <- .PkgEnv$seqarray.multicore
+    if (inherits(cl, "cluster"))
+    {
+        .PkgEnv$seqarray.multicore <- NULL
+        parallel::stopCluster(cl)
+    }
+    # return none
+    invisible()
+}
+
+.reg_finalizer <- function()
+{
+    if (is.null(.PkgEnv$.finalizer))
+    {
+        .PkgEnv$.finalizer <- new.env()
+        reg.finalizer(.PkgEnv$.finalizer, .release_pkg_func, onexit=TRUE)
+    }
+    invisible()
+}
+
 seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.null(cluster) | is.logical(cluster) |
         is.numeric(cluster) | inherits(cluster, "cluster"))
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.na(verbose)) verbose <- FALSE
 
-    if (is.null(cluster) || identical(cluster, FALSE))
+    if (is.null(cluster) || isFALSE(cluster))
     {
-        opt <- getOption("seqarray.parallel", NULL)
-        if (inherits(opt, "cluster"))
-            stopCluster(opt)
-        if (verbose)
-            cat("Stop the computing cluster.\n")
-        options(seqarray.parallel=cluster)
+        cl <- .PkgEnv$seqarray.parallel
+        if (inherits(cl, "cluster"))
+        {
+            .PkgEnv$seqarray.parallel <- NULL
+            stopCluster(cl)
+            if (verbose)
+                cat("Stop the computing cluster.\n")
+        }
         return(invisible())
     }
 
@@ -95,7 +129,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
     {
         setup <- function(num.cores)
         {
-            cl <- makeCluster(num.cores)
+            cl <- makeCluster(num.cores, outfile="")
             clusterCall(cl, function() {
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
                 TRUE
@@ -106,7 +140,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
         if (is.logical(cluster))
         {
             stopifnot(length(cluster) == 1L)
-            if (cluster)
+            if (isTRUE(cluster))
             {
                 cl <- detectCores() - 1L
                 if (cl <= 1L) cl <- 2L
@@ -129,7 +163,7 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
         }
     } else {
         # unix forking technique
-        if (identical(cluster, TRUE))
+        if (isTRUE(cluster))
         {
             n <- detectCores() - 1L
             if (n <= 1L) n <- 2L
@@ -146,12 +180,15 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
         }
     }
 
-    options(seqarray.parallel=cluster)
+    .PkgEnv$seqarray.parallel <- cluster
+    # need a finalizer when end the R session
+    .reg_finalizer()
+    # return
     invisible()
 }
 
 
-seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
+seqMulticoreSetup <- function(num=TRUE, type=c("psock", "fork"), verbose=TRUE)
 {
     # check
     stopifnot(is.logical(num) || is.numeric(num), length(num)==1L)
@@ -159,11 +196,11 @@ seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # multicore parallel object if available
-    cl <- getOption("seqarray.multicore")
+    cl <- .PkgEnv$seqarray.multicore
     if (inherits(cl, "cluster"))
     {
         stopCluster(cl)
-        options(seqarray.multicore=NULL)
+        .PkgEnv$seqarray.multicore <- NULL
     }
 
     # setup
@@ -182,7 +219,10 @@ seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
                 cat("Enable the multicore cluster via forking: ")
         }
         if (isTRUE(verbose)) print(cl)
-        options(seqarray.multicore=cl)
+        .PkgEnv$seqarray.multicore <- cl
+        # need a finalizer when end the R session
+        .reg_finalizer()
+
     } else {
         if (isTRUE(verbose))
             cat("Disable the pre-defined multicore cluster.\n")
@@ -199,7 +239,9 @@ seqMulticoreSetup <- function(num, type=c("psock", "fork"), verbose=TRUE)
 #
 seqGetParallel <- function()
 {
-    getOption("seqarray.parallel", FALSE)
+    ans <- .PkgEnv$seqarray.parallel
+    if (is.null(ans)) ans <- FALSE
+    ans
 }
 
 

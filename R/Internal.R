@@ -11,6 +11,10 @@
 
 .PkgEnv <- new.env()
 
+# parallel objects
+assign("seqarray.parallel", NULL, envir=.PkgEnv)
+assign("seqarray.multicore", NULL, envir=.PkgEnv)
+
 # the index of current children process
 process_index <- 1L
 # the number of children processes
