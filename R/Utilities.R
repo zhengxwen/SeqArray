@@ -333,7 +333,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 }
 
 # initialize the internal variables for child processes
-.init_proc <- function(idx=1L, cnt=1L, fname=FALSE)
+.init_proc <- function(idx=0L, cnt=0L, fname=FALSE)
 {
     .Call(SEQ_SetProcess, idx, cnt, fname)
 }
@@ -415,9 +415,11 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     .initialize, .finalize, .initparam, ...)
 {
     # initialize
+    .init_proc(idx=1L, cnt=1L)
     if (is.function(.initialize)) .initialize(1L, .initparam)
     on.exit({
         if (is.function(.finalize)) .finalize(1L, .initparam)        
+        .init_proc()
     })
     # call the user-defined function
     if (!is.numeric(gdsfile))

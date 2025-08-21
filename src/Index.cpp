@@ -1211,7 +1211,7 @@ static bool if_show_idx_cnt(int &idx, int &cnt)
 	{
 		idx = R_Block_Index;
 		cnt = R_Block_Count;
-	} else if (R_Process_Count && R_Process_Index && (*R_Process_Count>1))
+	} else if (R_Process_Count && R_Process_Index && (*R_Process_Count>0))
 	{
 		idx = *R_Process_Index;
 		cnt = *R_Process_Count;

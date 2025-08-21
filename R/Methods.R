@@ -595,8 +595,8 @@ seqApply <- function(gdsfile, var.name, FUN,
     stopifnot(is.logical(.list_dup), length(.list_dup)==1L)
     stopifnot(is.logical(.progress) || is.character(.progress),
         length(.progress)==1L)
-    njobs <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
+    njobs <- .NumParallel(parallel)
 
     param <- list(useraw=.useraw, list_dup=.list_dup,
         progress=isTRUE(.progress), progressfile=NULL)
@@ -609,7 +609,7 @@ seqApply <- function(gdsfile, var.name, FUN,
             on.exit(unlink(.progress, force=TRUE), add=TRUE)
     }
 
-    if (inherits(as.is, "connection") | inherits(as.is, "gdsn.class"))
+    if (inherits(as.is, "connection") || inherits(as.is, "gdsn.class"))
     {
         if (njobs > 1L)
         {
@@ -628,6 +628,8 @@ seqApply <- function(gdsfile, var.name, FUN,
             # C call, by.variant
             rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
+            
+            if (param$progress && process_count==0L) cat("\n")
         } else {
             rv <- seqParallel(parallel, gdsfile,
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
@@ -643,6 +645,7 @@ seqApply <- function(gdsfile, var.name, FUN,
             # C call, by.sample
             rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
                 var.index, .useraw, new.env())
+            if (param$progress && process_count==0L) cat("\n")
         } else {
             rv <- seqParallel(parallel, gdsfile,
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)

@@ -16,9 +16,9 @@ assign("seqarray.parallel", NULL, envir=.PkgEnv)
 assign("seqarray.multicore", NULL, envir=.PkgEnv)
 
 # the index of current children process
-process_index <- 1L
+process_index <- 0L
 # the number of children processes
-process_count <- 1L
+process_count <- 0L
 
 # the list of file names for the status of children processes
 # .PkgEnv$process_status_fname <- NULL
