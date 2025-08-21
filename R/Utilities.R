@@ -797,7 +797,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
     .balancing=FALSE, .bl_size=NA_integer_, .bl_progress=FALSE,
-    .status_file=FALSE, ...)
+    .status_file=FALSE, .proc_time=FALSE, ...)
 {
     # check
     stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) |
@@ -819,6 +819,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     stopifnot(is.null(.finalize) | is.function(.finalize))
     stopifnot(is.logical(.selection.flag), length(.selection.flag)==1L)
     stopifnot(is.logical(.status_file), length(.status_file)==1L)
+    stopifnot(is.logical(.proc_time), length(.proc_time)==1L)
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
     if (isTRUE(.balancing))
     {
@@ -849,6 +850,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     }
 
     # initialize internally
+    tm <- as.double(Sys.time())
     .init_proc()
 
     # get the number of workers
@@ -957,6 +959,14 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         ans <- .run_forking(cl, gdsfile, FUN, split, .combine,
             .selection.flag, .initialize, .finalize, .initparam,
             .balancing, .bl_size, .bl_progress, .status_file, ...)
+    }
+
+    # show the used time
+    if (isTRUE(.proc_time))
+    {
+        tm <- as.double(Sys.time()) - tm
+        .cat("\r[==================================================] 100%",
+            ", complete, ", .Call(SEQ_SecToTime, tm), "    ")
     }
 
     # output

@@ -700,6 +700,9 @@ COREARRAY_DLL_LOCAL string GDS_PATH_PREFIX(const string &path, char prefix);
 /// output to a connection
 COREARRAY_DLL_LOCAL void ConnPutText(Rconnection file, const char *fmt, ...);
 
+/// time interval to string
+COREARRAY_DLL_LOCAL const char *time_str(double s);
+
 
 
 // ===========================================================

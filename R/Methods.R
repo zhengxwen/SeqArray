@@ -799,7 +799,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         .progress=.process_verbose(pg))
                     list(v, ssum)
                 }, .combine=.combine_lst, .balancing=balancing,
-                    .status_file=TRUE, num=dm[2L], pg=verbose)
+                    .status_file=TRUE, .proc_time=verbose,
+                    num=dm[2L], pg=verbose)
             sv[[2L]] <- sv[[2L]] / (dm[1L] * dm[3L])
         } else {
             sv <- seqParallel(parallel, gdsfile, split="by.variant",
@@ -813,7 +814,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         .progress=.process_verbose(pg))
                     list(v, ssum)
                 }, .combine=.combine_lst, .balancing=balancing,
-                    .status_file=TRUE, num=dm[2L], pg=verbose, nm=nm)
+                    .status_file=TRUE, .proc_time=verbose,
+                    num=dm[2L], pg=verbose, nm=nm)
             sv[[2L]] <- sv[[2L]] / dm[3L]
         }
         names(sv) <- c("variant", "sample")
@@ -827,7 +829,8 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                seqApply(f, nm, as.is="double",
                    FUN=.cfunction("FC_Missing_PerVariant"), .useraw=NA,
                    .progress=.process_verbose(pg))
-            }, .balancing=balancing, .status_file=TRUE, pg=verbose, nm=nm)
+            }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
+                pg=verbose, nm=nm)
 
     } else {
         dm <- .seldim(gdsfile)
@@ -843,7 +846,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         .progress=.process_verbose(pg))
                     ssum
                 }, .balancing=balancing, .status_file=TRUE, .combine="+",
-                    num=dm[2L], pg=verbose)
+                    .proc_time=verbose, num=dm[2L], pg=verbose)
             sv / (dm[1L] * dm[3L])
         } else {
             sv <- seqParallel(parallel, gdsfile, split="by.variant",
@@ -857,7 +860,7 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
                         .progress=.process_verbose(pg))
                     ssum
                 }, .balancing=balancing, .status_file=TRUE, .combine="+",
-                    num=dm[2L], pg=verbose, nm=nm)
+                    .proc_time=verbose, num=dm[2L], pg=verbose, nm=nm)
             sv / dm[3L]
         }
     }
@@ -914,7 +917,8 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                 seqApply(f, c("genotype", "$num_allele"), as.is="list",
                     FUN=.cfunction("FC_AF_List"), .list_dup=FALSE, .useraw=NA,
                     .progress=.process_verbose(pg))
-            }, .balancing=balancing, .status_file=TRUE, pg=verbose)
+            }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
+                pg=verbose)
     } else if (is.numeric(ref.allele))
     {
         if (length(ref.allele) == 1L)
@@ -929,6 +933,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                             .useraw=NA,
                             .progress=.process_verbose(pg))
                     }, .balancing=balancing, .status_file=TRUE,
+                        .proc_time=verbose,
                         pg=verbose, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AF_Ref", "FC_AF_DS_Ref"))
             } else {
@@ -940,6 +945,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                             FUN=.cfunction(cn), .useraw=NA,
                             .progress=.process_verbose(pg))
                     }, .balancing=balancing, .status_file=TRUE,
+                        .proc_time=verbose,
                         ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AF_Index", "FC_AF_DS_Index"))
             }
@@ -959,6 +965,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                         FUN=.cfunction(cn), .useraw=NA,
                         .progress=.process_verbose(pg))
                 }, .balancing=balancing, .status_file=TRUE,
+                    .proc_time=verbose,
                     ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
                     cn=ifelse(gv, "FC_AF_Index", "FC_AF_DS_Index"))
         }
@@ -977,7 +984,7 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
                 seqApply(f, c(nm, "allele"), as.is="double",
                     FUN=.cfunction(cn), .useraw=NA,
                     .progress=.process_verbose(pg))
-            }, .balancing=balancing, .status_file=TRUE,
+            }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
                 ref=ref.allele, pg=verbose, nm=nm, mi=minor, pl=ploidy,
                 cn=ifelse(gv, "FC_AF_Allele", "FC_AF_DS_Allele"))
     } else
@@ -1036,7 +1043,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                     as.is="list", FUN = .cfunction("FC_AlleleCount"),
                     .useraw=NA, .list_dup=FALSE,
                     .progress=.process_verbose(pg))
-            }, .balancing=balancing, .status_file=TRUE, pg=verbose)
+            }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
+                pg=verbose)
     } else if (is.numeric(ref.allele))
     {
         if (length(ref.allele) == 1L)
@@ -1051,6 +1059,7 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                             .useraw=NA,
                             .progress=.process_verbose(pg))
                     }, .balancing=balancing, .status_file=TRUE,
+                        .proc_time=verbose,
                         pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AC_Ref", "FC_AC_DS_Ref"))
             } else {
@@ -1061,7 +1070,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                         seqApply(f, c(nm, "$num_allele"), as.is=tp,
                             FUN=.cfunction(cn), .useraw=NA,
                             .progress=.process_verbose(pg))
-                    }, .balancing=balancing, .status_file=TRUE, ref=ref.allele,
+                    }, .balancing=balancing, .status_file=TRUE,
+                        .proc_time=verbose, ref=ref.allele,
                         pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                         cn=ifelse(gv, "FC_AC_Index", "FC_AC_DS_Index"))
             }
@@ -1080,9 +1090,9 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                     seqApply(f, c(nm, "$num_allele"), as.is=tp,
                         FUN=.cfunction(cn), .useraw=NA,
                         .progress=.process_verbose(pg))
-                }, .balancing=balancing, .status_file=TRUE, ref=ref.allele,
-                    pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
-                    cn=ifelse(gv, "FC_AC_Index", "FC_AC_DS_Index"))
+                }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
+                    ref=ref.allele, pg=verbose, tp=tp, nm=nm, mi=minor,
+                    pl=ploidy, cn=ifelse(gv, "FC_AC_Index", "FC_AC_DS_Index"))
         }
     } else if (is.character(ref.allele))
     {
@@ -1099,8 +1109,8 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
                 seqApply(f, c(nm, "allele"), as.is=tp, FUN=.cfunction(cn),
                     .useraw=NA,
                     .progress=.process_verbose(pg))
-            }, .balancing=balancing, .status_file=TRUE, ref=ref.allele,
-                pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
+            }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
+                ref=ref.allele, pg=verbose, tp=tp, nm=nm, mi=minor, pl=ploidy,
                 cn=ifelse(gv, "FC_AC_Allele", "FC_AC_DS_Allele"))
     } else
         stop("Invalid 'ref.allele'.")
@@ -1156,7 +1166,7 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
             seqApply(f, nm, as.is="none", FUN=.cfunction(cn), .useraw=NA,
                 .progress=.process_verbose(pg))
             m3
-        }, .balancing=balancing, .status_file=TRUE,
+        }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
             pg=verbose, nm=nm, pl=ploidy, minor=minor,
             cn=ifelse(gv, "FC_AF_AC_MISS_Geno", "FC_AF_AC_MISS_DS"))
 

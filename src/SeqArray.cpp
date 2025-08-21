@@ -1592,6 +1592,19 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ProgressAdd(SEXP ref, SEXP inc)
 	COREARRAY_CATCH
 }
 
+/// convert seconds to time
+COREARRAY_DLL_EXPORT SEXP SEQ_SecToTime(SEXP second)
+{
+	if (!Rf_isNumeric(second))
+		Rf_error("'second' should be a numeric vector.");
+	const int n = Rf_length(second);
+	const double *s = REAL(second);
+	SEXP ans = NEW_CHARACTER(n);
+	for (int i=0; i < n; i++)
+		SET_STRING_ELT(ans, i, Rf_mkChar(time_str(s[i])));
+	return ans;
+}
+
 
 
 // ===========================================================
@@ -1724,6 +1737,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_bgzip_create, 1),
 		CALL(SEQ_ToVCF_Init, 6),            CALL(SEQ_ToVCF_Done, 0),
+		CALL(SEQ_SecToTime, 1),
 
 		CALL(SEQ_Progress, 2),              CALL(SEQ_ProgressAdd, 2),
 

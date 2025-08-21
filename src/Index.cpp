@@ -1109,7 +1109,7 @@ static const double S_HOUR =  60 * S_MIN;
 static const double S_DAY  =  24 * S_HOUR;
 static const double S_YEAR = 365 * S_DAY;
 
-static const char *time_str(double s)
+COREARRAY_DLL_LOCAL const char *time_str(double s)
 {
 	if (R_FINITE(s))
 	{
@@ -1254,7 +1254,7 @@ void CProgress::ShowProgress()
 		if (OutFile)
 		{
 			ConnPutText(OutFile, "[%s] %2.0f%%, %s %s", bar, p,
-				vCounter < vTotalCount ? "ETC:" : "completed,", time_str(s));
+				vCounter < vTotalCount ? "ETC:" : "used", time_str(s));
 			int i, m;
 			if (if_show_idx_cnt(i, m))
 				ConnPutText(OutFile, " (%d/%d)", i, m);
@@ -1280,11 +1280,11 @@ void CProgress::ShowProgress()
 			if (vCounter >= vTotalCount)
 			{
 				int n = snprintf(buf, sizeof(buf),
-					"\r[%s] %2.0f%%, completed, %s", bar, p, time_str(s));
+					"\r[%s] %2.0f%%, used %s", bar, p, time_str(s));
 				int i, m;
 				if (if_show_idx_cnt(i, m))
 					snprintf(buf+n, sizeof(buf)-n, " (%d/%d)", i, m);
-				Rprintf("%s\n", buf);
+				Rprintf("%s    ", buf);
 			} else {
 				double interval = difftime(now, _last_time);  // in seconds
 				if ((vCounter <= 0) || (interval >= PROGRESS_INTERVAL_SECOND))
@@ -1295,8 +1295,7 @@ void CProgress::ShowProgress()
 					int i, m;
 					if (if_show_idx_cnt(i, m))
 						n += snprintf(buf+n, sizeof(buf)-n, " (%d/%d)", i, m);
-					strcpy(buf+n, "    ");
-					Rprintf("%s", buf);
+					Rprintf("%s    ", buf);
 				}
 			}
 		}
