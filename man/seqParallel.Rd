@@ -10,7 +10,7 @@ seqParallel(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
     .balancing=FALSE, .bl_size=NA_integer_, .bl_progress=FALSE,
-    .status_file=FALSE, ...)
+    .status_file=FALSE, .proc_time=FALSE, ...)
 seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 }
 \arguments{
@@ -52,6 +52,8 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         information}
     \item{.status_file}{if \code{TRUE}, create empty files for saving the
         status of child processes, which can be used in the user-defined
+        function}
+    \item{.proc_time}{if \code{TRUE}, show the elapsed time calling the
         function}
     \item{x}{a vector (atomic or list), passed to \code{FUN}}
     \item{load.balancing}{if \code{TRUE}, call \code{\link{clusterApplyLB}}
