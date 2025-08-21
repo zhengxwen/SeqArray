@@ -963,7 +963,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             .balancing, .bl_size, .bl_progress, .status_file, ...)
     }
 
-    # show the used time
+    # show the elapsed time
     if (isTRUE(.proc_time))
     {
         tm <- as.double(Sys.time()) - tm

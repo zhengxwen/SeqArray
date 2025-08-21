@@ -628,8 +628,6 @@ seqApply <- function(gdsfile, var.name, FUN,
             # C call, by.variant
             rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
-            
-            if (param$progress && process_count==0L) cat("\n")
         } else {
             rv <- seqParallel(parallel, gdsfile,
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
@@ -645,7 +643,6 @@ seqApply <- function(gdsfile, var.name, FUN,
             # C call, by.sample
             rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
                 var.index, .useraw, new.env())
-            if (param$progress && process_count==0L) cat("\n")
         } else {
             rv <- seqParallel(parallel, gdsfile,
                 FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)

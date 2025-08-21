@@ -932,7 +932,8 @@ process_balancing_multiple <- 3L
     {
         if (flag) cat("    genotype")
         .DigestCode(n, digest, verbose)
-        .DigestCode(index.gdsn(gfile, "genotype/@data", silent=TRUE), digest, FALSE)
+        .DigestCode(index.gdsn(gfile, "genotype/@data", silent=TRUE),
+            digest, FALSE)
     }
 
     n <- index.gdsn(gfile, "phase/data", silent=TRUE)
@@ -963,7 +964,8 @@ process_balancing_multiple <- 3L
     for (n in ls.gdsn(node))
     {
         if (flag) cat("    annotation/format/", n, sep="")
-        .DigestCode(index.gdsn(node, paste0(n, "/data"), silent=TRUE), digest, verbose)
+        .DigestCode(index.gdsn(node, paste0(n, "/data"), silent=TRUE),
+            digest, verbose)
         .DigestCode(index.gdsn(node, paste0(n, "/@data")), digest, FALSE)
     }
 

@@ -1284,7 +1284,10 @@ void CProgress::ShowProgress()
 				int i, m;
 				if (if_show_idx_cnt(i, m))
 					snprintf(buf+n, sizeof(buf)-n, " (%d/%d)", i, m);
-				Rprintf("%s    ", buf);
+				if (R_Process_Count && *R_Process_Count>0)
+					Rprintf("%s    ", buf);
+				else
+					Rprintf("%s    \n", buf);
 			} else {
 				double interval = difftime(now, _last_time);  // in seconds
 				if ((vCounter <= 0) || (interval >= PROGRESS_INTERVAL_SECOND))
