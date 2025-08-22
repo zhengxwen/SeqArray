@@ -620,11 +620,14 @@ seqApply <- function(gdsfile, var.name, FUN,
         as.is <- match.arg(as.is)
     }
 
+    # get # of samples & variants
     dm <- .seldim(gdsfile)
     if (margin == "by.variant")
     {
         if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
+            # initialize
+           .init_proc()
             # C call, by.variant
             rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
@@ -640,6 +643,8 @@ seqApply <- function(gdsfile, var.name, FUN,
     } else {
         if ((njobs <= 1L) || (dm[2L] <= 0L))
         {
+            # initialize
+           .init_proc()
             # C call, by.sample
             rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
                 var.index, .useraw, new.env())
@@ -695,19 +700,23 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
         as.is <- match.arg(as.is)
     }
 
+    # get # of samples & variants
     dm <- .seldim(gdsfile)
     if (margin == "by.variant")
     {
         if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
+            # initialize
+           .init_proc()
             on.exit(seqFilterPop(gdsfile))  # in case if it fails
             # C call, blocking by variant
             rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
             on.exit()
         } else {
+            # multiple cores
             rv <- seqParallel(parallel, gdsfile,
-                FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
+                FUN=function(.gds, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
                     # check whether has a progress file or not
                     fn <- .PkgEnv$process_status_fname[process_index]
@@ -720,14 +729,15 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
                         })
                     }
                     # C call, blocking by variant
-                    .Call(SEQ_BApply_Variant, gdsfile, .vn, .FUN, .as.is,
+                    .Call(SEQ_BApply_Variant, .gds, .vn, .FUN, .as.is,
                         .varidx, .param, new.env())
-                }, split=margin, .balancing=.balancing,
+                }, split=margin, .balancing=.balancing, .proc_time=.progress,
                     .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
                     .param=param, ...)
         }
     }
 
+    # output
     if (!is.character(as.is) | identical(as.is, "none"))
         return(invisible())
     else if (identical(as.is, "unlist"))
