@@ -826,8 +826,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     stopifnot(is.logical(verbose), length(verbose)==1L)
     show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
 
-    pnum <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
+    pnum <- .NumParallel(parallel)
 
     if (verbose)
     {

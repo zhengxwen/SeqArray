@@ -856,8 +856,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     .init_proc()
 
     # get the number of workers
-    njobs <- .NumParallel(cl)
     cl <- .McoreParallel(cl)
+    njobs <- .NumParallel(cl)
     if (njobs <= 1L)
     {
         # run with a single core
@@ -982,8 +982,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 seqParApply <- function(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
 {
     # check
+    cl <- .McoreParallel(cl)
     njobs <- .NumParallel(cl, "cl")
-    parallel <- .McoreParallel(cl)
     stopifnot(is.logical(load.balancing), length(load.balancing)==1L)
 
     if (njobs <= 1L)

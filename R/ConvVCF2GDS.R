@@ -598,8 +598,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.logical(verbose), length(verbose)==1L)
     show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
 
-    pnum <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
+    pnum <- .NumParallel(parallel)
+
     if (inherits(vcf.fn, "connection"))
     {
         if (pnum > 1L)

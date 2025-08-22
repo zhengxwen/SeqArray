@@ -685,8 +685,8 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
         .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     stopifnot(is.logical(.progress), length(.progress)==1L)
 
-    njobs <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
+    njobs <- .NumParallel(parallel)
     param <- list(bsize=bsize, useraw=.useraw, padNA=.padNA, tolist=.tolist,
         progress=.progress, progressfile=NULL)
 
@@ -1131,8 +1131,8 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.na(balancing))
         balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
-    .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
+    njobs <- .NumParallel(parallel)
 
     if (is.character(gdsfile))
     {

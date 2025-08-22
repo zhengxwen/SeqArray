@@ -792,8 +792,8 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"), parallel=FALSE,
     }
     stopifnot(is.character(varname), length(varname)==1L)
     algo <- match.arg(algo)
-    njobs <- .NumParallel(parallel)
     parallel <- .McoreParallel(parallel)
+    njobs <- .NumParallel(parallel)
 
     if (requireNamespace("digest", quietly=TRUE))
     {
