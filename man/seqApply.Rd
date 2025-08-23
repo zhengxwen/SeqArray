@@ -9,7 +9,7 @@ margins of genotypes and annotations.
 seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
     var.index=c("none", "relative", "absolute"), parallel=FALSE,
-    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, .balancing=FALSE, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -41,6 +41,10 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     \item{.progress}{if \code{TRUE}, show progress information; or a file name
         for updating progress information}
     \item{.list_dup}{internal use only}
+    \item{.balancing}{whether to perform workload balancing or not, only
+        applicable when multiple cores are used; if \code{NA}, use \code{TRUE}
+        as a default until \code{getOption("seqarray.balancing")} is set and
+        not \code{TRUE}}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{

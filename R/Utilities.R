@@ -823,6 +823,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     stopifnot(is.logical(.status_file), length(.status_file)==1L)
     stopifnot(is.logical(.proc_time), length(.proc_time)==1L)
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
+    if (is.na(.balancing))
+        .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     if (isTRUE(.balancing))
     {
         stopifnot(is.numeric(.bl_size), length(.bl_size)==1L)

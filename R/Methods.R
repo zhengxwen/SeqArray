@@ -583,7 +583,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
     var.index=c("none", "relative", "absolute"), parallel=FALSE,
-    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, ...)
+    .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, .balancing=FALSE, ...)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -595,6 +595,10 @@ seqApply <- function(gdsfile, var.name, FUN,
     stopifnot(is.logical(.list_dup), length(.list_dup)==1L)
     stopifnot(is.logical(.progress) || is.character(.progress),
         length(.progress)==1L)
+    stopifnot(is.logical(.balancing), length(.balancing)==1L)
+    if (is.na(.balancing))
+        .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
+
     parallel <- .McoreParallel(parallel)
     njobs <- .NumParallel(parallel)
 
@@ -627,38 +631,45 @@ seqApply <- function(gdsfile, var.name, FUN,
         if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
             # initialize
-           .init_proc()
+            .init_proc()
             # C call, by.variant
             rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
         } else {
+            # multiple cores
             rv <- seqParallel(parallel, gdsfile,
-                FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
+                FUN = function(.gds, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
-                    .Call(SEQ_Apply_Variant, gdsfile, .vn, .FUN, .as.is,
+                    .Call(SEQ_Apply_Variant, .gds, .vn, .FUN, .as.is,
                         .varidx, .param, new.env())
-                }, split=margin, .vn=var.name, .FUN=FUN, .as.is=as.is,
-                .varidx=var.index, .param=param, ...)
+                }, split=margin, .balancing=.balancing,
+                .status_file=param$progress, .proc_time=param$progress,
+                .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
+                .param=param, ...)
         }
     } else {
         if ((njobs <= 1L) || (dm[2L] <= 0L))
         {
             # initialize
-           .init_proc()
+            .init_proc()
             # C call, by.sample
             rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
                 var.index, .useraw, new.env())
         } else {
+            # multiple cores
             rv <- seqParallel(parallel, gdsfile,
-                FUN=function(gdsfile, .vn, .FUN, .as.is, .varidx, .param, ...)
+                FUN = function(.gds, .vn, .FUN, .as.is, .varidx, .param, ...)
                 {
-                    .Call(SEQ_Apply_Sample, gdsfile, .vn, .FUN, .as.is,
+                    .Call(SEQ_Apply_Sample, .gds, .vn, .FUN, .as.is,
                         .varidx, .param, new.env())
-                }, split=margin, .vn=var.name, .FUN=FUN, .as.is=as.is,
-                .varidx=var.index, .param=param, ...)
+                }, split=margin, .balancing=.balancing,
+                .status_file=param$progress, .proc_time=param$progress,
+                .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
+                .param=param, ...)
         }
     }
 
+    # output
     if (!is.character(as.is) | identical(as.is, "none"))
         return(invisible())
     rv
@@ -707,7 +718,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
         if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
             # initialize
-           .init_proc()
+            .init_proc()
             on.exit(seqFilterPop(gdsfile))  # in case if it fails
             # C call, blocking by variant
             rv <- .Call(SEQ_BApply_Variant, gdsfile, var.name, FUN, as.is,

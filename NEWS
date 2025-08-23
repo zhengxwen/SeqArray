@@ -12,7 +12,7 @@ NEW FEATURES
       `seqGetAF_AC_Missing()`, `seqSetFilterCond()`, `seqUnitFilterCond()`
       (using workload balancing by default)
 
-    o new '.balancing' in `seqBlockApply()`
+    o new '.balancing' in `seqApply()` and `seqBlockApply()`
 
 UTILITIES
 
