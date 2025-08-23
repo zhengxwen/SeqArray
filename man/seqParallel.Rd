@@ -11,7 +11,7 @@ seqParallel(cl=seqGetParallel(), gdsfile, FUN,
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
     .balancing=FALSE, .bl_size=NA_integer_, .bl_progress=FALSE,
     .status_file=FALSE, .proc_time=FALSE, ...)
-seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
+seqParApply(cl=seqGetParallel(), x, FUN, .balancing=TRUE, ...)
 }
 \arguments{
     \item{cl}{\code{NULL} or \code{FALSE}: serial processing; \code{TRUE}:
@@ -56,8 +56,6 @@ seqParApply(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
     \item{.proc_time}{if \code{TRUE}, show the elapsed time calling the
         function}
     \item{x}{a vector (atomic or list), passed to \code{FUN}}
-    \item{load.balancing}{if \code{TRUE}, call \code{\link{clusterApplyLB}}
-        instead of \code{\link{clusterApply}}}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{

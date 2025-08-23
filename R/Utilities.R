@@ -981,21 +981,25 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 }
 
 
-seqParApply <- function(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
+seqParApply <- function(cl=seqGetParallel(), x, FUN, .balancing=TRUE, ...)
 {
     # check
     cl <- .McoreParallel(cl)
     njobs <- .NumParallel(cl, "cl")
-    stopifnot(is.logical(load.balancing), length(load.balancing)==1L)
+    stopifnot(is.logical(.balancing), length(.balancing)==1L)
+    if (is.na(.balancing))
+        .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
 
     if (njobs <= 1L)
     {
-        ## a single process
+        # a single process
         ans <- lapply(x, FUN, ...)
     } else if (inherits(cl, "BiocParallelParam"))
     {
+        # multiple cores
         ans <- BiocParallel::bplapply(x, FUN, ..., BPPARAM=cl)
     } else {
+        # multiple cores
         if (!inherits(cl, "cluster"))
         {
             if (.Platform$OS.type == "windows")
@@ -1006,12 +1010,13 @@ seqParApply <- function(cl=seqGetParallel(), x, FUN, load.balancing=TRUE, ...)
         }
 
         # a load balancing version
-        if (isTRUE(load.balancing))
+        if (.balancing)
             ans <- clusterApplyLB(cl, x, FUN, ...)
         else
             ans <- clusterApply(cl, x, FUN, ...)
     }
 
+    # output
     ans
 }
 
