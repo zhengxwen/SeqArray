@@ -33,21 +33,6 @@
     TRUE
 }
 
-.Last.lib <- function(libpath)
-{
-    # parallel object
-    cl <- getOption("seqarray.parallel")
-    if (inherits(cl, "cluster"))
-        stopCluster(cl)
-    options(seqarray.parallel=NULL)
-
-    # multicore parallel object if available
-    cl <- getOption("seqarray.multicore")
-    if (inherits(cl, "cluster"))
-        stopCluster(cl)
-    options(seqarray.multicore=NULL)
-}
-
 
 
 #######################################################################

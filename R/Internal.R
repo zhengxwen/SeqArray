@@ -373,7 +373,7 @@ process_balancing_multiple <- 3L
 # need parallel? how many? return 1 if no parallel
 .NumParallel <- function(cl, nm="parallel")
 {
-    if (is.null(cl) | identical(cl, FALSE))
+    if (is.null(cl) | isFALSE(cl))
     {
         ans <- 1L
     } else if (is.numeric(cl))
@@ -382,23 +382,12 @@ process_balancing_multiple <- 3L
             stop("'parallel' should be length-one.")
         if (is.na(cl)) cl <- 1L
         if (cl < 1L) cl <- 1L
-        mc <- getOption("seqarray.multicore")
-        if (inherits(mc, "cluster"))
-        {
-            if (cl > length(mc)) cl <-  length(mc)
-        }
         ans <- as.integer(cl)
     } else if (isTRUE(cl))
     {
-        mc <- getOption("seqarray.multicore")
-        if (inherits(mc, "cluster"))
-        {
-            ans <- length(mc)
-        } else {
-            ans <- detectCores() - 1L
-            if (is.na(ans)) ans <- 2L
-            if (ans <= 1L) ans <- 2L
-        }
+        ans <- detectCores() - 1L
+        if (is.na(ans)) ans <- 2L
+        if (ans <= 1L) ans <- 2L
     } else if (inherits(cl, "cluster"))
     {
         ans <- length(cl)
@@ -411,15 +400,31 @@ process_balancing_multiple <- 3L
         stop("Invalid '", nm, "'.")
     if (ans > 128L)  # limited by R itself
         stop("It is unable to allocate resources for more than 128 nodes.")
+    # output
     ans
 }
 
 # check if the multicore cluster is specified
 .McoreParallel <- function(parallel)
 {
-    if (is.numeric(parallel) || isTRUE(parallel))
+    # check
+    msg <- "'parallel' should be a positive integer, TRUE/FALSE or a cluster."
+    if (is.numeric(parallel))
     {
-        mc <- getOption("seqarray.multicore")
+        if (length(parallel) != 1L) stop(msg)
+        if (!is.finite(parallel) || parallel<1L) stop(msg)
+    }
+    if (is.logical(parallel))
+    {
+        if (length(parallel) != 1L) stop(msg)
+        if (is.na(parallel)) stop(msg)
+    }
+    # replace?
+    if (is.double(parallel))
+        parallel <- as.integer(parallel)
+    if (isTRUE(parallel) || (is.numeric(parallel) && parallel>1L))
+    {
+        mc <- .PkgEnv$seqarray.multicore
         if (inherits(mc, "cluster"))
         {
             if (isTRUE(parallel) || (parallel >= length(mc)))
@@ -436,6 +441,7 @@ process_balancing_multiple <- 3L
             }
         }
     }
+    # output
     parallel
 }
 
