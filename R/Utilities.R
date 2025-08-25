@@ -403,8 +403,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     .init_proc(idx=1L, cnt=1L)
     if (is.function(.initialize)) .initialize(1L, .initparam)
     on.exit({
-        if (is.function(.finalize)) .finalize(1L, .initparam)        
         .init_proc()
+        if (is.function(.finalize)) .finalize(1L, .initparam)        
     })
     # call the user-defined function
     if (!is.numeric(gdsfile))
@@ -653,13 +653,12 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 
 
 # run using forking in Unix/Linux
-.run_forking <- function(cl, gdsfile, FUN, split, .combine, .selection.flag,
+.run_forking <- function(njobs, gdsfile, FUN, split, .combine, .selection.flag,
     .initialize, .finalize, .initparam, .balancing, .bl_size, .bl_progress,
     .status_file, ...)
 {
-    # number of nodes
-    stopifnot(is.numeric(cl))
-    njobs <- cl
+    # check # of nodes
+    stopifnot(is.numeric(njobs))
     # status files
     st_fname <- NULL
     if (isTRUE(.status_file))
@@ -945,7 +944,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
                 .balancing, .bl_size, .bl_progress, .status_file, ...))
         }
         # call
-        ans <- .run_forking(cl, gdsfile, FUN, split, .combine,
+        ans <- .run_forking(njobs, gdsfile, FUN, split, .combine,
             .selection.flag, .initialize, .finalize, .initparam,
             .balancing, .bl_size, .bl_progress, .status_file, ...)
     }

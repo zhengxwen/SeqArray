@@ -430,8 +430,6 @@ seqSetFilterCond <- function(gdsfile, maf=NaN, mac=1L, missing.rate=NaN,
     stopifnot(is.numeric(mac), length(mac) %in% 1:2)
     stopifnot(is.numeric(missing.rate), length(missing.rate)==1L)
     stopifnot(is.logical(balancing), length(balancing)==1L)
-    if (is.na(balancing))
-        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     stopifnot(is.logical(.progress), length(.progress)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     verbose <- .progress || verbose
@@ -596,8 +594,6 @@ seqApply <- function(gdsfile, var.name, FUN,
     stopifnot(is.logical(.progress) || is.character(.progress),
         length(.progress)==1L)
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
-    if (is.na(.balancing))
-        .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
 
     parallel <- .McoreParallel(parallel)
     njobs <- .NumParallel(parallel)
@@ -630,8 +626,6 @@ seqApply <- function(gdsfile, var.name, FUN,
     {
         if ((njobs <= 1L) || (dm[3L] <= 0L))
         {
-            # initialize
-            .init_proc()
             # C call, by.variant
             rv <- .Call(SEQ_Apply_Variant, gdsfile, var.name, FUN, as.is,
                 var.index, param, new.env())
@@ -650,8 +644,6 @@ seqApply <- function(gdsfile, var.name, FUN,
     } else {
         if ((njobs <= 1L) || (dm[2L] <= 0L))
         {
-            # initialize
-            .init_proc()
             # C call, by.sample
             rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
                 var.index, .useraw, new.env())
@@ -697,8 +689,6 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     stopifnot(is.logical(.padNA), length(.padNA)==1L)
     stopifnot(is.logical(.tolist), length(.tolist)==1L)
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
-    if (is.na(.balancing))
-        .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     stopifnot(is.logical(.progress), length(.progress)==1L)
 
     parallel <- .McoreParallel(parallel)
@@ -786,8 +776,6 @@ seqMissing <- function(gdsfile, per.variant=TRUE, parallel=seqGetParallel(),
     stopifnot(is.logical(per.variant), length(per.variant)==1L)
     stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    if (is.na(balancing))
-        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
 
     if (is.character(gdsfile))
     {
@@ -901,8 +889,6 @@ seqAlleleFreq <- function(gdsfile, ref.allele=0L, minor=FALSE,
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    if (is.na(balancing))
-        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
 
     if (is.character(gdsfile))
     {
@@ -1024,8 +1010,6 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    if (is.na(balancing))
-        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
 
     if (is.character(gdsfile))
     {
@@ -1150,8 +1134,6 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     stopifnot(is.logical(minor), length(minor)==1L)
     stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    if (is.na(balancing))
-        balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
     parallel <- .McoreParallel(parallel)
     njobs <- .NumParallel(parallel)
 
