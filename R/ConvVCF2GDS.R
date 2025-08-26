@@ -1361,7 +1361,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         for (fn in ptmpfn)
         {
             if (verbose)
-                cat("    ", basename(fn), " ...", sep="")
+                cat("    ", basename(fn), sep="")
             # open the gds file
             tmpgds <- seqOpen(fn, allow.duplicate=TRUE)
             # merge variables
@@ -1377,7 +1377,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             # close the file
             seqClose(tmpgds)
             if (verbose)
-                cat(" [done]\n")
+                .cat(" [done, ", .tm(), "]")
         }
 
         filtervar <- as.factor(filtervar)
