@@ -550,7 +550,7 @@ process_balancing_multiple <- 3L
                     if (!is.null(dv)) ans[[d$tag]] <- dv
                 }
 
-                if (!is.null(.updatefun)) .updatefun(i)
+                if (is.function(.updatefun)) .updatefun(i)
             }
         }
     } else {
@@ -690,7 +690,7 @@ process_balancing_multiple <- 3L
                         # assignment NULL would remove it from the list
                         if (!is.null(child.res)) ans[[ci]] <- child.res
                     }
-                    if (!is.null(.updatefun)) .updatefun(ci)
+                    if (is.function(.updatefun)) .updatefun(ci)
                 } else {
                     # the job has finished
                     finish[ci] <- TRUE

@@ -578,7 +578,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         v <- .prepare_balancing(gdsfile, njobs, dm, split, .bl_size)
         .bl_size <- v$bl_size
         progress <- if (.bl_progress) .seqProgress(v$totcnt, njobs) else NULL
-        updatefun <- function(i) .seqProgForward(progress, .bl_size)
+        updatefun <- if (.bl_progress)
+            function(i) .seqProgForward(progress, .bl_size) else NULL
 
         # initialize the cluster & distribute data
         clusterApply(cl, seq_len(njobs),
@@ -745,7 +746,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         nblock <- v$nblock
         remove(v)
         progress <- if (.bl_progress) .seqProgress(totcnt, njobs) else NULL
-        updatefun <- function(i) .seqProgForward(progress, .bl_size)
+        updatefun <- if (.bl_progress)
+            function(i) .seqProgForward(progress, .bl_size) else NULL
         .sel <- seqGetFilter(gdsfile, .useraw=TRUE)
         split <- split == "by.variant"
 
