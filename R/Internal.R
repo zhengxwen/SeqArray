@@ -998,7 +998,7 @@ process_balancing_multiple <- 3L
 #######################################################################
 # Convert to a VariantAnnotation object
 
-.seqProgress <- function(count, nproc)
+.seqProgress <- function(count, nproc=1L)
     .Call(SEQ_Progress, count, nproc)
 
 .seqProgForward <- function(progress, inc)

@@ -681,7 +681,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     }
 
     # export to global variables
-    .init_proc(0L, njobs, st_fname)
+    .init_proc(0L, 0L, st_fname)
     .set_proc_block()
     .PkgEnv$process_status_fname <- st_fname
     on.exit({
@@ -703,17 +703,18 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         {
             ans <- .DynamicForkCall(njobs, njobs, .fun = function(.ji, .i, ...)
             {
-                .init_proc(.ji, NULL, NULL)  # export to global variables
+                .init_proc(.ji, njobs, NULL)  # export to global variables
                 FUN(...)
             }, .combinefun=.combine, .updatefun=NULL, ...)
         } else if (inherits(gdsfile, "SeqVarGDSClass"))
         {
             ans <- .DynamicForkCall(njobs, njobs, .fun = function(.ji, .i, ...)
             {
+                # actually .ji = .i
                 # export to global variables
-                .init_proc(.ji, NULL, NULL)
+                .init_proc(.ji, njobs, NULL)
                 # set filter
-                .s <- .Call(SEQ_SplitSelection, gdsfile, split, .ji, njobs,
+                .s <- .Call(SEQ_SplitSelection, gdsfile, split, .i, njobs,
                     .selection.flag)
                 # call the user-defined function
                 if (.selection.flag)
@@ -724,13 +725,12 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         } else {
             stopifnot(is.numeric(gdsfile))
             totnum <- as.integer(gdsfile)
-            .set_proc_block(0L, totnum)
             # call forking
             ans <- .DynamicForkCall(njobs, totnum, .fun = function(.ji, .i, ...)
             {
                 # export to global variables
-                .init_proc(.ji, NULL, NULL)
-                .set_proc_block(.i, NULL)
+                .init_proc(.ji, njobs, NULL)
+                .set_proc_block(.i, totnum)
                 FUN(.i, ...)
             }, .combinefun=.combine, .updatefun=NULL, ...)
         }
@@ -748,14 +748,13 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         updatefun <- function(i) .seqProgForward(progress, .bl_size)
         .sel <- seqGetFilter(gdsfile, .useraw=TRUE)
         split <- split == "by.variant"
-        .set_proc_block(0L, nblock)
 
         # do parallel
         ans <- .DynamicForkCall(njobs, nblock, .fun = function(.ji, .i, ...)
         {
             # set the process & block index
-            .init_proc(.ji, NULL, NULL)
-            .set_proc_block(.i, NULL)
+            .init_proc(.ji, njobs, NULL)
+            .set_proc_block(.i, nblock)
             # set filter
             .s <- .Call(SEQ_SplitSelectionX, gdsfile, .i, split,
                 .sel_idx, .sel$variant.sel, .sel$sample.sel, .bl_size,
@@ -950,7 +949,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     }
 
     # show the elapsed time
-    if (isTRUE(.proc_time))
+    if (isTRUE(.proc_time) && isFALSE(.balancing && .bl_progress))
     {
         tm <- as.double(Sys.time()) - tm
         .cat("\r[==================================================] 100%",
