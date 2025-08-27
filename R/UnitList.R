@@ -285,36 +285,36 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
     if (njobs == 1L)
     {
         # save state
-        seqSetFilter(gdsfile, action="push", verbose=FALSE)
-        on.exit({ seqSetFilter(gdsfile, action="pop", verbose=FALSE) })
-        # progress information
-        nl <- length(units$index)
-        progress <- if (.progress) .seqProgress(nl, njobs) else NULL
+        seqFilterPush(gdsfile)
+        on.exit(seqFilterPop(gdsfile))
+        # progress info
+        n <- length(units$index)
+        progress <- if (.progress) .seqProgress(n) else NULL
         # for-loop
-        ans <- vector("list", nl)
-        for (i in seq_len(nl))
+        ans <- vector("list", n)
+        for (i in 1:n)
         {
             seqSetFilter(gdsfile, variant.sel=units$index[[i]], verbose=FALSE)
             x <- seqGetData(gdsfile, var.name, .useraw, .padNA, .tolist, .envir)
             v <- FUN(x, ...)
             if (!is.null(v)) ans[[i]] <- v
-            .seqProgForward(progress, 1L)
+            if (!is.null(progress)) .seqProgForward(progress, 1L)
         }
-        # finalize
+        # release progress info bar
         remove(progress)
 
     } else {
+        # multiple cores
 
         # parameters for load balancing
-        nl <- length(units$index)
+        n <- length(units$index)
         .bl_size <- as.integer(.bl_size)
-        if (.bl_size * njobs > nl)
+        if (is.na(.bl_size) || (.bl_size * njobs > n))
         {
-            .bl_size <- nl %/% njobs
+            .bl_size <- n %/% njobs
             if (.bl_size <= 0L) .bl_size <- 1L
         }
-        totnum <- nl %/% .bl_size
-        if (nl %% .bl_size) totnum <- totnum + 1L
+        ntot <- as.integer(ceiling(n / .bl_size))
 
         # multiple processes
         if (.IsForking(parallel))
@@ -337,16 +337,19 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
                 parallel <- makeCluster(njobs)
             }
             # distribute the parameters to each node
-            clusterCall(parallel, function(fn, ut, vn, ss, env) {
+            clusterCall(parallel, function(fn, ut, vn, ss, env)
+            {
                 f <- SeqArray::seqOpen(fn, allow.duplicate=TRUE)
                 .PkgEnv$gdsfile <- f
+                ss <- .decompress(ss)
                 SeqArray::seqSetFilter(f, sample.sel=ss, verbose=FALSE)
                 .PkgEnv$units <- ut
                 .PkgEnv$var.name <- vn
                 .PkgEnv$envir <- env
                 invisible()
             }, fn=gdsfile$filename, ut=units$index, vn=var.name,
-                ss=.Call(SEQ_GetSpaceSample, gdsfile), env=.envir)
+                ss=.compress(.Call(SEQ_GetSpaceSample, gdsfile)),
+                env=.envir)
             # finalize
             on.exit({
                 clusterCall(parallel, function() {
@@ -362,23 +365,25 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             function(i, njobs) .init_proc(i, njobs), njobs=njobs)
 
         # progress information
-        progress <- if (.progress) .seqProgress(length(units$index), njobs) else NULL
+        progress <- if (.progress) .seqProgress(n) else NULL
+        updatefun <- if (.progress)
+            function(i) .seqProgForward(progress, .bl_size) else NULL
         # distributed for-loop
-        ans <- .DynamicClusterCall(parallel, totnum,
+        ans <- .DynamicClusterCall(parallel, ntot,
             .fun = function(i, FUN, .useraw, .bl_size, ...)
         {
             # chuck size
-            n <- .bl_size
-            k <- (i - 1L) * n
-            if (k + n > length(.PkgEnv$units))
-                n <- length(.PkgEnv$units) - k
+            b <- .bl_size
+            k <- (i - 1L) * b
+            if (k + b > length(.PkgEnv$units))
+                b <- length(.PkgEnv$units) - k
             # temporary
             f <- .PkgEnv$gdsfile
             vn <- .PkgEnv$var.name
             env <- .PkgEnv$envir
-            rv <- vector("list", n)
+            rv <- vector("list", b)
             # set variant filter for each sub unit
-            for (j in seq_len(n))
+            for (j in seq_len(b))
             {
                 seqSetFilter(f, variant.sel=.PkgEnv$units[[j+k]], verbose=FALSE)
                 x <- seqGetData(f, vn, .useraw, .padNA, .tolist, env)
@@ -387,11 +392,10 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             }
             # return
             rv
-        }, .combinefun="list",
-            .updatefun=function(i) .seqProgForward(progress, .bl_size),
+        }, .combinefun="list", .updatefun=updatefun,
             FUN=FUN, .useraw=.useraw, .bl_size=.bl_size, ...)
         ans <- unlist(ans, recursive=FALSE)
-        # finalize
+        # release progress info bar
         remove(progress)
     }
 

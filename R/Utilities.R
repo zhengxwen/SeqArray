@@ -492,8 +492,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             if (njobs > dm[2L]) cl <- cl[1L:dm[2L]]
         }
         sel <- seqGetFilter(gdsfile, .useraw=TRUE)
-        sel$sample.sel <- memCompress(sel$sample.sel, type="gzip")
-        sel$variant.sel <- memCompress(sel$variant.sel, type="gzip")
+        sel$sample.sel <- .compress(sel$sample.sel)
+        sel$variant.sel <- .compress(sel$variant.sel)
     } else {
         sel <- list(sample.sel=raw(), variant.sel=raw())
     }
@@ -549,8 +549,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
                 on.exit(seqClose(f))
                 # set filter
                 seqSetFilter(f,
-                    sample.sel = memDecompress(.sel[[1L]], type="gzip"),
-                    variant.sel = memDecompress(.sel[[2L]], type="gzip"),
+                    sample.sel = .decompress(.sel[[1L]]),
+                    variant.sel = .decompress(.sel[[2L]]),
                     verbose=FALSE)
                 .s <- .Call(SEQ_SplitSelection, f, .split, i, .cnt,
                     .selection.flag)
@@ -577,7 +577,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         # selection indexing
         v <- .prepare_balancing(gdsfile, njobs, dm, split, .bl_size)
         .bl_size <- v$bl_size
-        progress <- if (.bl_progress) .seqProgress(v$totcnt, njobs) else NULL
+        progress <- if (.bl_progress) .seqProgress(v$totcnt) else NULL
         updatefun <- if (.bl_progress)
             function(i) .seqProgForward(progress, .bl_size) else NULL
 
@@ -594,8 +594,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             .PkgEnv$process_status_fname <- st_fname
             # save internally
             .PkgEnv$gfile <- seqOpen(gdsfn, allow.duplicate=TRUE)
-            .PkgEnv$sample.sel <- memDecompress(sel[[1L]], type="gzip")
-            .PkgEnv$variant.sel <- memDecompress(sel[[2L]], type="gzip")
+            .PkgEnv$sample.sel <- .decompress(sel[[1L]])
+            .PkgEnv$variant.sel <- .decompress(sel[[2L]])
             .PkgEnv$totcnt <- totcnt
             # set filter
             seqSetFilter(.PkgEnv$gfile,
@@ -745,7 +745,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         totcnt <- v$totcnt
         nblock <- v$nblock
         remove(v)
-        progress <- if (.bl_progress) .seqProgress(totcnt, njobs) else NULL
+        progress <- if (.bl_progress) .seqProgress(totcnt) else NULL
         updatefun <- if (.bl_progress)
             function(i) .seqProgForward(progress, .bl_size) else NULL
         .sel <- seqGetFilter(gdsfile, .useraw=TRUE)
@@ -902,8 +902,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
 
                 # set filter
                 seqSetFilter(.file,
-                    sample.sel = memDecompress(.sel_sample, type="gzip"),
-                    variant.sel = memDecompress(.sel_variant, type="gzip"),
+                    sample.sel = .decompress(.sel_sample),
+                    variant.sel = .decompress(.sel_variant),
                     verbose=FALSE)
                 .ss <- .Call(SEQ_SplitSelection, .file, .split, .proc_idx,
                     .proc_cnt, .selection.flag)
@@ -913,8 +913,8 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             }
 
         },  .proc_cnt = njobs, .gds.fn = gdsfile$filename,
-            .sel_sample = memCompress(sel$sample.sel, type="gzip"),
-            .sel_variant = memCompress(sel$variant.sel, type="gzip"),
+            .sel_sample = .compress(sel$sample.sel),
+            .sel_variant = .compress(sel$variant.sel),
             .FUN = FUN, .split = split, .selection.flag=.selection.flag,
             ..., BPPARAM=cl)
 

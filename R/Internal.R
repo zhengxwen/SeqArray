@@ -368,6 +368,15 @@ process_balancing_multiple <- 3L
 
 
 #######################################################################
+# Compression and decompression in memory
+
+.compress <- function(m) memCompress(m, type="gzip")
+
+.decompress <- function(m) memDecompress(m, type="gzip")
+
+
+
+#######################################################################
 # Parallel functions
 
 # need parallel? how many? return 1 if no parallel
@@ -401,6 +410,7 @@ process_balancing_multiple <- 3L
     if (ans > 128L)  # limited by R itself
         stop("It is unable to allocate resources for more than 128 nodes.")
     # output
+    stopifnot(ans >= 1L)  # check
     ans
 }
 
