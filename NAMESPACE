@@ -43,8 +43,7 @@ importFrom(IRanges, IRanges, LogicalList, IntegerList, NumericList,
 importClassesFrom(GenomicRanges, GRanges, GRangesList)
 importFrom(GenomicRanges, GRanges)
 importMethodsFrom(GenomicRanges, granges)
-importMethodsFrom(GenomeInfoDb, seqnames, seqlevels)
-importFrom(GenomeInfoDb, renameSeqlevels)
+importMethodsFrom(Seqinfo, seqnames, seqlevels, "seqlevels<-")
 importFrom(Biostrings, DNAStringSet, DNAStringSetList)
 
 

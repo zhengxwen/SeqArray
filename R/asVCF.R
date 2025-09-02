@@ -6,13 +6,14 @@ seqAsVCF <- function(x, chr.prefix="", info=NULL, geno=NULL)
 {
     if (!requireNamespace("VariantAnnotation", quietly=TRUE, verbose=FALSE))
     {
-        stop("Please load VariantAnnotation to use this function")
+        stop("Please install VariantAnnotation to use this function")
     }
     
     stopifnot(is.character(chr.prefix), length(chr.prefix)==1L)
 
     sample.id <- seqGetData(x, "sample.id")
-    hdr <- VariantAnnotation::VCFHeader(samples=sample.id, header=SeqArray::header(x))
+    hdr <- VariantAnnotation::VCFHeader(samples=sample.id,
+        header=SeqArray::header(x))
     #hdr <- SeqArray::header(x)
 
     seqsum <- seqSummary(x, check="none", verbose=FALSE)
@@ -36,13 +37,21 @@ seqAsVCF <- function(x, chr.prefix="", info=NULL, geno=NULL)
             geno <- intersect(geno, validGeno)
         }
     }
-    vcf <- VariantAnnotation::VCF(rowRanges=SeqArray::rowRanges(x),
-                                  colData=SeqArray::colData(x),
-                                  exptData=SimpleList(header=hdr),
-                                  fixed=SeqArray::fixed(x),
-                                  info=SeqArray::info(x, info=info),
-                                  geno=SeqArray::geno(x, geno=geno))
-    if (chr.prefix != "")
-        vcf <- renameSeqlevels(vcf, paste0(chr.prefix, seqlevels(vcf)))
+    vcf <- VariantAnnotation::VCF(
+        rowRanges = SeqArray::rowRanges(x),
+        colData   = SeqArray::colData(x),
+        exptData  = SimpleList(header=hdr),
+        fixed     = SeqArray::fixed(x),
+        info      = SeqArray::info(x, info=info),
+        geno      = SeqArray::geno(x, geno=geno)
+    )
+    if (!is.na(chr.prefix) && (chr.prefix!=""))
+    {
+        chr <- seqlevels(vcf)
+        newchr <- paste0(chr.prefix, chr)
+        seqlevels(vcf) <- newchr
+    }
+
+    # return
     vcf
 }
