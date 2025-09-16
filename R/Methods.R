@@ -679,7 +679,7 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
     .progress=FALSE, ...)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass") || is.character(gdsfile))
     stopifnot(is.character(var.name), length(var.name)>0L)
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
@@ -693,12 +693,19 @@ seqBlockApply <- function(gdsfile, var.name, FUN, margin=c("by.variant"),
 
     parallel <- .McoreParallel(parallel)
     njobs <- .NumParallel(parallel)
+    if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
+        as.is <- match.arg(as.is)
     param <- list(bsize=bsize, useraw=.useraw, padNA=.padNA, tolist=.tolist,
         progress=.progress, progressfile=NULL)
 
-    if (!inherits(as.is, "connection") & !inherits(as.is, "gdsn.class"))
+    # gds file
+    if (is.character(gdsfile))
     {
-        as.is <- match.arg(as.is)
+        stopifnot(length(gdsfile)==1L)
+        if (isTRUE(.progress))
+            .cat("Open ", sQuote(basename(gdsfile)))
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
     }
 
     # get # of samples & variants

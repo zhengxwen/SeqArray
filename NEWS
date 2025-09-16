@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.49.4
+CHANGES IN VERSION 1.49.6
 -------------------------
 
 NEW FEATURES
@@ -17,6 +17,8 @@ NEW FEATURES
 UTILITIES
 
     o tweak the display of `seqGDS2BED()`
+
+    o `seqBlockApply()` allows a GDS file name in the first argument
 
 
 CHANGES IN VERSION 1.49.3
