@@ -584,7 +584,7 @@ seqApply <- function(gdsfile, var.name, FUN,
     .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, .balancing=FALSE, ...)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass") || is.character(gdsfile))
     stopifnot(is.character(var.name), length(var.name)>0L)
     FUN <- match.fun(FUN)
     margin <- match.arg(margin)
@@ -595,16 +595,25 @@ seqApply <- function(gdsfile, var.name, FUN,
         length(.progress)==1L)
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
 
+    # gds file
+    if (is.character(gdsfile))
+    {
+        stopifnot(length(gdsfile)==1L)
+        if (isTRUE(.progress))
+            .cat("Open ", sQuote(basename(gdsfile)))
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    }
+
     parallel <- .McoreParallel(parallel)
     njobs <- .NumParallel(parallel)
-
     param <- list(useraw=.useraw, list_dup=.list_dup,
         progress=isTRUE(.progress), progressfile=NULL)
     if (is.character(.progress) && njobs==1L)
     {
         param$progress <- isTRUE(attr(.progress, "verbose"))
         param$progressfile <- file(.progress, "at")
-        on.exit(close(param$progressfile))
+        on.exit(close(param$progressfile), add=TRUE)
         if (isTRUE(attr(.progress, "delete")))
             on.exit(unlink(.progress, force=TRUE), add=TRUE)
     }

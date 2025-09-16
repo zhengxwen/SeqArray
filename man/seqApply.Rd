@@ -12,7 +12,7 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
     .useraw=FALSE, .progress=FALSE, .list_dup=TRUE, .balancing=FALSE, ...)
 }
 \arguments{
-    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object or a GDS file name}
     \item{var.name}{the variable name(s), see details}
     \item{FUN}{the function to be applied}
     \item{margin}{giving the dimension which the function will be applied over;

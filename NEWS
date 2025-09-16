@@ -18,7 +18,8 @@ UTILITIES
 
     o tweak the display of `seqGDS2BED()`
 
-    o `seqBlockApply()` allows a GDS file name in the first argument
+    o `seqBlockApply()` and `seqApply()` allows a GDS file name in the first
+      argument
 
 
 CHANGES IN VERSION 1.49.3
