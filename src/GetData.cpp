@@ -1498,10 +1498,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 	int padNA = Rf_asLogical(RGetListElement(param, "padNA"));
 	if (padNA == NA_LOGICAL)
 		Rf_error("'.padNA' must be TRUE or FALSE.");
-	// .tolist
+	// .tolist (it could be NA)
 	int tolist = Rf_asLogical(RGetListElement(param, "tolist"));
-	if (tolist == NA_LOGICAL)
-		Rf_error("'.tolist' must be TRUE or FALSE.");
 	// .progress
 	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
 	if (prog_flag == NA_LOGICAL)
