@@ -23,6 +23,12 @@ UTILITIES
     o `seqBlockApply()` and `seqApply()` allows a GDS file name in the first
       argument
 
+BUG FIXES
+
+    o Previous `seqGetAF_AC_Missing()` returns the AF for the alt. alleles and
+      the AC for the ref. alleles, when a dosage GDS file is used;
+      a new 'alt' is used to specify the ref. or alt. alleles.
+
 
 CHANGES IN VERSION 1.49.3
 -------------------------

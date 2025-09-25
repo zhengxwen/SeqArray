@@ -927,7 +927,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Geno(SEXP Geno)
 	return R_NilValue;
 }
 
-/// Get MAF/MAC/missing rate from dosages
+/// Get AF/AC/missing rate from dosages
 COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_DS(SEXP DS)
 {
 	int n, m, num=0;
@@ -949,7 +949,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_DS(SEXP DS)
 	double af=R_NaN, ac=NA_REAL;
 	if (num > 0)
 	{
-		af = sum * m / (num * af_ac_miss_ploidy);
+		af = 1 - sum * m / (num * af_ac_miss_ploidy);
 		if (af_ac_miss_alt) af = 1 - af;
 		if (af_ac_miss_minor && (af > 0.5))
 			af = 1 - af;

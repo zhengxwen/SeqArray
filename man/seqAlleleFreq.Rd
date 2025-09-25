@@ -20,7 +20,10 @@ seqGetAF_AC_Missing(gdsfile, minor=FALSE, alt=FALSE, ns=FALSE,
         or a character vector; see Value}
     \item{minor}{if \code{TRUE}, return minor allele frequency/count}
     \item{alt}{if \code{TRUE} and \code{minor=FALSE}, return the frequencies
-        and counts for the alternative alleles in \code{seqGetAF_AC_Missing}}
+        and counts for the alternative alleles in \code{seqGetAF_AC_Missing};
+        otherwise, return the frequencies and counts for the reference alleles;
+        if there are more than two alleles at a site, the alternative alleles
+        will be collapsed}
     \item{ns}{if \code{TRUE}, return the numbers of samples without missing
         genotypes in the column \code{ns}, used in \code{seqGetAF_AC_Missing}}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
