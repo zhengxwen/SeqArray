@@ -14,6 +14,8 @@ NEW FEATURES
 
     o new '.balancing' in `seqApply()` and `seqBlockApply()`
 
+    o new 'alt' & 'ns' in `seqGetAF_AC_Missing()`
+
 UTILITIES
 
     o tweak the display of `seqGDS2BED()`

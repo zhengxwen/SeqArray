@@ -1143,11 +1143,13 @@ seqAlleleCount <- function(gdsfile, ref.allele=0L, minor=FALSE,
 # Get AF/MAF, AC/MAC and missing rate for variants
 #
 
-seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
-    balancing=NA, verbose=FALSE)
+seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, alt=FALSE, ns=FALSE,
+    parallel=seqGetParallel(), balancing=NA, verbose=FALSE)
 {
     # check
     stopifnot(is.logical(minor), length(minor)==1L)
+    stopifnot(is.logical(alt), length(alt)==1L)
+    stopifnot(is.logical(ns), length(ns)==1L)
     stopifnot(is.logical(balancing), length(balancing)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     parallel <- .McoreParallel(parallel)
@@ -1165,11 +1167,12 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
     }
 
     # check genotypes
+    dm <- .seldim(gdsfile)
     gv <- .has_geno(gdsfile)
     if (gv)
     {
         nm <- "genotype"
-        ploidy <- .dim(gdsfile)[1L]
+        ploidy <- dm[1L]
     } else {
         nm <- .has_dosage(gdsfile)
         ploidy <- getOption("seqarray.ploidy", 2L)
@@ -1178,21 +1181,26 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, parallel=seqGetParallel(),
 
     # calculate
     m3s <- seqParallel(parallel, gdsfile, split="by.variant", .combine="list",
-        FUN = function(f, pg, nm, pl, minor, cn)
+        FUN = function(f, pg, nm, pl, minor, alt, cn)
         {
             m3 <- matrix(0, nrow=3L, ncol=.seldim(f)[3L])
-            .cfunction3("FC_AF_AC_MISS_Init")(m3, pl, minor)
+            .cfunction4("FC_AF_AC_MISS_Init")(m3, pl, minor, alt)
             seqApply(f, nm, as.is="none", FUN=.cfunction(cn), .useraw=NA,
                 .progress=.process_verbose(pg))
             m3
         }, .balancing=balancing, .status_file=TRUE, .proc_time=verbose,
-            pg=verbose, nm=nm, pl=ploidy, minor=minor,
+            pg=verbose, nm=nm, pl=ploidy, minor=minor, alt=alt,
             cn=ifelse(gv, "FC_AF_AC_MISS_Geno", "FC_AF_AC_MISS_DS"))
 
     # merge
     if (is.list(m3s)) m3s <- do.call(cbind, m3s)
+    rv <- data.frame(af=m3s[1L,], ac=m3s[2L,], miss=m3s[3L,])
+    if (gv) rv$ac <- as.integer(rv$ac)
+    if (isTRUE(ns))
+        rv$ns <- as.integer(round(dm[2L]*(1L-rv$miss)))
+
     # output
-    data.frame(af=m3s[1L,], ac=m3s[2L,], miss=m3s[3L,])
+    rv
 }
 
 

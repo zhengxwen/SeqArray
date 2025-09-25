@@ -874,14 +874,24 @@ static double *af_ac_miss_ptr = NULL;
 static int af_ac_miss_ploidy = 0;
 // whether return minor AF/AC
 static bool af_ac_miss_minor = false;
+// whether return alternative allele
+static bool af_ac_miss_alt = false;
+
+static inline void swap(double &v1, double &v2)
+{
+	double tmp = v1;
+	v1 = v2; v2 = tmp;
+}
 
 /// Initialize maf/mac/missing internal variable
-COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Init(SEXP M_3n, SEXP ploidy, SEXP minor)
+COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Init(SEXP M_3n, SEXP ploidy,
+	SEXP minor, SEXP alt)
 {
 	af_ac_miss_ptr = REAL(M_3n);  // M_3n is a matrix with three rows
 	af_ac_miss_ploidy = Rf_asInteger(ploidy);
 	if (af_ac_miss_ploidy < 0) af_ac_miss_ploidy = 2;
 	af_ac_miss_minor = (Rf_asLogical(minor) == TRUE);
+	af_ac_miss_alt   = (Rf_asLogical(alt) == TRUE);
 	return R_NilValue;
 }
 
@@ -900,18 +910,20 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_Geno(SEXP Geno)
 	if (n > 0)
 	{
 		af = (double)n0 / n;
+		if (af_ac_miss_alt) af = 1 - af;
 		if (af_ac_miss_minor && (af > 0.5))
 			af = 1 - af;
 	}
-	af_ac_miss_ptr[0] = af;
 	// AC/MAC
 	double ac = n0, ac2 = n - n0;
+	if (af_ac_miss_alt) swap(ac, ac2);
 	if (af_ac_miss_minor && (ac > ac2)) ac = ac2;
-	af_ac_miss_ptr[1] = (n > 0) ? ac : NA_REAL;
-	// missing rate
-	af_ac_miss_ptr[2] = (double)nmiss / N;
+
+	// output
+	af_ac_miss_ptr[0] = af;  // AF or MAF
+	af_ac_miss_ptr[1] = (n > 0) ? ac : NA_REAL;  // AC or MAC
+	af_ac_miss_ptr[2] = (double)nmiss / N;  // missing rate
 	af_ac_miss_ptr += 3;
-	// output nothing
 	return R_NilValue;
 }
 
@@ -938,22 +950,21 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_AC_MISS_DS(SEXP DS)
 	if (num > 0)
 	{
 		af = sum * m / (num * af_ac_miss_ploidy);
+		if (af_ac_miss_alt) af = 1 - af;
 		if (af_ac_miss_minor && (af > 0.5))
 			af = 1 - af;
 		double totac = double(num * af_ac_miss_ploidy) / m;
+		double ac2 = sum;
 		ac = totac - sum;
-		if (af_ac_miss_minor && (ac > 0.5*totac))
-			ac = totac - ac;
+		if (af_ac_miss_alt) swap(ac, ac2);
+		if (af_ac_miss_minor && (ac > ac2)) ac = ac2;
 	}
 
-	// AF/MAF
-	af_ac_miss_ptr[0] = af;
-	// AC/MAC
-	af_ac_miss_ptr[1] = ac;
-	// missing rate
-	af_ac_miss_ptr[2] = (double)(n - num) / n;
+	// output
+	af_ac_miss_ptr[0] = af;  // AF or MAF
+	af_ac_miss_ptr[1] = ac;  // AC or MAC
+	af_ac_miss_ptr[2] = (double)(n - num) / n;  // missing rate
 	af_ac_miss_ptr += 3;
-	// output nothing
 	return R_NilValue;
 }
 
