@@ -38,18 +38,16 @@
 #######################################################################
 # Get the file name of an example
 #
-seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1"))
+seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1", "dosage"))
 {
     type <- match.arg(type)
-    switch(type,
-        gds =
-            system.file("extdata", "CEU_Exon.gds", package="SeqArray"),
-        vcf =
-            system.file("extdata", "CEU_Exon.vcf.gz", package="SeqArray"),
-        KG_Phase1 =
-            system.file("extdata", "1KG_phase1_release_v3_chr22.gds",
-                package="SeqArray")
+    fn <- switch(type,
+        gds = "CEU_Exon.gds",
+        vcf = "CEU_Exon.vcf.gz",
+        KG_Phase1 = "1KG_phase1_release_v3_chr22.gds",
+        dosage = "Imputed_dosages.gds"
     )
+    system.file("extdata", fn, package="SeqArray")
 }
 
 

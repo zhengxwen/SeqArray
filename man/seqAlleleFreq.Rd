@@ -99,6 +99,14 @@ head(v)
 
 # close the GDS file
 seqClose(f)
+
+# A GDS file with imputed dosages
+ds_fn <- seqExampleFileName("dosage")
+ds_fn
+
+str(seqGetAF_AC_Missing(ds_fn, alt=FALSE))
+str(seqGetAF_AC_Missing(ds_fn, alt=TRUE))
+str(seqGetAF_AC_Missing(ds_fn, minor=TRUE))
 }
 
 \keyword{gds}
