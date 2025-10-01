@@ -25,6 +25,9 @@ UTILITIES
     o `seqBlockApply()` and `seqApply()` allows a GDS file name in the first
       argument
 
+    o `seqGDS2VCF()` generates an indexing file (.tbi) according to the
+      vcf.gz output file, requiring the Rsamtools package
+
 BUG FIXES
 
     o Previous `seqGetAF_AC_Missing(, minor=FALSE)` returns the AF for the

@@ -27,6 +27,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     stopifnot(is.character(chr_prefix), length(chr_prefix)==1L)
     stopifnot(is.logical(use_Rsamtools), length(use_Rsamtools)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
 
     if (is.character(gdsfile))
     {
@@ -130,7 +131,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     if (verbose)
     {
-        .cat(date())
+        if (show_timeheader) .cat("##< ", .tm())
         .cat("VCF Export: ", basename(vcf.fn))
         s <- .seldim(gdsfile)
         .cat("    ", .pretty(s[2L]), " sample", .plural(s[2L]), ", ",
@@ -346,8 +347,16 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # finalize
     .Call(SEQ_ToVCF_Done)
     on.exit({
+        if (outfmt == 2L)
+        {
+            if (verbose) cat("VCF indexing ...\n")
+            Rsamtools::indexTabix(vcf.fn, format="vcf")
+        }
         if (verbose)
-            cat(date(), "    Done.\n", sep="")
+        {
+            cat("Done.\n")
+            if (show_timeheader) .cat("##> ", .tm())
+        }
     }, add=TRUE)
 
     # output
