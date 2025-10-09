@@ -69,21 +69,27 @@ associated with these variables.
 
 \code{"$dosage_alt"} returns a RAW/INTEGER matrix for the dosages of alternative
 allele without distinguishing different alternative alleles.
+\code{"$dosage_alt2"} allow the alleles are partially missing (e.g., genotypes
+on chromosome X for males)
 
 \code{"$dosage_sp"} returns a sparse matrix (dgCMatrix) for the dosages of
 alternative allele without distinguishing different alternative alleles.
+\code{"$dosage_sp2"} allow the alleles are partially missing (e.g., genotypes
+on chromosome X for males)
 
 \code{"$num_allele"} returns an integer vector with the numbers of distinct
 alleles.
 
-\code{"$ref"} returns a character vector of reference alleles
-
+\code{"$ref"} returns a character vector of reference alleles.
 \code{"$alt"} returns a character vector of alternative alleles (delimited by
-comma)
+comma).
 
 \code{"$chrom_pos"} returns characters with the combination of chromosome and
-position, e.g., "1:1272721". \code{"$chrom_pos_allele"} returns characters with
-the combination of chromosome, position and alleles, e.g., "1:1272721_A_G"
+position, e.g., "1:1272721". \code{"$chrom_pos2"} is similar to
+\code{"$chrom_pos"}, except the suffix "_1" is added to the first duplicate
+following the variant, "_2" is added to the second duplicate, and so on.
+\code{"$chrom_pos_allele"} returns characters with the combination of
+chromosome, position and alleles, e.g., "1:1272721_A_G"
 (i.e., chr:position_REF_ALT).
 
 \code{"$variant_index"} returns the indices of selected variants starting
