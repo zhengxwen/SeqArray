@@ -209,14 +209,12 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     # INFO field
     for (nm in z$info$ID)
     {
-        a <- get.attr.gdsn(index.gdsn(gdsfile,
-            paste("annotation/info/", nm, sep="")))
+        nd <- index.gdsn(gdsfile, paste0("annotation/info/", nm))
+        a <- get.attr.gdsn(nd)
         if (is.null(a$Number))
-        {
-        }
+            a$Number <- z$info$Number[which(z$info$ID == nm)]
         if (is.null(a$Type))
-        {
-        }
+            a$Type <- z$info$Type[which(z$info$ID == nm)]
         s <- sprintf("ID=%s,Number=%s,Type=%s,Description=%s",
             nm, .dquote(a$Number), .dquote(a$Type), .dquote(a$Description))
         if (!is.null(a$Source))
@@ -246,9 +244,12 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         a$VariableName, .dquote(a$Description)))
     for (nm in z$format$ID)
     {
-        a <- get.attr.gdsn(index.gdsn(gdsfile,
-            paste("annotation/format/", nm, sep="")))
-        # ToDo
+        nd <- index.gdsn(gdsfile, paste0("annotation/format/", nm))
+        a <- get.attr.gdsn(nd)
+        if (is.null(a$Number))
+            a$Number <- z$format$Number[which(z$format$ID == nm)]
+        if (is.null(a$Type))
+            a$Type <- z$format$Type[which(z$format$ID == nm)]
         txt <- c(txt, sprintf(
             "##FORMAT=<ID=%s,Number=%s,Type=%s,Description=%s>",
             nm, .dquote(a$Number), .dquote(a$Type), .dquote(a$Description)))

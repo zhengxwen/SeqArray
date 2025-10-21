@@ -44,6 +44,9 @@ BUG FIXES
       alt. alleles and the AC for the ref. alleles, when a dosage GDS file is
       used; a new 'alt' is used to specify the ref. or alt. alleles.
 
+    o Fix '##INFO=<>' in the output of `seqGDS2VCF()` when the INFO variable is
+      added by users
+
 
 CHANGES IN VERSION 1.48.0
 -------------------------
