@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.49.7
+CHANGES IN VERSION 1.50.0
 -------------------------
 
 NEW FEATURES
@@ -20,6 +20,16 @@ NEW FEATURES
 
 UTILITIES
 
+    o `seqDigest()` allows a GDS file name in the first argument
+
+    o a new option 'parallel' in `seqDigest()`
+
+    o `seqVCF2GDS()` and `seqBED2GDS()`: save the gds node 'chromosome'
+      before 'position'
+
+    o `seqAddValue(, varnm="annotation/filter", desp=...)` adds 'Description'
+      via the argument 'desp'
+
     o tweak the display of `seqGDS2BED()`
 
     o `seqBlockApply()` and `seqApply()` allows a GDS file name in the first
@@ -33,22 +43,6 @@ BUG FIXES
     o Previous `seqGetAF_AC_Missing(, minor=FALSE)` returns the AF for the
       alt. alleles and the AC for the ref. alleles, when a dosage GDS file is
       used; a new 'alt' is used to specify the ref. or alt. alleles.
-
-
-CHANGES IN VERSION 1.49.3
--------------------------
-
-UTILITIES
-
-    o `seqDigest()` allows a GDS file name in the first argument
-
-    o a new option 'parallel' in `seqDigest()`
-
-    o `seqVCF2GDS()` and `seqBED2GDS()`: save the gds node 'chromosome'
-      before 'position'
-
-    o `seqAddValue(, varnm="annotation/filter", desp=...)` adds 'Description'
-      via the argument 'desp'
 
 
 CHANGES IN VERSION 1.48.0
