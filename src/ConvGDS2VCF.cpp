@@ -30,40 +30,6 @@ using namespace std;
 namespace SeqArray
 {
 
-// double quote the text if it is needed
-static string QuoteText(const char *p)
-{
-	string rv;
-
-	rv.clear();
-	bool flag = false;
-	for (; *p != 0; p ++)
-	{
-		switch (*p)
-		{
-			case ',': case ';':
-				flag = true; rv.push_back(*p); break;
-			case '\"':
-				flag = true; rv.append("\\\""); break;
-			case '\'':
-				flag = true; rv.append("\\\'"); break;
-			case ' ':
-				flag = true; rv.push_back(' '); break;
-			default:
-				rv.push_back(*p);
-		}
-	}
-	if (flag) // add double quote
-	{
-		rv.insert(0, "\"");
-		rv.push_back('\"');
-	}
-
-	return rv;
-}
-
-
-
 // ========================================================================
 
 /// used in SEQ_OutVCF4
@@ -550,37 +516,6 @@ using namespace SeqArray;
 // ========================================================================
 // Convert to VCF4: GDS -> VCF4
 // ========================================================================
-
-/// double quote text if needed
-COREARRAY_DLL_EXPORT SEXP SEQ_Quote(SEXP text, SEXP dQuote)
-{
-	SEXP NewText, ans;
-	PROTECT(NewText = AS_CHARACTER(text));
-	PROTECT(ans = NEW_CHARACTER(Rf_length(NewText)));
-
-	for (int i=0; i < Rf_length(NewText); i++)
-	{
-		string tmp = QuoteText(CHAR(STRING_ELT(NewText, i)));
-		if (LOGICAL(dQuote)[0] == TRUE)
-		{
-			if ((tmp[0] != '\"') || (tmp[tmp.size()-1] != '\"'))
-			{
-				tmp.insert(0, "\"");
-				tmp.push_back('\"');
-			}
-		}
-		SET_STRING_ELT(ans, i, Rf_mkChar(tmp.c_str()));
-	}
-
-	UNPROTECT(2);
-	return ans;
-}
-
-
-
-
-// ========================================================================
-
 
 /// initialize
 COREARRAY_DLL_EXPORT SEXP SEQ_ToVCF_Init(SEXP SelDim, SEXP ChrPrefix, SEXP Info,

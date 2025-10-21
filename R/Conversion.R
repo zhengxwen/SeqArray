@@ -10,6 +10,18 @@
 # Create a bgzf file
 .bgzf_create <- function(fn) .Call(SEQ_bgzip_create, fn)
 
+# quote a string if it is needed
+.dquote <- function(s)
+{
+    if (length(s)==0L) return("")
+    if (length(s)>1L) s <- s[1L]
+    q <- grepl("[,;\"\' ]", s)
+    s <- gsub('\"', '\\\"', s, fixed=TRUE)
+    s <- gsub("\'", "\\\'", s, fixed=TRUE)
+    if (q) s <- paste0('"', s, '"')
+    s  # output
+}
+
 
 #######################################################################
 # Convert a SeqArray GDS file to a VCF file
@@ -70,10 +82,6 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     } else {
         if (gt) z$format <- z$format[-1L,]
     }
-
-
-    ## double quote text if needed
-    dq <- function(s, text=FALSE) .Call(SEQ_Quote, s, text)
 
 
     ######################################################
@@ -168,17 +176,17 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     # reference
     if (length(z$reference) > 0L)
-        txt <- c(txt, paste0("##reference=", z$reference[1L]))
+        txt <- c(txt, paste0("##reference=", .dquote(z$reference)))
 
     # assembly
     if (!is.null(a$vcf.assembly))
-        txt <- c(txt, paste0("##assembly=", dq(a$vcf.assembly)))
+        txt <- c(txt, paste0("##assembly=", .dquote(a$vcf.assembly)))
 
     # ALT=<ID=type,Description=description>
     for (i in seq_len(nrow(z$allele)))
     {
         s <- sprintf("##ALT=<ID=%s,Description=%s>",
-            as.character(z$allele[i,1L]), dq(z$allele[i,2L]))
+            as.character(z$allele[i,1L]), .dquote(z$allele[i,2L]))
         txt <- c(txt, s)
     }
 
@@ -192,7 +200,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         {
             s <- NULL
             for (j in seq_len(ncol(dat)))
-                s[j] <- paste(nm[j], "=", dq(dat[i,j]), sep="")
+                s[j] <- paste(nm[j], "=", .dquote(dat[i,j]), sep="")
             s <- paste(s, collapse=",")
             txt <- c(txt, paste0("##contig=<", s, ">"))
         }
@@ -203,12 +211,18 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile,
             paste("annotation/info/", nm, sep="")))
+        if (is.null(a$Number))
+        {
+        }
+        if (is.null(a$Type))
+        {
+        }
         s <- sprintf("ID=%s,Number=%s,Type=%s,Description=%s",
-            nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE))
+            nm, .dquote(a$Number), .dquote(a$Type), .dquote(a$Description))
         if (!is.null(a$Source))
-            s <- paste(s, ",Source=", dq(a$Source, TRUE), sep="")
+            s <- paste0(s, ",Source=", .dquote(a$Source))
         if (!is.null(a$Version))
-            s <- paste(s, ",Version=", dq(a$Version, TRUE), sep="")
+            s <- paste0(s, ",Version=", .dquote(a$Version))
         txt <- c(txt, paste0("##INFO=<", s, ">"))
     }
 
@@ -221,7 +235,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         for (i in seq_along(id))
         {
             txt <- c(txt, sprintf("##FILTER=<ID=%s,Description=%s>",
-                dq(id[i]), dq(dp[i], TRUE)))
+                .dquote(id[i]), .dquote(dp[i])))
         }
     }
 
@@ -229,14 +243,15 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     a <- get.attr.gdsn(index.gdsn(gdsfile, "genotype"))
     txt <- c(txt, sprintf(
         "##FORMAT=<ID=%s,Number=1,Type=String,Description=%s>",
-        a$VariableName, dq(a$Description, TRUE)))
+        a$VariableName, .dquote(a$Description)))
     for (nm in z$format$ID)
     {
         a <- get.attr.gdsn(index.gdsn(gdsfile,
             paste("annotation/format/", nm, sep="")))
+        # ToDo
         txt <- c(txt, sprintf(
             "##FORMAT=<ID=%s,Number=%s,Type=%s,Description=%s>",
-            nm, dq(a$Number), dq(a$Type), dq(a$Description, TRUE)))
+            nm, .dquote(a$Number), .dquote(a$Type), .dquote(a$Description)))
     }
 
     # others
@@ -248,7 +263,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         {
             s <- dat[i,1L]
             if (!(s %in% c("fileDate", "source")))
-                txt <- c(txt, paste0("##", s, "=", dq(dat[i,2L])))
+                txt <- c(txt, paste0("##", s, "=", .dquote(dat[i,2L])))
         }
     }
 
