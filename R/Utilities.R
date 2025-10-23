@@ -1167,8 +1167,12 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, digest=TRUE, verbose=
 # Optimize data by transposing
 #
 
+# Run-length encoding on chromosome codes
 .optim_chrom <- function(gdsfile)
 {
+    # check
+    stopifnot(inherits(gdsfile, "gds.class"))
+    # read
     n <- index.gdsn(gdsfile, "chromosome")
     readmode.gdsn(n)
     chr <- read.gdsn(n)
@@ -1179,22 +1183,36 @@ seqTranspose <- function(gdsfile, var.name, compress=NULL, digest=TRUE, verbose=
         visible=FALSE)
     moveto.gdsn(n2, n)
     moveto.gdsn(n1, n)
+    # return
     invisible()
 }
 
-seqOptimize <- function(gdsfn, target=c("chromosome", "by.sample"),
+seqOptimize <- function(gdsfile, target=c("chromosome", "by.sample"),
     format.var=TRUE, cleanup=TRUE, verbose=TRUE)
 {
     # check
-    stopifnot(is.character(gdsfn), length(gdsfn)==1L)
+    stopifnot(inherits(gdsfile, "SeqVarGDSClass") || is.character(gdsfile))
     target <- match.arg(target)
     stopifnot(is.logical(format.var) || is.character(format.var))
     stopifnot(is.logical(cleanup), length(cleanup)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
-    gdsfile <- seqOpen(gdsfn, readonly=FALSE)
-    on.exit({ seqClose(gdsfile) })
+    # the open file
+    if (is.character(gdsfile))
+    {
+        stopifnot(length(gdsfile) == 1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
+        gdsfn <- gdsfile
+        gdsfile <- seqOpen(gdsfn, readonly=FALSE)
+        on.exit(seqClose(gdsfile))
+    } else {
+        cleanup <- FALSE
+    }
+    if (gdsfile$readonly)
+        stop("'gdsfile' should not be read-only.")
 
+    # process
     if ("by.sample" %in% target)
     {
         # genotype
@@ -1206,14 +1224,13 @@ seqOptimize <- function(gdsfn, target=c("chromosome", "by.sample"),
         .Transpose(gdsfile, "phase/data", "~")
 
         # annotation - format
-        if (identical(format.var, TRUE) || is.character(format.var))
+        if (isTRUE(format.var) || is.character(format.var))
         {
             n <- index.gdsn(gdsfile, "annotation/format", silent=TRUE)
             if (!is.null(n))
             {
                 nm <- ls.gdsn(n)
-                if (identical(format.var, TRUE))
-                    format.var <- nm
+                if (isTRUE(format.var)) format.var <- nm
                 for (i in nm)
                 {
                     if (i %in% format.var)
@@ -1229,21 +1246,21 @@ seqOptimize <- function(gdsfn, target=c("chromosome", "by.sample"),
                 }
             }
         }
+
     } else if ("chromosome" %in% target)
     {
-        if (verbose)
-            cat("Adding run-length encoding for chromosome coding ...")
+        if (isTRUE(verbose))
+            cat("Adding run-length encoding for chromosomes ...")
+        # run-length encoding on chromosome codes
         .optim_chrom(gdsfile)
-        if (verbose)
-            cat(" [Done]\n")
+        if (isTRUE(verbose)) cat("  [Done]\n")
     }
 
-    if (cleanup)
+    if (isTRUE(cleanup))
     {
         on.exit()
         seqClose(gdsfile)
         cleanup.gds(gdsfn, verbose=verbose)
     }
-
     invisible()
 }

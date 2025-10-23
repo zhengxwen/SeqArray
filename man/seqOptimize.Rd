@@ -5,11 +5,11 @@
     Transpose data array or matrix for possibly higher-speed access.
 }
 \usage{
-seqOptimize(gdsfn, target=c("chromosome", "by.sample"), format.var=TRUE,
+seqOptimize(gdsfile, target=c("chromosome", "by.sample"), format.var=TRUE,
     cleanup=TRUE, verbose=TRUE)
 }
 \arguments{
-    \item{gdsfn}{the file name of GDS}
+    \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object or a GDS file name}
     \item{target}{"chromosome", "by.sample"; see details}
     \item{format.var}{a character vector for selected variable names,
         or \code{TRUE} for all variables, according to "annotation/format"}
@@ -43,12 +43,14 @@ seqOptimize(gdsfn, target=c("chromosome", "by.sample"), format.var=TRUE,
 # convert
 seqVCF2GDS(vcf.fn, "tmp.gds", storage.option="ZIP_RA")
 
-# prepare data for the SeqVarTools package
+# prepare data
 seqOptimize("tmp.gds", target="by.sample")
 
 
 # list the structure of GDS variables
-(f <- seqOpen("tmp.gds"))
+(f <- seqOpen("tmp.gds", readonly=FALSE))
+seqOptimize(f, "chromosome")
+
 # close
 seqClose(f)
 

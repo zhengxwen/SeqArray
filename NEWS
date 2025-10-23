@@ -38,6 +38,8 @@ UTILITIES
     o `seqGDS2VCF()` generates an indexing file (.tbi) according to the
       vcf.gz output file, requiring the Rsamtools package
 
+    o the first argument of `seqOptimize()` can be a SeqVarGDSClass object
+
 BUG FIXES
 
     o Previous `seqGetAF_AC_Missing(, minor=FALSE)` returns the AF for the
