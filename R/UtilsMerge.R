@@ -73,8 +73,8 @@
         need <- FALSE
         for (j in seq_along(flist))
         {
-            n <- index.gdsn(flist[[j]],
-                paste("annotation/info/", varnm[i], sep=""), silent=TRUE)
+            n <- index.gdsn(flist[[j]], paste0("annotation/info/", varnm[i]),
+                silent=TRUE)
             if (is.null(n))
             {
                 need <- TRUE
@@ -109,9 +109,11 @@
             if (!is.null(n4))
             {
                 append.gdsn(n2, n4)
+                unload.gdsn(n4)
                 if (!is.null(n5))
                 {
                     append.gdsn(n3, n5)
+                    unload.gdsn(n5)
                 } else {
                     if (!is.null(n3))
                     {

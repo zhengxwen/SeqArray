@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.50.1
+-------------------------
+
+UTILITIES
+
+    o Reduce memory usage in `seqMerge()` when there are many INFO variables
+
+
 CHANGES IN VERSION 1.50.0
 -------------------------
 
@@ -56,7 +64,7 @@ CHANGES IN VERSION 1.48.0
 NEW FEATURES
 
     o `seqAddValue()`: use bit1 for a logical vector; new argument
-      'use_float32' for storing double
+      'use_float32=FALSE' for storing double
 
     o new argument 'start' in `seqResetVariantID()`
 
