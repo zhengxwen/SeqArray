@@ -413,7 +413,8 @@ print.SeqUnitListClass <- function(x, ...) str(x, list.len=6L)
 summary.SeqUnitListClass <- function(object, ...)
 {
     .cat("# of units: ", length(object$index))
-    .cat("# of variants in total: ", .pretty(length(unique(object$index))))
+    .cat("# of variants in total: ",
+        .pretty(length(unique(unlist(object$index, use.names=FALSE)))))
     v <- lengths(object$index, use.names=FALSE)
     .cat("Avg # of variants per unit: ", mean(v))
     .cat("Median # of variants in a unit: ", median(v))
