@@ -221,7 +221,9 @@ process_balancing_multiple <- 3L
     .MergeNodeAttr(target.node, gdslist, varname)
     for (i in seq_along(gdslist))
     {
-        append.gdsn(target.node, index.gdsn(gdslist[[i]], varname))
+        nd <- index.gdsn(gdslist[[i]], varname)
+        append.gdsn(target.node, nd)
+        unload.gdsn(nd)
         if (verbose)
         {
             cat(s)
