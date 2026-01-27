@@ -1191,7 +1191,7 @@ seqOptimize <- function(gdsfile, target=c("chromosome", "by.sample"),
     format.var=TRUE, cleanup=TRUE, verbose=TRUE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass") || is.character(gdsfile))
+    stopifnot(inherits(gdsfile, "gds.class") || is.character(gdsfile))
     target <- match.arg(target)
     stopifnot(is.logical(format.var) || is.character(format.var))
     stopifnot(is.logical(cleanup), length(cleanup)==1L)
