@@ -6,7 +6,7 @@
 }
 \usage{
 seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
-    header=TRUE, use_Rsamtools=TRUE, verbose=TRUE)
+    header=TRUE, no_sample=NA, use_Rsamtools=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -22,6 +22,8 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
         default}
     \item{header}{\code{TRUE} for exporting the metadata header and the header
         line containing mandatory column names}
+    \item{no_sample}{\code{TRUE} to exclude the sample-level data and create
+        a site-only VCF file}
     \item{use_Rsamtools}{\code{TRUE} for loading the Rsamtools package, see
         details}
     \item{verbose}{if \code{TRUE}, show information}

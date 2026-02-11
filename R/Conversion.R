@@ -28,7 +28,7 @@
 #
 
 seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
-    chr_prefix="", header=TRUE, use_Rsamtools=TRUE, verbose=TRUE)
+    chr_prefix="", header=TRUE, no_sample=NA, use_Rsamtools=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
@@ -38,6 +38,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     stopifnot(is.null(fmt.var) | is.character(fmt.var))
     stopifnot(is.character(chr_prefix), length(chr_prefix)==1L)
     stopifnot(is.logical(header), length(header)==1L)
+    stopifnot(is.logical(no_sample), length(no_sample)==1L)
     stopifnot(is.logical(use_Rsamtools), length(use_Rsamtools)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
@@ -49,6 +50,16 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
             .cat("Open ", sQuote(basename(gdsfile)))
         gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
         on.exit(seqClose(gdsfile))
+        if (isTRUE(no_sample))
+            seqSetFilter(gdsfile, sample.id=character(), verbose=FALSE)
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+        if (isTRUE(no_sample))
+        {
+            seqFilterPush(gdsfile)
+            seqSetFilter(gdsfile, sample.id=character(), verbose=FALSE)
+            on.exit(seqFilterPop(gdsfile))
+        }
     }
 
     # get a summary
