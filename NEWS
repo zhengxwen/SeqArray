@@ -1,3 +1,12 @@
+CHANGES IN VERSION 1.51.1
+-------------------------
+
+NEW FEATURES
+
+    o new 'header=TRUE' in `seqGDS2VCF()` to specify whether exporting the
+      metadata header to a VCF file or not
+
+
 CHANGES IN VERSION 1.50.1
 -------------------------
 
