@@ -6,7 +6,7 @@ NEW FEATURES
     o new 'header=TRUE' in `seqGDS2VCF()` to specify whether exporting the
       metadata header to a VCF file or not
 
-    o new 'nosample=NA' in `seqGDS2VCF()` to exclude the sample-level data
+    o new 'nosample=TRUE' in `seqGDS2VCF()` to exclude the sample-level data
 
 
 CHANGES IN VERSION 1.50.1
