@@ -2,7 +2,7 @@
 //
 // Methods.cpp: the C/C++ codes for the SeqArray package
 //
-// Copyright (C) 2015-2024    Xiuwen Zheng
+// Copyright (C) 2015-2026    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -75,10 +75,11 @@ template<typename TYPE>
 		unsigned char bit_shift)
 {
 	bit_shift *= 2;  // since bit_shift is 0, 1, 2 or 3
+	const unsigned char mask = ~((0x03 << bit_shift));
 	for (size_t i=0; i < n; i++, p+=m)
 	{
 		unsigned char b = g2b(s[i]);
-		*p |= (b << bit_shift);
+		*p = (*p) & mask | (b << bit_shift);
 	}
 }
 
@@ -86,8 +87,8 @@ static void packed_geno_VxS_missing(Rbyte *p, size_t n, size_t m,
 	unsigned char bit_shift)
 {
 	bit_shift *= 2;  // since bit_shift is 0, 1, 2 or 3
-	const unsigned char b = (0x03 << bit_shift);
-	for (size_t i=0; i < n; i++, p+=m) *p |= b;
+	const unsigned char mask = (0x03 << bit_shift);
+	for (size_t i=0; i < n; i++, p+=m) *p |= mask;
 }
 
 
@@ -1109,8 +1110,9 @@ static const char *ERR_PACKED_GENO_TYPE =
 COREARRAY_DLL_EXPORT SEXP FC_InitPackedGeno(SEXP geno)
 {
 	geno_raw_ptr = RAW(geno);
-	geno_nrow = INTEGER(GET_DIM(geno))[0];
-	geno_ncol = INTEGER(GET_DIM(geno))[1];
+	const int *dm = INTEGER(GET_DIM(geno));
+	geno_nrow = dm[0];
+	geno_ncol = dm[1];
 	geno_index = 0;
 	return R_NilValue;
 }

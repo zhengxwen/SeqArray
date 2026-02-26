@@ -1218,7 +1218,16 @@ seqGetAF_AC_Missing <- function(gdsfile, minor=FALSE, alt=FALSE, ns=FALSE,
 seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L, verbose=FALSE)
 {
     # check
-    stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    if (is.character(gdsfile))
+    {
+        stopifnot(length(gdsfile)==1L)
+        if (isTRUE(verbose))
+            .cat("Open ", sQuote(basename(gdsfile)))
+        gdsfile <- seqOpen(gdsfile, allow.duplicate=TRUE)
+        on.exit(seqClose(gdsfile))
+    } else {
+        stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
+    }
     stopifnot(is.logical(samp_by_var), length(samp_by_var)==1L)
     stopifnot(is.numeric(ext_nbyte), length(ext_nbyte)==1L, ext_nbyte>=0L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
@@ -1226,7 +1235,7 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L, verbose=FALSE)
     # get gds node
     nd <- index.gdsn(gdsfile, "genotype/data", silent=TRUE)
     if (!is.null(nd))
-        varnm <- "$dosage_alt"
+        varnm <- "$dosage_alt2"
     else if (!is.null(index.gdsn(gdsfile, "annotation/format/DS", silent=TRUE)))
         varnm <- "annotation/format/DS"
     else
@@ -1236,12 +1245,13 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L, verbose=FALSE)
     dm <- .seldim(gdsfile)
     nsamp <- dm[2L]
     nvar  <- dm[3L]
+    val <- as.raw(0xFF)
     if (isTRUE(samp_by_var))
     {
-        geno <- matrix(as.raw(0xFF), nrow=ceiling(nsamp/4)+ext_nbyte, ncol=nvar)
+        geno <- matrix(val, nrow=ceiling(nsamp/4L)+ext_nbyte, ncol=nvar)
         cfunc <- .cfunction("FC_SetPackedGenoSxV")
     } else {
-        geno <- matrix(as.raw(0L), nrow=ceiling(nvar/4)+ext_nbyte, ncol=nsamp)
+        geno <- matrix(val, nrow=ceiling(nvar/4L)+ext_nbyte, ncol=nsamp)
         cfunc <- .cfunction("FC_SetPackedGenoVxS")
     }
     if (length(geno) <= 0) return(geno)
@@ -1251,12 +1261,6 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L, verbose=FALSE)
     # fill
     seqApply(gdsfile, varnm, FUN=cfunc, as.is="none", .useraw=NA,
         .progress=verbose)
-    # remainder for samp_by_var=FALSE
-    if (!isTRUE(samp_by_var))
-    {
-        n <- nrow(geno)*4L - nvar
-        for (i in seq_len(n)) cfunc(NULL)  # missing genotype
-    }
 
     # output
     geno
