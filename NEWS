@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.51.1
+CHANGES IN VERSION 1.51.2
 -------------------------
 
 NEW FEATURES
@@ -7,6 +7,9 @@ NEW FEATURES
       metadata header to a VCF file or not
 
     o new 'nosample=TRUE' in `seqGDS2VCF()` to exclude the sample-level data
+
+    o new 'SeqArray:::process_block_index' and 'SeqArray:::process_block_count'
+      used in children processes when balancing work
 
 
 CHANGES IN VERSION 1.50.1

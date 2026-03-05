@@ -79,7 +79,7 @@ template<typename TYPE>
 	for (size_t i=0; i < n; i++, p+=m)
 	{
 		unsigned char b = g2b(s[i]);
-		*p = (*p) & mask | (b << bit_shift);
+		*p = ((*p) & mask) | (b << bit_shift);
 	}
 }
 

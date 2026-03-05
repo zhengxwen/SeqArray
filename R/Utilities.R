@@ -29,6 +29,7 @@
 .onLoad <- function(lib, pkg)
 {
     .Call(SEQ_Pkg_Init, .dim_name, process_count, process_index,
+        process_block_count, process_block_index,
         .lang_eval, .List_IRanges_value)
     TRUE
 }

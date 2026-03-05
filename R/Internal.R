@@ -19,6 +19,10 @@ assign("seqarray.multicore", NULL, envir=.PkgEnv)
 process_index <- 0L
 # the number of children processes
 process_count <- 0L
+# the block index in the children process (only used in work balancing)
+process_block_index <- 0L
+# the total number of blocks in children processes (only used in work balancing)
+process_block_count <- 0L
 
 # the list of file names for the status of children processes
 # .PkgEnv$process_status_fname <- NULL

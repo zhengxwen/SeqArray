@@ -1338,6 +1338,8 @@ SEXP R_Data_ListClass = R_NilValue;
 
 int* R_Process_Index = NULL;  // the index of child process
 int* R_Process_Count = NULL;  // the number of child processes
+int* R_Process_Block_Index = NULL;  // the block index in the children process
+int* R_Process_Block_Count = NULL;  // the # of blocks in children processes
 vector<string> R_Process_StatusFName;  // list of file names for child processes
 int R_Block_Index = 0;  // the index of block being used currently
 int R_Block_Count = 0;  // the number of blocks, 0 when it is not used

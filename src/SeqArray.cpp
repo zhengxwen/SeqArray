@@ -1319,10 +1319,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetProcessBlock(SEXP blk_idx, SEXP blk_cnt)
 {
 	// block_index
 	if (!Rf_isNull(blk_idx))
+	{
 		R_Block_Index = Rf_asInteger(blk_idx);
+		if (R_Process_Block_Index)
+			*R_Process_Block_Index = R_Block_Index;
+	}
 	// block_count
 	if (!Rf_isNull(blk_cnt))
+	{
 		R_Block_Count = Rf_asInteger(blk_cnt);
+		if (R_Process_Block_Count)
+			*R_Process_Block_Count = R_Block_Count;
+	}
 	// return
 	return R_NilValue;
 }
@@ -1615,8 +1623,9 @@ extern SEXP LANG_NEW_RLE;
 extern SEXP LANG_AS_LIST;
 extern SEXP OBJ_CompressedList;
 
-COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt,
-	SEXP proc_idx, SEXP lang_eval, SEXP list_val)
+COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name,
+	SEXP proc_cnt, SEXP proc_idx, SEXP block_cnt, SEXP block_idx,
+	SEXP lang_eval, SEXP list_val)
 {
 	// .dim_name
 	R_Geno_Dim2_Name = VECTOR_ELT(dim_name, 0);
@@ -1628,6 +1637,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Pkg_Init(SEXP dim_name, SEXP proc_cnt,
 	// process_count, process_index
 	R_Process_Count = INTEGER(proc_cnt);
 	R_Process_Index = INTEGER(proc_idx);
+	// process_block_count, process_block_index
+	R_Process_Block_Count = INTEGER(block_cnt);
+	R_Process_Block_Index = INTEGER(block_idx);
 	// lang_eval
 	LANG_NEW_RLE = VECTOR_ELT(lang_eval, 0);
 	LANG_AS_LIST = VECTOR_ELT(lang_eval, 1);
@@ -1701,7 +1713,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 	static R_CallMethodDef callMethods[] =
 	{
-		CALL(SEQ_Pkg_Init, 5),
+		CALL(SEQ_Pkg_Init, 7),
 		CALL(SEQ_ExternalName0, 0),         CALL(SEQ_ExternalName1, 1),
 		CALL(SEQ_ExternalName2, 2),         CALL(SEQ_ExternalName3, 3),
 		CALL(SEQ_ExternalName4, 4),         CALL(SEQ_ExternalName5, 5),
