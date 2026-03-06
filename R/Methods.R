@@ -1273,8 +1273,14 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
     } else {
         # multicore processing
         # initialize
+        if (is.numeric(parallel) || isTRUE(parallel))
+        {
+            parallel <- makeCluster(njobs)
+            on.exit(stopCluster(parallel), add=TRUE)
+        }
         suppressWarnings(remove(geno, envir=.PkgEnv))
         on.exit(remove(geno, envir=.PkgEnv), add=TRUE)
+        # process
         if (isTRUE(samp_by_var))
         {
             # block size
