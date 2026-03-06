@@ -5,13 +5,18 @@
     Gets a RAW matrix of genotypes in a packed 2-bit format.
 }
 \usage{
-seqGet2bGeno(gdsfile, samp_by_var=TRUE, ext_nbyte=0L, verbose=FALSE)
+seqGet2bGeno(gdsfile, samp_by_var=TRUE, ext_nbyte=0L, parallel=FALSE,
+    verbose=FALSE)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object or a GDS file name}
     \item{samp_by_var}{if \code{TRUE}, return a sample-by-variant matrix;
         otherwise, return a variant-by-sample matrix}
     \item{ext_nbyte}{additional \code{ext_nbyte} row(s) with missing genotypes}
+    \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
+        processing), numeric value or other value; \code{parallel} is passed
+        to the argument \code{cl} in \code{\link{seqParallel}}, see
+        \code{\link{seqParallel}} for more details.}
     \item{verbose}{if \code{TRUE}, show progress information}
 }
 \value{
