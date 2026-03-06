@@ -1278,7 +1278,7 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
             parallel <- makeCluster(njobs)
             on.exit(stopCluster(parallel), add=TRUE)
         }
-        suppressWarnings(remove(geno, envir=.PkgEnv))
+        assign("geno", matrix(as.raw(0xFF), nrow=nr, ncol=nc), envir=.PkgEnv)
         on.exit(remove(geno, envir=.PkgEnv), add=TRUE)
         # process
         if (isTRUE(samp_by_var))
@@ -1298,11 +1298,6 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
                 list(i=process_block_index, g=g)
             }, .combine=function(x)
             {
-                if (is.null(.PkgEnv$geno))
-                {
-                    assign("geno", matrix(as.raw(0xFF), nrow=nr, ncol=nc),
-                        envir=.PkgEnv)
-                }
                 .cfunction4("FC_SetPackedGenoSubsetSxV")(.PkgEnv$geno, x$i, bs, x$g)
                 remove(x)
                 gc(FALSE, reset=TRUE)
