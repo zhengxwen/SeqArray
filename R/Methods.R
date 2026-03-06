@@ -1260,10 +1260,10 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
     if (njobs == 1L)
     {
         # sequential processing
-        geno <- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
-        if (nsamp<=0L || nvar<=0L) return(geno)
+        gm <- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
+        if (nsamp<=0L || nvar<=0L) return(gm)
         # initialize
-        .cfunction("FC_InitPackedGeno")(geno)
+        .cfunction("FC_InitPackedGeno")(gm)
         # fill
         seqApply(gdsfile, varnm,
             FUN = .cfunction(if (isTRUE(samp_by_var))
@@ -1272,37 +1272,43 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
 
     } else {
         # multicore processing
+        # initialize
+        suppressWarnings(remove(geno, envir=.PkgEnv))
+        on.exit(remove(geno, envir=.PkgEnv), add=TRUE)
         if (isTRUE(samp_by_var))
         {
-            # initialize
+            # block size
             bs <- ceiling(nvar/100L)
-            geno <- NULL
             # parallel loading
-            seqParallel(parallel, gdsfile,
-                FUN=function(gds, nr, varnm)
+            seqParallel(parallel, gdsfile, FUN=function(gds, nr, varnm)
             {
                 # initialize
                 nc <- .seldim(gds)[3L]
                 g <- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
                 .cfunction("FC_InitPackedGeno")(g)
                 seqApply(gdsfile, varnm, FUN=.cfunction("FC_SetPackedGenoSxV"),
-                    as.is="none", .useraw=NA, .progress=verbose)
+                    as.is="none", .useraw=NA)
                 # output
-                list(i=process_block_index, g)
+                list(i=process_block_index, g=g)
             }, .combine=function(x)
             {
-                if (is.null(geno))
-                    geno <<- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
-                g <- x[[2L]]
-                geno[, seq.int((x$i-1L)*bs+1L, length.out=ncol(g))] <<- g
+                if (is.null(.PkgEnv$geno))
+                {
+                    assign("geno", matrix(as.raw(0xFF), nrow=nr, ncol=nc),
+                        envir=.PkgEnv)
+                }
+                .cfunction4("FC_SetPackedGenoSubsetSxV")(.PkgEnv$geno, x$i, bs, x$g)
+                remove(x)
+                gc(FALSE, reset=TRUE)
                 NULL
             }, .balancing=TRUE, .bl_size=bs, .bl_progress=verbose,
                 nr=nr, varnm=varnm)
+            gm <- .PkgEnv$geno
         } else {
         
         }
     }
 
     # output
-    geno
+    gm
 }

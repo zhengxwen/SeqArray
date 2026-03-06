@@ -1176,4 +1176,18 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoVxS(SEXP dosage)
 	return R_NilValue;
 }
 
+/// store dosage in a 2-bit packed matrix (variant by sample)
+COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSubsetSxV(SEXP geno_out,
+	SEXP block_i, SEXP block_size, SEXP geno_sub)
+{
+	const int i_col = (Rf_asInteger(block_i) - 1) * Rf_asInteger(block_size);
+	size_t nrow = INTEGER(GET_DIM(geno_out))[0];
+	Rbyte *p = RAW(geno_out) + nrow*i_col;
+	Rbyte *s = RAW(geno_sub);
+	size_t n = Rf_xlength(geno_sub);
+	memcpy(p, s, n);
+	return R_NilValue;
+}
+
+
 } // extern "C"
