@@ -1304,12 +1304,33 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
                 NULL
             }, .balancing=TRUE, .bl_size=bs, .bl_progress=verbose,
                 nr=nr, varnm=varnm)
-            gm <- .PkgEnv$geno
         } else {
-        
+            # block size
+            bs <- ceiling(ceiling(nvar/100L)/4L) * 4L
+            # parallel loading
+            seqParallel(parallel, gdsfile, FUN=function(gds, nc, varnm)
+            {
+                # initialize
+                nr <- ceiling(.seldim(gds)[2L]/4L)
+                g <- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
+                .cfunction("FC_InitPackedGeno")(g)
+                seqApply(gdsfile, varnm, FUN=.cfunction("FC_SetPackedGenoVxS"),
+                    as.is="none", .useraw=NA)
+                # output
+                list(i=process_block_index, g=g)
+            }, .combine=function(x)
+            {
+                .cfunction4("FC_SetPackedGenoSubsetVxS")(.PkgEnv$geno, x$i, bs, x$g)
+                remove(x)
+                gc(FALSE, reset=TRUE)
+                NULL
+            }, .balancing=TRUE, .bl_size=bs, .bl_progress=verbose,
+                nc=nc, varnm=varnm)
         }
+        # output
+        gm <- .PkgEnv$geno
     }
 
-    # output
+    # return
     gm
 }

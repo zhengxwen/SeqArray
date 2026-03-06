@@ -1176,18 +1176,38 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoVxS(SEXP dosage)
 	return R_NilValue;
 }
 
-/// store dosage in a 2-bit packed matrix (variant by sample)
+/// store dosage subset in a 2-bit packed matrix (sample by variant)
 COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSubsetSxV(SEXP geno_out,
 	SEXP block_i, SEXP block_size, SEXP geno_sub)
 {
 	const int i_col = (Rf_asInteger(block_i) - 1) * Rf_asInteger(block_size);
-	size_t nrow = INTEGER(GET_DIM(geno_out))[0];
+	const size_t nrow = INTEGER(GET_DIM(geno_out))[0];
 	Rbyte *p = RAW(geno_out) + nrow*i_col;
-	Rbyte *s = RAW(geno_sub);
-	size_t n = Rf_xlength(geno_sub);
+	const Rbyte *s = RAW(geno_sub);
+	const size_t n = Rf_xlength(geno_sub);
 	memcpy(p, s, n);
 	return R_NilValue;
 }
 
+/// store dosage subset in a 2-bit packed matrix (variant by sample)
+COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSubsetVxS(SEXP geno_out,
+	SEXP block_i, SEXP block_size, SEXP geno_sub)
+{
+	const int *d1 = INTEGER(GET_DIM(geno_out));
+	const int *d2 = INTEGER(GET_DIM(geno_sub));
+	const size_t nr1 = d1[0], nc1 = d1[1];
+	const size_t nr2 = d2[0], nc2 = d2[1];
+	if (nc1 != nc2)
+		Rf_error("Internal error in FC_SetPackedGenoSubsetVxS: # of columns.");
+	const int i_row = (Rf_asInteger(block_i)-1) * Rf_asInteger(block_size) / 4;
+	Rbyte *p = RAW(geno_out) + i_row;
+	Rbyte *s = RAW(geno_sub);
+	for (size_t i=0; i < nc1; i++)
+	{
+		memcpy(p, s, nr2);
+		p += nr1; s += nr2;
+	}
+	return R_NilValue;
+}
 
 } // extern "C"
