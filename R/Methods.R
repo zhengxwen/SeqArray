@@ -1311,7 +1311,7 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
             seqParallel(parallel, gdsfile, FUN=function(gds, nc, varnm)
             {
                 # initialize
-                nr <- ceiling(.seldim(gds)[2L]/4L)
+                nr <- ceiling(.seldim(gds)[3L]/4L)
                 g <- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
                 .cfunction("FC_InitPackedGeno")(g)
                 seqApply(gdsfile, varnm, FUN=.cfunction("FC_SetPackedGenoVxS"),
