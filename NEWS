@@ -10,6 +10,8 @@ NEW FEATURES
 
     o `seqGet2bGeno()` allows a GDS file name in the first argument
 
+    o new 'parallel' in `seqGet2bGeno()` for parallel loading
+
     o new 'SeqArray:::process_block_index' and 'SeqArray:::process_block_count'
       used in children processes when balancing work
 
