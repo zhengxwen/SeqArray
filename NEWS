@@ -15,6 +15,11 @@ NEW FEATURES
     o new 'SeqArray:::process_block_index' and 'SeqArray:::process_block_count'
       used in children processes when balancing work
 
+UTILITIES
+
+    o Reduce memory usage in `seqParallel()` by avoiding the transfer of unused
+      data during work balancing in parallel
+
 
 CHANGES IN VERSION 1.50.1
 -------------------------

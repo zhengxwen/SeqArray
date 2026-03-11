@@ -394,6 +394,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 }
 
 
+####  Run with a single core  ####
+
 # run with a single core
 .run_single_core <- function(gdsfile, FUN, split, .combine, .selection.flag,
     .initialize, .finalize, .initparam, ...)
@@ -463,6 +465,104 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 }
 
 
+####  run with a cluster object  ####
+
+.fc_parallel_initializer <- function(i, njobs, st_fname, totnum, init, param)
+{
+    # load the package
+    library(SeqArray, quietly=TRUE, verbose=FALSE)
+    # export to global variables
+    .init_proc(i, njobs, st_fname)
+    .set_proc_block(0L, totnum)
+    .PkgEnv$process_status_fname <- st_fname
+    if (is.function(init)) init(i, param)
+    NULL
+}
+
+.fc_parallel_initializer_bl <- function(i, njobs, st_fname, nblock, gdsfn,
+    sel, totcnt, init, param)
+{
+    # load the package
+    library(SeqArray, quietly=TRUE, verbose=FALSE)
+    # export to global variables
+    .init_proc(i, njobs, st_fname)
+    .set_proc_block(1L, nblock)
+    .PkgEnv$process_status_fname <- st_fname
+    # save internally
+    .PkgEnv$gdsfile <- seqOpen(gdsfn, allow.duplicate=TRUE)
+    .PkgEnv$sample.sel <- .decompress(sel[[1L]])
+    .PkgEnv$variant.sel <- .decompress(sel[[2L]])
+    .PkgEnv$totcnt <- totcnt
+    # set filter
+    seqSetFilter(.PkgEnv$gdsfile,
+        sample.sel = .PkgEnv$sample.sel,
+        variant.sel = .PkgEnv$variant.sel,
+        verbose=FALSE)
+    # call
+    if (is.function(init)) init(i, param)
+    NULL
+}
+
+.fc_parallel_finalizer <- function(i, fc, param)
+{
+    if (is.function(fc)) fc(i, param)
+    if (inherits(.PkgEnv$gdsfile, "SeqVarGDSClass"))
+        seqClose(.PkgEnv$gdsfile)
+    .PkgEnv$gdsfile <- NULL
+    remove("gdsfile", envir=.PkgEnv)
+    .done_proc()
+}
+
+.fc_parallel_do <- function(i, .cnt, .gds.fn, .sel, FUN, .split,
+    .selection.flag, ...)
+{
+    # export to global variables
+    .set_proc_block(i, NULL)
+    # open the file
+    f <- seqOpen(.gds.fn, allow.duplicate=TRUE)
+    on.exit(seqClose(f))
+    # set filter
+    seqSetFilter(f,
+        sample.sel = .decompress(.sel[[1L]]),
+        variant.sel = .decompress(.sel[[2L]]),
+        verbose=FALSE)
+    s <- .Call(SEQ_SplitSelection, f, .split, i, .cnt, .selection.flag)
+    # call the user-defined function
+    if (.selection.flag) FUN(f, s, ...) else FUN(f, ...)
+}
+
+.fc_parallel_do_bl <- function(i, FUN, .split, .sel_idx, .bl_size,
+    .selection.flag, ...)
+{
+    # set the block index
+    .set_proc_block(i, NULL)
+    # set filter
+    .s <- .Call(SEQ_SplitSelectionX, .PkgEnv$gdsfile, i, .split,
+        .sel_idx, .PkgEnv$variant.sel, .PkgEnv$sample.sel,
+        .bl_size, .selection.flag, .PkgEnv$totcnt)
+    # call the user-defined function
+    if (.selection.flag)
+        FUN(.PkgEnv$gdsfile, .s, ...)
+    else
+        FUN(.PkgEnv$gdsfile, ...)
+}
+
+.fc_parallel_do_0 <- function(i, FUN, ...)
+{
+    # export to global variables
+    .set_proc_block(i, NULL)
+    # call the user-defined function
+    FUN(...)
+}
+
+.fc_parallel_do_1 <- function(i, FUN, ...)
+{
+    # export to global variables
+    .set_proc_block(i, NULL)
+    # call the user-defined function
+    FUN(i, ...)
+}
+
 # run with a cluster object
 .run_parallel_cluster <- function(cl, gdsfile, FUN, split, .combine,
     .selection.flag, .initialize, .finalize, .initparam,
@@ -502,72 +602,34 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     {
         totnum <- njobs
         if (is.numeric(gdsfile)) totnum <- as.integer(gdsfile)
+
         # initialize the cluster
-        clusterApply(cl, seq_len(njobs),
-            fun = function(i, njobs, st_fname, totnum, init, param)
-        {
-            # load the package
-            library(SeqArray, quietly=TRUE, verbose=FALSE)
-            # export to global variables
-            .init_proc(i, njobs, st_fname)
-            .set_proc_block(0L, totnum)
-            .PkgEnv$process_status_fname <- st_fname
-            if (is.function(init)) init(i, param)
-            # return none
-            NULL
-        },  njobs=njobs, st_fname=st_fname,
+        clusterApply(cl, seq_len(njobs), fun = .fc_parallel_initializer,
+            njobs=njobs, st_fname=st_fname,
             totnum = if (is.numeric(gdsfile)) totnum else 0L,
             init=.initialize, param=.initparam)
         # exit call
         on.exit({
-            clusterApply(cl, seq_len(njobs), fun = function(i, fc, param)
-            {
-                if (is.function(fc)) fc(i, param)
-                .done_proc()
-            }, fc=.finalize, param=.initparam)
+            clusterApply(cl, seq_len(njobs), fun=.fc_parallel_finalizer,
+                fc=.finalize, param=.initparam)
         }, add=TRUE)
+
         # call in parallel
         if (is.null(gdsfile))
         {
-            ans <- .DynamicClusterCall(cl, totnum, .fun = function(i, FUN, ...)
-            {
-                # export to global variables
-                .set_proc_block(i, NULL)
-                # call the user-defined function
-                FUN(...)
-            }, .combinefun=.combine, FUN = FUN, ...)
+            ans <- .DynamicClusterCall(cl, totnum, .fun = .fc_parallel_do_0,
+                .combinefun=.combine, FUN = FUN, ...)
         } else if (inherits(gdsfile, "SeqVarGDSClass"))
         {
-            ans <- .DynamicClusterCall(cl, totnum, .fun =
-                function(i, .cnt, .gds.fn, .sel, FUN, .split, .selection.flag, ...)
-            {
-                # export to global variables
-                .set_proc_block(i, NULL)
-                # open the file
-                f <- seqOpen(.gds.fn, allow.duplicate=TRUE)
-                on.exit(seqClose(f))
-                # set filter
-                seqSetFilter(f,
-                    sample.sel = .decompress(.sel[[1L]]),
-                    variant.sel = .decompress(.sel[[2L]]),
-                    verbose=FALSE)
-                .s <- .Call(SEQ_SplitSelection, f, .split, i, .cnt,
-                    .selection.flag)
-                # call the user-defined function
-                if (.selection.flag) FUN(f, .s, ...) else FUN(f, ...)
-            },  .combinefun=.combine, .cnt=totnum, .gds.fn = gdsfile$filename,
+            ans <- .DynamicClusterCall(cl, totnum, .fun = .fc_parallel_do,
+                .combinefun=.combine, .cnt=totnum, .gds.fn = gdsfile$filename,
                 .sel = sel, FUN = FUN, .split = split,
                 .selection.flag = .selection.flag, ...
             )
         } else {
             stopifnot(is.numeric(gdsfile))
-            ans <- .DynamicClusterCall(cl, totnum, .fun = function(i, FUN, ...)
-            {
-                # export to global variables
-                .set_proc_block(i, NULL)
-                # call the user-defined function
-                FUN(i, ...)
-            },  .combinefun=.combine, FUN = FUN, ...)
+            ans <- .DynamicClusterCall(cl, totnum, .fun = .fc_parallel_do_1,
+                .combinefun=.combine, FUN = FUN, ...)
         }
 
     } else {
@@ -582,62 +644,22 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 
         # initialize the cluster & distribute data
         clusterApply(cl, seq_len(njobs),
-            fun = function(i, njobs, st_fname, nblock, gdsfn, sel, totcnt,
-                init, param)
-        {
-            # load the package
-            library(SeqArray, quietly=TRUE, verbose=FALSE)
-            # export to global variables
-            .init_proc(i, njobs, st_fname)
-            .set_proc_block(1L, nblock)
-            .PkgEnv$process_status_fname <- st_fname
-            # save internally
-            .PkgEnv$gfile <- seqOpen(gdsfn, allow.duplicate=TRUE)
-            .PkgEnv$sample.sel <- .decompress(sel[[1L]])
-            .PkgEnv$variant.sel <- .decompress(sel[[2L]])
-            .PkgEnv$totcnt <- totcnt
-            # set filter
-            seqSetFilter(.PkgEnv$gfile,
-                sample.sel = .PkgEnv$sample.sel,
-                variant.sel = .PkgEnv$variant.sel,
-                verbose=FALSE)
-            # call
-            if (is.function(init)) init(i, param)
-            NULL
-        },  njobs = njobs, st_fname = st_fname, nblock = v$nblock,
+            fun = .fc_parallel_initializer_bl,
+            njobs = njobs, st_fname = st_fname, nblock = v$nblock,
             gdsfn = gdsfile$filename, sel = sel, totcnt = v$totcnt,
             init = .initialize, param = .initparam
         )
         remove(sel)
-
-        # finalize
+        # exit call
         on.exit({
-            clusterApply(cl, seq_len(njobs), fun = function(i, fc, param)
-            {
-                if (is.function(fc)) fc(i, param)
-                if (inherits(.PkgEnv$gfile, "SeqVarGDSClass"))
-                    seqClose(.PkgEnv$gfile)
-                .PkgEnv$gfile <- NULL
-                .done_proc()
-            }, fc=.finalize, param=.initparam)
+            clusterApply(cl, seq_len(njobs), fun=.fc_parallel_finalizer,
+                fc=.finalize, param=.initparam)
         })
 
         # do parallel
-        ans <- .DynamicClusterCall(cl, v$nblock, .fun =
-            function(i, FUN, .split, .sel_idx, .bl_size, .selection.flag, ...)
-        {
-            # set the block index
-            .set_proc_block(i, NULL)
-            # set filter
-            .s <- .Call(SEQ_SplitSelectionX, .PkgEnv$gfile, i, .split,
-                .sel_idx, .PkgEnv$variant.sel, .PkgEnv$sample.sel,
-                .bl_size, .selection.flag, .PkgEnv$totcnt)
-            # call the user-defined function
-            if (.selection.flag)
-                FUN(.PkgEnv$gfile, .s, ...)
-            else
-                FUN(.PkgEnv$gfile, ...)
-        }, .combinefun=.combine, .updatefun=updatefun, FUN = FUN,
+        ans <- .DynamicClusterCall(cl, v$nblock,
+            .fun = .fc_parallel_do_bl,
+            .combinefun=.combine, .updatefun=updatefun, FUN = FUN,
             .split = (split=="by.variant"), .sel_idx = v$sel_idx,
             .bl_size = .bl_size, .selection.flag = .selection.flag, ...
         )
@@ -651,6 +673,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     ans
 }
 
+
+####  Run using forking in Unix/Linux    ####
 
 # run using forking in Unix/Linux
 .run_forking <- function(njobs, gdsfile, FUN, split, .combine, .selection.flag,
