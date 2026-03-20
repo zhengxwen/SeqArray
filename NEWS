@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.51.2
+CHANGES IN VERSION 1.51.3
 -------------------------
 
 NEW FEATURES
@@ -14,6 +14,8 @@ NEW FEATURES
 
     o new 'SeqArray:::process_block_index' and 'SeqArray:::process_block_count'
       used in children processes when balancing work
+
+    o new 'ploidy' in `seqVCF2GDS()` and `seqBCF2GDS()`
 
 UTILITIES
 

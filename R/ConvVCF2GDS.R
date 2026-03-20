@@ -552,7 +552,7 @@ seqVCF_SampID <- function(vcf.fn)
 
 seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     storage.option="LZMA_RA", info.import=NULL, fmt.import=NULL,
-    genotype.var.name="GT", ignore.chr.prefix="chr",
+    genotype.var.name="GT", ploidy=NA_integer_, ignore.chr.prefix="chr",
     scenario=c("general", "imputation"), reference=NULL, start=1L, count=-1L,
     variant_count=NA_integer_, optimize=TRUE, raise.error=TRUE, digest=TRUE,
     use_Rsamtools=NA, parallel=FALSE, verbose=TRUE)
@@ -585,6 +585,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     stopifnot(is.null(info.import) | is.character(info.import))
     stopifnot(is.null(fmt.import) | is.character(fmt.import))
+    stopifnot(is.numeric(ploidy), length(ploidy)==1L)
+    if (!is.na(ploidy)) stopifnot(ploidy >= 1L)
     stopifnot(is.character(ignore.chr.prefix), length(ignore.chr.prefix)>0L)
 
     stopifnot(is.null(reference) | is.character(reference))
@@ -672,6 +674,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     # genome reference information
     reference <- as.character(unique(c(reference, header$reference)))
+    # ploidy
+    if (!is.na(ploidy)) header$ploidy <- ploidy
 
     if (verbose)
     {
@@ -1453,9 +1457,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
 seqBCF2GDS <- function(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
-    ignore.chr.prefix="chr", scenario=c("general", "imputation"),
-    reference=NULL, optimize=TRUE, raise.error=TRUE, digest=TRUE,
-    bcftools="bcftools", verbose=TRUE)
+    ploidy=NA_integer_, ignore.chr.prefix="chr",
+    scenario=c("general", "imputation"), reference=NULL, optimize=TRUE,
+    raise.error=TRUE, digest=TRUE, bcftools="bcftools", verbose=TRUE)
 {
     # check
     stopifnot(is.character(bcf.fn), length(bcf.fn)==1L)
@@ -1480,7 +1484,7 @@ seqBCF2GDS <- function(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     seqVCF2GDS(pipefile, out.fn, header=header,
         storage.option=storage.option,
         info.import=info.import, fmt.import=fmt.import,
-        genotype.var.name=genotype.var.name,
+        genotype.var.name=genotype.var.name, ploidy=ploidy,
         ignore.chr.prefix=ignore.chr.prefix, scenario=scenario,
         reference=reference, optimize=optimize, raise.error=raise.error,
         digest=digest, verbose=verbose)
