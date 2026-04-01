@@ -28,7 +28,8 @@
 #
 
 seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
-    chr_prefix="", header=TRUE, no_sample=NA, use_Rsamtools=TRUE, verbose=TRUE)
+    chr_prefix="", header=TRUE, no_sample=NA, use_Rsamtools=TRUE,
+    verbose=TRUE, verbose.progress=NA)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
@@ -41,7 +42,9 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
     stopifnot(is.logical(no_sample), length(no_sample)==1L)
     stopifnot(is.logical(use_Rsamtools), length(use_Rsamtools)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    stopifnot(is.logical(verbose.progress), length(verbose.progress)==1L)
     show_timeheader <- !isTRUE(attr(verbose, "header_no_time"))
+    if (is.na(verbose.progress)) verbose.progress <- verbose
 
     if (is.character(gdsfile))
     {
@@ -371,7 +374,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
 
     # output lines by variant
     seqApply(gdsfile, nm, margin="by.variant", as.is="none",
-        FUN=.cfunction(cfn), .useraw=NA, .progress=verbose)
+        FUN=.cfunction(cfn), .useraw=NA, .progress=isTRUE(verbose.progress))
 
     # finalize
     .Call(SEQ_ToVCF_Done)

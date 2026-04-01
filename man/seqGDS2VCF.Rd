@@ -6,7 +6,8 @@
 }
 \usage{
 seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
-    header=TRUE, no_sample=NA, use_Rsamtools=TRUE, verbose=TRUE)
+    header=TRUE, no_sample=NA, use_Rsamtools=TRUE, verbose=TRUE,
+    verbose.progress=NA)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -27,6 +28,8 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
     \item{use_Rsamtools}{\code{TRUE} for loading the Rsamtools package, see
         details}
     \item{verbose}{if \code{TRUE}, show information}
+    \item{verbose.progress}{if \code{NA}, set it to \code{verbose}; if
+        \code{TRUE}, display the progress for each variant}
 }
 \value{
     Return the file name of VCF file with an absolute path.

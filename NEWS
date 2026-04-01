@@ -1,12 +1,14 @@
-CHANGES IN VERSION 1.51.3
+CHANGES IN VERSION 1.51.4
 -------------------------
 
 NEW FEATURES
 
-    o new 'header=TRUE' in `seqGDS2VCF()` to specify whether exporting the
+    o new 'header' in `seqGDS2VCF()` to specify whether exporting the
       metadata header to a VCF file or not
 
-    o new 'nosample=TRUE' in `seqGDS2VCF()` to exclude the sample-level data
+    o set 'nosample=TRUE' in `seqGDS2VCF()` to exclude the sample-level data
+
+    o new 'verbose.progress' in `seqGDS2VCF()` to control the progress display
 
     o `seqGet2bGeno()` allows a GDS file name in the first argument
 
