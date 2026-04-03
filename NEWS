@@ -24,6 +24,8 @@ UTILITIES
     o Reduce memory usage in `seqParallel()` by avoiding the transfer of unused
       data during work balancing in parallel
 
+    o minor fix in `seqAsVCF()` when loading VariantAnnotation
+
 
 CHANGES IN VERSION 1.50.1
 -------------------------

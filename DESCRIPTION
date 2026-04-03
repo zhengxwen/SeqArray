@@ -2,8 +2,8 @@ Package: SeqArray
 Type: Package
 Title: Data management of large-scale whole-genome sequence variant calls
         using GDS files
-Version: 1.51.4
-Date: 2026-03-31
+Version: 1.51.5
+Date: 2026-04-03
 Depends: R (>= 3.5.0), gdsfmt (>= 1.31.1)
 Imports: methods, parallel, digest, S4Vectors, IRanges, GenomicRanges,
         Seqinfo, Biostrings

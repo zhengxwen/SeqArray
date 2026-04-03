@@ -4,7 +4,7 @@
 
 seqAsVCF <- function(x, chr.prefix="", info=NULL, geno=NULL)
 {
-    if (!requireNamespace("VariantAnnotation", quietly=TRUE, verbose=FALSE))
+    if (!requireNamespace("VariantAnnotation", quietly=TRUE))
     {
         stop("Please install VariantAnnotation to use this function")
     }
