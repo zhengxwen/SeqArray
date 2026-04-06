@@ -1177,8 +1177,9 @@ static SEXP get_env_R(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		if (Rf_isEnvironment(Env))
 		{
-			SEXP v = Rf_findVarInFrame(Env, Rf_install(varnm));
-			if (v != R_UnboundValue) x = v;
+			SEXP sym = Rf_install(varnm);
+			if (R_existsVarInFrame(Env, sym))
+				x = Rf_eval(sym, Env);
 		} else if (Rf_isVectorList(Env))
 			x = RGetListElement(Env, varnm);
 	}

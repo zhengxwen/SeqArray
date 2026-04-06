@@ -2,7 +2,7 @@
 //
 // Index.cpp: Indexing Objects
 //
-// Copyright (C) 2016-2025    Xiuwen Zheng
+// Copyright (C) 2016-2026    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -1270,7 +1270,7 @@ void CProgress::ShowProgress()
 				R_Process_Index && (*R_Process_Index > 1) &&
 				(vCounter < vTotalCount))
 			{
-				if (R_Process_StatusFName.size() < *R_Process_Count) return;
+				if ((int)R_Process_StatusFName.size() < *R_Process_Count) return;
 				const int idx = (*R_Process_Index) - 1;
 				for (int i=0; i < idx; i++)
 					if (file_exists(R_Process_StatusFName[i])) return;
