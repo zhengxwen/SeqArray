@@ -37,10 +37,11 @@ seqFilterPop(object)   # restore the last filter
 \arguments{
     \item{object}{a \code{\link{SeqVarGDSClass}} object}
     \item{variant.sel}{a logical/raw/index vector indicating the selected
-        variants; \code{\link{GRanges}}, a GRanges object for the genomic
-        locations; \code{\link{GRangesList}}, a GRangesList object for storing
-        a collection of GRanges objects; \code{\link{IRanges}}, a IRanges
-        object for storing a collection of range objects}
+        variants; \code{\link[GenomicRanges]{GRanges}}, a GRanges object
+        for the genomic locations; \code{\link[GenomicRanges]{GRangesList}},
+        a GRangesList object for storing a collection of GRanges objects;
+        \code{\link[IRanges]{IRanges}}, a IRanges object for storing a
+        collection of range objects}
     \item{sample.sel}{a logical/raw/index vector indicating the selected
         samples}
     \item{variant.id}{ID of selected variants}

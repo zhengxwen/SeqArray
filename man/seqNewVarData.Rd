@@ -33,7 +33,7 @@ object to a GDS file.
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{seqGetData}}, \code{\link{seqAddValue}},
-    \code{\link{IntegerList}}
+    \code{\link[IRanges]{IntegerList}}
 }
 
 \examples{

@@ -14,7 +14,7 @@ seqRecompress(gds.fn,
     \item{compress}{the compression method, \code{compress="ZIP"} by default}
     \item{exclude}{a list of GDS nodes to be excluded, see details}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE), whether adding md5 hash codes to
         the GDS file}
     \item{verbose}{if \code{TRUE}, show information}

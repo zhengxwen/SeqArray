@@ -21,7 +21,7 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE, compress="LZMA
     \item{replace}{if \code{TRUE}, replace the existing variable silently if
         possible}
     \item{compress}{the compression method can be "" (no compression), see
-        \code{\link{add.gdsn}}}
+        \code{\link[gdsfmt]{add.gdsn}}}
     \item{packed}{\code{TRUE}, pack data if there is any missing value}
     \item{packed.idx}{\code{TRUE}, store the index variable using integers with
         the fewest bits if possible}
@@ -37,7 +37,8 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE, compress="LZMA
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}, \code{\link{seqNewVarData}}
+    \code{\link{seqVCF2GDS}}, \code{\link{seqNewVarData}},
+    \code{\link[gdsfmt]{add.gdsn}}
 }
 
 \examples{

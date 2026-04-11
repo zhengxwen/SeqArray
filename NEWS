@@ -26,6 +26,8 @@ UTILITIES
 
     o minor fix in `seqAsVCF()` when loading VariantAnnotation
 
+    o fix the package anchors for all Rd \link{}
+
 
 CHANGES IN VERSION 1.50.1
 -------------------------

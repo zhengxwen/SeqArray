@@ -15,12 +15,12 @@ seqOpen(gds.fn, readonly=TRUE, allow.duplicate=FALSE)
 }
 \value{
     Return an object of class \code{SeqVarGDSClass} inherited from
-\code{\link{gds.class}}.
+\code{\link[gdsfmt]{gds.class}}.
 }
 \details{
     It is strongly suggested to call \code{seqOpen} instead of
-\code{\link{openfn.gds}}, since \code{seqOpen} will perform internal checking
-for data integrality.
+\code{\link[gdsfmt]{openfn.gds}}, since \code{seqOpen} will perform internal
+checking for data integrality.
 }
 
 \author{Xiuwen Zheng}

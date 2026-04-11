@@ -24,7 +24,7 @@ seqMerge(gds.fn, out.fn, storage.option="LZMA_RA", info.var=NULL, fmt.var=NULL,
     \item{samp.var}{characters, the variable name(s) in 'sample.annotation';
         or \code{NULL} for all variables}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
         if TRUE or a digest algorithm is specified}

@@ -59,7 +59,7 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
         is known, the conversion can skip counting the variants before
         splitting the file(s); \code{variant_count} could be an approximate}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
         \code{FALSE}: get missing value if numeric conversion fails}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",

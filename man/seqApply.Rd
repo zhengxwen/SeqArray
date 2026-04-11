@@ -19,7 +19,8 @@ seqApply(gdsfile, var.name, FUN, margin=c("by.variant", "by.sample"),
         \code{margin="by.variant"} by default}
     \item{as.is}{returned value: a list, an integer vector, etc; return nothing
         by default \code{as.is="none"}; \code{as.is} can be a
-        \code{\link{connection}} object, or a GDS node \code{\link{gdsn.class}}
+        \code{\link{connection}} object, or a GDS node
+        \code{\link[gdsfmt]{gdsn.class}}
         object; if "unlist" is used, produces a vector which contains all the
         atomic components, via \code{unlist(..., recursive=FALSE)}}
     \item{var.index}{if \code{"none"} (by default), call \code{FUN(x, ...)}

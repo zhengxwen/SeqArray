@@ -17,7 +17,8 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
     \item{FUN}{the function to be applied}
     \item{as.is}{returned value: a list, an integer vector, etc; return nothing
         by default \code{as.is="none"}; \code{as.is} can be a
-        \code{\link{connection}} object, or a GDS node \code{\link{gdsn.class}}
+        \code{\link{connection}} object, or a GDS node
+        \code{\link[gdsfmt]{gdsn.class}}
         object; if "unlist" is used, produces a vector which contains all the
         atomic components, via \code{unlist(..., recursive=FALSE)}}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore

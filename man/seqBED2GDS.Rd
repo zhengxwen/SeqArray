@@ -35,7 +35,7 @@ seqGDS2BED(gdsfile, out.fn, write.rsid=c("auto", "annot_id", "chr_pos_ref_alt"),
         \code{FALSE} for no phenotype; or a character vector to specify which
         of the family, father, mother, sex and phenotype variables to be added}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
         or a digest algorithm is specified}

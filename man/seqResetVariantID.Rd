@@ -15,7 +15,7 @@ seqResetVariantID(gds.fn, start=1L, set=NULL, digest=TRUE, optimize=TRUE,
         files, or \code{TRUE} for resetting variant.id for that GDS file}
     \item{digest}{a logical value, if TRUE, add a md5 hash code}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{

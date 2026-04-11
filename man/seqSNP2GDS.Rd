@@ -18,10 +18,10 @@ seqSNP2GDS(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
     \item{major.ref}{if TRUE, use the major allele as a reference allele;
         otherwise, use A allele in SNP GDS file as a reference allele}
     \item{ds.type}{applicable when import dosages, the data type for storing
-        dosages; see \code{\link{add.gdsn}}; \code{ds.type="packedreal16"} by
-        default}
+        dosages; see \code{\link[gdsfmt]{add.gdsn}};
+        \code{ds.type="packedreal16"} by default}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add hash codes to the GDS file if TRUE
         or a digest algorithm is specified}

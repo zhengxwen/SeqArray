@@ -30,7 +30,7 @@
 
 \description{
 	A \code{SeqVarGDSClass} object provides access to a GDS file containing
-Variant Call Format (VCF) data. It extends \code{\link{gds.class}}.
+Variant Call Format (VCF) data. It extends \code{\link[gdsfmt]{gds.class}}.
 }
 
 \details{
@@ -44,13 +44,13 @@ to create a \code{SeqVarGDSClass} object.
 	\describe{
 		\item{\code{granges(x)}}{
 				Returns the chromosome and position of variants as a
-				\code{GRanges} object.  Names correspond to the variant.id.
+				\code{\link[GenomicRanges]{GRanges}} object.  Names correspond to the variant.id.
 		}
 		\item{\code{ref(x)}}{
-				Returns the reference alleles as a \code{\link{DNAStringSet}}.
+				Returns the reference alleles as a \code{\link[Biostrings]{DNAStringSet}}.
 		}
 		\item{\code{alt(x)}}{
-			Returns the alternate alleles as a \code{\link{DNAStringSetList}}.
+			Returns the alternate alleles as a \code{\link[Biostrings]{DNAStringSetList}}.
 		}
 		\item{\code{qual(x)}}{
 			Returns the quality scores.
@@ -62,22 +62,22 @@ to create a \code{SeqVarGDSClass} object.
 			Returns the fixed fields (ref, alt, qual, filt).
 		}
 		\item{\code{header(x)}}{
-			Returns the header as a \code{\link{DataFrameList}}.
+			Returns the header as a \code{\link[IRanges]{DataFrameList}}.
 		}
 		\item{\code{rowRanges(x)}}{
-			Returns a \code{GRanges} object with metadata.
+			Returns a \code{\link[GenomicRanges]{GRanges}} object with metadata.
 		}
 		\item{\code{colData(x)}}{
-			Returns a \code{DataFrame} with sample identifiers and any
+			Returns a \code{\link[S4Vectors]{DataFrame}} with sample identifiers and any
 			information in the 'sample.annotation' node.
 		}
 		\item{\code{info(x, info=NULL)}}{
-			Returns the info fields as a \code{DataFrame}. \code{info} is a
+			Returns the info fields as a \code{\link[S4Vectors]{DataFrame}}. \code{info} is a
 			character vector with the names of fields to return (default is to
 			return all).
 		}
 		\item{\code{geno(x, geno=NULL)}}{
-			Returns the geno (format) fields as a \code{SimpleList}. \code{geno}
+			Returns the geno (format) fields as a \code{\link[S4Vectors]{SimpleList}}. \code{geno}
 			is a character vector with the names of fields to return (default
 			is to return all).
 		}
@@ -99,7 +99,7 @@ to create a \code{SeqVarGDSClass} object.
 \author{Stephanie Gogarten, Xiuwen Zheng}
 
 \seealso{
-    \code{\link{gds.class}}, \code{\link{seqOpen}}
+    \code{\link[gdsfmt]{gds.class}}, \code{\link{seqOpen}}
 }
 
 \examples{

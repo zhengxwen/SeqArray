@@ -20,7 +20,7 @@
 \details{
     If \code{object} is
     \itemize{
-        \item{\code{\link{gds.class}}, close a general GDS file}
+        \item{\code{\link[gdsfmt]{gds.class}}, close a general GDS file}
         \item{\code{\link{SeqVarGDSClass}}, close the sequence GDS file.}
     }
 }

@@ -19,7 +19,7 @@ seqExport(gdsfile, out.fn, info.var=NULL, fmt.var=NULL, samp.var=NULL,
     \item{samp.var}{characters, the variable name(s) in the folder
         \code{"sample.annotation"}}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
         if TRUE or a digest algorithm is specified}
@@ -34,7 +34,7 @@ seqExport(gdsfile, out.fn, info.var=NULL, fmt.var=NULL, samp.var=NULL,
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{seqVCF2GDS}}, \code{\link{cleanup.gds}}
+    \code{\link{seqVCF2GDS}}, \code{\link[gdsfmt]{cleanup.gds}}
 }
 
 \examples{

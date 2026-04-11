@@ -17,15 +17,15 @@ seqGDS2SNP(gdsfile, out.gdsfn, dosage=FALSE, compress.geno="LZMA_RA",
         dosage in the SeqArray file; if \code{FALSE} exports genotypes,
         otherwise exports dosages}
     \item{compress.geno}{the compression method for "genotype"; optional
-        values are defined in the function \code{add.gdsn}}
+        values are defined in the function \code{\link[gdsfmt]{add.gdsn}}}
     \item{compress.annotation}{the compression method for the GDS variables,
         except "genotype"; optional values are defined in the function
-        \code{add.gdsn}}
+        \code{\link[gdsfmt]{add.gdsn}}}
     \item{ds.type}{applicable when import dosages, the data type for storing
-        dosages; see \code{\link{add.gdsn}}; \code{ds.type="packedreal16"} by
-        default}
+        dosages; see \code{\link[gdsfmt]{add.gdsn}};
+        \code{ds.type="packedreal16"} by default}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
-        \code{\link{cleanup.gds}}}
+        \code{\link[gdsfmt]{cleanup.gds}}}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
