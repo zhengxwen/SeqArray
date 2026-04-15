@@ -113,10 +113,4 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Unit_SlidingWindows(SEXP Pos, SEXP Idx,
 	return rv_ans;
 }
 
-
-/// Apply functions over margins on a working space
-/*
-COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Unit(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho);
-*/
 }
