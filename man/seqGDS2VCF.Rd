@@ -110,7 +110,8 @@ seqGDS2VCF(f, "tmp.vcf.gz")
 
 
 # delete temporary files
-unlink(c("tmp.vcf.gz", "tmp1.vcf.gz", "tmp2.vcf.gz"))
+unlink(c("tmp.vcf.gz", "tmp.vcf.gz.tbi", "tmp1.vcf.gz", "tmp1.vcf.gz.tbi",
+    "tmp2.vcf.gz", "tmp2.vcf.gz.tbi"), force=TRUE)
 
 # close the GDS file
 seqClose(f)
