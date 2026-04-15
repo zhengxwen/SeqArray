@@ -1696,20 +1696,82 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_GetData(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_ListVarData(SEXP, SEXP);
 	extern SEXP SEQ_ConvBED2GDS(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-
 	extern SEXP SEQ_MergeAllele(SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergeGeno(SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergePhase(SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergeInfo(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_MergeFormat(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-
 	extern SEXP SEQ_BApply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_Unit_SlidingWindows(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_bgzip_create(SEXP);
-
     extern SEXP SEQ_ToVCF_Init(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
     extern SEXP SEQ_ToVCF_Done();
+	extern SEXP SEQ_ToVCF(SEXP);
+	extern SEXP SEQ_ToVCF_Di_WrtFmt(SEXP);
+	extern SEXP SEQ_ToVCF_Haploid(SEXP);
+	extern SEXP SEQ_ToVCF_NoGeno(SEXP);
+	extern SEXP SEQ_VCF_NumLines(SEXP, SEXP, SEXP);
+	extern SEXP SEQ_VCF_Split(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_VCF_Parse(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+
+	// FC_ functions from Methods.cpp
+	extern SEXP FC_Missing_PerVariant(SEXP);
+	extern SEXP FC_Missing_PerSamp(SEXP, SEXP);
+	extern SEXP FC_Missing_DS_PerSamp(SEXP, SEXP, SEXP);
+	extern SEXP FC_Missing_SampVariant(SEXP, SEXP);
+	extern SEXP FC_Missing_DS_SampVariant(SEXP, SEXP, SEXP);
+	extern SEXP FC_AF_SetIndex(SEXP, SEXP, SEXP);
+	extern SEXP FC_AF_SetAllele(SEXP, SEXP, SEXP);
+	extern SEXP FC_AF_List(SEXP);
+	extern SEXP FC_AF_Ref(SEXP);
+	extern SEXP FC_AF_DS_Ref(SEXP);
+	extern SEXP FC_AF_Index(SEXP);
+	extern SEXP FC_AF_DS_Index(SEXP);
+	extern SEXP FC_AF_Allele(SEXP);
+	extern SEXP FC_AF_DS_Allele(SEXP);
+	extern SEXP FC_AC_Ref(SEXP);
+	extern SEXP FC_AC_DS_Ref(SEXP);
+	extern SEXP FC_AC_Index(SEXP);
+	extern SEXP FC_AC_DS_Index(SEXP);
+	extern SEXP FC_AC_Allele(SEXP);
+	extern SEXP FC_AC_DS_Allele(SEXP);
+	extern SEXP FC_AlleleStr(SEXP);
+	extern SEXP FC_AlleleCount(SEXP);
+	extern SEXP FC_AF_AC_MISS_Init(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP FC_AF_AC_MISS_Geno(SEXP);
+	extern SEXP FC_AF_AC_MISS_DS(SEXP);
+	extern SEXP FC_DigestInit(SEXP);
+	extern SEXP FC_DigestDone(SEXP);
+	extern SEXP FC_DigestScan(SEXP);
+	extern SEXP FC_InitPackedGeno(SEXP);
+	extern SEXP FC_SetPackedGenoSxV(SEXP);
+	extern SEXP FC_SetPackedGenoVxS(SEXP);
+	extern SEXP FC_SetPackedGenoSubsetSxV(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP FC_SetPackedGenoSubsetVxS(SEXP, SEXP, SEXP, SEXP);
+
+	// FC_ functions from ConvToGDS.cpp
+	extern SEXP FC_GDS2BED(SEXP);
+	extern SEXP FC_SNP2GDS_Ref(SEXP);
+	extern SEXP FC_SNP2GDS(SEXP);
+	extern SEXP FC_Dosage2GDS(SEXP);
+	extern SEXP FC_GDS2SNP(SEXP);
+	extern SEXP FC_SetNumSamp(SEXP);
+	extern SEXP FC_GDS2Dosage(SEXP);
+
+	// test_ functions from pkg_test.cpp
+	extern SEXP test_array_popcnt32(SEXP);
+	extern SEXP test_array_popcnt64(SEXP, SEXP);
+	extern SEXP test_byte_count(SEXP, SEXP);
+	extern SEXP test_int8_replace(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP test_int32_count(SEXP, SEXP, SEXP);
+	extern SEXP test_i8_count(SEXP, SEXP, SEXP);
+	extern SEXP test_int32_count2(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP test_int8_count2(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP test_int32_count3(SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP test_int8_count3(SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP test_int32_replace(SEXP, SEXP, SEXP, SEXP);
+	extern SEXP test_position_index(SEXP, SEXP);
 
 	static R_CallMethodDef callMethods[] =
 	{
@@ -1733,6 +1795,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 9),
 		CALL(SEQ_GetSpace, 2),
+		CALL(SEQ_GetSpaceSample, 1),        CALL(SEQ_GetSpaceVariant, 1),
 
 		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
 
@@ -1749,14 +1812,56 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_bgzip_create, 1),
 		CALL(SEQ_ToVCF_Init, 6),            CALL(SEQ_ToVCF_Done, 0),
+		CALL(SEQ_ToVCF, 1),                 CALL(SEQ_ToVCF_Di_WrtFmt, 1),
+		CALL(SEQ_ToVCF_Haploid, 1),         CALL(SEQ_ToVCF_NoGeno, 1),
+		CALL(SEQ_VCF_NumLines, 3),          CALL(SEQ_VCF_Split, 4),
+		CALL(SEQ_VCF_Parse, 6),
 		CALL(SEQ_SecToTime, 1),
 
 		CALL(SEQ_Progress, 2),              CALL(SEQ_ProgressAdd, 2),
+		CALL(SEQ_Debug, 1),
+
+		// FC_ functions from Methods.cpp
+		CALL(FC_Missing_PerVariant, 1),     CALL(FC_Missing_PerSamp, 2),
+		CALL(FC_Missing_DS_PerSamp, 3),     CALL(FC_Missing_SampVariant, 2),
+		CALL(FC_Missing_DS_SampVariant, 3),
+		CALL(FC_AF_SetIndex, 3),            CALL(FC_AF_SetAllele, 3),
+		CALL(FC_AF_List, 1),                CALL(FC_AF_Ref, 1),
+		CALL(FC_AF_DS_Ref, 1),              CALL(FC_AF_Index, 1),
+		CALL(FC_AF_DS_Index, 1),            CALL(FC_AF_Allele, 1),
+		CALL(FC_AF_DS_Allele, 1),
+		CALL(FC_AC_Ref, 1),                 CALL(FC_AC_DS_Ref, 1),
+		CALL(FC_AC_Index, 1),               CALL(FC_AC_DS_Index, 1),
+		CALL(FC_AC_Allele, 1),              CALL(FC_AC_DS_Allele, 1),
+		CALL(FC_AlleleStr, 1),              CALL(FC_AlleleCount, 1),
+		CALL(FC_AF_AC_MISS_Init, 4),        CALL(FC_AF_AC_MISS_Geno, 1),
+		CALL(FC_AF_AC_MISS_DS, 1),
+		CALL(FC_DigestInit, 1),             CALL(FC_DigestDone, 1),
+		CALL(FC_DigestScan, 1),
+		CALL(FC_InitPackedGeno, 1),         CALL(FC_SetPackedGenoSxV, 1),
+		CALL(FC_SetPackedGenoVxS, 1),
+		CALL(FC_SetPackedGenoSubsetSxV, 4), CALL(FC_SetPackedGenoSubsetVxS, 4),
+
+		// FC_ functions from ConvToGDS.cpp
+		CALL(FC_GDS2BED, 1),                CALL(FC_SNP2GDS_Ref, 1),
+		CALL(FC_SNP2GDS, 1),                CALL(FC_Dosage2GDS, 1),
+		CALL(FC_GDS2SNP, 1),                CALL(FC_SetNumSamp, 1),
+		CALL(FC_GDS2Dosage, 1),
+
+		// test_ functions from pkg_test.cpp
+		CALL(test_array_popcnt32, 1),       CALL(test_array_popcnt64, 2),
+		CALL(test_byte_count, 2),           CALL(test_int8_replace, 4),
+		CALL(test_int32_count, 3),          CALL(test_i8_count, 3),
+		CALL(test_int32_count2, 4),         CALL(test_int8_count2, 4),
+		CALL(test_int32_count3, 5),         CALL(test_int8_count3, 5),
+		CALL(test_int32_replace, 4),        CALL(test_position_index, 2),
 
 		{ NULL, NULL, 0 }
 	};
 
 	R_registerRoutines(info, NULL, callMethods, NULL, NULL);
+	R_useDynamicSymbols(info, FALSE);
+
 	Register_SNPRelate_Functions();
 	Init_GDS_Routines();
 }
