@@ -343,55 +343,56 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     stopifnot(is.logical(ret.idx), length(ret.idx)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
-    # user-defined set
-    d0 <- data.frame(
-        chr=if (length(chr)==1L) rep(chr, length(pos)) else chr,
-        pos=pos, stringsAsFactors=FALSE)
-    if (ret.idx) d0$i0 <- seq_along(pos)
+    # input set
+    d0 <- data.frame(pos=pos, i0=seq_along(pos), stringsAsFactors=FALSE)
+    chr_lst <- unique(chr)
 
-    # set filter on chromosome first
-    # need reset the fitler on variants?
-    seqSetFilterChrom(object, chr, intersect=intersect, verbose=FALSE)
-
-    # gds variant set
-    d1 <- data.frame(
-        chr=seqGetData(object, "chromosome"),
-        pos=seqGetData(object, "position"),
-        i1=seqGetData(object, "$variant_index"), stringsAsFactors=FALSE)
+    # for-loop each chromosome
+    dd <- lapply(chr_lst, function(chr1)
+    {
+        # set filter on chromosome first
+        seqSetFilterChrom(object, chr1, intersect=intersect, verbose=FALSE)
+        # gds variant set
+        d1 <- data.frame(
+            pos=seqGetData(object, "position"),
+            i1=seqGetData(object, "$variant_index"), stringsAsFactors=FALSE)
+        # match
+        if (length(chr_lst) > 1L) d00 <- d0[chr==chr1, ] else d00 <- d0
+        d <- merge(d00, d1, all.x=TRUE, sort=FALSE)
+        # output
+        data.frame(i0=d$i0, i1=d$i1)
+    })
+    dd <- Reduce(rbind, dd)
+    if (isTRUE(ret.idx) && length(chr_lst)>1L) dd <- dd[order(dd$i0), ]
 
     if (has_ref_alt)
     {
-        # set filter on chromosomes and positions first
-        d <- merge(d0, d1, sort=FALSE)
-        seqSetFilter(object, variant.sel=d$i1, warn=FALSE, verbose=FALSE)
-        d1 <- data.frame(
-            chr=seqGetData(object, "chromosome"),
-            pos=seqGetData(object, "position"),
-            i1=seqGetData(object, "$variant_index"), stringsAsFactors=FALSE)
-        # then on alleles
-        d0$allele <- paste0(ref, ",", alt)
-        d1$allele <- seqGetData(object, "allele")
+        # set the filter
+        ii <- seqSetFilter(object, variant.sel=dd$i1, warn=FALSE, ret.idx=TRUE,
+            verbose=FALSE)$variant_idx
+        r <- seqGetData(object, "$ref")[ii]
+        a <- seqGetData(object, "$alt")[ii]
+        ref <- ref[dd$i0]
+        alt <- alt[dd$i0]
+        z <- (is.na(ref) | (ref==r)) & (is.na(alt) | (alt==a))
+        dd$i1[!z] <- NA_integer_
     }
-
-    # match
-    d <- merge(d0, d1, all.x=TRUE, sort=FALSE)
 
     # output
     if (!isFALSE(multi.pos))
     {
-        # multi.pos = TRUE
-        i1 <- d$i1
-        seqSetFilter(object, variant.sel=i1, warn=FALSE, verbose=verbose)
-        if (ret.idx)
+        # multi.pos = TRUE or NA
+        seqSetFilter(object, variant.sel=dd$i1, warn=FALSE, verbose=verbose)
+        if (isTRUE(ret.idx))
         {
-            if (nrow(d) <= nrow(d0))
+            if (nrow(dd) <= nrow(d0))
             {
-                # no duplicated d$i0
-                i1 <- i1[order(d$i0)]
+                # no duplicated dd$i0
+                i1 <- dd$i1
             } else {
-                # find the smallest d$i1 (the first variant in GDS)
-                j <- order(d$i0, d$i1)
-                i1 <- d$i1[j][!duplicated(d$i0[j])]
+                # find the smallest dd$i1 (the first variant in GDS)
+                j <- order(dd$i0, dd$i1)
+                i1 <- dd$i1[j][!duplicated(dd$i0[j])]
             }
             match(i1, seqGetData(object, "$variant_index"))
         } else {
@@ -399,23 +400,22 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
         }
     } else {
         # multi.pos = FALSE
-        if (ret.idx)
+        if (isTRUE(ret.idx))
         {
-            j <- order(d$i0, d$i1)
-            j <- j[!duplicated(d$i0[j])]
-            i <- d$i1[j]
+            j <- order(dd$i0, dd$i1)
+            j <- j[!duplicated(dd$i0[j])]
+            i <- dd$i1[j]
             seqSetFilter(object, variant.sel=i, warn=FALSE, verbose=verbose)
             match(i, seqGetData(object, "$variant_index"))
         } else {
-            i <- d$i1
+            i <- dd$i1
             j <- order(i)
-            i <- i[j[!duplicated(d$i0[j])]]
+            i <- i[j[!duplicated(dd$i0[j])]]
             seqSetFilter(object, variant.sel=i, warn=FALSE, verbose=verbose)
             invisible()
         }
     }
 }
-
 
 
 #######################################################################

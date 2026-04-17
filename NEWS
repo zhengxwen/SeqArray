@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.51.4
+CHANGES IN VERSION 1.52.0
 -------------------------
 
 NEW FEATURES
@@ -27,6 +27,8 @@ UTILITIES
     o minor fix in `seqAsVCF()` when loading VariantAnnotation
 
     o fix the package anchors for all Rd \link{}
+
+    o Updated `seqSetFilterPos()` is significantly faster than the old version
 
 
 CHANGES IN VERSION 1.50.1

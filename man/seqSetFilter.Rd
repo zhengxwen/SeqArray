@@ -217,6 +217,18 @@ seqSetFilterChrom(f, 6, from.bp=29719561, to.bp=32883508)  # MHC
 seqSetFilterChrom(f, include=6, intersect=TRUE)  # MHC region only
 
 
+## set filter by position
+seqSetFilterPos(f, chr=c(5,14,19,19,1,20),
+    pos=c(7945937,93982552,57310283,42747452,158593598,52208935))
+as.data.frame(seqGetData(f, c("chromosome", "position", "allele")))
+
+seqSetFilterPos(f, chr=c(5,14,19,19,1,20),
+    pos=c(7945937,93982552,57310283,42747452,158593598,52208935),
+    ref=c("C","G","G","G","T","C"), alt=c("T","A","A","A","C","T"),
+    ret.idx=TRUE)
+# NA  1 NA NA NA  2  (NA for ref/alt not matched)
+as.data.frame(seqGetData(f, c("chromosome", "position", "allele")))
+
 
 # close the GDS file
 seqClose(f)
