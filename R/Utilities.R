@@ -130,7 +130,10 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
                 if (cl <= 1L) cl <- 2L
                 cluster <- setup(cl)
                 if (verbose)
-                    cat("Enable the computing cluster with", cl, "R processes.\n")
+                {
+                    cat("Enable the computing cluster with", cl,
+                        "R processes.\n")
+                }
             } else {
                 if (verbose) cat("No computing cluster.\n")
             }
@@ -142,7 +145,10 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
                 cl <- cluster
                 cluster <- setup(cluster)
                 if (verbose)
-                    cat("Enable the computing cluster with", cl, "R processes.\n")
+                {
+                    cat("Enable the computing cluster with", cl,
+                        "R processes.\n")
+                }
             }
         }
     } else {
@@ -152,14 +158,20 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
             n <- detectCores() - 1L
             if (n <= 1L) n <- 2L
             if (verbose)
-                cat("Enable the computing cluster with", n, "forked R processes.\n")
+            {
+                cat("Enable the computing cluster with", n,
+                    "forked R processes.\n")
+            }
         } else if (is.numeric(cluster))
         {
             stopifnot(length(cluster) == 1L)
             if (cluster > 1L)
             {
                 if (verbose)
-                    cat("Enable the computing cluster with", cluster, "forked R processes.\n")
+                {
+                    cat("Enable the computing cluster with", cluster,
+                        "forked R processes.\n")
+                }
             }
         }
     }
@@ -1140,7 +1152,8 @@ seqDelete <- function(gdsfile, info.var=character(), fmt.var=character(),
 }
 
 
-seqTranspose <- function(gdsfile, var.name, compress=NULL, digest=TRUE, verbose=TRUE)
+seqTranspose <- function(gdsfile, var.name, compress=NULL, digest=TRUE,
+    verbose=TRUE)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -1221,17 +1234,19 @@ seqOptimize <- function(gdsfile, target=c("chromosome", "by.sample"),
     stopifnot(is.logical(format.var) || is.character(format.var))
     stopifnot(is.logical(cleanup), length(cleanup)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    if (is.na(verbose)) verbose <- FALSE
 
     # the open file
     if (is.character(gdsfile))
     {
         stopifnot(length(gdsfile) == 1L)
-        if (isTRUE(verbose))
+        if (verbose)
             .cat("Open ", sQuote(basename(gdsfile)))
         gdsfn <- gdsfile
         gdsfile <- seqOpen(gdsfn, readonly=FALSE)
         on.exit(seqClose(gdsfile))
     } else {
+        # do not call cleanup.gds
         cleanup <- FALSE
     }
     if (gdsfile$readonly)
@@ -1274,11 +1289,11 @@ seqOptimize <- function(gdsfile, target=c("chromosome", "by.sample"),
 
     } else if ("chromosome" %in% target)
     {
-        if (isTRUE(verbose))
+        if (verbose)
             cat("Adding run-length encoding for chromosomes ...")
         # run-length encoding on chromosome codes
         .optim_chrom(gdsfile)
-        if (isTRUE(verbose)) cat("  [Done]\n")
+        if (verbose) cat("  [Done]\n")
     }
 
     if (isTRUE(cleanup))
