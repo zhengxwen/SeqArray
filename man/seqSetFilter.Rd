@@ -80,8 +80,14 @@ seqFilterPop(object)   # restore the last filter
         selection are all samples/variants (by default); if \code{TRUE}, the
         candidate samples/variants are from the selected samples/variants
         defined via the previous call}
-    \item{ref}{the reference alleles}
-    \item{alt}{the alternative alleles}
+    \item{ref}{a character vector of reference alleles for additional
+        matching, or \code{NULL} (no reference allele filter); the length
+        should be the same as \code{pos}, and \code{NA} for entries that
+        match any reference allele. Must be used together with \code{alt}}
+    \item{alt}{a character vector of alternative alleles for additional
+        matching, or \code{NULL} (no alternative allele filter); the length
+        should be the same as \code{pos}, and \code{NA} for entries that
+        match any alternative allele. Must be used together with \code{ref}}
     \item{multi.pos}{\code{FALSE}, use the first matched position;
         \code{TRUE}, allow multiple variants at the same position}
     \item{id}{a character vector for RS IDs (stored in \code{"annotation/id"})}
