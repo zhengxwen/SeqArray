@@ -41,7 +41,7 @@ the export.
     If the filename extension is "gz" or "bgz", the gzip compression algorithm
 will be used to compress the output data. When the Rsamtools package is
 installed and \code{use_Rsamtools=TRUE}, the exported file utilizes the bgzf
-format (\link[Rsamtools:zip]{bgzip}, a variant of gzip format) allowing for
+format (\link[Rsamtools]{bgzip}, a variant of gzip format) allowing for
 fast indexing. \code{bzfile} or \code{xzfile} will be used, if the filename
 extension is "bz" or "xz".
 }
