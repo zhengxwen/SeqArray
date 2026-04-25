@@ -2,7 +2,7 @@
 //
 // ReadBySample.cpp: Read data sample by sample
 //
-// Copyright (C) 2015-2024    Xiuwen Zheng
+// Copyright (C) 2015-2026    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -394,7 +394,13 @@ void CVarApplyBySample::ReadData(SEXP Val)
 
 SEXP CVarApplyBySample::NeedRData(int &nProtected)
 {
-	map<size_t, SEXP>::iterator it = VarList.find(CellCount);
+	// For genotypes, ReadGenoData() bit-packs multiallelic alleles into
+	// DLen[2]*Num_Variant output elements; CellCount is larger when
+	// multiallelic variants are present (used only for GENO_BUFFER).
+	const size_t outLen = (fVarType == ctGenotype) ?
+		(size_t)DLen[2] * Num_Variant : CellCount;
+
+	map<size_t, SEXP>::iterator it = VarList.find(outLen);
 	if (it == VarList.end())
 	{
 		SEXP ans = R_NilValue, dim;
@@ -403,9 +409,9 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 			if (fVarType == ctGenotype)
 			{
 				if (UseRaw)
-					PROTECT(ans = NEW_RAW(CellCount));
+					PROTECT(ans = NEW_RAW(outLen));
 				else
-					PROTECT(ans = NEW_INTEGER(CellCount));
+					PROTECT(ans = NEW_INTEGER(outLen));
 				nProtected ++;
 			} else {
 				char classname[32];
@@ -413,23 +419,23 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 				GDS_Node_GetClassName(Node, classname, sizeof(classname));
 				if (strcmp(classname, "dBit1") == 0)
 				{
-					PROTECT(ans = NEW_LOGICAL(CellCount));
+					PROTECT(ans = NEW_LOGICAL(outLen));
 				} else if (GDS_R_Is_Logical(Node))
 				{
-					PROTECT(ans = NEW_LOGICAL(CellCount));
+					PROTECT(ans = NEW_LOGICAL(outLen));
 				} else {
-					PROTECT(ans = NEW_INTEGER(CellCount));
+					PROTECT(ans = NEW_INTEGER(outLen));
 					nProtected += GDS_R_Set_IfFactor(Node, ans);
 				}
 				nProtected ++;
 			}
 		} else if (COREARRAY_SV_FLOAT(SVType))
 		{
-			PROTECT(ans = NEW_NUMERIC(CellCount));
+			PROTECT(ans = NEW_NUMERIC(outLen));
 			nProtected ++;
 		} else if (COREARRAY_SV_STRING(SVType))
 		{
-			PROTECT(ans = NEW_CHARACTER(CellCount));
+			PROTECT(ans = NEW_CHARACTER(outLen));
 			nProtected ++;
 		}
 
@@ -455,7 +461,7 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 			if (DimCnt > 2)  // DimCnt = 2 or 3 only
 			{
 				p = INTEGER(dim = NEW_INTEGER(2));
-				p[0] = DLen[2]; p[1] = CellCount / DLen[2];
+				p[0] = DLen[2]; p[1] = outLen / DLen[2];
 				SET_DIM(ans, dim);
 			}
 			break;
@@ -464,7 +470,7 @@ SEXP CVarApplyBySample::NeedRData(int &nProtected)
 			break;
 		}
 
-		VarList.insert(pair<size_t, SEXP>(CellCount, ans));
+		VarList.insert(pair<size_t, SEXP>(outLen, ans));
 		return ans;
 	} else
 		return it->second;

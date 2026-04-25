@@ -30,6 +30,11 @@ UTILITIES
 
     o Updated `seqSetFilterPos()` is significantly faster than the old version
 
+BUG FIXES
+
+    o fix `seqApply(..., margin="by.sample")` dimension mismatch error when
+      multiallelic variants are present
+
 
 CHANGES IN VERSION 1.50.1
 -------------------------
