@@ -102,12 +102,13 @@
     if (verbose)
     {
         cat(paste(c("Ploidy:", "Number of samples:", "Number of variants:"),
-            .pretty(ans$dim)), sep="\n")
+                .pretty(ans$dim)), sep="\n")
         if (showsel)
         {
-            cat(paste(c("Number of selected samples:",
+            cat(paste(c(
+                "Number of selected samples:",
                 "Number of selected variants:"), .pretty(ans$seldim[-1L])),
-                sep="\n")
+            sep="\n")
         }
     }
     if (check == "full")
@@ -126,7 +127,8 @@
     ans <- .Call(SEQ_Summary, gdsfile, "phase")
     if (verbose)
     {
-        cat(paste(c("Ploidy:", "Number of samples:", "Number of variants:",
+        cat(paste(c(
+            "Ploidy:", "Number of samples:", "Number of variants:",
             "Number of selected samples:", "Number of selected variants:"),
             c(ans$dim, ans$seldim)), sep="\n")
     }
@@ -947,13 +949,15 @@ seqCheck <- function(gdsfile, verbose=TRUE)
         cat("Hash check:\n")
     nm_lst <- ls.gdsn(gdsfile, include.hidden=TRUE, recursive=TRUE,
         include.dirs=FALSE)
-    s <- sapply(nm_lst, function(nm) {
+    s <- sapply(nm_lst, function(nm)
+        {
             ns <- names(get.attr.gdsn(index.gdsn(gdsfile, nm)))
             any(ns %in% c("md5", "sha1", "sha256", "sha384", "sha512"))
         })
     nm_lst <- nm_lst[s]
     ans$hash <- data.frame(
-        algo = sapply(nm_lst, function(nm) {
+        algo = sapply(nm_lst, function(nm)
+        {
             paste(intersect(c("md5", "sha1", "sha256", "sha384", "sha512"),
                 names(get.attr.gdsn(index.gdsn(gdsfile, nm)))), collapse=",")
         }),
@@ -980,7 +984,7 @@ seqCheck <- function(gdsfile, verbose=TRUE)
             if (dat$ok)
                 cat("\t[OK]\n")
             else
-                cat("\t", .crayon_inverse(paste("[Error]", dat$info)), "\n", sep="")
+                .cat("\t", .crayon_inverse(paste("[Error]", dat$info)))
         }
         invisible()
     }
@@ -1007,7 +1011,7 @@ seqCheck <- function(gdsfile, verbose=TRUE)
     for (nm in lst.info)
     {
         addtab(.check_info_dim(gdsfile, paste0("annotation/info/", nm),
-            nVariant, verbose))
+                nVariant, verbose))
     }
 
     ans$dimension <- tab

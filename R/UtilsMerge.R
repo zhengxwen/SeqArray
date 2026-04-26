@@ -38,8 +38,8 @@
     dm <- objdesp.gdsn(n)$dim
     if (length(dm)!=1L || nVariant!=dm)
     {
-        stop(sprintf("Invalid number of variants in '%s' (%s).", varnm,
-            paste(dm, collapse="x")))
+        stop(sprintf("Invalid number of variants in '%s' (%s).",
+                varnm, paste(dm, collapse="x")))
     }
     n
 }
@@ -325,7 +325,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
             nVariant <- nVariant + objdesp.gdsn(index.gdsn(f, "variant.id"))$dim
         }
     } else {
-        variant.id <- variant2.id <- seqGetData(flist[[1L]], "$chrom_pos_allele")
+        variant.id <- variant2.id <-
+            seqGetData(flist[[1L]], "$chrom_pos_allele")
         if (verbose)
         {
             cat(sprintf("    [%-2d] %s (%s variant%s)\n", 1L, basename(gds.fn[1L]),
@@ -519,8 +520,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
                     assign.gdsn(n2, n4, seldim=s, append=TRUE,
                         .value=NA_integer_, .substitute=0)
                 }
-                geno_idx <- c(geno_idx, read.gdsn(index.gdsn(flist[[i]],
-                    "genotype/@data")))
+                geno_idx <- c(geno_idx,
+                    read.gdsn(index.gdsn(flist[[i]], "genotype/@data")))
                 if (geno.pad && i<length(flist) && ploidy==2L)
                 {
                     if (prod(objdesp.gdsn(n1)$dim) %% 4L)
@@ -595,8 +596,8 @@ seqMerge <- function(gds.fn, out.fn, storage.option="LZMA_RA",
         dp <- NULL; v <- NULL
         for (i in seq_along(flist))
         {
-            dp <- rbind(dp, seqSummary(flist[[i]], "$filter", check="none",
-                verbose=FALSE))
+            dp <- rbind(dp,
+                seqSummary(flist[[i]], "$filter", check="none", verbose=FALSE))
             a <- seqGetData(flist[[i]], nm)
             if (is.factor(a)) a <- as.character(a)
             v <- c(v, a)

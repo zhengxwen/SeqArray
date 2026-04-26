@@ -276,7 +276,8 @@ process_balancing_multiple <- 3L
 
 
 #######################################################################
-# Get or clear the memory buffer storing variant positions (return pointer or NULL)
+# Get or clear the memory buffer storing variant positions
+# (return pointer or NULL)
 #
 .buffer_position <- function(gdsfile, clear=FALSE)
 {
@@ -300,8 +301,8 @@ process_balancing_multiple <- 3L
     con2 <- NULL
     fmt <- ""
 
-    if ((substr(filename, 1L, 6L) == "ftp://") |
-        (substr(filename, 1L, 7L) == "http://"))
+    if ((substr(filename, 1L, 6L) == "ftp://") ||
+            (substr(filename, 1L, 7L) == "http://"))
     {
         if (.last_str(filename, 3L) == ".gz")
         {
@@ -331,8 +332,8 @@ process_balancing_multiple <- 3L
     stopifnot(is.character(filename))
     con2 <- NULL
 
-    if ((substr(filename, 1L, 6L) == "ftp://") |
-        (substr(filename, 1L, 7L) == "http://"))
+    if ((substr(filename, 1L, 6L) == "ftp://") ||
+            (substr(filename, 1L, 7L) == "http://"))
     {
         if (.last_str(filename, 3L) == ".gz")
         {
@@ -661,8 +662,8 @@ process_balancing_multiple <- 3L
         ans <- NULL
 
     jobs <- lapply(seq_len(min(.num, ncore)), function(i)
-        parallel::mcparallel(.fun(i, i, ...), name=NULL, mc.set.seed=TRUE,
-            silent=FALSE))
+            parallel::mcparallel(.fun(i, i, ...), name=NULL,
+                mc.set.seed=TRUE, silent=FALSE))
     jobsp <- .mc_processID(jobs)
     jobid <- seq_along(jobsp)
     has.errors <- 0L

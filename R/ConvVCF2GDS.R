@@ -165,7 +165,8 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
                     s <- readLines(infile, n=1L)
                     if (length(s) > 0L)
                     {
-                        ss <- scan(text=s, what=character(), sep="\t", quiet=TRUE)
+                        ss <- scan(text=s, what=character(), sep="\t",
+                            quiet=TRUE)
                         geno.text <- c(geno.text, ss[-seq_len(9L)])
                     }
                     if (isTRUE(getnum))
@@ -174,7 +175,10 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
                         if (njobs > 1L)
                         {
                             if (is.na(use_Rsamtools))
-                                use_Rsamtools <- requireNamespace("Rsamtools", quietly=TRUE)
+                            {
+                                use_Rsamtools <-
+                                    requireNamespace("Rsamtools", quietly=TRUE)
+                            }
                             if (use_Rsamtools) call_count_vcf <- TRUE
                         }
                         if (call_count_vcf)
@@ -192,10 +196,10 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
             if ((n %% 10000L) == 0L)
             {
                 warning(sprintf(
-                "There are too many lines in the header (>= %d). ", n),
-                "In order not to slow down the conversion, please consider ",
-                "deleting unnecessary annotations (like contig).",
-                immediate.=TRUE)
+                    "There are too many lines in the header (>= %d). ", n),
+                    "In order not to slow down the conversion, please ",
+                    "consider deleting unnecessary annotations (like contig).",
+                    immediate.=TRUE)
             }
         }
 
@@ -246,7 +250,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
             txt <- substr(txt, 1L, nchar(txt)-1L)
 
         v <- ValString(scan(text=txt, what=character(),
-            sep=",", quote="\"", quiet=TRUE))
+                sep=",", quote="\"", quiet=TRUE))
 
         # check
         ans <- list()
@@ -302,9 +306,10 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
 
     if (length(geno.text))
     {
-        txt <- unlist(vapply(geno.text, function(s) {
-            scan(text=s, what="", sep=":", quiet=TRUE, nmax=1L) },
-            "", USE.NAMES=FALSE))
+        txt <- unlist(vapply(geno.text, function(s)
+        {
+            scan(text=s, what="", sep=":", quiet=TRUE, nmax=1L)
+        }, "", USE.NAMES=FALSE))
         if (any(grepl(",", txt, fixed=TRUE)))
         {
             ploidy <- NA_integer_
@@ -366,7 +371,8 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
 
     #########################################################
     # INFO=<ID=ID,Number=number,Type=type,Description="description">
-    # INFO=<ID=ID,Number=number,Type=type,Description="description",Source="source",Version="version">
+    # INFO=<ID=ID,Number=number,Type=type,Description="description",
+    #       Source="source",Version="version">
 
     INFO <- NULL
     s <- ans$value[ans$id == "INFO"]
@@ -608,7 +614,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (pnum > 1L)
             stop("No parallel support when the input is a connection object.")
         if (length(variant_count)!=1L || !is.na(variant_count))
-            warning("'variant_count' is not used in seqVCF2GDS() when 'vcf.fn' is a connection object.")
+        {
+            warning("'variant_count' is not used in seqVCF2GDS() ",
+                "when 'vcf.fn' is a connection object.")
+        }
     } else if (!identical(variant_count, NA_integer_))
     {
         if (!is.numeric(variant_count))
@@ -637,12 +646,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 if (length(samp.id) != length(tmp))
                 {
                     stop(sprintf("The file '%s' has different sample id.",
-                        vcf.fn[i]))
+                            vcf.fn[i]))
                 }
                 if (!all(samp.id == tmp))
                 {
                     stop(sprintf("The file '%s' has different sample id.",
-                        vcf.fn[i]))
+                            vcf.fn[i]))
                 }
             }
         }
@@ -697,7 +706,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         }
         .cat("    file format: ", header$fileformat)
         .cat("    genome reference: ", if (length(reference))
-            paste(reference, collapse=", ") else "<unknown>")
+                paste(reference, collapse=", ") else "<unknown>")
         .cat("    # of sets of chromosomes (ploidy): ", header$ploidy)
         .cat("    # of samples: ", .pretty(length(samp.id)))
         .cat("    genotype field: ", genotype.var.name)
@@ -728,7 +737,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (verbose)
             {
                 cat(sprintf("Duplicated Format ID (%s) are removed.\n",
-                    paste(header$format$ID[flag], collapse=",")))
+                        paste(header$format$ID[flag], collapse=",")))
             }
             header$format <- header$format[!flag, ]
         }
@@ -839,8 +848,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             {
                 .cat("    >>> writing to ", pnum, " files: <<<")
                 cat(sprintf("        %s\t[%s .. %s]\n", basename(ptmpfn),
-                    .pretty(psplit[[1L]]),
-                    .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
+                        .pretty(psplit[[1L]]),
+                        .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
                 flush.console()
             }
             # unlimit the last one
@@ -1049,7 +1058,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (verbose)
             {
                 cat(sprintf("Duplicated Info ID (%s) are removed.\n",
-                    paste(header$info$ID[flag], collapse=",")))
+                        paste(header$info$ID[flag], collapse=",")))
             }
             header$info <- header$info[!flag, ]
         }
@@ -1109,7 +1118,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                         int_num[i] <- -4L
                     else {
                         stop(sprintf("Unknown INFO (%s) Number: %s",
-                            header$info$ID[i], s))
+                                header$info$ID[i], s))
                     }
                 }
 
@@ -1125,7 +1134,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                         storage=mode, valdim=initdim)
                     put.attr.gdsn(node, "Number", header$info$Number[i])
                     put.attr.gdsn(node, "Type", header$info$Type[i])
-                    put.attr.gdsn(node, "Description", header$info$Description[i])
+                    put.attr.gdsn(node, "Description",
+                        header$info$Description[i])
                     if (!is.na(header$info$Source[i]))
                         put.attr.gdsn(node, "Source", header$info$Source[i])
                     if (!is.na(header$info$Version[i]))
@@ -1200,7 +1210,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 int_num[i] <- -4L
             else {
                 stop(sprintf("Unknown FORMAT (%s) Number: %s",
-                    header$format$ID[i], s))
+                        header$format$ID[i], s))
             }
         }
 
@@ -1218,8 +1228,12 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             put.attr.gdsn(node, "Description", header$format$Description[i])
 
             if (nSamp > 0L)
-                .AddVar(storage.option, node, "data", storage=mode, valdim=c(nSamp, 0L))
-            .AddVar(storage.option, node, "@data", storage="int32", visible=FALSE)
+            {
+                .AddVar(storage.option, node, "data", storage=mode,
+                    valdim=c(nSamp, 0L))
+            }
+            .AddVar(storage.option, node, "@data", storage="int32",
+                visible=FALSE)
         }
     }
 
@@ -1355,7 +1369,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         if (length(s) > 0L)
         {
             varnm <- c(varnm, paste0("annotation/format/", rep(s, each=2L),
-                c("/data", "/@data")))
+                    c("/data", "/@data")))
         }
 
         if (verbose) cat("Merging:\n")
@@ -1401,7 +1415,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
         if (NROW(header$filter) > 0L)
         {
-            dp <- header$filter$Description[match(filterlevels, header$filter$ID)]
+            dp <- header$filter$Description[
+                match(filterlevels, header$filter$ID)]
             dp[is.na(dp)] <- ""
         } else
             dp <- rep("", length(filterlevels))
@@ -1474,8 +1489,7 @@ seqBCF2GDS <- function(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
         f <- pipe(paste(shQuote(bcftools), "-v"))
         s <- readLines(f)
         close(f)
-        if (length(s) <= 0L)
-            stop("Please install bcftools (http://samtools.github.io/bcftools).")
+        if (length(s) <= 0L) stop("Please install bcftools.")
     }
     pipefile <- pipe(cmd, "rt")
     on.exit(close(pipefile))

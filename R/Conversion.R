@@ -127,7 +127,10 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
                 if (verbose)
                 {
                     if (.Platform$OS.type != "windows")
-                        message("Hint: install Rsamtools to enable the BGZF-format output.")
+                    {
+                        message("Hint: install ",
+                            "Rsamtools to enable the BGZF-format output.")
+                    }
                 }
                 ofile <- gzfile(vcf.fn, "wb")
                 outfmt <- 3L
@@ -166,7 +169,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         if (!isTRUE(header)) cat("    No header in VCF\n")
         .cat("    output to ",
             c("a VCF text file", "a BGZF-format gzip file",
-            "a general gzip file", "a bz file", "a xz file")[outfmt])
+                "a general gzip file", "a bz file", "a xz file")[outfmt])
     }
 
 
@@ -249,7 +252,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         for (i in seq_along(id))
         {
             txt <- c(txt, sprintf("##FILTER=<ID=%s,Description=%s>",
-                .dquote(id[i]), .dquote(dp[i])))
+                    .dquote(id[i]), .dquote(dp[i])))
         }
     }
 
@@ -413,7 +416,8 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
     stopifnot(is.logical(dosage) | is.character(dosage), length(dosage)==1L)
     stopifnot(is.character(compress.geno), length(compress.geno)==1L)
-    stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
+    stopifnot(is.character(compress.annotation),
+        length(compress.annotation)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     ds.type <- match.arg(ds.type)
@@ -742,7 +746,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
         {
             if (verbose) cat("    annotation/info/", i, sep="")
             copyto.gdsn(n1, index.gdsn(n2, i))
-           .DigestCode(index.gdsn(n1, i), digest, verbose)
+            .DigestCode(index.gdsn(n1, i), digest, verbose)
         }
     }
 
@@ -756,7 +760,8 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
         varGeno <- addfolder.gdsn(n, "DS")
         put.attr.gdsn(varGeno, "Number", "1")
         put.attr.gdsn(varGeno, "Type", "Float")
-        put.attr.gdsn(varGeno, "Description", "Estimated alternate allele dosage")
+        put.attr.gdsn(varGeno, "Description",
+            "Estimated alternate allele dosage")
 
         nd_geno <- .AddVar(storage.option, varGeno, "data", storage=ds.type,
             valdim=c(nSamp, 0L))
@@ -793,7 +798,7 @@ seqSNP2GDS <- function(gds.fn, out.fn, storage.option="LZMA_RA", major.ref=TRUE,
         {
             if (verbose) cat("    sample.annotation/", i, sep="")
             copyto.gdsn(n, index.gdsn(n1, i))
-           .DigestCode(index.gdsn(n, i), digest, verbose)
+            .DigestCode(index.gdsn(n, i), digest, verbose)
         }
     }
 
@@ -844,7 +849,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
     stopifnot(is.character(bim.fn), length(bim.fn)==1L)
     stopifnot(is.character(out.gdsfn), length(out.gdsfn)==1L)
     stopifnot(is.character(compress.geno), length(compress.geno)==1L)
-    stopifnot(is.character(compress.annotation), length(compress.annotation)==1L)
+    stopifnot(is.character(compress.annotation),
+        length(compress.annotation)==1L)
     stopifnot(is.logical(chr.conv), length(chr.conv)==1L)
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(include.pheno) | is.character(include.pheno))
@@ -888,7 +894,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         cat("    BED file: ", sQuote(bed.fn), "\n        ",
             .pretty_size(file.size(bed.fn)), ", ",
             ifelse(bed_flag, "sample-major mode: [SNP, sample]",
-            "SNP-major mode: [sample, SNP]"), "\n", sep="")
+                "SNP-major mode: [sample, SNP]"), "\n", sep="")
     }
 
     ##  read fam.fn  ##
@@ -938,16 +944,16 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         x25 <- sum(x==25L, na.rm=TRUE)
         x26 <- sum(x==26L, na.rm=TRUE)
         if (x23 && verbose)
-            cat("        chromosome code 23 => X (", .pretty(x23), ")\n", sep="")
+            .cat("        chromosome code 23 => X (", .pretty(x23), ")")
         if (x23) x[x == 23L] <- "X"
         if (x24 && verbose)
-            cat("        chromosome code 24 => Y (", .pretty(x24), ")\n", sep="")
+            .cat("        chromosome code 24 => Y (", .pretty(x24), ")")
         if (x24) x[x == 24L] <- "Y"
         if (x25 && verbose)
-            cat("        chromosome code 25 => XY (", .pretty(x25), ")\n", sep="")
+            .cat("        chromosome code 25 => XY (", .pretty(x25), ")")
         if (x25) x[x == 25L] <- "XY"
         if (x26 && verbose)
-            cat("        chromosome code 26 => MT (", .pretty(x26), ")\n", sep="")
+            .cat("        chromosome code 26 => MT (", .pretty(x26), ")")
         if (x26) x[x == 26L] <- "MT"
         bimD$chr <- x
     }
@@ -1036,8 +1042,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         {
             cat(sprintf("    >>> writing to %d files: <<<\n", pnum))
             cat(sprintf("        %s\t[%s .. %s]\n", basename(ptmpfn),
-                .pretty(psplit[[1L]]),
-                .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
+                    .pretty(psplit[[1L]]),
+                    .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
             flush.console()
         }
         # working flags
@@ -1045,7 +1051,8 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
         .PkgEnv$work_flag <- rep(FALSE, pnum)
 
         # conversion in parallel
-        seqParallel(parallel, NULL, FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
+        seqParallel(parallel, NULL,
+            FUN = function(bed.fn, tmp.fn, num4, psplit, cp)
         {
             # the process id, starting from one
             i <- process_index
@@ -1184,7 +1191,7 @@ seqBED2GDS <- function(bed.fn, fam.fn, bim.fn, out.gdsfn,
             readmode.gdsn(vg)
             invisible()
         }, split="none", tmp.fn=ptmpfn, nsamp=nrow(famD), psplit=psplit,
-            cp=compress.annotation)
+        cp=compress.annotation)
 
         if (verbose) cat("        merging files ... [")
         lapply(seq_along(ptmpfn), function(i)

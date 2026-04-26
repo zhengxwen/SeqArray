@@ -41,7 +41,7 @@ setMethod("alt", "SeqVarGDSClass", function(x)
     s[alt == ""] <- ""
     # remove invalid characters
     s <- sapply(s, function(x)
-        gsub("[^ACGTMRWSYKVHDBNacgtmrwsykvhdbn\\-\\+\\.]", ".", x),
+            gsub("[^ACGTMRWSYKVHDBNacgtmrwsykvhdbn\\-\\+\\.]", ".", x),
         simplify=FALSE)
     do.call(DNAStringSetList, s)
 })
@@ -63,10 +63,10 @@ setMethod("filt", "SeqVarGDSClass", function(x)
 
 setMethod("fixed", "SeqVarGDSClass", function(x)
 {
-    DataFrame(REF=SeqArray::ref(x),
-              ALT=SeqArray::alt(x),
-              QUAL=SeqArray::qual(x),
-              FILTER=SeqArray::filt(x))
+    DataFrame(REF = SeqArray::ref(x),
+        ALT = SeqArray::alt(x),
+        QUAL = SeqArray::qual(x),
+        FILTER = SeqArray::filt(x))
 })
 
 
@@ -86,11 +86,13 @@ setMethod("header", "SeqVarGDSClass", function(x)
     ## meta
     des <- get.attr.gdsn(index.gdsn(x, "description"))
     ff <- des$vcf.fileformat
-    meta <- DataFrameList(fileformat=DataFrame(Value=ff, row.names="fileformat"))
+    meta <- DataFrameList(
+        fileformat=DataFrame(Value=ff, row.names="fileformat"))
     ref <- seqsum$reference
     if (length(ref) > 0L)
     {
-        meta <- c(meta, DataFrameList(reference=DataFrame(Value=ref, row.names="reference")))
+        meta <- c(meta, DataFrameList(
+            reference=DataFrame(Value=ref, row.names="reference")))
     }
     n <- index.gdsn(x, "description/vcf.header", silent=TRUE)
     if (!is.null(n))
@@ -101,7 +103,8 @@ setMethod("header", "SeqVarGDSClass", function(x)
         fields <- unique(des[,1L])
         for (f in fields) {
             des.f <- des[des[,1L] %in% f,,drop=FALSE]
-            meta.des <- DataFrameList(DataFrame(Value=des.f[,2L], row.names=make.unique(des.f[,1L])))
+            meta.des <- DataFrameList(
+                DataFrame(Value=des.f[,2L], row.names=make.unique(des.f[,1L])))
             names(meta.des) <- f
             meta <- c(meta, meta.des)
         }
@@ -136,12 +139,14 @@ setMethod("info", "SeqVarGDSClass", function(x, infovar=NULL)
     {
         for (i in seq_len(nrow(des)))
         {
-            v <- seqGetData(x, paste0("annotation/info/", des$ID[i]), .padNA=FALSE)
+            v <- seqGetData(x, paste0("annotation/info/", des$ID[i]),
+                .padNA=FALSE)
             ## deal with variable length fields
             if (!is.null(names(v)))
             {
                 vl <- .variableLengthToList(v)
-                ## each element should have length number of alt alleles, even for NAs
+                ## each element should have length number of alt alleles,
+                ## even for NAs
                 if (des$Number[i] == "A")
                 {
                     nAlt <- lengths(SeqArray::alt(x))
@@ -183,13 +188,13 @@ setMethod("geno", "SeqVarGDSClass", function(x, genovar=NULL)
     if (is.null(genovar) || "GT" %in% genovar)
     {
         gt <- seqApply(x, c(genovar="genotype", phase="phase"),
-                       function(x) {
-                           sep <- ifelse(x$phase, "|", "/")
-                           paste(x$genovar[1L,], sep, x$genovar[2L,], sep="")
-                       },
-                       as.is="list", margin="by.variant")
+            function(x) {
+                sep <- ifelse(x$phase, "|", "/")
+                paste(x$genovar[1L,], sep, x$genovar[2L,], sep="")
+            },
+            as.is="list", margin="by.variant")
         gt <- matrix(unlist(gt), ncol=length(gt),
-                     dimnames=list(sample.id, variant.id))
+            dimnames=list(sample.id, variant.id))
         gt[gt == "NA/NA"] <- "."
         gt <- t(gt)
 
@@ -213,7 +218,7 @@ setMethod("geno", "SeqVarGDSClass", function(x, genovar=NULL)
             if (!is.na(number) && number > 1L)
             {
                 v <- seqApply(x, var.name, function(v) v,
-                              as.is="list", margin="by.variant")
+                    as.is="list", margin="by.variant")
                 vm <- array(
                     dim=c(length(variant.id), length(sample.id), number),
                     dimnames=list(variant.id, sample.id, NULL))
@@ -236,7 +241,7 @@ setMethod("geno", "SeqVarGDSClass", function(x, genovar=NULL)
                         v <- v$data
                     } else {
                         v <- seqApply(x, var.name, function(v) v,
-                                      as.is="list", margin="by.variant")
+                            as.is="list", margin="by.variant")
                         v <- .variableLengthToMatrix(v)
                     }
                 }

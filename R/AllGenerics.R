@@ -1,13 +1,13 @@
 # define new generic functions
-setGeneric("seqClose", function(object, ...)
-    standardGeneric("seqClose"))
+setGeneric("seqClose", function(object, ...) standardGeneric("seqClose"))
 
 setGeneric("seqSetFilter", function(object, variant.sel, ...)
-    standardGeneric("seqSetFilter"))
+        standardGeneric("seqSetFilter"))
 
 # setGeneric("seqAppend", function(object, ...) standardGeneric("seqAppend"))
 
-# redefine generics from VariantAnnotation and SummarizedExperiment to reduce package load time
+# redefine generics from VariantAnnotation and SummarizedExperiment to
+# reduce package load time
 setGeneric("ref", function(x, ...) standardGeneric("ref"))
 setGeneric("alt", function(x, ...) standardGeneric("alt"))
 setGeneric("qual", function(x, ...) standardGeneric("qual"))

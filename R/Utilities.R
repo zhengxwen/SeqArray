@@ -90,8 +90,8 @@ seqExampleFileName <- function(type=c("gds", "vcf", "KG_Phase1", "dosage"))
 seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 {
     # check
-    stopifnot(is.null(cluster) | is.logical(cluster) |
-        is.numeric(cluster) | inherits(cluster, "cluster"))
+    stopifnot(is.null(cluster) || is.logical(cluster) ||
+        is.numeric(cluster) || inherits(cluster, "cluster"))
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.na(verbose)) verbose <- FALSE
 
@@ -822,9 +822,9 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     .status_file=FALSE, .proc_time=FALSE, ...)
 {
     # check
-    stopifnot(is.null(cl) | is.logical(cl) | is.numeric(cl) |
-        inherits(cl, "cluster") | inherits(cl, "BiocParallelParam"))
-    stopifnot(is.null(gdsfile) | inherits(gdsfile, "SeqVarGDSClass") |
+    stopifnot(is.null(cl) || is.logical(cl) || is.numeric(cl) ||
+        inherits(cl, "cluster") || inherits(cl, "BiocParallelParam"))
+    stopifnot(is.null(gdsfile) || inherits(gdsfile, "SeqVarGDSClass") ||
         is.numeric(gdsfile))
     if (is.numeric(gdsfile))
     {
