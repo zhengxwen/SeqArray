@@ -232,35 +232,40 @@ setMethod("seqSetFilter",
     signature(object="SeqVarGDSClass", variant.sel="GRanges"),
     gds_set_filter_granges)
 
-setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
-    variant.sel="GRangesList"),
-    function(object, variant.sel, rm.txt="chr", intersect=FALSE, verbose=TRUE)
-    {
-        seqSetFilter(object, unlist(variant.sel), rm.txt, intersect, verbose)
-        invisible()
-    }
-)
 
-setMethod("seqSetFilter", signature(object="SeqVarGDSClass",
-    variant.sel="IRanges"),
-    function(object, variant.sel, chr, intersect=FALSE, verbose=TRUE)
-    {
-        stopifnot(is.vector(chr))
-        if (length(chr) > 1L)
-            stopifnot(length(chr) == length(variant.sel))
-        else
-            chr <- rep(chr, length(variant.sel))
+gds_set_filter_grangeslist <- function(object, variant.sel, rm.txt="chr",
+    intersect=FALSE, verbose=TRUE)
+{
+    seqSetFilter(object, unlist(variant.sel), rm.txt, intersect, verbose)
+    invisible()
+}
 
-        seqSetFilterChrom(object,
-            include = chr,
-            from.bp = BiocGenerics::start(variant.sel),
-            to.bp   = BiocGenerics::end(variant.sel),
-            intersect = intersect,
-            verbose = verbose)
-        invisible()
-    }
-)
+setMethod("seqSetFilter",
+    signature(object="SeqVarGDSClass", variant.sel="GRangesList"),
+    gds_set_filter_grangeslist)
 
+
+gds_set_filter_iranges <- function(object, variant.sel, chr,
+    intersect=FALSE, verbose=TRUE)
+{
+    stopifnot(is.vector(chr))
+    if (length(chr) > 1L)
+        stopifnot(length(chr) == length(variant.sel))
+    else
+        chr <- rep(chr, length(variant.sel))
+
+    seqSetFilterChrom(object,
+        include = chr,
+        from.bp = BiocGenerics::start(variant.sel),
+        to.bp   = BiocGenerics::end(variant.sel),
+        intersect = intersect,
+        verbose = verbose)
+    invisible()
+}
+
+setMethod("seqSetFilter",
+    signature(object="SeqVarGDSClass", variant.sel="IRanges"),
+    gds_set_filter_iranges)
 
 
 #######################################################################
