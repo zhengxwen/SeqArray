@@ -479,9 +479,12 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 
 ####  run with a cluster object  ####
 
-.fc_parallel_initializer <- function(i, njobs, st_fname, totnum, init, param)
+.fc_parallel_initializer <- function(i, njobs, st_fname, gdsfn, totnum,
+    init, param)
 {
     # load the package
+    for (pkg in attr(gdsfn, "pkgname"))
+        library(pkg, character.only=TRUE, quietly=TRUE, verbose=FALSE)
     library(SeqArray, quietly=TRUE, verbose=FALSE)
     # export to global variables
     .init_proc(i, njobs, st_fname)
@@ -495,6 +498,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     sel, totcnt, init, param)
 {
     # load the package
+    for (pkg in attr(gdsfn, "pkgname"))
+        library(pkg, character.only=TRUE, quietly=TRUE, verbose=FALSE)
     library(SeqArray, quietly=TRUE, verbose=FALSE)
     # export to global variables
     .init_proc(i, njobs, st_fname)
@@ -618,6 +623,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         # initialize the cluster
         clusterApply(cl, seq_len(njobs), fun = .fc_parallel_initializer,
             njobs=njobs, st_fname=st_fname,
+            gdsfn = if (inherits(gdsfile, "SeqVarGDSClass"))
+                gdsfile$filename else NULL,
             totnum = if (is.numeric(gdsfile)) totnum else 0L,
             init=.initialize, param=.initparam)
         # exit call
