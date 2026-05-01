@@ -302,6 +302,20 @@ public:
 	virtual SEXP NeedRData(int &nProtected);
 };
 
+
+/// Object for reading the 1-based variant index variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_VariantIndex: public CApply_Variant
+{
+protected:
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_VariantIndex(CFileInfo &File);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
 }
 
 

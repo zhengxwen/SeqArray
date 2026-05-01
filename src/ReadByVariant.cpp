@@ -1029,6 +1029,34 @@ SEXP CApply_Variant_ChromPosAllele::NeedRData(int &nProtected)
 	return VarNode;
 }
 
+
+// =====================================================================
+// Object for reading the 1-based variant index variant by variant
+
+CApply_Variant_VariantIndex::CApply_Variant_VariantIndex(CFileInfo &File):
+	CApply_Variant(File)
+{
+	fVarType = ctBasic;
+	Node = NULL;
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_VariantIndex::ReadData(SEXP val)
+{
+	INTEGER(val)[0] = Position + 1;
+}
+
+SEXP CApply_Variant_VariantIndex::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(NEW_INTEGER(1));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
 }
 
 
@@ -1175,6 +1203,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			} else if (s == VAR_CHROM_POS_ALLELE)
 			{
 				NodeList.push_back(new CApply_Variant_ChromPosAllele(File));
+			} else if (s == VAR_VARIANT_INDEX)
+			{
+				NodeList.push_back(new CApply_Variant_VariantIndex(File));
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a valid variable name. See ?seqApply",
