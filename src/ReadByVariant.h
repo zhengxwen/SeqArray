@@ -268,6 +268,40 @@ public:
 	virtual SEXP NeedRData(int &nProtected);
 };
 
+
+/// Object for reading chromosome:position variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_ChromPos: public CApply_Variant
+{
+protected:
+	CChromIndex *ChromIndex;
+	int *PtrPos;
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_ChromPos(CFileInfo &File);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
+
+/// Object for reading chromosome:position_allele variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_ChromPosAllele: public CApply_Variant
+{
+private:
+	string strbuf;
+protected:
+	CChromIndex *ChromIndex;
+	int *PtrPos;
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_ChromPosAllele(CFileInfo &File);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
 }
 
 

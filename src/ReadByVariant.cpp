@@ -30,7 +30,6 @@ using namespace Vectorization;
 static const char *ERR_DIM = "Invalid dimension of '%s'.";
 
 // variable list
-static const string VAR_SAMP_ID("sample.id");
 static const string VAR_POSITION("position");
 static const string VAR_CHROM("chromosome");
 static const string VAR_ID("variant.id");
@@ -51,9 +50,7 @@ static const string VAR_NUM_ALLELE("$num_allele");
 static const string VAR_REF_ALLELE("$ref");
 static const string VAR_ALT_ALLELE("$alt");
 static const string VAR_CHROM_POS("$chrom_pos");
-static const string VAR_CHROM_POS2("$chrom_pos2");
 static const string VAR_CHROM_POS_ALLELE("$chrom_pos_allele");
-static const string VAR_SAMPLE_INDEX("$sample_index");
 static const string VAR_VARIANT_INDEX("$variant_index");
 
 
@@ -960,6 +957,78 @@ SEXP CApply_Variant_AltAllele::NeedRData(int &nProtected)
 	return VarNode;
 }
 
+
+// =====================================================================
+// Object for reading chromosome:position variant by variant
+
+CApply_Variant_ChromPos::CApply_Variant_ChromPos(CFileInfo &File):
+	CApply_Variant(File)
+{
+	fVarType = ctBasic;
+	Node = File.GetObj("chromosome", TRUE);
+	ChromIndex = &File.Chromosome();
+	PtrPos = &File.Position()[0];
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_ChromPos::ReadData(SEXP val)
+{
+	char buf[1024];
+	snprintf(buf, sizeof(buf), "%s:%d",
+		(*ChromIndex)[Position].c_str(), PtrPos[Position]);
+	SET_STRING_ELT(val, 0, Rf_mkChar(buf));
+}
+
+SEXP CApply_Variant_ChromPos::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(NEW_CHARACTER(1));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
+
+// =====================================================================
+// Object for reading chromosome:position_allele variant by variant
+
+CApply_Variant_ChromPosAllele::CApply_Variant_ChromPosAllele(CFileInfo &File):
+	CApply_Variant(File)
+{
+	strbuf.reserve(128);
+	fVarType = ctBasic;
+	Node = File.GetObj("allele", TRUE);
+	ChromIndex = &File.Chromosome();
+	PtrPos = &File.Position()[0];
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_ChromPosAllele::ReadData(SEXP val)
+{
+	C_Int32 st = Position, one = 1;
+	GDS_Array_ReadData(Node, &st, &one, &strbuf, svStrUTF8);
+	// replace commas with underscores in the allele string
+	for (size_t i=0; i < strbuf.size(); i++)
+		if (strbuf[i] == ',') strbuf[i] = '_';
+	char buf[8192];
+	snprintf(buf, sizeof(buf), "%s:%d_%s",
+		(*ChromIndex)[Position].c_str(), PtrPos[Position], strbuf.c_str());
+	SET_STRING_ELT(val, 0, Rf_mkChar(buf));
+}
+
+SEXP CApply_Variant_ChromPosAllele::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(NEW_CHARACTER(1));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
 }
 
 
@@ -1100,6 +1169,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			} else if (s == VAR_ALT_ALLELE)
 			{
 				NodeList.push_back(new CApply_Variant_AltAllele(File));
+			} else if (s == VAR_CHROM_POS)
+			{
+				NodeList.push_back(new CApply_Variant_ChromPos(File));
+			} else if (s == VAR_CHROM_POS_ALLELE)
+			{
+				NodeList.push_back(new CApply_Variant_ChromPosAllele(File));
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a valid variable name. See ?seqApply",
