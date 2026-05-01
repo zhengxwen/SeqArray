@@ -892,6 +892,74 @@ int CApply_Variant_NumAllele::GetNumAllele()
 	return GetNumOfAllele(strbuf.c_str());
 }
 
+
+// =====================================================================
+// Object for reading reference allele variant by variant
+
+CApply_Variant_RefAllele::CApply_Variant_RefAllele(CFileInfo &File):
+	CApply_Variant(File)
+{
+	strbuf.reserve(128);
+	fVarType = ctBasic;
+	Node = File.GetObj("allele", TRUE);
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_RefAllele::ReadData(SEXP val)
+{
+	C_Int32 st = Position, one = 1;
+	GDS_Array_ReadData(Node, &st, &one, &strbuf, svStrUTF8);
+	const char *p = strbuf.c_str();
+	size_t m = 0;
+	for (const char *s=p; *s!=',' && *s!=0; s++) m++;
+	SET_STRING_ELT(val, 0, Rf_mkCharLen(p, m));
+}
+
+SEXP CApply_Variant_RefAllele::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(NEW_CHARACTER(1));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
+
+// =====================================================================
+// Object for reading alternative allele(s) variant by variant
+
+CApply_Variant_AltAllele::CApply_Variant_AltAllele(CFileInfo &File):
+	CApply_Variant(File)
+{
+	strbuf.reserve(128);
+	fVarType = ctBasic;
+	Node = File.GetObj("allele", TRUE);
+	VarNode = NULL;
+	Reset();
+}
+
+void CApply_Variant_AltAllele::ReadData(SEXP val)
+{
+	C_Int32 st = Position, one = 1;
+	GDS_Array_ReadData(Node, &st, &one, &strbuf, svStrUTF8);
+	const char *p = strbuf.c_str();
+	for (; *p!=',' && *p!=0;) p++;
+	if (*p == ',') p++;
+	SET_STRING_ELT(val, 0, Rf_mkChar(p));
+}
+
+SEXP CApply_Variant_AltAllele::NeedRData(int &nProtected)
+{
+	if (VarNode == NULL)
+	{
+		VarNode = PROTECT(NEW_CHARACTER(1));
+		nProtected ++;
+	}
+	return VarNode;
+}
+
 }
 
 
@@ -1026,6 +1094,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Variant(SEXP gdsfile, SEXP var_name,
 			} else if (s == VAR_NUM_ALLELE)
 			{
 				NodeList.push_back(new CApply_Variant_NumAllele(File));
+			} else if (s == VAR_REF_ALLELE)
+			{
+				NodeList.push_back(new CApply_Variant_RefAllele(File));
+			} else if (s == VAR_ALT_ALLELE)
+			{
+				NodeList.push_back(new CApply_Variant_AltAllele(File));
 			} else {
 				throw ErrSeqArray(
 					"'%s' is not a valid variable name. See ?seqApply",

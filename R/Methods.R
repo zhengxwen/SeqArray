@@ -587,7 +587,8 @@ seqListVarData <- function(obj, useList=FALSE)
 
 
 #######################################################################
-# Apply functions over margins on a working space with selected samples and variants
+# Apply functions over margins on a working space with selected
+# samples and variants
 #
 seqApply <- function(gdsfile, var.name, FUN,
     margin=c("by.variant", "by.sample"),

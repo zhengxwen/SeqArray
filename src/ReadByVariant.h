@@ -236,6 +236,38 @@ public:
 	int GetNumAllele();
 };
 
+
+/// Object for reading the reference allele variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_RefAllele: public CApply_Variant
+{
+private:
+	string strbuf;
+protected:
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_RefAllele(CFileInfo &File);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
+
+/// Object for reading the alternative allele(s) variant by variant
+class COREARRAY_DLL_LOCAL CApply_Variant_AltAllele: public CApply_Variant
+{
+private:
+	string strbuf;
+protected:
+	SEXP VarNode;  ///< R object
+public:
+	/// constructor
+	CApply_Variant_AltAllele(CFileInfo &File);
+
+	virtual void ReadData(SEXP val);
+	virtual SEXP NeedRData(int &nProtected);
+};
+
 }
 
 

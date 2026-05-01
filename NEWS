@@ -7,6 +7,9 @@ NEW FEATURES
       before calling the user-defined function, with backward compatibility
       for older gdsfmt versions
 
+    o `seqApply()` supports "$ref" and "$alt" as variable names, consistent
+      with `seqGetData()`
+
 
 CHANGES IN VERSION 1.52.0
 -------------------------

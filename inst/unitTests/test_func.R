@@ -434,3 +434,47 @@ test.sp_dosage <- function()
 
 	invisible()
 }
+
+
+test.apply_ref_alt_numallele <- function()
+{
+	# open the GDS file
+	f <- seqOpen(seqExampleFileName("gds"))
+	on.exit(seqClose(f))
+
+	# test $ref: seqApply vs seqGetData
+	v1 <- seqApply(f, "$ref", function(x) x, as.is="character")
+	v2 <- seqGetData(f, "$ref")
+	checkEquals(v1, v2, "seqApply $ref vs seqGetData $ref")
+
+	# test $alt: seqApply vs seqGetData
+	v1 <- seqApply(f, "$alt", function(x) x, as.is="character")
+	v2 <- seqGetData(f, "$alt")
+	checkEquals(v1, v2, "seqApply $alt vs seqGetData $alt")
+
+	# test $num_allele: seqApply vs seqGetData
+	v1 <- seqApply(f, "$num_allele", function(x) x, as.is="integer")
+	v2 <- seqGetData(f, "$num_allele")
+	checkEquals(v1, v2, "seqApply $num_allele vs seqGetData $num_allele")
+
+	# test with a subset of variants
+	set.seed(500)
+	n <- seqSummary(f, "genotype", check="none", verbose=FALSE)$dim[3L]
+	seqSetFilter(f, variant.sel=sample.int(n, n %/% 2), warn=FALSE, verbose=FALSE)
+
+	v1 <- seqApply(f, "$ref", function(x) x, as.is="character")
+	v2 <- seqGetData(f, "$ref")
+	checkEquals(v1, v2, "seqApply $ref vs seqGetData $ref (subset)")
+
+	v1 <- seqApply(f, "$alt", function(x) x, as.is="character")
+	v2 <- seqGetData(f, "$alt")
+	checkEquals(v1, v2, "seqApply $alt vs seqGetData $alt (subset)")
+
+	v1 <- seqApply(f, "$num_allele", function(x) x, as.is="integer")
+	v2 <- seqGetData(f, "$num_allele")
+	checkEquals(v1, v2, "seqApply $num_allele vs seqGetData $num_allele (subset)")
+
+	invisible()
+}
+
+
