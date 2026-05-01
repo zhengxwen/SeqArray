@@ -78,6 +78,6 @@ extern "C"
 {
 
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho);
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho);
 
 } // extern "C"

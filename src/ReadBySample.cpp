@@ -493,11 +493,17 @@ COREARRAY_DLL_LOCAL extern const char *Txt_Apply_VarIdx[];
 
 /// Apply functions over margins on a working space
 COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
-	SEXP FUN, SEXP as_is, SEXP var_index, SEXP use_raw, SEXP rho)
+	SEXP FUN, SEXP as_is, SEXP var_index, SEXP param, SEXP rho)
 {
-	int use_raw_flag = Rf_asLogical(use_raw);
-	if (use_raw_flag == NA_LOGICAL)
+	SEXP pam_use_raw = RGetListElement(param, "useraw");
+	if (!Rf_isLogical(pam_use_raw))
 		Rf_error("'.useraw' must be TRUE or FALSE.");
+	int use_raw_flag = Rf_asLogical(pam_use_raw);
+
+	int prog_flag = Rf_asLogical(RGetListElement(param, "progress"));
+	if (prog_flag == NA_LOGICAL)
+		Rf_error("'.progress' must be TRUE or FALSE.");
+	SEXP prog_file = RGetListElement(param, "progressfile");
 
 	COREARRAY_TRY
 
@@ -625,6 +631,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 		// ===============================================================
 		// for-loop calling
 
+		CProgress progress(nSample, prog_file, prog_flag);
+
 		bool ifend = false;
 		int ans_index = 0;
 		do {
@@ -677,6 +685,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 				RAW(rv_ans)[ans_index] = Rf_asInteger(val); break;
 			}
 			ans_index ++;
+
+			progress.Forward();
 
 			// check the end
 			for (it=NodeList.begin(); it != NodeList.end(); it ++)

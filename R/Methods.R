@@ -668,7 +668,7 @@ seqApply <- function(gdsfile, var.name, FUN,
         {
             # C call, by.sample
             rv <- .Call(SEQ_Apply_Sample, gdsfile, var.name, FUN, as.is,
-                var.index, .useraw, new.env())
+                var.index, param, new.env())
         } else {
             # multiple cores
             rv <- seqParallel(parallel, gdsfile,
@@ -676,6 +676,7 @@ seqApply <- function(gdsfile, var.name, FUN,
                 {
                     .Call(SEQ_Apply_Sample, .gds, .vn, .FUN, .as.is,
                         .varidx, .param, new.env())
+
                 }, split=margin, .balancing=.balancing,
                 .status_file=param$progress, .proc_time=param$progress,
                 .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
