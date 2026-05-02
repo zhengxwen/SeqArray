@@ -15,8 +15,11 @@ seqAddValue(gdsfile, varnm, val, desp=character(), replace=FALSE, compress="LZMA
         "chromosome", "annotation/info/NEW_VARIABLE"}
     \item{val}{the R value can be integers, real numbers, characters,
         factor, logical, raw variable, \code{data.frame} or a list; a list of
-        vectors is used for variable-length annotation data; or \code{NULL}
-        for adding a new folder}
+        vectors is used for variable-length annotation data;
+        \code{LogicalList}, \code{IntegerList}, \code{NumericList} and
+        \code{CharacterList} from the \pkg{IRanges} package are also
+        supported for variable-length data; or \code{NULL} for adding a
+        new folder}
     \item{desp}{variable description}
     \item{replace}{if \code{TRUE}, replace the existing variable silently if
         possible}
@@ -73,6 +76,11 @@ v <- lapply(1:1348, function(x) as.character(x))
 v[[1]] <- 1:10
 seqAddValue(f, "annotation/info/folder/val1", v)
 head(seqGetData(f, "annotation/info/folder/val1", .tolist=TRUE))
+
+# variable-length annotation info data using IntegerList
+# v2 <- IRanges::IntegerList(lapply(1:1348, function(x) seq_len(x %% 5)))
+# seqAddValue(f, "annotation/info/folder/val2", v2)
+# head(seqGetData(f, "annotation/info/folder/val2", .tolist=TRUE))
 
 
 # sample annotation

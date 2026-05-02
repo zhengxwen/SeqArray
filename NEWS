@@ -10,6 +10,10 @@ NEW FEATURES
     o `seqApply()` supports "$ref", "$alt", "$chrom_pos", "$chrom_pos_allele"
       and "$variant_index" as variable names, consistent with `seqGetData()`
 
+    o `seqAddValue()` supports `LogicalList`, `IntegerList`, `NumericList`
+      and `CharacterList` from the IRanges package as variable-length
+      annotation data input
+
 
 CHANGES IN VERSION 1.52.0
 -------------------------

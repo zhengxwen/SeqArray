@@ -319,6 +319,22 @@
         st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
         nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
             compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
+    } else if (is(val, "CompressedAtomicList"))
+    {
+        # store CompressedAtomicList:
+        # LogicalList, IntegerList, NumericList, CharacterList, ...
+        stopifnot(length(val) == nvar)
+        ns <- lengths(val)
+        val <- unlist(val, use.names=FALSE)
+        if (is.null(val)) val <- integer()
+        st <- storage.mode(val)
+        if (is.logical(val) && !anyNA(val)) st <- "bit1"
+        if (is.double(val) && isTRUE(use_float32)) st <- "float32"
+        n <- add.gdsn(node, nm, val, storage=st, compress=compress,
+            closezip=TRUE, replace=TRUE)
+        st <- if (packed.idx) .maxlen_bit_type(max(ns)) else "int"
+        nidx <- add.gdsn(node, paste0("@", nm), ns, storage=st,
+            compress=compress, closezip=TRUE, replace=TRUE, visible=FALSE)
     } else if (is.list(val))
     {
         # store lists
