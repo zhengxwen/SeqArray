@@ -22,7 +22,9 @@
 #include "Index.h"
 #include <Rdefines.h>
 #include <R_ext/Rdynload.h>
+#include <unordered_map>
 
+using namespace std;
 using namespace SeqArray;
 
 
@@ -1208,6 +1210,80 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSubsetVxS(SEXP geno_out,
 		p += nr1; s += nr2;
 	}
 	return R_NilValue;
+}
+
+
+// ======================================================================
+
+/// Many-to-many left join on integer position key
+/// pos0, idx0: query positions and their original indices (from d00)
+/// pos1, idx1: GDS positions and their variant indices (from d1)
+/// Returns a list with i0 and i1 integer vectors
+COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0, SEXP idx0,
+	SEXP pos1, SEXP idx1)
+{
+	const R_xlen_t n0 = XLENGTH(pos0);
+	const R_xlen_t n1 = XLENGTH(pos1);
+	const int *p0 = INTEGER(pos0);
+	const int *ii0 = INTEGER(idx0);
+	const int *p1 = INTEGER(pos1);
+	const int *ii1 = INTEGER(idx1);
+
+	// Build hash: position -> vector of indices from d1
+	unordered_map<int, vector<int>> pos_map;
+	pos_map.reserve(n1);
+	for (R_xlen_t i = 0; i < n1; i++)
+		pos_map[p1[i]].push_back(ii1[i]);
+
+	// First pass: count total output rows
+	R_xlen_t total = 0;
+	for (R_xlen_t i = 0; i < n0; i++)
+	{
+		auto it = pos_map.find(p0[i]);
+		if (it != pos_map.end())
+			total += (R_xlen_t)it->second.size();
+		else
+			total += 1;  // NA row for left join
+	}
+
+	// Allocate output
+	SEXP out_i0 = PROTECT(Rf_allocVector(INTSXP, total));
+	SEXP out_i1 = PROTECT(Rf_allocVector(INTSXP, total));
+	int *oi0 = INTEGER(out_i0);
+	int *oi1 = INTEGER(out_i1);
+
+	// Second pass: fill output
+	R_xlen_t k = 0;
+	for (R_xlen_t i = 0; i < n0; i++)
+	{
+		auto it = pos_map.find(p0[i]);
+		if (it != pos_map.end())
+		{
+			for (int val : it->second)
+			{
+				oi0[k] = ii0[i];
+				oi1[k] = val;
+				k++;
+			}
+		} else {
+			oi0[k] = ii0[i];
+			oi1[k] = NA_INTEGER;
+			k++;
+		}
+	}
+
+	// Return as named list
+	SEXP rv = PROTECT(Rf_allocVector(VECSXP, 2));
+	SET_VECTOR_ELT(rv, 0, out_i0);
+	SET_VECTOR_ELT(rv, 1, out_i1);
+
+	SEXP names = PROTECT(Rf_allocVector(STRSXP, 2));
+	SET_STRING_ELT(names, 0, Rf_mkChar("i0"));
+	SET_STRING_ELT(names, 1, Rf_mkChar("i1"));
+	Rf_setAttrib(rv, R_NamesSymbol, names);
+
+	UNPROTECT(4);
+	return rv;
 }
 
 } // extern "C"

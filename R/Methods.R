@@ -329,7 +329,7 @@ seqSetFilterChrom <- function(object, include=NULL, is.num=NA,
 
 
 #######################################################################
-# Set a filter according to specified chromosomes, positions, ref & alt alleles
+# Set a filter according to chromosomes, positions, ref & alt alleles
 #
 seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     intersect=FALSE, multi.pos=TRUE, ret.idx=FALSE, verbose=TRUE)
@@ -360,23 +360,25 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     chr_lst <- unique(chr)
 
     # for-loop each chromosome
+print(system.time({
     dd <- lapply(chr_lst, function(chr1)
     {
         # set filter on chromosome first
         seqSetFilterChrom(object, chr1, intersect=intersect, verbose=FALSE)
         # gds variant set
-        d1 <- data.frame(
-            pos=seqGetData(object, "position"),
-            i1=seqGetData(object, "$variant_index"), stringsAsFactors=FALSE)
+        p1 <- seqGetData(object, "position")
+        i1 <- seqGetData(object, "$variant_index")
         # match
         if (length(chr_lst) > 1L) d00 <- d0[chr==chr1, ] else d00 <- d0
-        d <- merge(d00, d1, all.x=TRUE, sort=FALSE)
-        # output
-        data.frame(i0=d$i0, i1=d$i1)
+        .Call(SEQ_FindMatchIndex, d00$pos, d00$i0, p1, i1)
     })
-    dd <- Reduce(rbind, dd)
+    dd <- data.frame(
+        i0 = unlist(lapply(dd, `[[`, "i0"), use.names=FALSE),
+        i1 = unlist(lapply(dd, `[[`, "i1"), use.names=FALSE))
     if (isTRUE(ret.idx) && length(chr_lst)>1L) dd <- dd[order(dd$i0), ]
+}))
 
+print(system.time({
     if (has_ref_alt)
     {
         # set the filter
@@ -389,6 +391,7 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
         z <- (is.na(ref) | (ref==r)) & (is.na(alt) | (alt==a))
         dd$i1[!z] <- NA_integer_
     }
+}))
 
     # output
     if (!isFALSE(multi.pos))
@@ -590,6 +593,17 @@ seqListVarData <- function(obj, useList=FALSE)
 # Apply functions over margins on a working space with selected
 # samples and variants
 #
+
+.seq_apply_var_fc <- function(f, .vn, .FUN, .as.is, .varidx, .param, ...)
+{
+    .Call(SEQ_Apply_Variant, f, .vn, .FUN, .as.is, .varidx, .param, new.env())
+}
+
+.seq_apply_samp_fc <- function(f, .vn, .FUN, .as.is, .varidx, .param, ...)
+{
+    .Call(SEQ_Apply_Sample, f, .vn, .FUN, .as.is, .varidx, .param, new.env())
+}
+
 seqApply <- function(gdsfile, var.name, FUN,
     margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
@@ -653,12 +667,8 @@ seqApply <- function(gdsfile, var.name, FUN,
                 var.index, param, new.env())
         } else {
             # multiple cores
-            rv <- seqParallel(parallel, gdsfile,
-                FUN = function(.gds, .vn, .FUN, .as.is, .varidx, .param, ...)
-                {
-                    .Call(SEQ_Apply_Variant, .gds, .vn, .FUN, .as.is,
-                        .varidx, .param, new.env())
-                }, split=margin, .balancing=.balancing,
+            rv <- seqParallel(parallel, gdsfile, FUN = .seq_apply_var_fc,
+                split=margin, .balancing=.balancing,
                 .status_file=param$progress, .proc_time=param$progress,
                 .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
                 .param=param, ...)
@@ -671,13 +681,8 @@ seqApply <- function(gdsfile, var.name, FUN,
                 var.index, param, new.env())
         } else {
             # multiple cores
-            rv <- seqParallel(parallel, gdsfile,
-                FUN = function(.gds, .vn, .FUN, .as.is, .varidx, .param, ...)
-                {
-                    .Call(SEQ_Apply_Sample, .gds, .vn, .FUN, .as.is,
-                        .varidx, .param, new.env())
-
-                }, split=margin, .balancing=.balancing,
+            rv <- seqParallel(parallel, gdsfile, FUN = .seq_apply_samp_fc,
+                split=margin, .balancing=.balancing,
                 .status_file=param$progress, .proc_time=param$progress,
                 .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
                 .param=param, ...)

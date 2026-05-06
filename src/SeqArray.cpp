@@ -1703,6 +1703,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_MergeFormat(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_BApply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_Unit_SlidingWindows(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_FindMatchIndex(SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_bgzip_create(SEXP);
     extern SEXP SEQ_ToVCF_Init(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -1749,7 +1750,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP FC_SetPackedGenoVxS(SEXP);
 	extern SEXP FC_SetPackedGenoSubsetSxV(SEXP, SEXP, SEXP, SEXP);
 	extern SEXP FC_SetPackedGenoSubsetVxS(SEXP, SEXP, SEXP, SEXP);
-
+	
 	// FC_ functions from ConvToGDS.cpp
 	extern SEXP FC_GDS2BED(SEXP);
 	extern SEXP FC_SNP2GDS_Ref(SEXP);
@@ -1802,6 +1803,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_GetData, 6),               CALL(SEQ_ListVarData, 2),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
 		CALL(SEQ_BApply_Variant, 7),        CALL(SEQ_Unit_SlidingWindows, 7),
+		CALL(SEQ_FindMatchIndex, 4),
 
 		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
