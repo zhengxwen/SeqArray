@@ -43,8 +43,11 @@ before running any memory-intensive functions, as forking within such functions
 can significantly increase memory usage.
 }
 \value{
-    \code{seqParallelSetup()} has no return, and \code{seqGetParallel()} returns
-\code{getOption("seqarray.parallel", FALSE)}.
+    \code{seqParallelSetup()} has no return.
+    \code{seqGetParallel()} returns \code{getOption("seqarray.parallel", FALSE)}.
+    \code{seqMulticoreSetup()} invisibly returns the newly created cluster
+object when a multicore cluster is set up, and otherwise returns invisibly
+with no value.
 }
 
 \author{Xiuwen Zheng}
