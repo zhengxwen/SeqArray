@@ -19,6 +19,9 @@ UTILITIES
     o `seqMulticoreSetup()` invisibly returns the newly created cluster
       object when a multicore cluster is set up
 
+    o `seqUnitMerge()` now properly supports merging more than two
+      'SeqUnitListClass' objects via '...'
+
 
 CHANGES IN VERSION 1.52.0
 -------------------------

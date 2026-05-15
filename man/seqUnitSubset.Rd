@@ -9,17 +9,14 @@
 \usage{
 seqUnitCreate(idx, desp=NULL)
 seqUnitSubset(units, i)
-seqUnitMerge(ut1, ut2)
+seqUnitMerge(...)
 }
 \arguments{
     \item{idx}{a list of numeric indexing vectors for specifying variants}
     \item{desp}{a \code{data.frame} for annotating the variant sets}
     \item{units}{a list of units of selected variants, with S3 class
         \code{SeqUnitListClass}}
-    \item{ut1}{a list of units of selected variants, with S3 class
-        \code{SeqUnitListClass}}
-    \item{ut2}{a list of units of selected variants, with S3 class
-        \code{SeqUnitListClass}}
+    \item{...}{\code{SeqUnitListClass} objects to be merged}
     \item{i}{a numeric or logical vector for indices specifying elements}
 }
 \value{

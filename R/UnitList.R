@@ -239,15 +239,21 @@ seqUnitSubset <- function(units, i)
     units
 }
 
-seqUnitMerge <- function(ut1, ut2)
+seqUnitMerge <- function(...)
 {
     # check
-    stopifnot(inherits(ut1, "SeqUnitListClass"))
-    stopifnot(inherits(ut2, "SeqUnitListClass"))
+    args <- list(...)
+    stopifnot(length(args) >= 1L)
+    for (i in seq_along(args))
+        stopifnot(inherits(args[[i]], "SeqUnitListClass"))
     # output
-    ut1$desp <- rbind(ut1$desp, ut2$desp)
-    ut1$index <- c(ut1$index, ut2$index)
-    ut1
+    if (length(args) == 1L) return(args[[1L]])
+    ans <- list(desp=NULL, index=NULL)
+    ans$desp <- Reduce(rbind, lapply(args, function(x) x$desp))
+    rownames(ans$desp) <- NULL
+    ans$index <- unlist(lapply(args, function(x) x$index), recursive=FALSE)
+    class(ans) <- "SeqUnitListClass"
+    ans
 }
 
 
