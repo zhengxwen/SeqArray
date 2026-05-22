@@ -22,7 +22,8 @@
 #include "Index.h"
 #include <Rdefines.h>
 #include <R_ext/Rdynload.h>
-#include <unordered_map>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace SeqArray;
@@ -1215,75 +1216,185 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSubsetVxS(SEXP geno_out,
 
 // ======================================================================
 
-/// Many-to-many left join on integer position key
-/// pos0, idx0: query positions and their original indices (from d00)
-/// pos1, idx1: GDS positions and their variant indices (from d1)
-/// Returns a list with i0 and i1 integer vectors
-COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0, SEXP idx0,
-	SEXP pos1, SEXP idx1)
+/// Many-to-many left join on integer position key using sort-merge join
+/// pos0: full query position vector
+/// ref0, alt0: query ref/alt character vectors (or R_NilValue if NULL)
+/// ord0: sorted indices into pos0 (1-based, subset for this chromosome)
+/// pos1, idx1: GDS positions and their variant indices
+/// ord1: order indices for pos1 (1-based, from R's order())
+/// node: GDS node for allele data
+/// Returns a list with i0, i1 and i2 integer vectors
+COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
+	SEXP ref0, SEXP alt0, SEXP ord0, SEXP pos1, SEXP idx1, SEXP ord1,
+	SEXP node)
 {
-	const R_xlen_t n0 = XLENGTH(pos0);
+	const R_xlen_t n0 = XLENGTH(ord0);
 	const R_xlen_t n1 = XLENGTH(pos1);
 	const int *p0 = INTEGER(pos0);
-	const int *ii0 = INTEGER(idx0);
+	const int *k0 = INTEGER(ord0);  // 1-based sorted indices into p0
 	const int *p1 = INTEGER(pos1);
-	const int *ii1 = INTEGER(idx1);
+	const int *i1 = INTEGER(idx1);
+	const int *k1 = INTEGER(ord1);  // 1-based sort order
+	const bool use_allele = !Rf_isNull(ref0) && !Rf_isNull(alt0);
 
-	// Build hash: position -> vector of indices from d1
-	unordered_map<int, vector<int>> pos_map;
-	pos_map.reserve(n1);
-	for (R_xlen_t i = 0; i < n1; i++)
-		pos_map[p1[i]].push_back(ii1[i]);
+	COREARRAY_TRY
 
-	// First pass: count total output rows
-	R_xlen_t total = 0;
-	for (R_xlen_t i = 0; i < n0; i++)
-	{
-		auto it = pos_map.find(p0[i]);
-		if (it != pos_map.end())
-			total += (R_xlen_t)it->second.size();
-		else
-			total += 1;  // NA row for left join
-	}
-
-	// Allocate output
-	SEXP out_i0 = PROTECT(Rf_allocVector(INTSXP, total));
-	SEXP out_i1 = PROTECT(Rf_allocVector(INTSXP, total));
-	int *oi0 = INTEGER(out_i0);
-	int *oi1 = INTEGER(out_i1);
-
-	// Second pass: fill output
-	R_xlen_t k = 0;
-	for (R_xlen_t i = 0; i < n0; i++)
-	{
-		auto it = pos_map.find(p0[i]);
-		if (it != pos_map.end())
+		// First pass: max count total output rows using sort-merge
+		R_xlen_t total = 0;
+		R_xlen_t i = 0, j = 0;
+		while (i < n0)
 		{
-			for (int val : it->second)
+			int v0 = p0[k0[i] - 1];
+			// advance j past values smaller than v0
+			while (j < n1 && p1[k1[j] - 1] < v0) j++;
+			if (j < n1 && p1[k1[j] - 1] == v0)
 			{
-				oi0[k] = ii0[i];
-				oi1[k] = val;
-				k++;
+				// count duplicates on both sides
+				R_xlen_t cnt0 = 0;
+				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
+					cnt0 ++;
+				R_xlen_t cnt1 = 0;
+				for (R_xlen_t jj = j; jj < n1 && p1[k1[jj] - 1] == v0; jj++)
+					cnt1 ++;
+				// each right entry written at most once (cnt1) in out_i2
+				total += cnt1;
+				i += cnt0;
+			} else {
+				// no match: count consecutive duplicates on left side
+				R_xlen_t cnt0 = 0;
+				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
+					cnt0 ++;
+				i += cnt0;
 			}
-		} else {
-			oi0[k] = ii0[i];
-			oi1[k] = NA_INTEGER;
-			k++;
 		}
-	}
 
-	// Return as named list
-	SEXP rv = PROTECT(Rf_allocVector(VECSXP, 2));
-	SET_VECTOR_ELT(rv, 0, out_i0);
-	SET_VECTOR_ELT(rv, 1, out_i1);
+		// Allocate output (named list: i0, i1, i2)
+		rv_ans = PROTECT(Rf_allocVector(VECSXP, 3));
+		SET_VECTOR_ELT(rv_ans, 0, ord0);
+		SEXP out_i1 = PROTECT(Rf_allocVector(INTSXP, n0));
+		SET_VECTOR_ELT(rv_ans, 1, out_i1);
+		SEXP out_i2 = PROTECT(Rf_allocVector(INTSXP, total));
+		SET_VECTOR_ELT(rv_ans, 2, out_i2);
 
-	SEXP names = PROTECT(Rf_allocVector(STRSXP, 2));
-	SET_STRING_ELT(names, 0, Rf_mkChar("i0"));
-	SET_STRING_ELT(names, 1, Rf_mkChar("i1"));
-	Rf_setAttrib(rv, R_NamesSymbol, names);
+		int *oi1 = INTEGER(out_i1);
+		int *oi2 = INTEGER(out_i2);
+		for (R_xlen_t k=0; k < total; k++) oi2[k] = NA_INTEGER;
+		R_xlen_t oi2_index = 0;
 
-	UNPROTECT(4);
-	return rv;
+		// allele in the GDS file
+		vector<string> allele_vec;
+		vector<C_BOOL> allele_flag_vec;
+		PdGDSObj node_allele = GDS_R_SEXP2Obj(node, TRUE);
+
+		// Second pass: fill output using sort-merge with ref & alt (if provided)
+		i = 0; j = 0;
+		while (i < n0)
+		{
+			int v0 = p0[k0[i] - 1];
+			// advance j past values smaller than v0
+			while ((j < n1) && (p1[k1[j] - 1] < v0)) j++;
+			// find the run of equal values on the right side
+			R_xlen_t j_start = j;
+			R_xlen_t j_end = j;
+			if (j < n1 && p1[k1[j] - 1] == v0)
+			{
+				while ((j_end < n1) && (p1[k1[j_end] - 1] == v0))
+					j_end ++;
+				if (use_allele && (j_start < j_end))
+				{
+					// read allele data from the GDS file
+					R_xlen_t n_allele = j_end - j_start;
+					if (n_allele > allele_vec.size()) allele_vec.resize(n_allele);
+					// reset allele flag vector
+					const int st = i1[k1[j_start] - 1];
+					R_xlen_t n = i1[k1[j_end-1] - 1] - st + 1;
+					if (n <= 0)
+						throw ErrSeqArray("SEQ_FindMatchIndex: invalid variant index range.");
+					if (n > allele_flag_vec.size()) allele_flag_vec.resize(n);
+					memset(&allele_flag_vec[0], 0, sizeof(C_BOOL)*n);
+					int last = -1;  // used for checking
+					for (R_xlen_t jj = j_start; jj < j_end; jj++)
+					{
+						int ii = i1[k1[jj] - 1] - st;
+						if (ii <= last)
+							throw ErrSeqArray("SEQ_FindMatchIndex: allele index not increasing.");
+						last = ii;
+						allele_flag_vec[ii] = TRUE;
+					}
+					// read
+					const C_Int32 start = st-1, length = n;
+					const C_BOOL *sel = &allele_flag_vec[0];
+					GDS_Array_ReadDataEx(node_allele, &start, &length, &sel,
+						&allele_vec[0], svStrUTF8);
+				}
+			}
+			// emit cross-product for all left entries with this position
+			while ((i < n0) && (p0[k0[i] - 1] == v0))
+			{
+				if (j_start < j_end)
+				{
+					if (use_allele)
+					{
+						// check: (is.na(ref) | ref==r) & (is.na(alt) | alt==a)
+						const int k0_i = k0[i] - 1;
+						SEXP ref_s = STRING_ELT(ref0, k0_i);
+						SEXP alt_s = STRING_ELT(alt0, k0_i);
+						const bool ref_is_na = (ref_s == NA_STRING);
+						const bool alt_is_na = (alt_s == NA_STRING);
+						const char *ref = ref_is_na ? "" : CHAR(ref_s);
+						const char *alt = alt_is_na ? "" : CHAR(alt_s);
+						const int i1_k1_j_start = i1[k1[j_start] - 1];
+						int found = NA_INTEGER;
+						for (R_xlen_t jj = j_start; jj < j_end; jj++)
+						{
+							const string &al = allele_vec[jj - j_start];
+							// parse "ref,alt" from GDS allele string
+							size_t cp = al.find(',');
+							bool ref_ok = ref_is_na ||
+								(cp != string::npos ? (al.compare(0, cp, ref) == 0) : (al == ref));
+							if (!ref_ok) continue;
+							bool alt_ok = alt_is_na ||
+								(cp != string::npos ? (strcmp(alt, al.c_str()+cp+1) == 0) : false);
+							if (alt_ok)
+							{
+								const int i1_index = i1[k1[jj] - 1];
+								if (found < 0) found = i1_index;
+								if (allele_flag_vec[i1_index - i1_k1_j_start])
+								{
+									allele_flag_vec[i1_index - i1_k1_j_start] = 0;  // mark as used
+									oi2[oi2_index++] = i1_index;
+								}
+							}
+						}
+						oi1[i] = found;
+					} else {
+						// no allele check: all entries match
+						// use the first one as the representative
+						const int i1_k1_j_start = i1[k1[j_start] - 1];
+						oi1[i] = i1_k1_j_start;
+						// fill out_i2 once for this position group
+						for (R_xlen_t jj = j_start; jj < j_end; jj++)
+							oi2[oi2_index++] = i1[k1[jj] - 1];
+						// set oi1 for remaining left entries at this position
+						i++;
+						while ((i < n0) && (p0[k0[i] - 1] == v0))
+						{
+							oi1[i] = i1_k1_j_start;
+							i++;
+						}
+						break;
+					}
+				} else {
+					// not found: output NA for right index
+					oi1[i] = NA_INTEGER;
+				}
+				i++;
+			}
+		}
+
+		UNPROTECT(3);
+
+	COREARRAY_CATCH
 }
 
 } // extern "C"
