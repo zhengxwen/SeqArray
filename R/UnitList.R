@@ -239,26 +239,19 @@ seqUnitSubset <- function(units, i)
     units
 }
 
-seqUnitMerge <- function(..., sort=TRUE)
+seqUnitMerge <- function(...)
 {
     # check
     args <- list(...)
     stopifnot(length(args) >= 1L)
     for (i in seq_along(args))
         stopifnot(inherits(args[[i]], "SeqUnitListClass"))
-    stopifnot(is.logical(sort), length(sort)==1L)
     # output
     if (length(args) == 1L) return(args[[1L]])
     ans <- list(desp=NULL, index=NULL)
     ans$desp <- Reduce(rbind, lapply(args, function(x) x$desp))
     rownames(ans$desp) <- NULL
     ans$index <- unlist(lapply(args, function(x) x$index), recursive=FALSE)
-    if (isTRUE(sort))
-    {
-        i <- order(sapply(ans$index, `[`, 1L))
-        ans$desp <- ans$desp[i, , drop=FALSE]
-        ans$index <- ans$index[i]
-    }
     class(ans) <- "SeqUnitListClass"
     ans
 }
