@@ -3,9 +3,31 @@ CHANGES IN VERSION 1.53.1
 
 NEW FEATURES
 
+    o `seqParallel()` supports a `BiocParallelParam` object for the `cl`
+      argument, with full feature parity to the cluster-based path, including
+      load balancing, init/finalize hooks, and numeric/NULL `gdsfile` inputs
+
+UTILITIES
+
+    o `seqUnitMerge()` now properly supports merging more than two
+      'SeqUnitListClass' objects via '...'
+
+    o new `seqUnitSetDiff()` to remove variant indices of one unit list
+      from another, returning the set-difference version of units
+
+
+CHANGES IN VERSION 1.52.1
+-------------------------
+
+NEW FEATURES
+
     o `seqParallel()` can load cloud-related packages on worker processes
       before calling the user-defined function, with backward compatibility
       for older gdsfmt versions
+
+UTILITIES
+
+    o faster `seqSetFilterPos()` than v1.52.0
 
     o `seqApply()` supports "$ref", "$alt", "$chrom_pos", "$chrom_pos_allele"
       and "$variant_index" as variable names, consistent with `seqGetData()`
@@ -14,16 +36,8 @@ NEW FEATURES
       and `CharacterList` from the IRanges package as variable-length
       annotation data input
 
-UTILITIES
-
     o `seqMulticoreSetup()` invisibly returns the newly created cluster
       object when a multicore cluster is set up
-
-    o `seqUnitMerge()` now properly supports merging more than two
-      'SeqUnitListClass' objects via '...'
-
-    o new `seqUnitSetDiff()` to remove variant indices of one unit list
-      from another, returning the set-difference version of units
 
 
 CHANGES IN VERSION 1.52.0
