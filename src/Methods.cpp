@@ -1223,10 +1223,11 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSubsetVxS(SEXP geno_out,
 /// pos1, idx1: GDS positions and their variant indices
 /// ord1: order indices for pos1 (1-based, from R's order())
 /// node: GDS node for allele data
+/// multi_pos: whether to return multiple matches for the same position 
 /// Returns a list with i0, i1 and i2 integer vectors
 COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
 	SEXP ref0, SEXP alt0, SEXP ord0, SEXP pos1, SEXP idx1, SEXP ord1,
-	SEXP node)
+	SEXP node, SEXP multi_pos)
 {
 	const R_xlen_t n0 = XLENGTH(ord0);
 	const R_xlen_t n1 = XLENGTH(pos1);
@@ -1236,35 +1237,39 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
 	const int *i1 = INTEGER(idx1);
 	const int *k1 = INTEGER(ord1);  // 1-based sort order
 	const bool use_allele = !Rf_isNull(ref0) && !Rf_isNull(alt0);
+	const bool need_i2 = Rf_asLogical(multi_pos) != FALSE;  // TRUE or NA
 
 	COREARRAY_TRY
 
-		// First pass: max count total output rows using sort-merge
 		R_xlen_t total = 0;
-		R_xlen_t i = 0, j = 0;
-		while (i < n0)
+		if (need_i2)
 		{
-			int v0 = p0[k0[i] - 1];
-			// advance j past values smaller than v0
-			while (j < n1 && p1[k1[j] - 1] < v0) j++;
-			if (j < n1 && p1[k1[j] - 1] == v0)
+			// First pass: max count total output rows using sort-merge
+			R_xlen_t i = 0, j = 0;
+			while (i < n0)
 			{
-				// count duplicates on both sides
-				R_xlen_t cnt0 = 0;
-				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
-					cnt0 ++;
-				R_xlen_t cnt1 = 0;
-				for (R_xlen_t jj = j; jj < n1 && p1[k1[jj] - 1] == v0; jj++)
-					cnt1 ++;
-				// each right entry written at most once (cnt1) in out_i2
-				total += cnt1;
-				i += cnt0;
-			} else {
-				// no match: count consecutive duplicates on left side
-				R_xlen_t cnt0 = 0;
-				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
-					cnt0 ++;
-				i += cnt0;
+				int v0 = p0[k0[i] - 1];
+				// advance j past values smaller than v0
+				while (j < n1 && p1[k1[j] - 1] < v0) j++;
+				if (j < n1 && p1[k1[j] - 1] == v0)
+				{
+					// count duplicates on both sides
+					R_xlen_t cnt0 = 0;
+					for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
+						cnt0 ++;
+					R_xlen_t cnt1 = 0;
+					for (R_xlen_t jj = j; jj < n1 && p1[k1[jj] - 1] == v0; jj++)
+						cnt1 ++;
+					// each right entry written at most once (cnt1) in out_i2
+					total += cnt1;
+					i += cnt0;
+				} else {
+					// no match: count consecutive duplicates on left side
+					R_xlen_t cnt0 = 0;
+					for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
+						cnt0 ++;
+					i += cnt0;
+				}
 			}
 		}
 
@@ -1277,8 +1282,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
 		SET_VECTOR_ELT(rv_ans, 2, out_i2);
 
 		int *oi1 = INTEGER(out_i1);
-		int *oi2 = INTEGER(out_i2);
-		for (R_xlen_t k=0; k < total; k++) oi2[k] = NA_INTEGER;
+		int *oi2 = need_i2 ? INTEGER(out_i2) : NULL;
+		if (need_i2)
+			for (R_xlen_t k=0; k < total; k++) oi2[k] = NA_INTEGER;
 		R_xlen_t oi2_index = 0;
 
 		// allele in the GDS file
@@ -1287,7 +1293,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
 		PdGDSObj node_allele = GDS_R_SEXP2Obj(node, TRUE);
 
 		// Second pass: fill output using sort-merge with ref & alt (if provided)
-		i = 0; j = 0;
+		R_xlen_t i = 0, j = 0;
 		while (i < n0)
 		{
 			int v0 = p0[k0[i] - 1];
@@ -1359,7 +1365,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
 							{
 								const int i1_index = i1[k1[jj] - 1];
 								if (found < 0) found = i1_index;
-								if (allele_flag_vec[i1_index - i1_k1_j_start])
+								if (need_i2 && allele_flag_vec[i1_index - i1_k1_j_start])
 								{
 									allele_flag_vec[i1_index - i1_k1_j_start] = 0;  // mark as used
 									oi2[oi2_index++] = i1_index;
@@ -1373,8 +1379,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
 						const int i1_k1_j_start = i1[k1[j_start] - 1];
 						oi1[i] = i1_k1_j_start;
 						// fill out_i2 once for this position group
-						for (R_xlen_t jj = j_start; jj < j_end; jj++)
-							oi2[oi2_index++] = i1[k1[jj] - 1];
+						if (need_i2)
+						{
+							for (R_xlen_t jj = j_start; jj < j_end; jj++)
+								oi2[oi2_index++] = i1[k1[jj] - 1];
+						}
 						// set oi1 for remaining left entries at this position
 						i++;
 						while ((i < n0) && (p0[k0[i] - 1] == v0))

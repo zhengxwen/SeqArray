@@ -384,7 +384,8 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
         i1 <- seqGetData(object, "$variant_index")
         # match
         ord1 <- order(p1)
-        .Call(SEQ_FindMatchIndex, pos, ref, alt, i_sub, p1, i1, ord1, node)
+        .Call(SEQ_FindMatchIndex, pos, ref, alt, i_sub, p1, i1, ord1,
+            node, multi.pos)
     })
 
     if (length(dd) == 1L)

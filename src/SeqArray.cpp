@@ -1703,7 +1703,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_MergeFormat(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_BApply_Variant(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_Unit_SlidingWindows(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-	extern SEXP SEQ_FindMatchIndex(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	extern SEXP SEQ_FindMatchIndex(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_bgzip_create(SEXP);
     extern SEXP SEQ_ToVCF_Init(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -1803,7 +1803,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_GetData, 6),               CALL(SEQ_ListVarData, 2),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
 		CALL(SEQ_BApply_Variant, 7),        CALL(SEQ_Unit_SlidingWindows, 7),
-		CALL(SEQ_FindMatchIndex, 8),
+		CALL(SEQ_FindMatchIndex, 9),
 
 		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
