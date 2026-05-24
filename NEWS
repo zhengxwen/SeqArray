@@ -1,7 +1,11 @@
-CHANGES IN VERSION 1.53.1
+CHANGES IN VERSION 1.53.2
 -------------------------
 
 NEW FEATURES
+
+    o AARCH64 NEON SIMD optimization for vectorized internal functions,
+      providing hardware-accelerated performance on Apple Silicon and other
+      ARM64 platforms
 
     o `seqParallel()` supports a `BiocParallelParam` object for the `cl`
       argument, with full feature parity to the cluster-based path, including
