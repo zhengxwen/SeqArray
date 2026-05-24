@@ -168,6 +168,45 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 		ans += 16 - POPCNT_U64(array[0]) - POPCNT_U64(array[1]);
 	}
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t ZERO = vdupq_n_u8(0);
+	uint8x16_t sum = vdupq_n_u8(0);
+	size_t offset = 0;
+
+	for (; n >= 64; n -= 64)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vmvnq_u8(vceqq_u8(v, ZERO)));
+		v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vmvnq_u8(vceqq_u8(v, ZERO)));
+		v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vmvnq_u8(vceqq_u8(v, ZERO)));
+		v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vmvnq_u8(vceqq_u8(v, ZERO)));
+		offset += 4;
+		if (offset >= 252)
+		{
+			ans += vec_neon_sum_u8(sum);
+			sum = vdupq_n_u8(0);
+			offset = 0;
+		}
+	}
+	for (; n >= 16; n -= 16, p += 16)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p);
+		sum = vsubq_u8(sum, vmvnq_u8(vceqq_u8(v, ZERO)));
+		if ((++offset) >= 252)
+		{
+			ans += vec_neon_sum_u8(sum);
+			sum = vdupq_n_u8(0);
+			offset = 0;
+		}
+	}
+	if (offset > 0)
+		ans += vec_neon_sum_u8(sum);
+
 #else
 
 	// header, 8-byte aligned
@@ -216,6 +255,14 @@ const int8_t *vec_i8_cnt_nonzero_ptr(const int8_t *p, size_t n, size_t *out_n)
 		__m128i v = _mm_loadu_si128((__m128i const*)p);
 		v = _mm_cmpeq_epi8(v, ZERO);
 		if (_mm_movemask_epi8(v) != 0xFFFF) break;
+	}
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	for (; n >= 16; n-=16, p+=16)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p);
+		if (vmaxvq_u8(v) != 0) break;
 	}
 
 #endif
@@ -344,6 +391,50 @@ size_t vec_i8_count(const char *p, size_t n, char val)
 		num += vec_sum_u8(sum);
 #endif
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t mask = vdupq_n_u8((uint8_t)val);
+	uint8x16_t sum = vdupq_n_u8(0);
+	size_t offset = 0;
+
+	for (; n >= 64; n-=64)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vreinterpretq_u8_s8(
+			vreinterpretq_s8_u8(vceqq_u8(v, mask))));
+		v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vreinterpretq_u8_s8(
+			vreinterpretq_s8_u8(vceqq_u8(v, mask))));
+		v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vreinterpretq_u8_s8(
+			vreinterpretq_s8_u8(vceqq_u8(v, mask))));
+		v = vld1q_u8((const uint8_t*)p); p += 16;
+		sum = vsubq_u8(sum, vreinterpretq_u8_s8(
+			vreinterpretq_s8_u8(vceqq_u8(v, mask))));
+		offset += 4;
+		if (offset >= 252)
+		{
+			num += vec_neon_sum_u8(sum);
+			sum = vdupq_n_u8(0);
+			offset = 0;
+		}
+	}
+	for (; n >= 16; n-=16, p+=16)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p);
+		sum = vsubq_u8(sum, vreinterpretq_u8_s8(
+			vreinterpretq_s8_u8(vceqq_u8(v, mask))));
+		if ((++offset) >= 252)
+		{
+			num += vec_neon_sum_u8(sum);
+			sum = vdupq_n_u8(0);
+			offset = 0;
+		}
+	}
+	if (offset > 0)
+		num += vec_neon_sum_u8(sum);
+
 #endif
 
 	// tail
@@ -449,6 +540,33 @@ void vec_i8_count2(const char *p, size_t n, char val1, char val2,
 		n2 += vec_sum_u8(sum2);
 	}
 #endif
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t mask1 = vdupq_n_u8((uint8_t)val1);
+	const uint8x16_t mask2 = vdupq_n_u8((uint8_t)val2);
+	uint8x16_t sum1 = vdupq_n_u8(0), sum2 = vdupq_n_u8(0);
+	size_t offset = 0;
+
+	for (; n >= 16; n-=16, p+=16)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p);
+		sum1 = vsubq_u8(sum1, vceqq_u8(v, mask1));
+		sum2 = vsubq_u8(sum2, vceqq_u8(v, mask2));
+		if ((++offset) >= 252)
+		{
+			n1 += vec_neon_sum_u8(sum1);
+			n2 += vec_neon_sum_u8(sum2);
+			sum1 = sum2 = vdupq_n_u8(0);
+			offset = 0;
+		}
+	}
+	if (offset > 0)
+	{
+		n1 += vec_neon_sum_u8(sum1);
+		n2 += vec_neon_sum_u8(sum2);
+	}
 
 #endif
 
@@ -575,6 +693,37 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 	}
 #endif
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t mask1 = vdupq_n_u8((uint8_t)val1);
+	const uint8x16_t mask2 = vdupq_n_u8((uint8_t)val2);
+	const uint8x16_t mask3 = vdupq_n_u8((uint8_t)val3);
+	uint8x16_t sum1 = vdupq_n_u8(0), sum2 = vdupq_n_u8(0), sum3 = vdupq_n_u8(0);
+	size_t offset = 0;
+
+	for (; n >= 16; n-=16, p+=16)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p);
+		sum1 = vsubq_u8(sum1, vceqq_u8(v, mask1));
+		sum2 = vsubq_u8(sum2, vceqq_u8(v, mask2));
+		sum3 = vsubq_u8(sum3, vceqq_u8(v, mask3));
+		if ((++offset) >= 252)
+		{
+			n1 += vec_neon_sum_u8(sum1);
+			n2 += vec_neon_sum_u8(sum2);
+			n3 += vec_neon_sum_u8(sum3);
+			sum1 = sum2 = sum3 = vdupq_n_u8(0);
+			offset = 0;
+		}
+	}
+	if (offset > 0)
+	{
+		n1 += vec_neon_sum_u8(sum1);
+		n2 += vec_neon_sum_u8(sum2);
+		n3 += vec_neon_sum_u8(sum3);
+	}
+
 #endif
 
 	// tail
@@ -644,6 +793,20 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 		__m128i c = _mm_cmpeq_epi8(v, mask);
 		if (_mm_movemask_epi8(c))
 			_mm_maskmoveu_si128(sub, c, (char*)p);
+	}
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t vmask = vdupq_n_u8((uint8_t)val);
+	const uint8x16_t vsub  = vdupq_n_u8((uint8_t)substitute);
+
+	for (; n >= 16; n-=16, p+=16)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p);
+		uint8x16_t c = vceqq_u8(v, vmask);
+		if (vmaxvq_u8(c))
+			vst1q_u8((uint8_t*)p, vbslq_u8(c, vsub, v));
 	}
 
 #endif
@@ -746,6 +909,36 @@ void vec_i8_cnt_dosage2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 		c = _mm_or_si128(_mm_and_si128(w, sub16), _mm_andnot_si128(w, c));
 
 		_mm_store_si128((__m128i *)out, c);
+		out += 16;
+	}
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t val16  = vdupq_n_u8((uint8_t)val);
+	const uint8x16_t miss16 = vdupq_n_u8((uint8_t)missing);
+	const uint8x16_t sub16  = vdupq_n_u8((uint8_t)missing_substitute);
+
+	for (; n >= 16; n-=16)
+	{
+		uint8x16_t w1 = vld1q_u8((const uint8_t*)p); p += 16;
+		uint8x16_t w2 = vld1q_u8((const uint8_t*)p); p += 16;
+
+		// deinterleave: v1 gets even bytes, v2 gets odd bytes
+		uint8x16x2_t dz = vuzpq_u8(w1, w2);
+		uint8x16_t v1 = dz.val[0];
+		uint8x16_t v2 = dz.val[1];
+
+		uint8x16_t c = vdupq_n_u8(0);
+		c = vsubq_u8(c, vceqq_u8(v1, val16));
+		c = vsubq_u8(c, vceqq_u8(v2, val16));
+
+		uint8x16_t m1 = vceqq_u8(v1, miss16);
+		uint8x16_t m2 = vceqq_u8(v2, miss16);
+		uint8x16_t w  = vorrq_u8(m1, m2);
+		c = vbslq_u8(w, sub16, c);
+
+		vst1q_u8((uint8_t*)out, c);
 		out += 16;
 	}
 
@@ -858,6 +1051,36 @@ void vec_i8_cnt_dosage_alt2(const int8_t *p, int8_t *out, size_t n, int8_t val,
 		out += 16;
 	}
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t val16  = vdupq_n_u8((uint8_t)val);
+	const uint8x16_t miss16 = vdupq_n_u8((uint8_t)missing);
+	const uint8x16_t sub16  = vdupq_n_u8((uint8_t)missing_substitute);
+	const uint8x16_t two16  = vdupq_n_u8(2);
+
+	for (; n >= 16; n-=16)
+	{
+		uint8x16_t w1 = vld1q_u8((const uint8_t*)p); p += 16;
+		uint8x16_t w2 = vld1q_u8((const uint8_t*)p); p += 16;
+
+		uint8x16x2_t dz = vuzpq_u8(w1, w2);
+		uint8x16_t v1 = dz.val[0];
+		uint8x16_t v2 = dz.val[1];
+
+		uint8x16_t c = two16;
+		c = vaddq_u8(c, vceqq_u8(v1, val16));
+		c = vaddq_u8(c, vceqq_u8(v2, val16));
+
+		uint8x16_t m1 = vceqq_u8(v1, miss16);
+		uint8x16_t m2 = vceqq_u8(v2, miss16);
+		uint8x16_t w  = vorrq_u8(m1, m2);
+		c = vbslq_u8(w, sub16, c);
+
+		vst1q_u8((uint8_t*)out, c);
+		out += 16;
+	}
+
 #endif
 
 	// tail
@@ -903,6 +1126,36 @@ void vec_i8_cnt_dosage_alt2_p(const int8_t *p, int8_t *out, size_t n,
 		out += 16;
 	}
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t val16  = vdupq_n_u8((uint8_t)val);
+	const uint8x16_t miss16 = vdupq_n_u8((uint8_t)missing);
+	const uint8x16_t sub16  = vdupq_n_u8((uint8_t)missing_substitute);
+	const uint8x16_t two16  = vdupq_n_u8(2);
+
+	for (; n >= 16; n-=16)
+	{
+		uint8x16_t w0 = vld1q_u8((const uint8_t*)p); p += 16;
+		uint8x16_t w1 = vld1q_u8((const uint8_t*)p); p += 16;
+
+		uint8x16x2_t dz = vuzpq_u8(w0, w1);
+		uint8x16_t v0 = dz.val[0];
+		uint8x16_t v1 = dz.val[1];
+
+		uint8x16_t b0 = vceqq_u8(v0, miss16);
+		uint8x16_t b1 = vceqq_u8(v1, miss16);
+		uint8x16_t bb = vandq_u8(b0, b1);
+
+		uint8x16_t c = two16;
+		c = vaddq_u8(c, vorrq_u8(b0, vceqq_u8(v0, val16)));
+		c = vaddq_u8(c, vorrq_u8(b1, vceqq_u8(v1, val16)));
+		c = vbslq_u8(bb, sub16, c);
+
+		vst1q_u8((uint8_t*)out, c);
+		out += 16;
+	}
+
 #endif
 	// tail
 	for (; n > 0; n--, p+=2)
@@ -938,6 +1191,15 @@ void vec_u8_shr_b2(uint8_t *p, size_t n)
 		_mm_store_si128((__m128i *)p, v & mask);
 	}
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	for (; n >= 16; n-=16, p+=16)
+	{
+		uint8x16_t v = vld1q_u8(p);
+		vst1q_u8(p, vshrq_n_u8(v, 2));
+	}
+
 #endif
 
 	// tail
@@ -958,6 +1220,19 @@ void vec_u8_or_shl(uint8_t *p, size_t n, const uint8_t *s, const uint8_t nbit)
 			__m128i sv = _mm_loadu_si128((__m128i const*)s);
 			__m128i  v = _mm_slli_epi16(sv & mask, nbit);
 			_mm_storeu_si128((__m128i*)p, pv | v);
+		}
+	}
+#elif defined(COREARRAY_SIMD_NEON)
+	if (n >= 16)
+	{
+		const uint8x16_t vmask = vdupq_n_u8(((uint8_t)0xFF) >> nbit);
+		const int8x16_t vshift = vdupq_n_s8((int8_t)nbit);
+		for (; n >= 16; n-=16, p+=16, s+=16)
+		{
+			uint8x16_t pv = vld1q_u8(p);
+			uint8x16_t sv = vld1q_u8(s);
+			uint8x16_t v = vshlq_u8(vandq_u8(sv, vmask), vshift);
+			vst1q_u8(p, vorrq_u8(pv, v));
 		}
 	}
 #endif
@@ -985,6 +1260,15 @@ void vec_i16_shr_b2(int16_t *p, size_t n)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		_mm_store_si128((__m128i *)p, _mm_srai_epi16(v, 2));
+	}
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	for (; n >= 8; n-=8, p+=8)
+	{
+		int16x8_t v = vld1q_s16(p);
+		vst1q_s16(p, vshrq_n_s16(v, 2));
 	}
 
 #endif
@@ -1066,6 +1350,19 @@ size_t vec_i32_count(const int32_t *p, size_t n, int32_t val)
 	ans += vec_sum_i32(sum);
 
 #   endif
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const int32x4_t vmask = vdupq_n_s32(val);
+	int32x4_t sum = vdupq_n_s32(0);
+	for (; n >= 4; n-=4, p+=4)
+	{
+		int32x4_t v = vld1q_s32(p);
+		uint32x4_t c = vceqq_s32(v, vmask);
+		sum = vsubq_s32(sum, vreinterpretq_s32_u32(c));
+	}
+	ans += vec_neon_sum_i32(sum);
 
 #endif
 
@@ -1169,6 +1466,22 @@ void vec_i32_count2(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 	n2 += vec_sum_i32(sum2);
 
 #   endif
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const int32x4_t vmask1 = vdupq_n_s32(val1);
+	const int32x4_t vmask2 = vdupq_n_s32(val2);
+	int32x4_t sum1 = vdupq_n_s32(0), sum2 = vdupq_n_s32(0);
+
+	for (; n >= 4; n-=4, p+=4)
+	{
+		int32x4_t v = vld1q_s32(p);
+		sum1 = vsubq_s32(sum1, vreinterpretq_s32_u32(vceqq_s32(v, vmask1)));
+		sum2 = vsubq_s32(sum2, vreinterpretq_s32_u32(vceqq_s32(v, vmask2)));
+	}
+	n1 += vec_neon_sum_i32(sum1);
+	n2 += vec_neon_sum_i32(sum2);
 
 #endif
 
@@ -1292,6 +1605,25 @@ void vec_i32_count3(const int32_t *p, size_t n, int32_t val1, int32_t val2,
 
 #   endif
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const int32x4_t vmask1 = vdupq_n_s32(val1);
+	const int32x4_t vmask2 = vdupq_n_s32(val2);
+	const int32x4_t vmask3 = vdupq_n_s32(val3);
+	int32x4_t sum1 = vdupq_n_s32(0), sum2 = vdupq_n_s32(0), sum3 = vdupq_n_s32(0);
+
+	for (; n >= 4; n-=4, p+=4)
+	{
+		int32x4_t v = vld1q_s32(p);
+		sum1 = vsubq_s32(sum1, vreinterpretq_s32_u32(vceqq_s32(v, vmask1)));
+		sum2 = vsubq_s32(sum2, vreinterpretq_s32_u32(vceqq_s32(v, vmask2)));
+		sum3 = vsubq_s32(sum3, vreinterpretq_s32_u32(vceqq_s32(v, vmask3)));
+	}
+	n1 += vec_neon_sum_i32(sum1);
+	n2 += vec_neon_sum_i32(sum2);
+	n3 += vec_neon_sum_i32(sum3);
+
 #endif
 
 	// tail
@@ -1360,6 +1692,20 @@ void vec_i32_replace(int32_t *p, size_t n, int32_t val, int32_t substitute)
 		__m128i c = _mm_cmpeq_epi32(v, mask);
 		if (_mm_movemask_epi8(c))
 			_mm_maskmoveu_si128(sub4, c, (char*)p);
+	}
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const int32x4_t vmask = vdupq_n_s32(val);
+	const int32x4_t vsub  = vdupq_n_s32(substitute);
+
+	for (; n >= 4; n-=4, p+=4)
+	{
+		int32x4_t v = vld1q_s32(p);
+		uint32x4_t c = vceqq_s32(v, vmask);
+		if (vmaxvq_u32(c))
+			vst1q_s32(p, vbslq_s32(c, vsub, v));
 	}
 
 #endif
@@ -1483,6 +1829,32 @@ void vec_i32_cnt_dosage2(const int32_t *p, int32_t *out, size_t n, int32_t val,
 		c = _mm_or_si128(_mm_and_si128(w, sub4), _mm_andnot_si128(w, c));
 
 		_mm_store_si128((__m128i *)out, c);
+		out += 4;
+	}
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON - deinterleave pairs: p[0],p[1] → v1[i],v2[i]
+	const int32x4_t val4  = vdupq_n_s32(val);
+	const int32x4_t miss4 = vdupq_n_s32(missing);
+	const int32x4_t sub4  = vdupq_n_s32(missing_substitute);
+
+	for (; n >= 4; n-=4)
+	{
+		int32x4x2_t pair = vld2q_s32(p); p += 8;
+		int32x4_t v1 = pair.val[0];
+		int32x4_t v2 = pair.val[1];
+
+		int32x4_t c = vdupq_n_s32(0);
+		c = vsubq_s32(c, vreinterpretq_s32_u32(vceqq_s32(v1, val4)));
+		c = vsubq_s32(c, vreinterpretq_s32_u32(vceqq_s32(v2, val4)));
+
+		uint32x4_t m1 = vceqq_s32(v1, miss4);
+		uint32x4_t m2 = vceqq_s32(v2, miss4);
+		uint32x4_t w  = vorrq_u32(m1, m2);
+		c = vbslq_s32(w, sub4, c);
+
+		vst1q_s32(out, c);
 		out += 4;
 	}
 
@@ -1616,6 +1988,33 @@ void vec_i32_cnt_dosage_alt2(const int32_t *p, int32_t *out, size_t n, int32_t v
 		out += 4;
 	}
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const int32x4_t val4  = vdupq_n_s32(val);
+	const int32x4_t miss4 = vdupq_n_s32(missing);
+	const int32x4_t sub4  = vdupq_n_s32(missing_substitute);
+	const int32x4_t two4  = vdupq_n_s32(2);
+
+	for (; n >= 4; n-=4)
+	{
+		int32x4x2_t pair = vld2q_s32(p); p += 8;
+		int32x4_t v1 = pair.val[0];
+		int32x4_t v2 = pair.val[1];
+
+		int32x4_t c = two4;
+		c = vaddq_s32(c, vreinterpretq_s32_u32(vceqq_s32(v1, val4)));
+		c = vaddq_s32(c, vreinterpretq_s32_u32(vceqq_s32(v2, val4)));
+
+		uint32x4_t m1 = vceqq_s32(v1, miss4);
+		uint32x4_t m2 = vceqq_s32(v2, miss4);
+		uint32x4_t w  = vorrq_u32(m1, m2);
+		c = vbslq_s32(w, sub4, c);
+
+		vst1q_s32(out, c);
+		out += 4;
+	}
+
 #endif
 
 	// tail
@@ -1666,6 +2065,35 @@ COREARRAY_DLL_DEFAULT void vec_i32_cnt_dosage_alt2_p(const int32_t *p,
 		out += 4;
 	}
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const int32x4_t val4  = vdupq_n_s32(val);
+	const int32x4_t miss4 = vdupq_n_s32(missing);
+	const int32x4_t sub4  = vdupq_n_s32(missing_substitute);
+	const int32x4_t two4  = vdupq_n_s32(2);
+
+	for (; n >= 4; n-=4)
+	{
+		int32x4x2_t pair = vld2q_s32(p); p += 8;
+		int32x4_t v0 = pair.val[0];
+		int32x4_t v1 = pair.val[1];
+
+		uint32x4_t b0 = vceqq_s32(v0, miss4);
+		uint32x4_t b1 = vceqq_s32(v1, miss4);
+		uint32x4_t bb = vandq_u32(b0, b1);
+
+		int32x4_t c = two4;
+		c = vaddq_s32(c, vreinterpretq_s32_u32(
+			vorrq_u32(b0, vceqq_s32(v0, val4))));
+		c = vaddq_s32(c, vreinterpretq_s32_u32(
+			vorrq_u32(b1, vceqq_s32(v1, val4))));
+		c = vbslq_s32(bb, sub4, c);
+
+		vst1q_s32(out, c);
+		out += 4;
+	}
+
 #endif
 
 	// tail
@@ -1693,6 +2121,15 @@ void vec_i32_shr_b2(int32_t *p, size_t n)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
 		_mm_store_si128((__m128i *)p, _mm_srai_epi32(v, 2));
+	}
+
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	for (; n >= 4; n-=4, p+=4)
+	{
+		int32x4_t v = vld1q_s32(p);
+		vst1q_s32(p, vshrq_n_s32(v, 2));
 	}
 
 #endif
@@ -1733,6 +2170,22 @@ int vec_i32_bound_check(const int32_t *p, size_t n, int bound)
 		if (_mm_movemask_epi8(m) != 0xFFFF)
 			return 0;
 	}
+#elif defined(COREARRAY_SIMD_NEON)
+	const int32x4_t vNA   = vdupq_n_s32(NA_INTEGER);
+	const int32x4_t vZERO = vdupq_n_s32(0);
+	const int32x4_t vBND  = vdupq_n_s32(bound);
+	for (; n >= 4; n-=4)
+	{
+		int32x4_t i4 = vld1q_s32(p);
+		p += 4;
+		// m = (i4 > 0) & !(i4 > bound) = valid and in-range
+		uint32x4_t gt_zero = vcgtq_s32(i4, vZERO);
+		uint32x4_t gt_bnd  = vcgtq_s32(i4, vBND);
+		uint32x4_t m = vbicq_u32(gt_zero, gt_bnd);  // in-range: >0 and <=bound
+		m = vorrq_u32(m, vceqq_s32(i4, vNA));       // or is NA
+		if (vminvq_u32(m) == 0)
+			return 0;
+	}
 #endif
 	for (; n > 0; n--)
 	{
@@ -1755,6 +2208,15 @@ COREARRAY_DLL_DEFAULT void vec_i32_or_shl(int32_t *p, size_t n,
 		__m128i sv = _mm_loadu_si128((__m128i const*)s);
 		__m128i  v = _mm_slli_epi32(sv, nbit);
 		_mm_storeu_si128((__m128i*)p, pv | v);
+	}
+#elif defined(COREARRAY_SIMD_NEON)
+	const int32x4_t vshift = vdupq_n_s32((int32_t)nbit);
+	for (; n >= 4; n-=4, p+=4, s+=4)
+	{
+		int32x4_t pv = vld1q_s32(p);
+		int32x4_t sv = vld1q_s32(s);
+		int32x4_t v  = vshlq_s32(sv, vshift);
+		vst1q_s32(p, vorrq_s32(pv, v));
 	}
 #endif
 	// tail
@@ -1800,6 +2262,44 @@ COREARRAY_DLL_DEFAULT void vec_i32_or_shl2(int32_t *p, size_t n,
 				__m128i s = _mm_unpackhi_epi16(s_h, zero); // uint16 => uint32
 				__m128i pv = _mm_loadu_si128((__m128i const*)p);
 				_mm_storeu_si128((__m128i*)p, pv | _mm_slli_epi32(s, nbit));
+				p += 4;
+			}
+		}
+	}
+#elif defined(COREARRAY_SIMD_NEON)
+	if (n >= 16)
+	{
+		const int32x4_t vshift = vdupq_n_s32((int32_t)nbit);
+		const uint8x16_t vmask = vdupq_n_u8(((uint8_t)0xFF) >> nbit);
+		for (; n >= 16; n-=16, s+=16)
+		{
+			uint8x16_t sv16 = vandq_u8(vld1q_u8(s), vmask);
+			// widen uint8 to uint16
+			uint16x8_t s_l = vmovl_u8(vget_low_u8(sv16));
+			uint16x8_t s_h = vmovl_u8(vget_high_u8(sv16));
+			// widen uint16 to uint32 and shift-or
+			{	// 1st 4 int
+				int32x4_t sv = vreinterpretq_s32_u32(vmovl_u16(vget_low_u16(s_l)));
+				int32x4_t pv = vld1q_s32(p);
+				vst1q_s32(p, vorrq_s32(pv, vshlq_s32(sv, vshift)));
+				p += 4;
+			}
+			{	// 2nd 4 int
+				int32x4_t sv = vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(s_l)));
+				int32x4_t pv = vld1q_s32(p);
+				vst1q_s32(p, vorrq_s32(pv, vshlq_s32(sv, vshift)));
+				p += 4;
+			}
+			{	// 3rd 4 int
+				int32x4_t sv = vreinterpretq_s32_u32(vmovl_u16(vget_low_u16(s_h)));
+				int32x4_t pv = vld1q_s32(p);
+				vst1q_s32(p, vorrq_s32(pv, vshlq_s32(sv, vshift)));
+				p += 4;
+			}
+			{	// 4th 4 int
+				int32x4_t sv = vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(s_h)));
+				int32x4_t pv = vld1q_s32(p);
+				vst1q_s32(p, vorrq_s32(pv, vshlq_s32(sv, vshift)));
 				p += 4;
 			}
 		}
@@ -1885,6 +2385,20 @@ const char *vec_char_find_CRLF(const char *p, size_t n)
 			break;
 	}
 
+#elif defined(COREARRAY_SIMD_NEON)
+
+	// body, NEON
+	const uint8x16_t vmask1 = vdupq_n_u8('\n');
+	const uint8x16_t vmask2 = vdupq_n_u8('\r');
+	for (; n >= 16; n-=16, p+=16)
+	{
+		uint8x16_t v  = vld1q_u8((const uint8_t*)p);
+		uint8x16_t c1 = vceqq_u8(v, vmask1);
+		uint8x16_t c2 = vceqq_u8(v, vmask2);
+		if (vmaxvq_u8(vorrq_u8(c1, c2)))
+			break;
+	}
+
 #endif
 
 	// tail
@@ -1917,6 +2431,12 @@ COREARRAY_DLL_DEFAULT const int8_t *vec_bool_find_true(const int8_t *p,
 	#else
 		if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF) break;
 	#endif
+	}
+#elif defined(COREARRAY_SIMD_NEON)
+	for (; p+16 < end; p+=16)
+	{
+		uint8x16_t v = vld1q_u8((const uint8_t*)p);
+		if (vmaxvq_u8(v) != 0) break;
 	}
 #endif
 	for (; p < end; p++) if (*p) break;
