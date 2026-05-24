@@ -2,7 +2,7 @@
 //
 // vectorization.cpp: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2024    Xiuwen Zheng
+// Copyright (C) 2016-2026    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -23,7 +23,7 @@
  *	\file     vectorization.c
  *	\author   Xiuwen Zheng [zhengx@u.washington.edu]
  *	\version  1.0
- *	\date     2016-2024
+ *	\date     2016-2026
  *	\brief    compiler optimization with vectorization
  *	\details
 **/
@@ -260,6 +260,7 @@ size_t vec_i8_count(const char *p, size_t n, char val)
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask));
 		sum = MM_SET_M128(_mm_sub_epi8(zeros, c1), zeros);
 		n -= 16; p += 16;
+		offset++;
 	}
 
 	for (; n >= 128; n-=128)
@@ -297,6 +298,7 @@ size_t vec_i8_count(const char *p, size_t n, char val)
 		__m128i c1 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask));
 		sum = _mm256_sub_epi8(sum, MM_SET_M128(zeros, c1));
 		n -= 16; p += 16;
+		offset++;
 	}
 
 	if (offset > 0)
@@ -385,6 +387,7 @@ void vec_i8_count2(const char *p, size_t n, char val1, char val2,
 		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
 		sum2 = MM_SET_M128(_mm_sub_epi8(zeros, c2), zeros);
 		n -= 16; p += 16;
+		offset++;
 	}
 
 	for (; n >= 32; n-=32, p+=32)
@@ -409,6 +412,7 @@ void vec_i8_count2(const char *p, size_t n, char val1, char val2,
 		__m128i c2 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask2));
 		sum2 = _mm256_sub_epi8(sum2, MM_SET_M128(c2, zeros));
 		n -= 16; p += 16;
+		offset++;
 	}
 
 	if (offset > 0)
@@ -499,6 +503,7 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 		__m128i c3 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask3));
 		sum3 = MM_SET_M128(_mm_sub_epi8(zeros, c3), zeros);
 		n -= 16; p += 16;
+		offset++;
 	}
 
 	for (; n >= 32; n-=32, p+=32)
@@ -527,6 +532,7 @@ void vec_i8_count3(const char *p, size_t n, char val1, char val2, char val3,
 		__m128i c3 = _mm_cmpeq_epi8(v, _mm256_castsi256_si128(mask3));
 		sum3 = _mm256_sub_epi8(sum3, MM_SET_M128(c3, zeros));
 		n -= 16; p += 16;
+		offset++;
 	}
 
 	if (offset > 0)
@@ -616,8 +622,6 @@ void vec_i8_replace(int8_t *p, size_t n, int8_t val, int8_t substitute)
 
 	const __m256i mask2 = _mm256_set1_epi8(val);
 	const __m256i sub32 = _mm256_set1_epi8(substitute);
-	const __m256i zero = _mm256_setzero_si256();
-	const __m256i ones = _mm256_cmpeq_epi64(zero, zero);
 
 	for (; n >= 32; n-=32, p+=32)
 	{
@@ -980,7 +984,7 @@ void vec_i16_shr_b2(int16_t *p, size_t n)
 	for (; n >= 8; n-=8, p+=8)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
-		_mm_store_si128((__m128i *)p, _mm_srli_epi16(v, 2));
+		_mm_store_si128((__m128i *)p, _mm_srai_epi16(v, 2));
 	}
 
 #endif
@@ -1688,7 +1692,7 @@ void vec_i32_shr_b2(int32_t *p, size_t n)
 	for (; n >= 4; n-=4, p+=4)
 	{
 		__m128i v = _mm_load_si128((__m128i const*)p);
-		_mm_store_si128((__m128i *)p, _mm_srli_epi32(v, 2));
+		_mm_store_si128((__m128i *)p, _mm_srai_epi32(v, 2));
 	}
 
 #endif
@@ -1704,13 +1708,13 @@ int vec_i32_bound_check(const int32_t *p, size_t n, int bound)
 #ifdef COREARRAY_SIMD_AVX2
 	__m256i NA8   = _mm256_set1_epi32(NA_INTEGER);
 	__m256i ZERO8 = _mm256_setzero_si256();
-	__m256i BND8  = _mm256_set1_epi32(bound+1);
+	__m256i BND8  = _mm256_set1_epi32(bound);
 	for (; n >= 8; n-=8)
 	{
 		__m256i i8 = _mm256_loadu_si256((__m256i const*)p);
 		p += 8;
-		__m256i m = _mm256_and_si256(_mm256_cmpgt_epi32(i8, ZERO8),
-			_mm256_cmpgt_epi32(BND8, i8));
+		__m256i m = _mm256_andnot_si256(_mm256_cmpgt_epi32(i8, BND8),
+			_mm256_cmpgt_epi32(i8, ZERO8));
 		m = _mm256_or_si256(m, _mm256_cmpeq_epi32(i8, NA8));
 		if (_mm256_movemask_epi8(m) != -1)
 			return 0;
@@ -1719,12 +1723,12 @@ int vec_i32_bound_check(const int32_t *p, size_t n, int bound)
 #ifdef COREARRAY_SIMD_SSE2
 	__m128i NA   = _mm_set1_epi32(NA_INTEGER);
 	__m128i ZERO = _mm_setzero_si128();
-	__m128i BND  = _mm_set1_epi32(bound+1);
+	__m128i BND  = _mm_set1_epi32(bound);
 	for (; n >= 4; n-=4)
 	{
 		__m128i i4 = _mm_loadu_si128((__m128i const*)p);
 		p += 4;
-		__m128i m = _mm_and_si128(_mm_cmplt_epi32(ZERO, i4), _mm_cmplt_epi32(i4, BND));
+		__m128i m = _mm_andnot_si128(_mm_cmpgt_epi32(i4, BND), _mm_cmpgt_epi32(i4, ZERO));
 		m = _mm_or_si128(m, _mm_cmpeq_epi32(i4, NA));
 		if (_mm_movemask_epi8(m) != 0xFFFF)
 			return 0;
