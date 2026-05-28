@@ -65,10 +65,7 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 		__m128i c = _mm_cmpeq_epi8(_mm_load_si128((__m128i const*)p), ZERO);
 		__m128i bit = _mm_and_si128(c, ONES);
 		p += 16; n -= 16;
-
-		uint64_t array[2] __attribute__((aligned(16)));
-		*((__m128i*)array) = bit;
-		ans += 16 - POPCNT_U64(array[0]) - POPCNT_U64(array[1]);
+		ans += 16 - vec_sum_u8(bit);
 	}
 
 	const __m256i ZERO2 = { 0LL, 0LL, 0LL, 0LL };
@@ -110,10 +107,13 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 		bit = _mm256_or_si256(_mm256_sll_epi64(bit, ONE), _mm256_and_si256(c, ONES2));
 		p += 32;
 
-		uint64_t array[4] __attribute__((aligned(32)));
-		*((__m256i*)array) = bit;
-		ans += 256 - POPCNT_U64(array[0]) - POPCNT_U64(array[1]) -
-			 POPCNT_U64(array[2]) - POPCNT_U64(array[3]);
+		__m128i lo = _mm256_castsi256_si128(bit);
+		__m128i hi = _mm256_extracti128_si256(bit, 1);
+		ans += 256
+			- POPCNT_U64((uint64_t)_mm_cvtsi128_si64(lo))
+			- POPCNT_U64((uint64_t)_mm_cvtsi128_si64(_mm_srli_si128(lo, 8)))
+			- POPCNT_U64((uint64_t)_mm_cvtsi128_si64(hi))
+			- POPCNT_U64((uint64_t)_mm_cvtsi128_si64(_mm_srli_si128(hi, 8)));
 	}
 
 #   endif
@@ -152,10 +152,7 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 		c = _mm_cmpeq_epi8(_mm_load_si128((__m128i const*)p), ZERO);
 		bit = _mm_or_si128(_mm_sll_epi64(bit, ONE), _mm_and_si128(c, ONES));
 		p += 16;
-
-		uint64_t array[2] __attribute__((aligned(16)));
-		*((__m128i*)array) = bit;
-		ans += 128 - POPCNT_U64(array[0]) - POPCNT_U64(array[1]);
+		ans += 128 - vec_sum_u8(bit);
 	}
 
 	for (; n >= 16; n -= 16)
@@ -163,9 +160,7 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 		__m128i c = _mm_cmpeq_epi8(_mm_load_si128((__m128i const*)p), ZERO);
 		__m128i bit = _mm_and_si128(c, ONES);
 		p += 16;
-		uint64_t array[2] __attribute__((aligned(16)));
-		*((__m128i*)array) = bit;
-		ans += 16 - POPCNT_U64(array[0]) - POPCNT_U64(array[1]);
+		ans += 16 - vec_sum_u8(bit);
 	}
 
 #elif defined(COREARRAY_SIMD_NEON)
