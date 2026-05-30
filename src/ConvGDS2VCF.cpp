@@ -89,26 +89,76 @@ inline static void LineBuf_NeedSize(size_t st)
 	}
 }
 
+/// Convert int32 to decimal string, writing directly to output buffer.
+/// Uses division-free approach: replaces expensive hardware div/mod with
+/// multiply-and-shift ("magic number" technique), and a 200-byte lookup
+/// table to emit two ASCII digits per step.  Fully unrolled by digit-count
+/// range so there is no loop, no temporary buffer, and no memcpy.
+/// Returns pointer past the last character written.
 inline static char *fast_itoa(char *p, int32_t val)
 {
-	static int base[10] = {
-		1000000000, 100000000, 10000000, 1000000, 100000,
-		10000, 1000, 100, 10, 1
-	};
+	// Lookup table: dd[2*k] and dd[2*k+1] give the two ASCII chars for k
+	// (e.g. dd[14]='0', dd[15]='7' for k==7; dd[24]='1', dd[25]='2' for k==12)
+	static const char dd[201] =
+		"00010203040506070809"  "10111213141516171819"
+		"20212223242526272829"  "30313233343536373839"
+		"40414243444546474849"  "50515253545556575859"
+		"60616263646566676869"  "70717273747576777879"
+		"80818283848586878889"  "90919293949596979899";
+
+	// INT32_MIN cannot be negated in int32 (UB), so output "NA" directly
+	if (val == INT32_MIN)
+		{ *p++ = 'N'; *p++ = 'A'; return p; }
 	if (val < 0)
 		{ *p++ = '-'; val = -val; }
 
-	size_t n=9;
-	for (int *b = base+8; n > 0; n--)
-		if (val < (*b--)) break;
+	uint32_t u = (uint32_t)val;
 
-	for (int *b = base+n; n < 9; n++, b++)
-	{
-		*p++ = val / (*b) + '0';
-		val %= (*b);
+	// Division by 100 using the "magic number" multiply-and-shift trick:
+	//   floor(u / 100) == floor(u * 0x51EB851F / 2^37)  for u < 2^32
+	// This compiles to a single MULQ + SHR on x86-64, ~3-4 cycles vs
+	// ~20-90 cycles for a hardware DIV instruction.
+	#define DIV100(u) ((uint32_t)((uint64_t)(u) * 0x51EB851FULL >> 37))
+
+	// Write a 2-digit pair (value 00–99) to output via the lookup table
+	#define W2(v) do { p[0] = dd[(v)*2]; p[1] = dd[(v)*2+1]; p += 2; } while(0)
+
+	// Write the leading (most-significant) group: 1 digit if < 10, else 2
+	#define W1OR2(v) do { if ((v) >= 10) W2(v); else *p++ = '0' + (v); } while(0)
+
+	// Fully unrolled by value range — each branch does the minimum number
+	// of multiplications and writes for that digit count.
+	if (u < 100) {
+		// 1–2 digits (0..99): single leading group, no pairs
+		W1OR2(u);
+	} else if (u < 10000) {
+		// 3–4 digits (100..9999): one DIV100, leading group + one pair
+		uint32_t q = DIV100(u);
+		W1OR2(q); W2(u - q * 100);
+	} else if (u < 1000000) {
+		// 5–6 digits (10000..999999): two DIV100s
+		uint32_t q1 = DIV100(u), r1 = u - q1 * 100;
+		uint32_t q2 = DIV100(q1);
+		W1OR2(q2); W2(q1 - q2 * 100); W2(r1);
+	} else if (u < 100000000) {
+		// 7–8 digits (1000000..99999999): three DIV100s
+		uint32_t q1 = DIV100(u),  r1 = u  - q1 * 100;
+		uint32_t q2 = DIV100(q1), r2 = q1 - q2 * 100;
+		uint32_t q3 = DIV100(q2);
+		W1OR2(q3); W2(q2 - q3 * 100); W2(r2); W2(r1);
+	} else {
+		// 9–10 digits (100000000..2147483647): four DIV100s
+		uint32_t q1 = DIV100(u),  r1 = u  - q1 * 100;
+		uint32_t q2 = DIV100(q1), r2 = q1 - q2 * 100;
+		uint32_t q3 = DIV100(q2), r3 = q2 - q3 * 100;
+		uint32_t q4 = DIV100(q3);
+		W1OR2(q4); W2(q3 - q4 * 100); W2(r3); W2(r2); W2(r1);
 	}
 
-	*p++ = val + '0';
+	#undef DIV100
+	#undef W2
+	#undef W1OR2
+
 	return p;
 }
 
