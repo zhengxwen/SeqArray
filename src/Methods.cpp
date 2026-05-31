@@ -452,7 +452,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Ref(SEXP DS)
 		throw ErrSeqArray(ERR_DS_TYPE);
 	}
 
-	if (num > 0)
+	if (num > 0 && AFreq_Ploidy > 0)
 	{
 		double p = 1 - sum * m / (num * AFreq_Ploidy);
 		if (AFreq_Minor && p>0.5) p = 1 - p;
@@ -591,7 +591,7 @@ COREARRAY_DLL_EXPORT SEXP FC_AF_DS_Allele(SEXP List)
 		}
 	}
 
-	if (num > 0)
+	if (num > 0 && AFreq_Ploidy > 0)
 	{
 		double p = sum / (num * AFreq_Ploidy);
 		if (AFreq_Minor && p>0.5) p = 1 - p;
