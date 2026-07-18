@@ -456,7 +456,7 @@ void CChromIndex::AddChrom(PdGDSFolder Root)
 
 	TRange rng;
 	rng.Start = 0; rng.Length = 1;
-	const C_Int32 NMAX = 65536;
+	const C_Int32 NMAX = 8192;
 	string txt[NMAX];
 
 	while (idx < NumChrom)

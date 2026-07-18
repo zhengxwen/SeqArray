@@ -239,14 +239,47 @@ seqUnitSubset <- function(units, i)
     units
 }
 
-seqUnitMerge <- function(ut1, ut2)
+seqUnitMerge <- function(...)
+{
+    # check
+    args <- list(...)
+    stopifnot(length(args) >= 1L)
+    for (i in seq_along(args))
+        stopifnot(inherits(args[[i]], "SeqUnitListClass"))
+    # output
+    if (length(args) == 1L) return(args[[1L]])
+    ans <- list(desp=NULL, index=NULL)
+    ans$desp <- Reduce(rbind, lapply(args, function(x) x$desp))
+    rownames(ans$desp) <- NULL
+    ans$index <- unlist(lapply(args, function(x) x$index), recursive=FALSE)
+    class(ans) <- "SeqUnitListClass"
+    ans
+}
+
+seqUnitSetDiff <- function(ut1, ut2, drop=TRUE)
 {
     # check
     stopifnot(inherits(ut1, "SeqUnitListClass"))
     stopifnot(inherits(ut2, "SeqUnitListClass"))
+    stopifnot(is.logical(drop), length(drop)==1L)
+    # setdiff
+    for (i in seq_along(ut1$index))
+    {
+        nm <- names(ut1$index)[i]
+        ut1$index[[i]] <- setdiff(ut1$index[[i]], ut2$index[[nm]])
+    }
+    # drop empty units
+    if (isTRUE(drop))
+    {
+        x <- lengths(ut1$index) > 0L
+        if (!all(x))
+        {
+            ut1$desp <- ut1$desp[x, , drop=FALSE]
+            rownames(ut1$desp) <- NULL
+            ut1$index <- ut1$index[x]
+        }
+    }
     # output
-    ut1$desp <- rbind(ut1$desp, ut2$desp)
-    ut1$index <- c(ut1$index, ut2$index)
     ut1
 }
 

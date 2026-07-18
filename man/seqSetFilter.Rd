@@ -109,10 +109,11 @@ as 0, and \code{NA} in \code{to.bp} is treated as the maximum of integer
 \value{
     If \code{ret.idx=TRUE}, \code{seqSetFilter()} returns a list with two
 components \code{sample_idx} and \code{variant_idx} to indicate the indices
-of the output array according to the input 'sample.id', 'sample.sel',
-'variant.id' or 'variant.sel';
-    if \code{ret.idx=TRUE}, \code{seqSetFilterAnnotID()} return an index vector;
-    otherwise no return.
+of the output array according to the input \code{sample.id}, \code{sample.sel},
+\code{variant.id} or \code{variant.sel}; \code{seqSetFilterPos()} and
+\code{seqSetFilterAnnotID()} return an index vector.
+    If \code{ret.idx=FALSE} (the default), these functions return \code{NULL}
+invisibly.
 }
 
 \author{Xiuwen Zheng}

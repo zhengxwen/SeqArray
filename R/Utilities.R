@@ -218,6 +218,8 @@ seqMulticoreSetup <- function(num=TRUE, type=c("psock", "fork"), verbose=TRUE)
         .PkgEnv$seqarray.multicore <- cl
         # need a finalizer when end the R session
         .reg_finalizer()
+        # return
+        return(invisible(cl))
 
     } else {
         if (isTRUE(verbose))

@@ -329,7 +329,7 @@ seqSetFilterChrom <- function(object, include=NULL, is.num=NA,
 
 
 #######################################################################
-# Set a filter according to specified chromosomes, positions, ref & alt alleles
+# Set a filter according to chromosomes, positions, ref & alt alleles
 #
 seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     intersect=FALSE, multi.pos=TRUE, ret.idx=FALSE, verbose=TRUE)
@@ -339,7 +339,6 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     stopifnot(is.vector(chr))
     stopifnot(is.vector(pos))
     stopifnot(length(chr)==1L || length(chr)==length(pos))
-    has_ref_alt <- !is.null(ref) && !is.null(alt)
     if (!is.null(ref))
     {
         stopifnot(is.vector(ref), length(ref)==length(pos), is.character(ref))
@@ -356,76 +355,67 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     stopifnot(is.logical(verbose), length(verbose)==1L)
 
     # input set
-    d0 <- data.frame(pos=pos, i0=seq_along(pos), stringsAsFactors=FALSE)
+    pos <- as.integer(pos)
     chr_lst <- unique(chr)
+    node <- index.gdsn(object, "allele")
 
     # for-loop each chromosome
     dd <- lapply(chr_lst, function(chr1)
     {
+        # subset of input set, sorted by position
+        if (length(chr)==1L)
+        {
+            i_sub <- order(pos)
+        } else {
+            i_sub <- which(chr==chr1)
+            i_sub <- i_sub[order(pos[i_sub])]
+            if (isTRUE(intersect))
+            {
+                seqFilterPush(object)
+                on.exit(seqFilterPop(object))
+            }
+        }
         # set filter on chromosome first
-        seqSetFilterChrom(object, chr1, intersect=intersect, verbose=FALSE)
-        # gds variant set
-        d1 <- data.frame(
-            pos=seqGetData(object, "position"),
-            i1=seqGetData(object, "$variant_index"), stringsAsFactors=FALSE)
+        seqSetFilterChrom(object, chr1,
+            from.bp=pos[i_sub[1L]], to.bp=pos[i_sub[length(i_sub)]],
+            intersect=intersect, verbose=FALSE)
+        # gds variant position and index
+        p1 <- seqGetData(object, "position")
+        i1 <- seqGetData(object, "$variant_index")
         # match
-        if (length(chr_lst) > 1L) d00 <- d0[chr==chr1, ] else d00 <- d0
-        d <- merge(d00, d1, all.x=TRUE, sort=FALSE)
-        # output
-        data.frame(i0=d$i0, i1=d$i1)
+        ord1 <- order(p1)
+        .Call(SEQ_FindMatchIndex, pos, ref, alt, i_sub, p1, i1, ord1,
+            node, multi.pos)
     })
-    dd <- Reduce(rbind, dd)
-    if (isTRUE(ret.idx) && length(chr_lst)>1L) dd <- dd[order(dd$i0), ]
 
-    if (has_ref_alt)
+    if (length(dd) == 1L)
     {
-        # set the filter
-        ii <- seqSetFilter(object, variant.sel=dd$i1, warn=FALSE, ret.idx=TRUE,
-            verbose=FALSE)$variant_idx
-        r <- seqGetData(object, "$ref")[ii]
-        a <- seqGetData(object, "$alt")[ii]
-        ref <- ref[dd$i0]
-        alt <- alt[dd$i0]
-        z <- (is.na(ref) | (ref==r)) & (is.na(alt) | (alt==a))
-        dd$i1[!z] <- NA_integer_
+        # only one chromosome, no need to combine
+        dd <- dd[[1L]]
+        names(dd) <- c("i0", "i1", "i2")
+    } else {
+        dd <- list(
+            i0 = unlist(lapply(dd, `[`, i=1L), use.names=FALSE),
+            i1 = unlist(lapply(dd, `[`, i=2L), use.names=FALSE),
+            i2 = unlist(lapply(dd, `[`, i=3L), use.names=FALSE))
     }
 
-    # output
+    # set the filter
     if (!isFALSE(multi.pos))
     {
         # multi.pos = TRUE or NA
-        seqSetFilter(object, variant.sel=dd$i1, warn=FALSE, verbose=verbose)
-        if (isTRUE(ret.idx))
-        {
-            if (nrow(dd) <= nrow(d0))
-            {
-                # no duplicated dd$i0
-                i1 <- dd$i1
-            } else {
-                # find the smallest dd$i1 (the first variant in GDS)
-                j <- order(dd$i0, dd$i1)
-                i1 <- dd$i1[j][!duplicated(dd$i0[j])]
-            }
-            match(i1, seqGetData(object, "$variant_index"))
-        } else {
-            invisible()
-        }
+        seqSetFilter(object, variant.sel=dd$i2, warn=FALSE, verbose=verbose)
     } else {
         # multi.pos = FALSE
-        if (isTRUE(ret.idx))
-        {
-            j <- order(dd$i0, dd$i1)
-            j <- j[!duplicated(dd$i0[j])]
-            i <- dd$i1[j]
-            seqSetFilter(object, variant.sel=i, warn=FALSE, verbose=verbose)
-            match(i, seqGetData(object, "$variant_index"))
-        } else {
-            i <- dd$i1
-            j <- order(i)
-            i <- i[j[!duplicated(dd$i0[j])]]
-            seqSetFilter(object, variant.sel=i, warn=FALSE, verbose=verbose)
-            invisible()
-        }
+        seqSetFilter(object, variant.sel=dd$i1, warn=FALSE, verbose=verbose)
+    }
+    # output
+    if (isTRUE(ret.idx))
+    {
+        i1 <- dd$i1[order(dd$i0)]
+        match(i1, seqGetData(object, "$variant_index"))
+    } else {
+        invisible()
     }
 }
 
@@ -590,6 +580,17 @@ seqListVarData <- function(obj, useList=FALSE)
 # Apply functions over margins on a working space with selected
 # samples and variants
 #
+
+.seq_apply_var_fc <- function(f, .vn, .FUN, .as.is, .varidx, .param, ...)
+{
+    .Call(SEQ_Apply_Variant, f, .vn, .FUN, .as.is, .varidx, .param, new.env())
+}
+
+.seq_apply_samp_fc <- function(f, .vn, .FUN, .as.is, .varidx, .param, ...)
+{
+    .Call(SEQ_Apply_Sample, f, .vn, .FUN, .as.is, .varidx, .param, new.env())
+}
+
 seqApply <- function(gdsfile, var.name, FUN,
     margin=c("by.variant", "by.sample"),
     as.is=c("none", "list", "integer", "double", "character", "logical", "raw"),
@@ -653,12 +654,8 @@ seqApply <- function(gdsfile, var.name, FUN,
                 var.index, param, new.env())
         } else {
             # multiple cores
-            rv <- seqParallel(parallel, gdsfile,
-                FUN = function(.gds, .vn, .FUN, .as.is, .varidx, .param, ...)
-                {
-                    .Call(SEQ_Apply_Variant, .gds, .vn, .FUN, .as.is,
-                        .varidx, .param, new.env())
-                }, split=margin, .balancing=.balancing,
+            rv <- seqParallel(parallel, gdsfile, FUN = .seq_apply_var_fc,
+                split=margin, .balancing=.balancing,
                 .status_file=param$progress, .proc_time=param$progress,
                 .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
                 .param=param, ...)
@@ -671,13 +668,8 @@ seqApply <- function(gdsfile, var.name, FUN,
                 var.index, param, new.env())
         } else {
             # multiple cores
-            rv <- seqParallel(parallel, gdsfile,
-                FUN = function(.gds, .vn, .FUN, .as.is, .varidx, .param, ...)
-                {
-                    .Call(SEQ_Apply_Sample, .gds, .vn, .FUN, .as.is,
-                        .varidx, .param, new.env())
-
-                }, split=margin, .balancing=.balancing,
+            rv <- seqParallel(parallel, gdsfile, FUN = .seq_apply_samp_fc,
+                split=margin, .balancing=.balancing,
                 .status_file=param$progress, .proc_time=param$progress,
                 .vn=var.name, .FUN=FUN, .as.is=as.is, .varidx=var.index,
                 .param=param, ...)

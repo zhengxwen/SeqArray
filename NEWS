@@ -3,16 +3,21 @@ CHANGES IN VERSION 1.53.2
 
 NEW FEATURES
 
-    o `seqParallel()` can load cloud-related packages on worker processes
-      before calling the user-defined function, with backward compatibility
-      for older gdsfmt versions
+    o AARCH64 NEON SIMD optimization for vectorized internal functions,
+      providing hardware-accelerated performance on Apple Silicon and other
+      ARM64 platforms
 
-    o `seqApply()` supports "$ref", "$alt", "$chrom_pos", "$chrom_pos_allele"
-      and "$variant_index" as variable names, consistent with `seqGetData()`
+    o `seqParallel()` supports a `BiocParallelParam` object for the `cl`
+      argument, with full feature parity to the cluster-based path, including
+      load balancing, init/finalize hooks, and numeric/NULL `gdsfile` inputs
 
-    o `seqAddValue()` supports `LogicalList`, `IntegerList`, `NumericList`
-      and `CharacterList` from the IRanges package as variable-length
-      annotation data input
+UTILITIES
+
+    o `seqUnitMerge()` now properly supports merging more than two
+      'SeqUnitListClass' objects via '...'
+
+    o new `seqUnitSetDiff()` to remove variant indices of one unit list
+      from another, returning the set-difference version of units
 
     o 'val' in `seqAddValue()` can be a function returning the data block by
       block, when adding a variable to "annotation/info": the blocks are
@@ -21,6 +26,30 @@ NEW FEATURES
       in this case, since the data are unknown before writing). New 'param'
       in `seqAddValue()`, passed to the second argument of the user-defined
       function 'val(k, param)'
+
+
+CHANGES IN VERSION 1.52.1
+-------------------------
+
+NEW FEATURES
+
+    o `seqParallel()` can load cloud-related packages on worker processes
+      before calling the user-defined function, with backward compatibility
+      for older gdsfmt versions
+
+UTILITIES
+
+    o faster `seqSetFilterPos()` than v1.52.0
+
+    o `seqApply()` supports "$ref", "$alt", "$chrom_pos", "$chrom_pos_allele"
+      and "$variant_index" as variable names, consistent with `seqGetData()`
+
+    o `seqAddValue()` supports `LogicalList`, `IntegerList`, `NumericList`
+      and `CharacterList` from the IRanges package as variable-length
+      annotation data input
+
+    o `seqMulticoreSetup()` invisibly returns the newly created cluster
+      object when a multicore cluster is set up
 
 
 CHANGES IN VERSION 1.52.0
@@ -454,7 +483,7 @@ NEW FEATURES
     o new functions `seqUnitSlidingWindows()`, `seqUnitApply()`,
       `seqUnitFilterCond()`
 
-    o new variable "$variant_index", "$sample_index" in `SeqGetData()`,
+    o new variable "$variant_index", "$sample_index" in `seqGetData()`,
       `seqBlockApply()` and `seqUnitApply()` to get the indices of selected
       variants
 
@@ -470,7 +499,7 @@ NEW FEATURES
 
     o new option 'verbose' in `seqMissing()`, `seqAlleleFreq()` and
       `seqAlleleCount()`; '.progress' is deprecated, but still can be used
-      for compatiblity
+      for compatibility
 
     o `seqAlleleFreq()`, `seqAlleleCount()`, `seqMissing()`,
       `seqSetFilterCond()` work on 'annotation/format/DS', if 'genotype/data'
