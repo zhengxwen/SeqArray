@@ -237,10 +237,152 @@
     TRUE
 }
 
+# split a block of values into the flat data vector and the number of values
+#   per variant ('len' is NULL if it is a plain vector, i.e., one value each)
+.blk_len_data <- function(val)
+{
+    if (inherits(val, "SeqVarDataList"))
+    {
+        len <- val$length
+        len[is.na(len) | len<0L] <- 0L
+        dat <- val$data
+        if (!isTRUE(sum(len) == length(dat)))
+            stop("Invalid 'SeqVarDataList' input.")
+    } else if (is(val, "CompressedAtomicList"))
+    {
+        len <- lengths(val)
+        dat <- unlist(val, use.names=FALSE)
+    } else if ((is.vector(val) || is.factor(val)) && !is.list(val))
+    {
+        len <- NULL
+        dat <- val
+    } else if (is.list(val))
+    {
+        val <- lapply(val, function(x) unlist(x, use.names=FALSE))
+        len <- lengths(val)
+        dat <- unlist(val, use.names=FALSE)
+    } else
+        stop("Invalid type of the data block: ", typeof(val))
+    if (is.null(dat)) dat <- integer()
+    list(len=len, dat=dat)
+}
+
+# add annotation/info/VARNAME block by block, where 'val' is a function:
+#   val(k) or val(k, param) returns the k-th block of values (a vector, a
+#   list, an AtomicList or a SeqVarDataList object), or NULL if there is no
+#   more block. Only one block is held in memory at a time, so the peak
+#   memory usage does not depend on the total number of variants
+.r_annot_info_stream <- function(gdsfile, varnm, val, replace, nvar, desp,
+    compress, use_float32, packed.idx, verbose, verbose.attr, param=NULL)
+{
+    # 'param' is passed to val() only if it accepts a second argument, so
+    #   that a single-argument val(k) still works
+    has_param <- length(formals(val)) >= 2L
+    n <- index.gdsn(gdsfile, varnm, silent=TRUE)
+    if (!is.null(n))
+        stopifnot(replace)
+    node <- index.gdsn(gdsfile, dirname(varnm))
+    nm <- basename(varnm)
+    n <- nidx <- NULL
+    st <- NULL     # storage mode of the data node
+    islist <- NA   # TRUE if there is an associated '@' index node
+    cnt <- 0       # the number of variants written so far
+    pending <- list()   # lengths of the leading blocks with no value at all
+    k <- 0L
+    repeat {
+        k <- k + 1L
+        v <- if (has_param) val(k, param) else val(k)
+        if (is.null(v)) break
+        v <- .blk_len_data(v)
+        len <- v$len; dat <- v$dat
+        remove(v)
+        if (is.na(islist)) islist <- !is.null(len)
+        else if (islist != !is.null(len))
+            stop("The data blocks should have the same layout.")
+        cnt <- cnt + if (islist) length(len) else length(dat)
+        if (is.null(n))
+        {
+            if (islist && !length(dat))
+            {
+                # the data type is still unknown, so only keep the lengths
+                #   (all zeros) and wait for the first non-empty block
+                pending[[length(pending) + 1L]] <- len
+                next
+            }
+            # the first non-empty block defines the storage mode
+            st <- if (is.factor(dat) || is.character(dat)) "string" else
+                storage.mode(dat)
+            if (identical(st, "double") && isTRUE(use_float32))
+                st <- "float32"
+            n <- add.gdsn(node, nm, dat, storage=st, compress=compress,
+                replace=TRUE)
+            if (islist)
+            {
+                # the largest length is unknown before reading all blocks,
+                #   so 'packed.idx' cannot be used here
+                nidx <- add.gdsn(node, paste0("@", nm),
+                    unlist(pending, use.names=FALSE), storage="int",
+                    compress=compress, replace=TRUE, visible=FALSE)
+                pending <- list()
+                append.gdsn(nidx, len)
+            } else {
+                # remove the index node if it exists
+                z <- index.gdsn(node, paste0("@", nm), silent=TRUE)
+                if (!is.null(z)) delete.gdsn(z)
+            }
+        } else {
+            # keep the data type consistent with the first non-empty block
+            if (is.factor(dat)) dat <- as.character(dat)
+            if (length(dat) && is.character(dat) != (st == "string"))
+            {
+                stop("The data block ", k,
+                    " does not have the same data type as the previous ones.")
+            }
+            # append.gdsn() coerces 'dat' to the storage mode of the node
+            if (length(dat)) append.gdsn(n, dat)
+            if (islist) append.gdsn(nidx, len)
+        }
+        remove(len, dat)
+    }
+    if (is.na(islist))
+        stop("No data block returned by 'val()'.")
+    if (is.null(n))
+    {
+        # there is no value at all in any block
+        n <- add.gdsn(node, nm, integer(), storage="int", compress=compress,
+            replace=TRUE)
+        nidx <- add.gdsn(node, paste0("@", nm),
+            unlist(pending, use.names=FALSE), storage="int",
+            compress=compress, replace=TRUE, visible=FALSE)
+    }
+    readmode.gdsn(n)
+    if (!is.null(nidx)) readmode.gdsn(nidx)
+    if (cnt != nvar)
+        stop("The total number of variants should be ", nvar, ", but ", cnt)
+
+    put.attr.gdsn(n, "Number", ".")
+    put.attr.gdsn(n, "Type", .vcf_type(n))
+    if (!length(desp)) desp <- ""
+    put.attr.gdsn(n, "Description", desp[1L])
+    .DigestCode(n, TRUE, FALSE)
+    if (verbose)
+        print(n, attribute=verbose.attr)
+    if (!is.null(nidx))
+        .DigestCode(nidx, TRUE, FALSE)
+
+    TRUE
+}
+
 # add annotation/info/VARNAME
 .r_annot_info_sub <- function(gdsfile, varnm, val, replace, nvar, desp,
-    compress, use_float32, packed, packed.idx, verbose, verbose.attr)
+    compress, use_float32, packed, packed.idx, verbose, verbose.attr,
+    param=NULL)
 {
+    if (is.function(val))
+    {
+        return(.r_annot_info_stream(gdsfile, varnm, val, replace, nvar, desp,
+            compress, use_float32, packed.idx, verbose, verbose.attr, param))
+    }
     n <- index.gdsn(gdsfile, varnm, silent=TRUE)
     if (!is.null(n))
         stopifnot(replace)
@@ -377,7 +519,7 @@
 #
 seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
     compress="LZMA_RA", packed=TRUE, packed.idx=TRUE, use_float32=TRUE,
-    verbose=TRUE, verbose.attr=TRUE)
+    param=NULL, verbose=TRUE, verbose.attr=TRUE)
 {
     # check
     stopifnot(is.character(gdsfile) | inherits(gdsfile, "SeqVarGDSClass"))
@@ -441,7 +583,7 @@ seqAddValue <- function(gdsfile, varnm, val, desp=character(), replace=FALSE,
         if (nchar(varnm) <= 16L)
             stop("Invalid 'varnm'.")
         .r_annot_info_sub(gdsfile, varnm, val, replace, nvar, desp, compress,
-            use_float32, packed, packed.idx, verbose, verbose.attr)
+            use_float32, packed, packed.idx, verbose, verbose.attr, param)
     } else
         stop("Invalid `varnm`.")
 

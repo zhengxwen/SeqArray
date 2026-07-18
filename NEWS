@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.53.1
+CHANGES IN VERSION 1.53.2
 -------------------------
 
 NEW FEATURES
@@ -13,6 +13,14 @@ NEW FEATURES
     o `seqAddValue()` supports `LogicalList`, `IntegerList`, `NumericList`
       and `CharacterList` from the IRanges package as variable-length
       annotation data input
+
+    o 'val' in `seqAddValue()` can be a function returning the data block by
+      block, when adding a variable to "annotation/info": the blocks are
+      written to the GDS file one by one, so the memory usage does not depend
+      on the total number of variants ('packed' and 'packed.idx' are ignored
+      in this case, since the data are unknown before writing). New 'param'
+      in `seqAddValue()`, passed to the second argument of the user-defined
+      function 'val(k, param)'
 
 
 CHANGES IN VERSION 1.52.0
