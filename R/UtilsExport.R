@@ -215,7 +215,7 @@ seqExport <- function(gdsfile, out.fn, info.var=NULL, fmt.var=NULL,
     if (exist.gdsn(gdsfile, "genotype/data") && nsamp && nsnp)
     {
         cp2(node, S$sample.sel, S$variant.sel, "genotype")
-        dm <- objdesp.gdsn(index.gdsn(gdsfile, "genotype/data"))$dim
+        dm <- objdesp.gdsn(index.gdsn(gdsfile, "genotype/extra.index"))$dim
         if (prod(dm) <= 0L)
         {
             copyto.gdsn(node, index.gdsn(gdsfile, "genotype/extra.index"))
