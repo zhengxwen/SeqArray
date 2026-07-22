@@ -2,7 +2,7 @@
 //
 // vectorization.h: compiler optimization with vectorization
 //
-// Copyright (C) 2016-2024    Xiuwen Zheng
+// Copyright (C) 2016-2026    Xiuwen Zheng
 //
 // This file is part of SeqArray.
 //
@@ -23,7 +23,7 @@
  *	\file     vectorization.h
  *	\author   Xiuwen Zheng [zhengx@u.washington.edu]
  *	\version  1.0
- *	\date     2016-2024
+ *	\date     2016-2026
  *	\brief    compiler optimization with vectorization
  *	\details
 **/

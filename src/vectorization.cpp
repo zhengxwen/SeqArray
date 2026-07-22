@@ -152,7 +152,11 @@ size_t vec_i8_cnt_nonzero(const int8_t *p, size_t n)
 		c = _mm_cmpeq_epi8(_mm_load_si128((__m128i const*)p), ZERO);
 		bit = _mm_or_si128(_mm_sll_epi64(bit, ONE), _mm_and_si128(c, ONES));
 		p += 16;
-		ans += 128 - vec_sum_u8(bit);
+		// 'bit' packs 8 comparison results per byte (one bit each), so the number
+		// of zero bytes is the popcount of 'bit', not the sum of its byte values.
+		ans += 128
+			- POPCNT_U64((uint64_t)_mm_cvtsi128_si64(bit))
+			- POPCNT_U64((uint64_t)_mm_cvtsi128_si64(_mm_srli_si128(bit, 8)));
 	}
 
 	for (; n >= 16; n -= 16)
