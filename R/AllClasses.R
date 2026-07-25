@@ -12,6 +12,13 @@ setValidity("SeqVarGDSClass",
         if (!inherits(object, "gds.class"))
             return("object should inherited from 'gds.class'.")
 
+        # validObject() may validate this superclass against a hollow S4
+        # coercion shell (e.g. as(, "SeqVarGDSClass")) that carries
+        # no live gds connection; only a live handle is an S3 list. Skip the
+        # shell so it does not error on ls.gdsn()/`$root`.
+        if (typeof(object) != "list")
+            return(TRUE)
+
         n <- index.gdsn(object, "description", silent=TRUE)
         if (is.null(n))
             return("Description variable must exist!")
