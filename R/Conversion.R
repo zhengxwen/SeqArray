@@ -7,8 +7,6 @@
 #
 
 
-# Create a bgzf file
-.bgzf_create <- function(fn) .Call(SEQ_bgzip_create, fn)
 
 # quote a string if it is needed
 .dquote <- function(s)
@@ -25,6 +23,8 @@
 
 #######################################################################
 # Convert a SeqArray GDS file to a VCF file
+# note: 'use_Rsamtools' is deprecated and ignored, since the BGZF output
+#   and the .csi index no longer need the Rsamtools package
 #
 
 seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
@@ -110,31 +110,8 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         ext <- tolower(ifelse(pos > -1L, substring(vcf.fn, pos+1L), ""))
         if (ext %in% c("gz", "bgz"))
         {
-            if (.Platform$OS.type == "windows")
-            {
-                if (isTRUE(use_Rsamtools))
-                {
-                    warning("Rsamtools is not used on Windows.",
-                        immediate.=TRUE)
-                }
-                use_Rsamtools <- FALSE
-            }
-            if (isTRUE(use_Rsamtools) && requireNamespace("Rsamtools"))
-            {
-                ofile <- .bgzf_create(vcf.fn)
-                outfmt <- 2L
-            } else {
-                if (verbose)
-                {
-                    if (.Platform$OS.type != "windows")
-                    {
-                        message("Hint: install ",
-                            "Rsamtools to enable the BGZF-format output.")
-                    }
-                }
-                ofile <- gzfile(vcf.fn, "wb")
-                outfmt <- 3L
-            }
+            ofile <- .bgzf_create(vcf.fn)
+            outfmt <- 2L
         } else if (ext == "bz")
         {
             ofile <- bzfile(vcf.fn, "wb")
@@ -385,7 +362,7 @@ seqGDS2VCF <- function(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL,
         if (outfmt == 2L)
         {
             if (verbose) cat("VCF indexing ...\n")
-            Rsamtools::indexTabix(vcf.fn, format="vcf")
+            .bgzf_index(vcf.fn)
         }
         if (verbose)
         {

@@ -13,12 +13,31 @@ NEW FEATURES
 
 UTILITIES
 
-    o `seqVCF2GDS(, parallel=n)` on an uncompressed VCF file: the number of
-      variants is now counted together with the file offsets of the variants,
-      so that each of the parallel jobs seeks to its starting position
-      directly, instead of scanning the file from the beginning; it also no
-      longer requires a tabix index file (.tbi or .csi) when the Rsamtools
-      package is installed
+    o `seqVCF2GDS(, parallel=n)`: the number of variants is now counted
+      together with the file offsets of the variants, so that each of the
+      parallel jobs seeks to its starting position directly, instead of
+      scanning (and decompressing) the file from the beginning; it works on
+      an uncompressed VCF file and on a BGZF file (i.e., created by bgzip),
+      the latter using the block structure of the BGZF format
+
+    o SeqArray no longer needs the Rsamtools package: reading and writing
+      the BGZF format (i.e., bgzip) and building the .csi index are
+      implemented in the package using zlib, so they work on all platforms
+      including Windows; `use_Rsamtools` in `seqVCF_Header()`,
+      `seqVCF2GDS()` and `seqGDS2VCF()` is deprecated and ignored
+
+    o `seqGDS2VCF()` always outputs a BGZF file (i.e., bgzip) when the file
+      name ends with .gz or .bgz, together with a .csi index instead of a
+      .tbi index, since the position in a .tbi index is limited to 2^29
+      (~512Mb)
+
+    o `seqVCF2GDS(, parallel=n)` seeks to the starting position only if the
+      input is a plain text file or a BGZF file; a VCF file compressed by
+      gzip (instead of bgzip) does not support seeking, and a hint is shown
+      when 'verbose=TRUE'
+
+    o `seqVCF2GDS(, parallel=n)` no longer requires a tabix index file (.tbi
+      or .csi): the number of variants is always counted directly
 
     o `seqUnitMerge()` now properly supports merging more than two
       'SeqUnitListClass' objects via '...'

@@ -37,30 +37,43 @@
 # seqVCF2GDS()
 .vcf_offset_step <- 1024L
 
-# whether a VCF file is a plain text file (i.e., not compressed), so that
-# seek() works on the file connection
-.vcf_plain_text <- function(fn)
+# whether a VCF file is a plain text file (i.e., not compressed)
+.is_text_file <- function(fn)
 {
     if (grepl("^(ftp|http|https)://", fn, ignore.case=TRUE)) return(FALSE)
     f <- file(fn, "rb")
     on.exit(close(f))
-    b <- readBin(f, "raw", 2L)
-    identical(b, charToRaw("##"))
+    identical(readBin(f, "raw", 2L), charToRaw("##"))
+}
+
+# whether the file offsets of a VCF file can be used for seeking: TRUE if it
+# is a plain text file (i.e., not compressed), or a BGZF file (i.e., bgzip)
+.vcf_seekable <- function(fn)
+{
+    if (grepl("^(ftp|http|https)://", fn, ignore.case=TRUE)) return(FALSE)
+    .is_text_file(fn) || .bgzf_is(fn)
 }
 
 # count the number of variants, and record the file offset of every
-# '.vcf_offset_step' variants; return list(num, offset, step, line)
+# '.vcf_offset_step' variants; return list(num, offset, uoffset, step, line)
 .vcf_count_offset <- function(fn, verbose=FALSE)
 {
-    infile <- file(fn, "rt")
-    on.exit(close(infile))
-    .Call(SEQ_VCF_NumLines, infile, TRUE, .vcf_offset_step, verbose)
+    if (.bgzf_is(fn))
+    {
+        # the BGZF file is read in the C code, to record the virtual offsets
+        .Call(SEQ_VCF_NumLines, fn, TRUE, .vcf_offset_step, verbose)
+    } else {
+        infile <- file(fn, "rt")
+        on.exit(close(infile))
+        .Call(SEQ_VCF_NumLines, infile, TRUE, .vcf_offset_step, verbose)
+    }
 }
 
 # for each starting variant index in 'start', return c(file index, file
-# offset in bytes, the variant index at that offset, the VCF line number at
-# that offset), or NULL if the file offset is not available; 'offset' is a
-# list of the values returned by .vcf_count_offset() for each of the VCF files
+# offset, within-block offset, the variant index at that offset, the VCF line
+# number at that offset), or NULL if the file offset is not available;
+# 'offset' is a list of the values returned by .vcf_count_offset() for each
+# of the VCF files
 .vcf_seek_list <- function(start, variant_count, offset)
 {
     cum <- cumsum(variant_count)
@@ -77,7 +90,7 @@
         k <- (st - pre - 1) %/% .vcf_offset_step + 1
         if (k < 1 || k > length(z$offset)) return(NULL)
         m <- (k-1) * .vcf_offset_step
-        c(i, z$offset[k], pre + m + 1, z$line + m)
+        c(i, z$offset[k], z$uoffset[k], pre + m + 1, z$line + m)
     })
 }
 
@@ -87,60 +100,11 @@
 # http://www.1000genomes.org/wiki/analysis/variant-call-format
 #
 
-.count_vcf_samtools <- function(fn, parallel=FALSE)
-{
-    # check
-    stopifnot(is.character(fn), length(fn)==1L, !is.na(fn))
-    if (!requireNamespace("Rsamtools", quietly=TRUE))
-        stop("Rsamtools should be installed when 'parallel' is not FALSE.")
-    # check the indexing file
-    idxfn <- paste0(fn, ".csi")
-    if (!file.exists(idxfn))
-    {
-        idxfn <- paste0(fn, ".tbi")
-        if (!file.exists(idxfn))
-            stop("The indexing file should exist (either .csi or .tbi) when 'parallel' is used.")
-    }
-    # process
-    pnum <- .NumParallel(parallel)
-    if (pnum<=1L || isTRUE(file.size(fn) <= 67108864L))
-    {
-        # if file size <= 64MB
-        f <- Rsamtools::TabixFile(fn, idxfn)
-        open(f)
-        on.exit(close(f))
-        unlist(Rsamtools::countTabix(f), use.names=FALSE)
-    } else {
-        f <- Rsamtools::TabixFile(fn, idxfn)
-        open(f)
-        s <- Rsamtools::seqnamesTabix(f)
-        close(f)
-        # generate Granges object
-        if (length(s) < pnum)
-        {
-            each <- 5000000L
-            p <- (seq_len(100L)-1L) * each + 1L
-            r <- IRanges::IRanges(p, width=each)
-            gr <- GenomicRanges::GRanges(rep(s, each=length(r)),
-                rep(r, length(s)))
-        } else {
-            gr <- GenomicRanges::GRanges(s, IRanges::IRanges(1L, 2^29))
-        }
-        # parallel
-        lst <- seqParApply(parallel, 1:length(gr),
-            FUN=function(i, vcffn, idxfn, gr)
-            {
-                f <- Rsamtools::TabixFile(vcffn, idxfn)
-                open(f); on.exit(close(f))
-                unlist(Rsamtools::countTabix(f, param=gr[i,]), use.names=FALSE)
-            }, vcffn=fn, idxfn=idxfn, gr=gr)
-        do.call(sum, lst)
-    }
-}
-
 seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
     parallel=FALSE, verbose=TRUE)
 {
+    # note: 'use_Rsamtools' is deprecated and ignored, since counting the
+    #   variants no longer needs the Rsamtools package
     # check
     if (!inherits(vcf.fn, "connection"))
     {
@@ -152,8 +116,6 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
     stopifnot(is.logical(getnum), length(getnum)==1L)
     stopifnot(is.logical(use_Rsamtools), length(use_Rsamtools)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    if (getnum)
-        njobs <- .NumParallel(parallel)
 
     #########################################################
     # open the vcf file
@@ -220,25 +182,9 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
                     }
                     if (isTRUE(getnum))
                     {
-                        call_count_vcf <- FALSE
-                        if (njobs > 1L)
-                        {
-                            if (is.na(use_Rsamtools))
-                            {
-                                use_Rsamtools <-
-                                    requireNamespace("Rsamtools", quietly=TRUE)
-                            }
-                            if (use_Rsamtools) call_count_vcf <- TRUE
-                        }
-                        if (call_count_vcf)
-                        {
-                            nVariant <- nVariant +
-                                .count_vcf_samtools(vcf.fn[i], parallel)
-                        } else {
-                            nVariant <- nVariant + length(s) +
-                                .Call(SEQ_VCF_NumLines, infile, FALSE, 0,
-                                    verbose)$num
-                        }
+                        nVariant <- nVariant + length(s) +
+                            .Call(SEQ_VCF_NumLines, infile, FALSE, 0,
+                                verbose)$num
                     }
                 }
                 break
@@ -856,13 +802,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (length(a) < length(vcf.fn)) a[length(vcf.fn)] <- NA
             if (anyNA(a) || any(a, na.rm=TRUE))
             {
-                cat("    calculating the total number of variants")
-                if (!isFALSE(use_Rsamtools))
-                {
-                    if (requireNamespace("Rsamtools", quietly=TRUE))
-                        cat(" using Rsamtools")
-                }
-                cat(" ...\n")
+                cat("    calculating the total number of variants ...\n")
             }
             flush.console()
         }
@@ -877,15 +817,22 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             if (is.na(v) || (v < 0L))
             {
                 fn <- vcf.fn[i]
-                if (.vcf_plain_text(fn))
+                if (.vcf_seekable(fn))
                 {
                     z <- .vcf_count_offset(fn)
                     variant_count[i] <- z$num
                     if (isTRUE(z$line >= 1)) voffset[[i]] <- z
                 } else {
                     variant_count[i] <- seqVCF_Header(fn, getnum=TRUE,
-                        use_Rsamtools=use_Rsamtools, parallel=parallel,
-                        verbose=FALSE)$num.variant
+                        parallel=parallel, verbose=FALSE)$num.variant
+                    if (verbose && !.is_text_file(fn))
+                    {
+                        cat("    Hint: '", basename(fn), "' is not in the ",
+                            "BGZF format, so each of the parallel jobs has ",
+                            "to decompress the file from the beginning; ",
+                            "using bgzip instead of gzip is much faster.\n",
+                            sep="")
+                    }
                 }
             }
         }
@@ -1350,7 +1297,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         on.exit({
             close(progfile)
             unlink(prog_fn, force=TRUE)
-            if (!is.null(infile)) close(infile)
+            if (inherits(infile, "connection")) close(infile)
         }, add=TRUE)
 
         if (!inherits(vcf.fn, "connection"))
@@ -1368,7 +1315,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     }
                 }
 
-                infile <- file(vcf.fn[i], open="rt")
                 if (verbose)
                 {
                     cat(sprintf("Parsing '%s':\n", basename(vcf.fn[i])))
@@ -1377,12 +1323,21 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
                 # seek to the starting position directly, if the file offset
                 # is known, instead of scanning the file from the beginning
-                skiphead <- TRUE
+                skiphead <- TRUE; foffset <- NULL
                 if (!is.null(seek_info) && (seek_info[1L] == i))
                 {
-                    seek(infile, where=seek_info[2L])
-                    linecnt <- as.double(seek_info[3L] - 1)
+                    linecnt <- as.double(seek_info[4L] - 1)
                     skiphead <- FALSE  # no VCF header at the file offset
+                }
+                if (skiphead || !.bgzf_is(vcf.fn[i]))
+                {
+                    infile <- file(vcf.fn[i], open="rt")
+                    if (!skiphead) seek(infile, where=seek_info[2L])
+                } else {
+                    # let the C code read the BGZF file from the given
+                    # virtual offset, since seek() does not work here
+                    infile <- vcf.fn[i]
+                    foffset <- seek_info[2:3]
                 }
 
                 # call C function
@@ -1394,7 +1349,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                         start = start, count = count,
                         chr.prefix = ignore.chr.prefix,
                         progfile = progfile, use.file = skiphead,
-                        line.base = if (skiphead) NULL else seek_info[4L],
+                        line.base = if (skiphead) NULL else seek_info[5L],
+                        file.offset = foffset,
                         verbose = verbose),
                     linecnt, new.env())
 
@@ -1402,7 +1358,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 if (verbose && !is.null(geno.node))
                     print(geno.node)
 
-                close(infile)
+                if (inherits(infile, "connection")) close(infile)
                 infile <- NULL
             }
 

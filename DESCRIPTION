@@ -9,7 +9,7 @@ Imports: methods, parallel, digest, S4Vectors, IRanges, GenomicRanges,
         Seqinfo, Biostrings
 LinkingTo: gdsfmt
 Suggests: Biobase, BiocGenerics, BiocParallel, RUnit, Rcpp, SNPRelate, crayon,
-        knitr, markdown, rmarkdown, Rsamtools, VariantAnnotation
+        knitr, markdown, rmarkdown, VariantAnnotation
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="zhengx@u.washington.edu", comment=c(ORCID="0000-0002-1390-0708")),
         person("Stephanie", "Gogarten", role="aut", email="sdmorris@uw.edu"),
@@ -21,6 +21,7 @@ Description: Data management of large-scale whole-genome sequencing variant
         are stored in an array-oriented and compressed manner, with efficient
         data access using the R programming language.
 License: GPL-3
+SystemRequirements: zlib: zlib1g-dev (deb), zlib-devel (rpm)
 VignetteBuilder: knitr
 ByteCompile: TRUE
 LazyData: true

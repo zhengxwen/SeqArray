@@ -1706,6 +1706,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_FindMatchIndex(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	extern SEXP SEQ_bgzip_create(SEXP);
+	extern SEXP SEQ_bgzip_is(SEXP);
+	extern SEXP SEQ_bgzip_index(SEXP, SEXP);
     extern SEXP SEQ_ToVCF_Init(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
     extern SEXP SEQ_ToVCF_Done();
 	extern SEXP SEQ_ToVCF(SEXP);
@@ -1812,7 +1814,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_AppendFill, 3),
 		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_BufferPosition, 2),
 
-		CALL(SEQ_bgzip_create, 1),
+		CALL(SEQ_bgzip_create, 1),        CALL(SEQ_bgzip_is, 1),
+		CALL(SEQ_bgzip_index, 2),
 		CALL(SEQ_ToVCF_Init, 6),            CALL(SEQ_ToVCF_Done, 0),
 		CALL(SEQ_ToVCF, 1),                 CALL(SEQ_ToVCF_Di_WrtFmt, 1),
 		CALL(SEQ_ToVCF_Haploid, 1),         CALL(SEQ_ToVCF_NoGeno, 1),
