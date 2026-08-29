@@ -75,6 +75,7 @@ static char *VCF_Buffer_Ptr;     ///< the current pointer to reading buffer
 static char *VCF_Buffer_EndPtr;  ///< the end pointer to reading buffer
 static const size_t VCF_BUFFER_SIZE = 65536;  ///< reading buffer size
 static const size_t VCF_BUFFER_SIZE_PLUS = 32;  ///< additional buffer is needed since *VCF_Buffer_EndPtr might be revised
+static C_Int64 VCF_Total_Read;   ///< the total number of bytes stored in VCF_Buffer
 
 /// initialize
 inline static void Init_VCF_Buffer(SEXP File)
@@ -83,6 +84,7 @@ inline static void Init_VCF_Buffer(SEXP File)
 	VCF_File->EOF_signalled = FALSE;
 	VCF_Buffer.resize(VCF_BUFFER_SIZE + VCF_BUFFER_SIZE_PLUS);
 	VCF_Buffer_EndPtr = VCF_Buffer_Ptr = &VCF_Buffer[0];
+	VCF_Total_Read = 0;
 }
 
 /// finalize
@@ -116,6 +118,7 @@ inline static void Read_VCF_Buffer()
 	}
 	VCF_Buffer_Ptr = &VCF_Buffer[0];
 	VCF_Buffer_EndPtr = VCF_Buffer_Ptr + n;
+	VCF_Total_Read += n;
 	if (n <= 0)
 	{
 		if (VCF_File->EOF_signalled)
@@ -131,6 +134,13 @@ inline static bool VCF_EOF()
 	if (VCF_Buffer_Ptr >= VCF_Buffer_EndPtr)
 		Read_VCF_Buffer();
 	return (VCF_Buffer_Ptr >= VCF_Buffer_EndPtr);
+}
+
+/// the number of bytes read from the connection object before VCF_Buffer_Ptr,
+///   i.e., the file offset of VCF_Buffer_Ptr if reading from the beginning
+inline static C_Int64 VCF_Position()
+{
+	return VCF_Total_Read - (VCF_Buffer_EndPtr - VCF_Buffer_Ptr);
 }
 
 
@@ -1061,10 +1071,20 @@ static const char *datetime_str()
 	return date_buffer;
 }
 
+/// Count the number of variants, and record the file offsets if OffsetStep > 0
+///   Return list(num, offset, step, line):
+///     num,   the number of lines (i.e., variants) after the header
+///     offset, the file offsets (in bytes) of the 1st, (step+1)-th,
+///             (2*step+1)-th, ... lines, or NULL if OffsetStep <= 0
+///     step,  the value of OffsetStep
+///     line,  the line number (1-based, counting the header) of the 1st line
 COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
-	SEXP Verbose)
+	SEXP OffsetStep, SEXP Verbose)
 {
 	const bool verbose = Rf_asLogical(Verbose) == TRUE;
+	const C_Int64 step = (C_Int64)Rf_asReal(OffsetStep);
+	vector<double> offset;  // the file offsets, if step > 0
+	C_Int64 first_line = -1;  // the line number of the 1st line, -1 for none
 	Init_VCF_Buffer(File);
 
 	if (Rf_asLogical(SkipHead) == TRUE)
@@ -1080,6 +1100,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 				break;
 			}
 		}
+		first_line = VCF_NextLineNum;  // the 1st line after the header
 		DoneText();
 	}
 
@@ -1088,6 +1109,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 	int m0 = 0, m1 = 0;
 	while (!VCF_EOF())
 	{
+		// VCF_Buffer_Ptr points to the first character of the n-th line
+		if ((step > 0) && ((n % step) == 0))
+			offset.push_back((double)VCF_Position());
 		n ++;
 		if (verbose && ((++m0) >= 20000))
 		{
@@ -1106,7 +1130,29 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 	}
 
 	Done_VCF_Buffer();
-	return Rf_ScalarReal(n);
+
+	// output
+	SEXP ans = PROTECT(NEW_LIST(4));
+	SET_ELEMENT(ans, 0, Rf_ScalarReal(n));
+	if (step > 0)
+	{
+		SEXP v = PROTECT(NEW_NUMERIC(offset.size()));
+		if (!offset.empty())
+			memcpy(REAL(v), &offset[0], sizeof(double)*offset.size());
+		SET_ELEMENT(ans, 1, v);
+		UNPROTECT(1);
+	}
+	SET_ELEMENT(ans, 2, Rf_ScalarReal(step));
+	SET_ELEMENT(ans, 3, Rf_ScalarReal(
+		first_line >= 1 ? (double)first_line : NA_REAL));
+	SEXP nm = PROTECT(NEW_CHARACTER(4));
+	SET_STRING_ELT(nm, 0, Rf_mkChar("num"));
+	SET_STRING_ELT(nm, 1, Rf_mkChar("offset"));
+	SET_STRING_ELT(nm, 2, Rf_mkChar("step"));
+	SET_STRING_ELT(nm, 3, Rf_mkChar("line"));
+	SET_NAMES(ans, nm);
+	UNPROTECT(2);
+	return ans;
 }
 
 
@@ -1369,6 +1415,16 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					SkipLine();
 					break;
 				}
+			}
+		} else {
+			// the file offset is given, so the VCF header is not read here;
+			// set the line number for the error messages
+			SEXP ln = RGetListElement(param, "line.base");
+			if (!Rf_isNull(ln))
+			{
+				double v = Rf_asReal(ln);
+				if (R_FINITE(v) && (v >= 1))
+					VCF_LineNum = VCF_NextLineNum = (C_Int64)v;
 			}
 		}
 

@@ -32,6 +32,55 @@
     ptmpfn
 }
 
+# the interval (in the number of variants) of the file offsets recorded in
+# .vcf_count_offset(), see the internal 'seek' attribute of 'start' in
+# seqVCF2GDS()
+.vcf_offset_step <- 1024L
+
+# whether a VCF file is a plain text file (i.e., not compressed), so that
+# seek() works on the file connection
+.vcf_plain_text <- function(fn)
+{
+    if (grepl("^(ftp|http|https)://", fn, ignore.case=TRUE)) return(FALSE)
+    f <- file(fn, "rb")
+    on.exit(close(f))
+    b <- readBin(f, "raw", 2L)
+    identical(b, charToRaw("##"))
+}
+
+# count the number of variants, and record the file offset of every
+# '.vcf_offset_step' variants; return list(num, offset, step, line)
+.vcf_count_offset <- function(fn, verbose=FALSE)
+{
+    infile <- file(fn, "rt")
+    on.exit(close(infile))
+    .Call(SEQ_VCF_NumLines, infile, TRUE, .vcf_offset_step, verbose)
+}
+
+# for each starting variant index in 'start', return c(file index, file
+# offset in bytes, the variant index at that offset, the VCF line number at
+# that offset), or NULL if the file offset is not available; 'offset' is a
+# list of the values returned by .vcf_count_offset() for each of the VCF files
+.vcf_seek_list <- function(start, variant_count, offset)
+{
+    cum <- cumsum(variant_count)
+    lapply(start, function(st)
+    {
+        i <- which(st <= cum)
+        if (!length(i)) return(NULL)
+        i <- i[1L]
+        z <- offset[[i]]
+        if (is.null(z)) return(NULL)
+        # the number of variants in the previous files
+        pre <- if (i > 1L) cum[i-1L] else 0
+        # z$offset[k] is the offset of the ((k-1)*step + 1)-th variant
+        k <- (st - pre - 1) %/% .vcf_offset_step + 1
+        if (k < 1 || k > length(z$offset)) return(NULL)
+        m <- (k-1) * .vcf_offset_step
+        c(i, z$offset[k], pre + m + 1, z$line + m)
+    })
+}
+
 
 #######################################################################
 # Parse the header of a VCF file
@@ -187,7 +236,8 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
                                 .count_vcf_samtools(vcf.fn[i], parallel)
                         } else {
                             nVariant <- nVariant + length(s) +
-                                .Call(SEQ_VCF_NumLines, infile, FALSE, verbose)
+                                .Call(SEQ_VCF_NumLines, infile, FALSE, 0,
+                                    verbose)$num
                         }
                     }
                 }
@@ -598,6 +648,11 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.null(reference) | is.character(reference))
     stopifnot(is.numeric(start), length(start)==1L)
     stopifnot(is.numeric(count), length(count)==1L)
+    # the internal 'seek' attribute set by the parallel jobs in seqVCF2GDS(),
+    # c(file index, file offset in bytes, the variant index at that offset),
+    # see .vcf_seek_list()
+    seek_info <- attr(start, "seek")
+    attributes(start) <- NULL
 
     stopifnot(is.logical(optimize), length(optimize)==1L)
     stopifnot(is.logical(raise.error), length(raise.error)==1L)
@@ -813,15 +868,25 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         }
 
         # get the number of variants in each VCF file
+        # 'voffset[[i]]' stores the file offsets, if available, so that the
+        #     parallel jobs can seek to the starting position directly
+        voffset <- vector("list", length(vcf.fn))
         for (i in seq_along(vcf.fn))
         {
             v <- variant_count[i]
             if (is.na(v) || (v < 0L))
             {
                 fn <- vcf.fn[i]
-                variant_count[i] <- seqVCF_Header(fn, getnum=TRUE,
-                    use_Rsamtools=use_Rsamtools, parallel=parallel,
-                    verbose=FALSE)$num.variant
+                if (.vcf_plain_text(fn))
+                {
+                    z <- .vcf_count_offset(fn)
+                    variant_count[i] <- z$num
+                    if (isTRUE(z$line >= 1)) voffset[[i]] <- z
+                } else {
+                    variant_count[i] <- seqVCF_Header(fn, getnum=TRUE,
+                        use_Rsamtools=use_Rsamtools, parallel=parallel,
+                        verbose=FALSE)$num.variant
+                }
             }
         }
         num_var <- sum(variant_count)
@@ -854,6 +919,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             }
             # unlimit the last one
             psplit[[2L]][length(psplit[[2L]])] <- -1L
+            # the file offsets of the starting variants, if available
+            pseek <- .vcf_seek_list(psplit[[1L]], variant_count, voffset)
+            voffset <- NULL  # not needed by the parallel jobs
 
             # show information
             update_info <- function(i)
@@ -871,9 +939,13 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             seqParallel(parallel, NULL, FUN = function(
                 vcf.fn, header, storage.option, info.import, fmt.import,
                 genotype.var.name, ignore.chr.prefix, scenario, optim,
-                raise.err, ptmpfn, psplit, variant_count)
+                raise.err, ptmpfn, psplit, pseek, variant_count)
             {
                 i <- process_index  # the process id, starting from one
+                # the starting variant index, with the internal 'seek'
+                # attribute to avoid scanning the file from the beginning
+                pstart <- psplit[[1L]][i]
+                attr(pstart, "seek") <- pseek[[i]]
                 tryCatch(
                 {
                     SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
@@ -881,7 +953,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                         fmt.import=fmt.import,
                         genotype.var.name=genotype.var.name,
                         ignore.chr.prefix=ignore.chr.prefix,
-                        start = psplit[[1L]][i], count = psplit[[2L]][i],
+                        start = pstart, count = psplit[[2L]][i],
                         variant_count=variant_count,
                         optimize=optim, scenario=scenario,
                         raise.error=raise.err,
@@ -904,7 +976,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 genotype.var.name=genotype.var.name,
                 ignore.chr.prefix=ignore.chr.prefix, scenario=scenario,
                 optim=optimize, raise.err=raise.error,
-                ptmpfn=ptmpfn, psplit=psplit, variant_count=variant_count)
+                ptmpfn=ptmpfn, psplit=psplit, pseek=pseek,
+                variant_count=variant_count)
 
             if (verbose)
                 .cat("    >>> Done (", .tm(), ") <<<")
@@ -1302,6 +1375,16 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                     flush.console()
                 }
 
+                # seek to the starting position directly, if the file offset
+                # is known, instead of scanning the file from the beginning
+                skiphead <- TRUE
+                if (!is.null(seek_info) && (seek_info[1L] == i))
+                {
+                    seek(infile, where=seek_info[2L])
+                    linecnt <- as.double(seek_info[3L] - 1)
+                    skiphead <- FALSE  # no VCF header at the file offset
+                }
+
                 # call C function
                 v <- .Call(SEQ_VCF_Parse, vcf.fn[i], header, gfile$root,
                     list(sample.num = length(samp.id),
@@ -1310,7 +1393,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                         raise.error = raise.error, filter.levels = filterlevels,
                         start = start, count = count,
                         chr.prefix = ignore.chr.prefix,
-                        progfile = progfile, use.file = TRUE,
+                        progfile = progfile, use.file = skiphead,
+                        line.base = if (skiphead) NULL else seek_info[4L],
                         verbose = verbose),
                     linecnt, new.env())
 

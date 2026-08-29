@@ -13,6 +13,13 @@ NEW FEATURES
 
 UTILITIES
 
+    o `seqVCF2GDS(, parallel=n)` on an uncompressed VCF file: the number of
+      variants is now counted together with the file offsets of the variants,
+      so that each of the parallel jobs seeks to its starting position
+      directly, instead of scanning the file from the beginning; it also no
+      longer requires a tabix index file (.tbi or .csi) when the Rsamtools
+      package is installed
+
     o `seqUnitMerge()` now properly supports merging more than two
       'SeqUnitListClass' objects via '...'
 

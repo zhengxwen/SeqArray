@@ -1712,7 +1712,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP SEQ_ToVCF_Di_WrtFmt(SEXP);
 	extern SEXP SEQ_ToVCF_Haploid(SEXP);
 	extern SEXP SEQ_ToVCF_NoGeno(SEXP);
-	extern SEXP SEQ_VCF_NumLines(SEXP, SEXP, SEXP);
+	extern SEXP SEQ_VCF_NumLines(SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_VCF_Split(SEXP, SEXP, SEXP, SEXP);
 	extern SEXP SEQ_VCF_Parse(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
@@ -1816,7 +1816,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_ToVCF_Init, 6),            CALL(SEQ_ToVCF_Done, 0),
 		CALL(SEQ_ToVCF, 1),                 CALL(SEQ_ToVCF_Di_WrtFmt, 1),
 		CALL(SEQ_ToVCF_Haploid, 1),         CALL(SEQ_ToVCF_NoGeno, 1),
-		CALL(SEQ_VCF_NumLines, 3),          CALL(SEQ_VCF_Split, 4),
+		CALL(SEQ_VCF_NumLines, 4),          CALL(SEQ_VCF_Split, 4),
 		CALL(SEQ_VCF_Parse, 6),
 		CALL(SEQ_SecToTime, 1),
 
