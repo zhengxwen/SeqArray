@@ -83,7 +83,7 @@
         FUN = function(i, fn, rg, step)
         {
             # only the first part has the VCF header
-            .Call(SeqArray:::SEQ_VCF_NumLines, fn, i==1L, step, rg[i, ], FALSE)
+            .Call(SEQ_VCF_NumLines, fn, i==1L, step, rg[i, ], FALSE)
         }, fn=fn, rg=rg, step=.vcf_offset_step)
 
     # combine: the variant indices of each part are shifted by the number of
