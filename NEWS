@@ -36,6 +36,11 @@ UTILITIES
       gzip (instead of bgzip) does not support seeking, and a hint is shown
       when 'verbose=TRUE'
 
+    o `seqVCF2GDS(, parallel=n)` on a BGZF file: counting the variants and
+      recording the file offsets is done in parallel, since a BGZF file can
+      be split at the block boundaries by reading the block headers only
+      (i.e., nothing is decompressed)
+
     o `seqVCF2GDS(, parallel=n)` no longer requires a tabix index file (.tbi
       or .csi): the number of variants is always counted directly
 

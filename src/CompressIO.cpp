@@ -280,6 +280,71 @@ void CBgzfWriter::Close()
 
 
 // ===========================================================
+// Splitting a BGZF file at the block boundaries
+// ===========================================================
+
+void BGZF_Split(const char *fn, size_t num, vector<TBgzfPart> &parts)
+{
+	parts.clear();
+	if (num < 1) num = 1;
+	FILE *f = fopen(fn, "rb");
+	if (!f) throw ErrSeqArray("Cannot open '%s'.", fn);
+
+	// the file size
+#ifdef _WIN32
+	_fseeki64(f, 0, SEEK_END);
+	const int64_t fsize = _ftelli64(f);
+#else
+	fseeko(f, 0, SEEK_END);
+	const int64_t fsize = ftello(f);
+#endif
+
+	// scan the block headers, and record the block boundaries closest to
+	//   fsize/num, 2*fsize/num, ...; only 18 bytes are read for each block
+	size_t k = 1;
+	int64_t addr = 0, prev = 0;
+	while (k < num)
+	{
+		const int64_t target = (int64_t)((double)fsize * k / num);
+		// move to the first block at or after 'target'
+		while (addr < target)
+		{
+		#ifdef _WIN32
+			if (_fseeki64(f, addr, SEEK_SET) != 0) break;
+		#else
+			if (fseeko(f, addr, SEEK_SET) != 0) break;
+		#endif
+			unsigned char h[18];
+			if (fread(h, 1, 18, f) != 18) { addr = fsize; break; }
+			if (!bgzf_check_head(h))
+			{
+				fclose(f);
+				throw ErrSeqArray("Invalid BGZF block at the offset %lld.",
+					(long long int)addr);
+			}
+			prev = addr;
+			addr += (int64_t)(h[16] | (h[17] << 8)) + 1;
+		}
+		if (addr >= fsize) break;
+		TBgzfPart p;
+		p.open_addr = prev; p.first_addr = addr; p.end_addr = 0;
+		parts.push_back(p);
+		k ++;
+	}
+	fclose(f);
+
+	// the first part starts from the beginning of the file
+	TBgzfPart p0;
+	p0.open_addr = p0.first_addr = 0; p0.end_addr = fsize;
+	parts.insert(parts.begin(), p0);
+	// the end of each part is the beginning of the next one
+	for (size_t i=0; i+1 < parts.size(); i++)
+		parts[i].end_addr = parts[i+1].first_addr;
+	parts[parts.size()-1].end_addr = fsize;
+}
+
+
+// ===========================================================
 // Reading a BGZF file line by line
 // ===========================================================
 
@@ -670,13 +735,32 @@ COREARRAY_DLL_EXPORT SEXP SEQ_bgzip_is(SEXP filename)
 	return Rf_ScalarLogical(BGZF_IsValid(CHAR(STRING_ELT(filename, 0))));
 }
 
+/// split a BGZF file into 'num' parts, return a matrix of 3 columns
+COREARRAY_DLL_EXPORT SEXP SEQ_bgzip_split(SEXP filename, SEXP num)
+{
+	const string fn(R_ExpandFileName(CHAR(STRING_ELT(filename, 0))));
+	COREARRAY_TRY
+		vector<TBgzfPart> parts;
+		BGZF_Split(fn.c_str(), (size_t)Rf_asInteger(num), parts);
+		const size_t n = parts.size();
+		rv_ans = PROTECT(Rf_allocMatrix(REALSXP, n, 3));
+		for (size_t i=0; i < n; i++)
+		{
+			REAL(rv_ans)[i] = (double)parts[i].open_addr;
+			REAL(rv_ans)[i + n] = (double)parts[i].first_addr;
+			REAL(rv_ans)[i + 2*n] = (double)parts[i].end_addr;
+		}
+		UNPROTECT(1);
+	COREARRAY_CATCH
+}
+
 /// build a CSI index for a BGZF-compressed VCF file
 COREARRAY_DLL_EXPORT SEXP SEQ_bgzip_index(SEXP filename, SEXP idxfilename)
 {
-	// note: R_ExpandFileName() may return a pointer to a static buffer
-	const string fn(R_ExpandFileName(CHAR(STRING_ELT(filename, 0))));
-	const string fnidx(R_ExpandFileName(CHAR(STRING_ELT(idxfilename, 0))));
 	COREARRAY_TRY
+		// note: R_ExpandFileName() may return a pointer to a static buffer
+		const string fn(R_ExpandFileName(CHAR(STRING_ELT(filename, 0))));
+		const string fnidx(R_ExpandFileName(CHAR(STRING_ELT(idxfilename, 0))));
 		int64_t n = BGZF_BuildCSI_VCF(fn.c_str(), fnidx.c_str());
 		rv_ans = Rf_ScalarReal((double)n);
 	COREARRAY_CATCH

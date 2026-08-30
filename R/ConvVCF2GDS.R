@@ -55,18 +55,47 @@
 }
 
 # count the number of variants, and record the file offset of every
-# '.vcf_offset_step' variants; return list(num, offset, uoffset, step, line)
-.vcf_count_offset <- function(fn, verbose=FALSE)
+# '.vcf_offset_step' variants; a BGZF file is counted in parallel, since it
+# can be split at the block boundaries without decompressing anything;
+# return list(num, offset, uoffset, index, line)
+.vcf_count_offset <- function(fn, parallel=FALSE, verbose=FALSE)
 {
-    if (.bgzf_is(fn))
+    if (!.bgzf_is(fn))
     {
-        # the BGZF file is read in the C code, to record the virtual offsets
-        .Call(SEQ_VCF_NumLines, fn, TRUE, .vcf_offset_step, verbose)
-    } else {
+        # not a BGZF file, no way to seek, so it has to be read sequentially
         infile <- file(fn, "rt")
         on.exit(close(infile))
-        .Call(SEQ_VCF_NumLines, infile, TRUE, .vcf_offset_step, verbose)
+        return(.Call(SEQ_VCF_NumLines, infile, TRUE, .vcf_offset_step, NULL,
+            verbose))
     }
+
+    # the BGZF file is read in the C code, to record the virtual offsets
+    pnum <- .NumParallel(parallel)
+    rg <- if (pnum > 1L) .Call(SEQ_bgzip_split, fn, pnum) else NULL
+    if (NROW(rg) <= 1L)
+    {
+        return(.Call(SEQ_VCF_NumLines, fn, TRUE, .vcf_offset_step, NULL,
+            verbose))
+    }
+
+    # count each part of the file in parallel
+    lst <- seqParApply(parallel, seq_len(NROW(rg)),
+        FUN = function(i, fn, rg, step)
+        {
+            # only the first part has the VCF header
+            .Call(SeqArray:::SEQ_VCF_NumLines, fn, i==1L, step, rg[i, ], FALSE)
+        }, fn=fn, rg=rg, step=.vcf_offset_step)
+
+    # combine: the variant indices of each part are shifted by the number of
+    #     the variants in the previous parts
+    num <- vapply(lst, function(z) z$num, 0)
+    pre <- c(0, cumsum(num)[-length(num)])
+    list(num = sum(num),
+        offset  = unlist(lapply(lst, function(z) z$offset), use.names=FALSE),
+        uoffset = unlist(lapply(lst, function(z) z$uoffset), use.names=FALSE),
+        index   = unlist(lapply(seq_along(lst), function(i)
+            lst[[i]]$index + pre[i]), use.names=FALSE),
+        line = lst[[1L]]$line)
 }
 
 # for each starting variant index in 'start', return c(file index, file
@@ -86,11 +115,11 @@
         if (is.null(z)) return(NULL)
         # the number of variants in the previous files
         pre <- if (i > 1L) cum[i-1L] else 0
-        # z$offset[k] is the offset of the ((k-1)*step + 1)-th variant
-        k <- (st - pre - 1) %/% .vcf_offset_step + 1
-        if (k < 1 || k > length(z$offset)) return(NULL)
-        m <- (k-1) * .vcf_offset_step
-        c(i, z$offset[k], z$uoffset[k], pre + m + 1, z$line + m)
+        # z$offset[k] is the file offset of the z$index[k]-th variant
+        k <- findInterval(st - pre, z$index)
+        if (k < 1L) return(NULL)
+        m <- z$index[k]
+        c(i, z$offset[k], z$uoffset[k], pre + m, z$line + m - 1)
     })
 }
 
@@ -183,7 +212,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
                     if (isTRUE(getnum))
                     {
                         nVariant <- nVariant + length(s) +
-                            .Call(SEQ_VCF_NumLines, infile, FALSE, 0,
+                            .Call(SEQ_VCF_NumLines, infile, FALSE, 0, NULL,
                                 verbose)$num
                     }
                 }
@@ -819,7 +848,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 fn <- vcf.fn[i]
                 if (.vcf_seekable(fn))
                 {
-                    z <- .vcf_count_offset(fn)
+                    z <- .vcf_count_offset(fn, parallel)
                     variant_count[i] <- z$num
                     if (isTRUE(z$line >= 1)) voffset[[i]] <- z
                 } else {

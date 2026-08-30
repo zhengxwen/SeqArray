@@ -1123,25 +1123,40 @@ static const char *datetime_str()
 }
 
 /// Count the number of variants, and record the file offsets if OffsetStep > 0
-///   Return list(num, offset, step, line):
-///     num,   the number of lines (i.e., variants) after the header
+///   'Range' is NULL, or c(open_addr, first_addr, end_addr) for a BGZF file:
+///     the reading starts from the block at 'open_addr', and only the lines
+///     beginning in the blocks [first_addr, end_addr) are counted, so that a
+///     BGZF file can be counted in parallel, see BGZF_Split()
+///   Return list(num, offset, uoffset, index, line):
+///     num,   the number of lines (i.e., variants) in the range
 ///     offset, the offsets of the 1st, (step+1)-th, (2*step+1)-th, ... lines,
 ///             or NULL if OffsetStep <= 0; see VCF_Position()
 ///     uoffset, the within-block offsets, all zeros unless 'File' is a BGZF
 ///             file name
-///     step,  the value of OffsetStep
-///     line,  the line number (1-based, counting the header) of the 1st line
+///     index, index[k] is the variant index (1-based, within the range) at
+///             offset[k]
+///     line,  the line number (1-based, counting the header) of the 1st line,
+///             or NA if 'SkipHead' is FALSE
 COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
-	SEXP OffsetStep, SEXP Verbose)
+	SEXP OffsetStep, SEXP Range, SEXP Verbose)
 {
 	const bool verbose = Rf_asLogical(Verbose) == TRUE;
 	const C_Int64 step = (C_Int64)Rf_asReal(OffsetStep);
-	vector<double> offset, uoffset;  // the offsets, if step > 0
+	vector<double> offset, uoffset, index;  // the offsets, if step > 0
 	C_Int64 first_line = -1;  // the line number of the 1st line, -1 for none
+
+	// the range of the blocks to be counted
+	C_Int64 open_addr=0, first_addr=0, end_addr=-1;
+	if (!Rf_isNull(Range) && (RLength(Range) >= 3))
+	{
+		open_addr  = (C_Int64)REAL(Range)[0];
+		first_addr = (C_Int64)REAL(Range)[1];
+		end_addr   = (C_Int64)REAL(Range)[2];
+	}
 
 	COREARRAY_TRY
 
-	Init_VCF_Buffer(File);
+	Init_VCF_Buffer(File, open_addr, 0);
 
 	if (Rf_asLogical(SkipHead) == TRUE)
 	{
@@ -1158,6 +1173,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 		}
 		first_line = VCF_NextLineNum;  // the 1st line after the header
 		DoneText();
+	} else if (first_addr > open_addr)
+	{
+		// the reading starts from the block before 'first_addr', so skip the
+		//   lines beginning before it; note that the first line here may be
+		//   incomplete, and it belongs to the previous part
+		while (!VCF_EOF() && (VCF_Position() < first_addr))
+			SkipLine();
 	}
 
 	// get the number of left lines
@@ -1165,11 +1187,14 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 	int m0 = 0, m1 = 0;
 	while (!VCF_EOF())
 	{
-		// VCF_Buffer_Ptr points to the first character of the n-th line
+		// VCF_Buffer_Ptr points to the first character of the n-th line;
+		//   a line belongs to this part if it begins before 'end_addr'
+		if ((end_addr >= 0) && (VCF_Position() >= end_addr)) break;
 		if ((step > 0) && ((n % step) == 0))
 		{
 			offset.push_back((double)VCF_Position());
 			uoffset.push_back((double)VCF_Position_U());
+			index.push_back((double)(n + 1));
 		}
 		n ++;
 		if (verbose && ((++m0) >= 20000))
@@ -1197,23 +1222,25 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_NumLines(SEXP File, SEXP SkipHead,
 	{
 		SEXP v1 = PROTECT(NEW_NUMERIC(offset.size()));
 		SEXP v2 = PROTECT(NEW_NUMERIC(uoffset.size()));
+		SEXP v3 = PROTECT(NEW_NUMERIC(index.size()));
 		if (!offset.empty())
 		{
 			memcpy(REAL(v1), &offset[0], sizeof(double)*offset.size());
 			memcpy(REAL(v2), &uoffset[0], sizeof(double)*uoffset.size());
+			memcpy(REAL(v3), &index[0], sizeof(double)*index.size());
 		}
 		SET_ELEMENT(ans, 1, v1);
 		SET_ELEMENT(ans, 2, v2);
-		UNPROTECT(2);
+		SET_ELEMENT(ans, 3, v3);
+		UNPROTECT(3);
 	}
-	SET_ELEMENT(ans, 3, Rf_ScalarReal(step));
 	SET_ELEMENT(ans, 4, Rf_ScalarReal(
 		first_line >= 1 ? (double)first_line : NA_REAL));
 	SEXP nm = PROTECT(NEW_CHARACTER(5));
 	SET_STRING_ELT(nm, 0, Rf_mkChar("num"));
 	SET_STRING_ELT(nm, 1, Rf_mkChar("offset"));
 	SET_STRING_ELT(nm, 2, Rf_mkChar("uoffset"));
-	SET_STRING_ELT(nm, 3, Rf_mkChar("step"));
+	SET_STRING_ELT(nm, 3, Rf_mkChar("index"));
 	SET_STRING_ELT(nm, 4, Rf_mkChar("line"));
 	SET_NAMES(ans, nm);
 	rv_ans = ans;

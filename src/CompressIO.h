@@ -116,6 +116,16 @@ private:
 ///   'fnidx'; return the number of the indexed variants
 int64_t BGZF_BuildCSI_VCF(const char *fn, const char *fnidx);
 
+
+/// Split a BGZF file into 'num' parts at the block boundaries, by scanning
+///   the block headers only (i.e., nothing is decompressed). For each part,
+///   'open_addr' is the file offset of the block where the reading starts
+///   (i.e., the block before 'first_addr', so that the first complete line
+///   can be found), and the part covers the blocks in
+///   [first_addr, end_addr).
+struct TBgzfPart { int64_t open_addr, first_addr, end_addr; };
+void BGZF_Split(const char *fn, size_t num, std::vector<TBgzfPart> &parts);
+
 }
 
 #endif /* _HEADER_SEQ_COMPRESS_IO_ */
