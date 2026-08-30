@@ -12,11 +12,8 @@ seqVCF_Header(vcf.fn, getnum=FALSE, use_Rsamtools=NA, parallel=FALSE,
     \item{vcf.fn}{the file name of VCF or BCF format;
         or a \code{\link{connection}} object for VCF format}
     \item{getnum}{if \code{TRUE}, return the total number of variants}
-    \item{use_Rsamtools}{only applicable when \code{getnum=TRUE} and multiple
-        cores are used;
-        \code{NA}: using Rsamtools when it is installed; \code{FALSE}: not use
-        the Rsamtools package; \code{TRUE}: to use Rsamtools, if it is not
-        installed, the function fails}
+    \item{use_Rsamtools}{deprecated and ignored, since the Rsamtools package
+        is no longer used}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
         processing), a numeric value indicating the number of cores, or a
         cluster object for parallel processing; \code{parallel} is passed to
@@ -49,8 +46,9 @@ Project; \code{Type} -- data type; \code{Description} -- a variable
 description.
 
     If multiple cores are used to get the total number of variants, the
-Rsamtools package should be installed, and the indexing file (i.e., .csi or
-.tbi) should be available along with \code{vcf.fn}.
+counting is done in parallel when \code{vcf.fn} is in the BGZF format (i.e.,
+created by bgzip), since a BGZF file can be split at the block boundaries
+without decompressing anything. No indexing file is needed.
 }
 
 \references{

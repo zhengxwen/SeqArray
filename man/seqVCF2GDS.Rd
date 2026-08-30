@@ -81,12 +81,8 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     \item{digest}{a logical value (TRUE/FALSE) or a character ("md5", "sha1",
         "sha256", "sha384" or "sha512"); add md5 hash codes to the GDS file
         if TRUE or a digest algorithm is specified}
-    \item{use_Rsamtools}{only applicable when multiple cores are used;
-        \code{use_Rsamtools} is passed to \code{\link{seqVCF_Header}} to get
-        the total number of variants;
-        \code{NA}: using Rsamtools when it is installed; \code{FALSE}: not use
-        the Rsamtools package; \code{TRUE}: to use Rsamtools, if it is not
-        installed, the function fails}
+    \item{use_Rsamtools}{deprecated and ignored, since the Rsamtools package
+        is no longer used}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (parallel
         processing), a numeric value indicating the number of cores, or a
         cluster object for parallel processing; \code{parallel} is passed to

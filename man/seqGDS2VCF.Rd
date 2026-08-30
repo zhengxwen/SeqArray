@@ -25,8 +25,8 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
         line containing mandatory column names}
     \item{no_sample}{\code{TRUE} to exclude the sample-level data and create
         a site-only VCF file}
-    \item{use_Rsamtools}{\code{TRUE} for loading the Rsamtools package, see
-        details}
+    \item{use_Rsamtools}{deprecated and ignored, since the Rsamtools package
+        is no longer used}
     \item{verbose}{if \code{TRUE}, show information}
     \item{verbose.progress}{if \code{NA}, set it to \code{verbose}; if
         \code{TRUE}, display the progress for each variant}
@@ -38,12 +38,10 @@ seqGDS2VCF(gdsfile, vcf.fn, info.var=NULL, fmt.var=NULL, chr_prefix="",
     \code{\link{seqSetFilter}} can be used to define a subset of data for
 the export.
 
-    If the filename extension is "gz" or "bgz", the gzip compression algorithm
-will be used to compress the output data. When the Rsamtools package is
-installed and \code{use_Rsamtools=TRUE}, the exported file utilizes the bgzf
-format (\link[Rsamtools]{bgzip}, a variant of gzip format) allowing for
-fast indexing. \code{bzfile} or \code{xzfile} will be used, if the filename
-extension is "bz" or "xz".
+    If the filename extension is "gz" or "bgz", the output file is in the BGZF
+format (i.e., created by bgzip, a variant of the gzip format) allowing for
+fast indexing, and a .csi index file is created along with it. \code{bzfile}
+or \code{xzfile} will be used, if the filename extension is "bz" or "xz".
 }
 \references{
     Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo,
