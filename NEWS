@@ -1,15 +1,5 @@
-CHANGES IN VERSION 1.53.2
+CHANGES IN VERSION 1.53.3
 -------------------------
-
-NEW FEATURES
-
-    o AARCH64 NEON SIMD optimization for vectorized internal functions,
-      providing hardware-accelerated performance on Apple Silicon and other
-      ARM64 platforms
-
-    o `seqParallel()` supports a `BiocParallelParam` object for the `cl`
-      argument, with full feature parity to the cluster-based path, including
-      load balancing, init/finalize hooks, and numeric/NULL `gdsfile` inputs
 
 UTILITIES
 
@@ -36,6 +26,13 @@ UTILITIES
       gzip (instead of bgzip) does not support seeking, and a hint is shown
       when 'verbose=TRUE'
 
+    o new `split` in `seqVCF2GDS()` for the parallel jobs: "block" (default)
+      splits a BGZF file at the block boundaries, so counting the variants
+      is not needed at all; it requires all of the input files to be in the
+      BGZF format and cannot be used together with 'start', 'count' or
+      'variant_count', in which case it falls back to "variant"; "variant"
+      counts the variants first and splits by the variant index
+
     o `seqVCF2GDS(, parallel=n)` on a BGZF file: counting the variants and
       recording the file offsets is done in parallel, since a BGZF file can
       be split at the block boundaries by reading the block headers only
@@ -43,6 +40,36 @@ UTILITIES
 
     o `seqVCF2GDS(, parallel=n)` no longer requires a tabix index file (.tbi
       or .csi): the number of variants is always counted directly
+
+BUG FIXES
+
+    o `seqVCF2GDS(, start=, count=, parallel=n)` returned more variants than
+      requested: the last job was not limited by 'count', to tolerate an
+      inaccurate number of variants reported by the Rsamtools package; the
+      variants are now always counted exactly, so the limit is applied
+
+    o `seqVCF2GDS(, start=, count=, parallel=n)`: the upper bound of the
+      splitting was wrong when 'start' was not 1
+
+    o `seqVCF2GDS(, variant_count=, parallel=n)`: 'variant_count' should be
+      exact now, since the variants beyond it are not converted; it was
+      documented as "could be an approximate"
+
+
+CHANGES IN VERSION 1.53.2
+-------------------------
+
+NEW FEATURES
+
+    o AARCH64 NEON SIMD optimization for vectorized internal functions,
+      providing hardware-accelerated performance on Apple Silicon and other
+      ARM64 platforms
+
+    o `seqParallel()` supports a `BiocParallelParam` object for the `cl`
+      argument, with full feature parity to the cluster-based path, including
+      load balancing, init/finalize hooks, and numeric/NULL `gdsfile` inputs
+
+UTILITIES
 
     o `seqUnitMerge()` now properly supports merging more than two
       'SeqUnitListClass' objects via '...'
@@ -57,6 +84,7 @@ UTILITIES
       in this case, since the data are unknown before writing). New 'param'
       in `seqAddValue()`, passed to the second argument of the user-defined
       function 'val(k, param)'
+
 
 
 CHANGES IN VERSION 1.52.1

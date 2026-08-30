@@ -585,8 +585,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     storage.option="LZMA_RA", info.import=NULL, fmt.import=NULL,
     genotype.var.name="GT", ploidy=NA_integer_, ignore.chr.prefix="chr",
     scenario=c("general", "imputation"), reference=NULL, start=1L, count=-1L,
-    variant_count=NA_integer_, optimize=TRUE, raise.error=TRUE, digest=TRUE,
-    use_Rsamtools=NA, parallel=FALSE, verbose=TRUE)
+    variant_count=NA_integer_, split=c("block", "variant"), optimize=TRUE,
+    raise.error=TRUE, digest=TRUE, use_Rsamtools=NA, parallel=FALSE,
+    verbose=TRUE)
 {
     # check
     if (!inherits(vcf.fn, "connection"))
@@ -595,6 +596,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.null(header) | inherits(header, "SeqVCFHeaderClass"))
 
     scenario <- match.arg(scenario)
+    split_given <- !missing(split)   # whether split="block" is asked for
+    split <- match.arg(split)
     storage.tmp <- storage.option
     if (is.character(storage.option))
     {
@@ -627,6 +630,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     # c(file index, file offset in bytes, the variant index at that offset),
     # see .vcf_seek_list()
     seek_info <- attr(start, "seek")
+    # the internal 'range' attribute set by the parallel jobs when
+    # split="block", c(file index, open_addr, first_addr, end_addr), see
+    # BGZF_Split() in the C code
+    range_info <- attr(start, "range")
     attributes(start) <- NULL
 
     stopifnot(is.logical(optimize), length(optimize)==1L)
@@ -638,6 +645,26 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     parallel <- .McoreParallel(parallel)
     pnum <- .NumParallel(parallel)
+
+    # whether to split the input at the BGZF block boundaries, so that
+    # counting the variants beforehand is not needed at all
+    use_block <- FALSE
+    if ((split == "block") && (pnum > 1L))
+    {
+        msg <- NULL
+        if (inherits(vcf.fn, "connection"))
+            msg <- "the input is a connection object"
+        else if (!all(vapply(vcf.fn, .bgzf_is, TRUE)))
+            msg <- "the input is not in the BGZF format (i.e., bgzip)"
+        else if ((start != 1L) || (count >= 0L))
+            msg <- "'start' or 'count' is used"
+        else if (!identical(variant_count, NA_integer_))
+            msg <- "'variant_count' is used"
+        if (is.null(msg))
+            use_block <- TRUE
+        else if (verbose && split_given)
+            .cat("    split=\"block\" is not used, since ", msg, ".")
+    }
 
     if (inherits(vcf.fn, "connection"))
     {
@@ -824,143 +851,223 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
     if (pnum > 1L)
     {
-        if (verbose)
-        {
-            .cat("    # of cores/jobs: ", pnum)
-            a <- variant_count < 0L
-            if (length(a) < length(vcf.fn)) a[length(vcf.fn)] <- NA
-            if (anyNA(a) || any(a, na.rm=TRUE))
-            {
-                cat("    calculating the total number of variants ...\n")
-            }
-            flush.console()
-        }
+        if (verbose) .cat("    # of cores/jobs: ", pnum)
 
-        # get the number of variants in each VCF file
-        # 'voffset[[i]]' stores the file offsets, if available, so that the
-        #     parallel jobs can seek to the starting position directly
-        voffset <- vector("list", length(vcf.fn))
-        for (i in seq_along(vcf.fn))
+        if (use_block)
         {
-            v <- variant_count[i]
-            if (is.na(v) || (v < 0L))
+            # =========================================================
+            # split="block": split the BGZF file(s) at the block boundaries,
+            #     so that the variants do not need to be counted beforehand;
+            #     'variant.id' is not known in each job, and it is written
+            #     after merging all of the temporary files
+
+            # the number of the parts of each file, proportional to its size
+            sz <- file.size(vcf.fn)
+            k <- pmax(1L, as.integer(round(pnum * sz / sum(sz))))
+            prg <- do.call(rbind, lapply(seq_along(vcf.fn), function(i)
+                cbind(i, .Call(SEQ_bgzip_split, vcf.fn[i], k[i]))))
+            nparts <- NROW(prg)
+
+            if (nparts >= 2L)
             {
-                fn <- vcf.fn[i]
-                if (.vcf_seekable(fn))
+                # need unique temporary file names
+                ptmpfn <- .get_temp_fn(nparts,
+                    sub("^([^.]*).*", "\\1", basename(out.fn)), dirname(out.fn))
+                if (verbose)
                 {
-                    z <- .vcf_count_offset(fn, parallel)
-                    variant_count[i] <- z$num
-                    if (isTRUE(z$line >= 1)) voffset[[i]] <- z
-                } else {
-                    variant_count[i] <- seqVCF_Header(fn, getnum=TRUE,
-                        parallel=parallel, verbose=FALSE)$num.variant
-                    if (verbose && !.is_text_file(fn))
+                    .cat("    >>> writing to ", nparts, " files: <<<")
+                    cat(sprintf("        %s\t[%s: %s .. %s]\n",
+                        basename(ptmpfn), basename(vcf.fn)[prg[, 1L]],
+                        .pretty_size(prg[, 3L]), .pretty_size(prg[, 4L])),
+                        sep="")
+                    flush.console()
+                }
+
+                # show information
+                update_info <- function(i)
+                {
+                    .cat("        |> ", i, " [", .tm(), " done]")
+                    flush.console()
+                    NULL
+                }
+
+                # reset memory before calling parallel
+                gc(FALSE, reset=TRUE, full=TRUE)
+
+                # conversion in parallel
+                seqParApply(parallel, seq_len(nparts), FUN = function(i,
+                    vcf.fn, hdr, storage.option, info.import, fmt.import,
+                    genotype.var.name, ignore.chr.prefix, scenario, optim,
+                    raise.err, ptmpfn, prg, upd)
+                {
+                    # the range of the BGZF blocks assigned to this job
+                    pstart <- 1L
+                    attr(pstart, "range") <- prg[i, ]
+                    tryCatch(
                     {
-                        cat("    Hint: '", basename(fn), "' is not in the ",
-                            "BGZF format, so each of the parallel jobs has ",
-                            "to decompress the file from the beginning; ",
-                            "using bgzip instead of gzip is much faster.\n",
-                            sep="")
+                        SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[i], header=hdr,
+                            storage.option=storage.option,
+                            info.import=info.import, fmt.import=fmt.import,
+                            genotype.var.name=genotype.var.name,
+                            ignore.chr.prefix=ignore.chr.prefix,
+                            start=pstart, count=-1L,
+                            optimize=optim, scenario=scenario,
+                            raise.error=raise.err,
+                            digest=FALSE, parallel=FALSE, verbose=FALSE)
+                        if (is.function(upd)) upd(i)
+                        i
+                    }, error = function(e) {
+                        # capture full traceback
+                        trace <- capture.output({
+                            cat("Error: ", e$message, "\n", sep="")
+                            traceback()
+                        })
+                        con <- file(paste0(ptmpfn[i], ".progress.txt"),
+                            open="at")
+                        writeLines(trace, con)
+                        close(con)
+                        stop(e$message)
+                    })
+                }, vcf.fn=vcf.fn, hdr=oldheader, storage.option=storage.option,
+                    info.import=info.import, fmt.import=fmt.import,
+                    genotype.var.name=genotype.var.name,
+                    ignore.chr.prefix=ignore.chr.prefix, scenario=scenario,
+                    optim=optimize, raise.err=raise.error, ptmpfn=ptmpfn,
+                    prg=prg, upd=if (isTRUE(verbose)) update_info else NULL)
+
+                if (verbose)
+                    .cat("    >>> Done (", .tm(), ") <<<")
+
+            } else {
+                pnum <- 1L; use_block <- FALSE
+                message("No use of parallel environment!")
+            }
+
+        } else {
+            # get the number of variants in each VCF file
+            # 'voffset[[i]]' stores the file offsets, if available, so that the
+            #     parallel jobs can seek to the starting position directly
+            voffset <- vector("list", length(vcf.fn))
+            for (i in seq_along(vcf.fn))
+            {
+                v <- variant_count[i]
+                if (is.na(v) || (v < 0L))
+                {
+                    fn <- vcf.fn[i]
+                    if (.vcf_seekable(fn))
+                    {
+                        z <- .vcf_count_offset(fn, parallel)
+                        variant_count[i] <- z$num
+                        if (isTRUE(z$line >= 1)) voffset[[i]] <- z
+                    } else {
+                        variant_count[i] <- seqVCF_Header(fn, getnum=TRUE,
+                            parallel=parallel, verbose=FALSE)$num.variant
+                        if (verbose && !.is_text_file(fn))
+                        {
+                            cat("    Hint: '", basename(fn), "' is not in the ",
+                                "BGZF format, so each of the parallel jobs has ",
+                                "to decompress the file from the beginning; ",
+                                "using bgzip instead of gzip is much faster.\n",
+                                sep="")
+                        }
                     }
                 }
             }
-        }
-        num_var <- sum(variant_count)
-        if (anyNA(num_var)) stop("Getting invalid # of variants.")
+            num_var <- sum(variant_count)
+            if (anyNA(num_var)) stop("Getting invalid # of variants.")
 
-        if (start < 1L)
-            stop("'start' should be a positive integer if conversion in parallel.")
-        else if (start > num_var)
-            stop("'start' should not be greater than the total number of variants.")
-        if (count < 0L)
-            count <- num_var - start + 1L
-        if (start+count > num_var+1L)
-            stop("Invalid 'count'.")
-        if (verbose)
-            .cat("    # of variants: ", .pretty(count))
-
-        if (count >= pnum)
-        {
-            # need unique temporary file names
-            ptmpfn <- .get_temp_fn(pnum,
-                sub("^([^.]*).*", "\\1", basename(out.fn)), dirname(out.fn))
-            psplit <- .file_split(count, pnum, start)
+            if (start < 1L)
+                stop("'start' should be a positive integer if conversion in parallel.")
+            else if (start > num_var)
+                stop("'start' should not be greater than the total number of variants.")
+            if (count < 0L)
+                count <- num_var - start + 1L
+            if (start+count > num_var+1L)
+                stop("Invalid 'count'.")
             if (verbose)
-            {
-                .cat("    >>> writing to ", pnum, " files: <<<")
-                cat(sprintf("        %s\t[%s .. %s]\n", basename(ptmpfn),
-                        .pretty(psplit[[1L]]),
-                        .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
-                flush.console()
-            }
-            # unlimit the last one
-            psplit[[2L]][length(psplit[[2L]])] <- -1L
-            # the file offsets of the starting variants, if available
-            pseek <- .vcf_seek_list(psplit[[1L]], variant_count, voffset)
-            voffset <- NULL  # not needed by the parallel jobs
+                .cat("    # of variants: ", .pretty(count))
 
-            # show information
-            update_info <- function(i)
+            if (count >= pnum)
             {
-                .cat("        |> ", i, " [", .tm(), " done]")
-                flush.console()
-                NULL
-            }
-            if (!isTRUE(verbose)) update_info <- "none"
-
-            # reset memory before calling parallel
-            gc(FALSE, reset=TRUE, full=TRUE)
-
-            # conversion in parallel
-            seqParallel(parallel, NULL, FUN = function(
-                vcf.fn, header, storage.option, info.import, fmt.import,
-                genotype.var.name, ignore.chr.prefix, scenario, optim,
-                raise.err, ptmpfn, psplit, pseek, variant_count)
-            {
-                i <- process_index  # the process id, starting from one
-                # the starting variant index, with the internal 'seek'
-                # attribute to avoid scanning the file from the beginning
-                pstart <- psplit[[1L]][i]
-                attr(pstart, "seek") <- pseek[[i]]
-                tryCatch(
+                # need unique temporary file names
+                ptmpfn <- .get_temp_fn(pnum,
+                    sub("^([^.]*).*", "\\1", basename(out.fn)), dirname(out.fn))
+                psplit <- .file_split(count, pnum, start)
+                if (verbose)
                 {
-                    SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
-                        storage.option=storage.option, info.import=info.import,
-                        fmt.import=fmt.import,
-                        genotype.var.name=genotype.var.name,
-                        ignore.chr.prefix=ignore.chr.prefix,
-                        start = pstart, count = psplit[[2L]][i],
-                        variant_count=variant_count,
-                        optimize=optim, scenario=scenario,
-                        raise.error=raise.err,
-                        digest=FALSE, parallel=FALSE, verbose=FALSE)
-                    i  # return the process index
-                }, error = function(e) {
-                    # capture full traceback
-                    trace <- capture.output({
-                        cat("Error: ", e$message, "\n", sep="")
-                        traceback()
+                    .cat("    >>> writing to ", pnum, " files: <<<")
+                    cat(sprintf("        %s\t[%s .. %s]\n", basename(ptmpfn),
+                            .pretty(psplit[[1L]]),
+                            .pretty(psplit[[1L]] + psplit[[2L]] - 1L)), sep="")
+                    flush.console()
+                }
+                # the file offsets of the starting variants, if available
+                pseek <- .vcf_seek_list(psplit[[1L]], variant_count, voffset)
+                voffset <- NULL  # not needed by the parallel jobs
+
+                # show information
+                update_info <- function(i)
+                {
+                    .cat("        |> ", i, " [", .tm(), " done]")
+                    flush.console()
+                    NULL
+                }
+                if (!isTRUE(verbose)) update_info <- "none"
+
+                # reset memory before calling parallel
+                gc(FALSE, reset=TRUE, full=TRUE)
+
+                # conversion in parallel
+                seqParallel(parallel, NULL, FUN = function(
+                    vcf.fn, header, storage.option, info.import, fmt.import,
+                    genotype.var.name, ignore.chr.prefix, scenario, optim,
+                    raise.err, ptmpfn, psplit, pseek, variant_count)
+                {
+                    i <- process_index  # the process id, starting from one
+                    # the starting variant index, with the internal 'seek'
+                    # attribute to avoid scanning the file from the beginning
+                    pstart <- psplit[[1L]][i]
+                    attr(pstart, "seek") <- pseek[[i]]
+                    tryCatch(
+                    {
+                        SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[i], header=oldheader,
+                            storage.option=storage.option, info.import=info.import,
+                            fmt.import=fmt.import,
+                            genotype.var.name=genotype.var.name,
+                            ignore.chr.prefix=ignore.chr.prefix,
+                            start = pstart, count = psplit[[2L]][i],
+                            variant_count=variant_count,
+                            optimize=optim, scenario=scenario,
+                            raise.error=raise.err,
+                            digest=FALSE, parallel=FALSE, verbose=FALSE)
+                        i  # return the process index
+                    }, error = function(e) {
+                        # capture full traceback
+                        trace <- capture.output({
+                            cat("Error: ", e$message, "\n", sep="")
+                            traceback()
+                        })
+                        con <- file(paste0(ptmpfn[i], ".progress.txt"), open="at")
+                        writeLines(trace, con)
+                        close(con)
+                        stop(e$message)
                     })
-                    con <- file(paste0(ptmpfn[i], ".progress.txt"), open="at")
-                    writeLines(trace, con)
-                    close(con)
-                    stop(e$message)
-                })
-            }, split = "none", .combine = update_info,
-                vcf.fn=vcf.fn, header=header, storage.option=storage.option,
-                info.import=info.import, fmt.import=fmt.import,
-                genotype.var.name=genotype.var.name,
-                ignore.chr.prefix=ignore.chr.prefix, scenario=scenario,
-                optim=optimize, raise.err=raise.error,
-                ptmpfn=ptmpfn, psplit=psplit, pseek=pseek,
-                variant_count=variant_count)
+                }, split = "none", .combine = update_info,
+                    vcf.fn=vcf.fn, header=header, storage.option=storage.option,
+                    info.import=info.import, fmt.import=fmt.import,
+                    genotype.var.name=genotype.var.name,
+                    ignore.chr.prefix=ignore.chr.prefix, scenario=scenario,
+                    optim=optimize, raise.err=raise.error,
+                    ptmpfn=ptmpfn, psplit=psplit, pseek=pseek,
+                    variant_count=variant_count)
 
-            if (verbose)
-                .cat("    >>> Done (", .tm(), ") <<<")
+                if (verbose)
+                    .cat("    >>> Done (", .tm(), ") <<<")
 
-        } else {
-            pnum <- 1L
-            message("No use of parallel environment!")
+            } else {
+                pnum <- 1L
+                message("No use of parallel environment!")
+            }
         }
     }
 
@@ -1334,6 +1441,8 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
             for (i in seq_along(vcf.fn))
             {
+                # split="block": only the assigned file is converted
+                if (!is.null(range_info) && (range_info[1L] != i)) next
                 if (!is.null(variant_count))
                 {
                     cnt <- cumsum(variant_count)[i]
@@ -1352,21 +1461,31 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
                 # seek to the starting position directly, if the file offset
                 # is known, instead of scanning the file from the beginning
-                skiphead <- TRUE; foffset <- NULL
-                if (!is.null(seek_info) && (seek_info[1L] == i))
+                skiphead <- TRUE; foffset <- brange <- NULL
+                if (!is.null(range_info))
                 {
-                    linecnt <- as.double(seek_info[4L] - 1)
-                    skiphead <- FALSE  # no VCF header at the file offset
-                }
-                if (skiphead || !.bgzf_is(vcf.fn[i]))
-                {
-                    infile <- file(vcf.fn[i], open="rt")
-                    if (!skiphead) seek(infile, where=seek_info[2L])
-                } else {
-                    # let the C code read the BGZF file from the given
-                    # virtual offset, since seek() does not work here
+                    # split="block": the range of the BGZF blocks, which is
+                    # read in the C code; only the 1st part has the header
+                    brange <- range_info[2:4]
+                    skiphead <- (range_info[3L] <= 0)
                     infile <- vcf.fn[i]
-                    foffset <- seek_info[2:3]
+                    linecnt <- 0
+                } else {
+                    if (!is.null(seek_info) && (seek_info[1L] == i))
+                    {
+                        linecnt <- as.double(seek_info[4L] - 1)
+                        skiphead <- FALSE  # no VCF header at the file offset
+                    }
+                    if (skiphead || !.bgzf_is(vcf.fn[i]))
+                    {
+                        infile <- file(vcf.fn[i], open="rt")
+                        if (!skiphead) seek(infile, where=seek_info[2L])
+                    } else {
+                        # let the C code read the BGZF file from the given
+                        # virtual offset, since seek() does not work here
+                        infile <- vcf.fn[i]
+                        foffset <- seek_info[2:3]
+                    }
                 }
 
                 # call C function
@@ -1378,8 +1497,9 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                         start = start, count = count,
                         chr.prefix = ignore.chr.prefix,
                         progfile = progfile, use.file = skiphead,
-                        line.base = if (skiphead) NULL else seek_info[5L],
-                        file.offset = foffset,
+                        line.base = if (skiphead || is.null(seek_info))
+                            NULL else seek_info[5L],
+                        file.offset = foffset, block.range = brange,
                         verbose = verbose),
                     linecnt, new.env())
 
@@ -1418,7 +1538,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         ## merge all temporary files
 
         # all GDS variables to be merged
-        varnm <- c("variant.id", "position", "chromosome", "allele",
+        # with split="block", each job does not know the global variant
+        #     index, so 'variant.id' is written after merging
+        varnm <- c(if (!use_block) "variant.id", "position", "chromosome",
+            "allele",
             "genotype/data", "genotype/@data",
             "genotype/extra", "genotype/extra.index",
             "phase/data", "phase/extra", "phase/extra.index",
@@ -1465,6 +1588,13 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             seqClose(tmpgds)
             if (verbose)
                 .cat(" [done, ", .tm(), "]")
+        }
+
+        if (use_block)
+        {
+            # 'variant.id' is 1 .. the total number of variants
+            n <- prod(objdesp.gdsn(index.gdsn(gfile, "position"))$dim)
+            append.gdsn(index.gdsn(gfile, "variant.id"), seq_len(n))
         }
 
         filtervar <- as.factor(filtervar)

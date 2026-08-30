@@ -732,7 +732,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_bgzip_create(SEXP filename)
 /// whether 'filename' is a BGZF file
 COREARRAY_DLL_EXPORT SEXP SEQ_bgzip_is(SEXP filename)
 {
-	return Rf_ScalarLogical(BGZF_IsValid(CHAR(STRING_ELT(filename, 0))));
+	return Rf_ScalarLogical(
+		BGZF_IsValid(R_ExpandFileName(CHAR(STRING_ELT(filename, 0)))));
 }
 
 /// split a BGZF file into 'num' parts, return a matrix of 3 columns

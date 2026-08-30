@@ -1275,6 +1275,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
 	double cnt = Rf_asReal(count);
 	double scale = cnt / num;
 	double st = Rf_asReal(start);
+	const double st_end = st + cnt;  // the variant after the last one
 	for (int i=0; i < num; i++)
 	{
 		double old_st = REAL(start_array)[i] = round(st);
@@ -1286,8 +1287,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Split(SEXP start, SEXP count, SEXP pnum,
 			st += m - n;
 			n = m;
 		}
-		if ((old_st + n) > (cnt + 1))
-			n = round(cnt + 1 - old_st);
+		if ((old_st + n) > st_end)
+			n = round(st_end - old_st);
 		REAL(count_array)[i] = (n >= 0) ? n : 0;
 	}
 
@@ -1345,12 +1346,22 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		C_Int64 variant_count = (C_Int64)Rf_asReal(RGetListElement(param, "count"));
 		// input file: an R connection object, or a BGZF file name together
 		//   with the starting offset c(the block offset, the within-block one)
+		C_Int64 blk_first=0, blk_end=-1;  // the range of the blocks to parse
 		{
 			SEXP off = RGetListElement(param, "file.offset");
 			C_Int64 a=0, u=0;
 			if (!Rf_isNull(off) && (RLength(off) >= 2))
 			{
 				a = (C_Int64)REAL(off)[0]; u = (C_Int64)REAL(off)[1];
+			}
+			// c(open_addr, first_addr, end_addr): parse the lines beginning
+			//   in the blocks [first_addr, end_addr), see BGZF_Split()
+			SEXP rg = RGetListElement(param, "block.range");
+			if (!Rf_isNull(rg) && (RLength(rg) >= 3))
+			{
+				a = (C_Int64)REAL(rg)[0]; u = 0;
+				blk_first = (C_Int64)REAL(rg)[1];
+				blk_end   = (C_Int64)REAL(rg)[2];
 			}
 			Init_VCF_Buffer(RGetListElement(param, "infile"), a, u);
 		}
@@ -1532,6 +1543,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 				if (R_FINITE(v) && (v >= 1))
 					VCF_LineNum = VCF_NextLineNum = (C_Int64)v;
 			}
+			// the reading starts from the block before 'blk_first', so skip
+			//   the lines beginning before it; the first line here may be
+			//   incomplete, and it belongs to the previous part
+			while (!VCF_EOF() && (VCF_Position() < blk_first))
+				SkipLine();
 		}
 
 		while (!VCF_EOF() && (variant_index+1 < variant_start))
@@ -1549,6 +1565,9 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		while (!VCF_EOF())
 		{
+			// a line belongs to this part if it begins before 'blk_end'
+			if ((blk_end >= 0) && (VCF_Position() >= blk_end)) break;
+
 			// -----------------------------------------------------
 			// column 1: CHROM
 			GetText(FALSE);
