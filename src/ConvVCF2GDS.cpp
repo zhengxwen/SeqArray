@@ -1560,8 +1560,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		// =========================================================
 		// parse the context
 
-		// progress information
-		CProgress Progress(variant_count, progfile, false);
+		// progress information; when a range of the BGZF blocks is given, the
+		//   number of variants is unknown, so the progress is measured by the
+		//   compressed bytes of the blocks instead
+		const bool blk_prog = (blk_end > blk_first);
+		CProgress Progress(blk_prog ? (blk_end - blk_first) : variant_count,
+			progfile, false);
+		C_Int64 prog_addr = blk_first;  // the last reported block offset
 
 		while (!VCF_EOF())
 		{
@@ -2082,8 +2087,17 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 		#endif
 
 			// update progress
-			Progress.Forward();
+			if (blk_prog)
+			{
+				const C_Int64 a = VCF_Position();
+				if (a > prog_addr)
+					{ Progress.Forward(a - prog_addr); prog_addr = a; }
+			} else
+				Progress.Forward();
 		}
+		// the last block is not fully counted in the loop above
+		if (blk_prog && (prog_addr < blk_end))
+			Progress.Forward(blk_end - prog_addr);
 
 		// set returned value: levels(filter)
 		PROTECT(rv_ans = NEW_CHARACTER(filter_list.size()));

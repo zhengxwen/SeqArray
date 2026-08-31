@@ -31,7 +31,10 @@ UTILITIES
       is not needed at all; it requires all of the input files to be in the
       BGZF format and cannot be used together with 'start', 'count' or
       'variant_count', in which case it falls back to "variant"; "variant"
-      counts the variants first and splits by the variant index
+      counts the variants first and splits by the variant index. With
+      split="block", the progress is measured by the compressed bytes of the
+      BGZF blocks instead of the variants, so the estimated time is still
+      shown although the number of variants is unknown
 
     o `seqVCF2GDS(, parallel=n)` on a BGZF file: counting the variants and
       recording the file offsets is done in parallel, since a BGZF file can

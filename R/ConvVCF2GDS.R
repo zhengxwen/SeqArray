@@ -862,7 +862,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
             #     after merging all of the temporary files
 
             # the number of the parts of each file, proportional to its size
-            sz <- file.size(vcf.fn)
+            sz <- as.double(file.size(vcf.fn))
             k <- pmax(1L, as.integer(round(pnum * sz / sum(sz))))
             prg <- do.call(rbind, lapply(seq_along(vcf.fn), function(i)
                 cbind(i, .Call(SEQ_bgzip_split, vcf.fn[i], k[i]))))
@@ -870,6 +870,15 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
 
             if (nparts >= 2L)
             {
+                # seqParallel(, split="none") calls FUN once for each of the
+                #     'pnum' jobs, so assign a contiguous set of the parts to
+                #     each job; the order of the temporary files is then the
+                #     order of the variants; a job has no part if nparts<pnum,
+                #     and it has more than one part if nparts>pnum (e.g., the
+                #     number of the input files is greater than pnum)
+                pidx <- split(seq_len(nparts), factor(
+                    as.integer(ceiling(seq_len(nparts) * pnum / nparts)),
+                    levels=seq_len(pnum)))
                 # need unique temporary file names
                 ptmpfn <- .get_temp_fn(nparts,
                     sub("^([^.]*).*", "\\1", basename(out.fn)), dirname(out.fn))
@@ -886,54 +895,65 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 # show information
                 update_info <- function(i)
                 {
-                    .cat("        |> ", i, " [", .tm(), " done]")
-                    flush.console()
+                    if (!is.null(i))
+                    {
+                        .cat("        |> ", i, " [", .tm(), " done]")
+                        flush.console()
+                    }
                     NULL
                 }
+                if (!isTRUE(verbose)) update_info <- "none"
 
                 # reset memory before calling parallel
                 gc(FALSE, reset=TRUE, full=TRUE)
 
                 # conversion in parallel
-                seqParApply(parallel, seq_len(nparts), FUN = function(i,
+                seqParallel(parallel, NULL, FUN = function(
                     vcf.fn, hdr, storage.option, info.import, fmt.import,
                     genotype.var.name, ignore.chr.prefix, scenario, optim,
-                    raise.err, ptmpfn, prg, upd)
+                    raise.err, ptmpfn, prg, pidx)
                 {
-                    # the range of the BGZF blocks assigned to this job
-                    pstart <- 1L
-                    attr(pstart, "range") <- prg[i, ]
-                    tryCatch(
+                    i <- process_index  # the process id, starting from one
+                    v <- pidx[[i]]      # the parts assigned to this job
+                    if (!length(v)) return(NULL)
+                    for (p in v)
                     {
-                        SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[i], header=hdr,
-                            storage.option=storage.option,
-                            info.import=info.import, fmt.import=fmt.import,
-                            genotype.var.name=genotype.var.name,
-                            ignore.chr.prefix=ignore.chr.prefix,
-                            start=pstart, count=-1L,
-                            optimize=optim, scenario=scenario,
-                            raise.error=raise.err,
-                            digest=FALSE, parallel=FALSE, verbose=FALSE)
-                        if (is.function(upd)) upd(i)
-                        i
-                    }, error = function(e) {
-                        # capture full traceback
-                        trace <- capture.output({
-                            cat("Error: ", e$message, "\n", sep="")
-                            traceback()
+                        # the range of the BGZF blocks of this part
+                        pstart <- 1L
+                        attr(pstart, "range") <- prg[p, ]
+                        tryCatch(
+                        {
+                            SeqArray::seqVCF2GDS(vcf.fn, ptmpfn[p], header=hdr,
+                                storage.option=storage.option,
+                                info.import=info.import, fmt.import=fmt.import,
+                                genotype.var.name=genotype.var.name,
+                                ignore.chr.prefix=ignore.chr.prefix,
+                                start=pstart, count=-1L,
+                                optimize=optim, scenario=scenario,
+                                raise.error=raise.err,
+                                digest=FALSE, parallel=FALSE, verbose=FALSE)
+                        }, error = function(e) {
+                            # capture full traceback
+                            trace <- capture.output({
+                                cat("Error: ", e$message, "\n", sep="")
+                                traceback()
+                            })
+                            con <- file(paste0(ptmpfn[p], ".progress.txt"),
+                                open="at")
+                            writeLines(trace, con)
+                            close(con)
+                            stop(e$message)
                         })
-                        con <- file(paste0(ptmpfn[i], ".progress.txt"),
-                            open="at")
-                        writeLines(trace, con)
-                        close(con)
-                        stop(e$message)
-                    })
-                }, vcf.fn=vcf.fn, hdr=oldheader, storage.option=storage.option,
-                    info.import=info.import, fmt.import=fmt.import,
+                    }
+                    i  # return the process index
+                }, split = "none", .combine = update_info,
+                    vcf.fn=vcf.fn, hdr=oldheader,
+                    storage.option=storage.option, info.import=info.import,
+                    fmt.import=fmt.import,
                     genotype.var.name=genotype.var.name,
                     ignore.chr.prefix=ignore.chr.prefix, scenario=scenario,
                     optim=optimize, raise.err=raise.error, ptmpfn=ptmpfn,
-                    prg=prg, upd=if (isTRUE(verbose)) update_info else NULL)
+                    prg=prg, pidx=pidx)
 
                 if (verbose)
                     .cat("    >>> Done (", .tm(), ") <<<")
