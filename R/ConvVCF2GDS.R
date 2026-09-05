@@ -585,7 +585,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     storage.option="LZMA_RA", info.import=NULL, fmt.import=NULL,
     genotype.var.name="GT", ploidy=NA_integer_, ignore.chr.prefix="chr",
     scenario=c("general", "imputation"), reference=NULL, start=1L, count=-1L,
-    variant_count=NA_integer_, split=c("block", "variant"), optimize=TRUE,
+    variant_count=NA_integer_, split=c("variant", "block"), optimize=TRUE,
     raise.error=TRUE, digest=TRUE, use_Rsamtools=NA, parallel=FALSE,
     verbose=TRUE)
 {
@@ -596,7 +596,7 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
     stopifnot(is.null(header) | inherits(header, "SeqVCFHeaderClass"))
 
     scenario <- match.arg(scenario)
-    split_given <- !missing(split)   # whether split="block" is asked for
+    split_given <- !missing(split)   # whether 'split' is specified by the user
     split <- match.arg(split)
     storage.tmp <- storage.option
     if (is.character(storage.option))

@@ -10,7 +10,7 @@ seqVCF2GDS(vcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
     info.import=NULL, fmt.import=NULL, genotype.var.name="GT",
     ploidy=NA_integer_, ignore.chr.prefix="chr",
     scenario=c("general", "imputation"), reference=NULL, start=1L, count=-1L,
-    variant_count=NA_integer_, split=c("block", "variant"), optimize=TRUE,
+    variant_count=NA_integer_, split=c("variant", "block"), optimize=TRUE,
     raise.error=TRUE, digest=TRUE, use_Rsamtools=NA, parallel=FALSE,
     verbose=TRUE)
 seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
@@ -65,15 +65,14 @@ seqBCF2GDS(bcf.fn, out.fn, header=NULL, storage.option="LZMA_RA",
         the file offsets used for seeking, so \code{variant_count} is mainly
         useful for the input that is not in the BGZF format}
     \item{split}{how to split the input for the parallel jobs, only applicable
-        when multiple cores are used. \code{"block"} (default): split the input
+        when multiple cores are used. \code{"variant"} (default): count the
+        variants first and split by the variant index, so the numbers of
+        variants in the jobs are balanced; \code{"block"}: split the input
         at the BGZF block boundaries, which does not need to count the variants
-        beforehand, so it is faster; it requires all of the input files to be
+        beforehand; it requires all of the input files to be
         in the BGZF format (i.e., created by bgzip), and it cannot be used
         together with \code{start}, \code{count} or \code{variant_count}, in
-        which case it falls back to
-        \code{"variant"}; \code{"variant"}: count the variants first and
-        split by the variant index, so the numbers of variants in the jobs are
-        balanced}
+        which case it falls back to \code{"variant"}}
     \item{optimize}{if \code{TRUE}, optimize the access efficiency by calling
         \code{\link[gdsfmt]{cleanup.gds}}}
     \item{raise.error}{\code{TRUE}: throw an error if numeric conversion fails;
