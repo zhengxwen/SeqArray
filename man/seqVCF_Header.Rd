@@ -45,10 +45,12 @@ seqVCF_Header(vcf.fn, getnum=FALSE, use_Rsamtools=NA, parallel=FALSE,
 Project; \code{Type} -- data type; \code{Description} -- a variable
 description.
 
-    If multiple cores are used to get the total number of variants, the
-counting is done in parallel when \code{vcf.fn} is in the BGZF format (i.e.,
-created by bgzip), since a BGZF file can be split at the block boundaries
-without decompressing anything. No indexing file is needed.
+    If \code{getnum=TRUE} and multiple cores are specified by \code{parallel},
+the counting is done in parallel when \code{vcf.fn} is a local file in the BGZF
+format (i.e., created by bgzip), since a BGZF file can be split at the block
+boundaries without decompressing anything. No indexing file is needed. Otherwise
+(a plain text file, a gzip file or a connection object), the file is read
+sequentially and \code{parallel} is ignored.
 }
 
 \references{

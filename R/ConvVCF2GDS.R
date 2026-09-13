@@ -58,25 +58,23 @@
 # '.vcf_offset_step' variants; a BGZF file is counted in parallel, since it
 # can be split at the block boundaries without decompressing anything;
 # return list(num, offset, uoffset, index, line)
-.vcf_count_offset <- function(fn, parallel=FALSE, verbose=FALSE)
+.vcf_count_offset <- function(fn, parallel=FALSE, verbose=FALSE,
+    step=.vcf_offset_step)
 {
+    # step=0 for counting only, without recording the file offsets
     if (!.bgzf_is(fn))
     {
         # not a BGZF file, no way to seek, so it has to be read sequentially
         infile <- file(fn, "rt")
         on.exit(close(infile))
-        return(.Call(SEQ_VCF_NumLines, infile, TRUE, .vcf_offset_step, NULL,
-            verbose))
+        return(.Call(SEQ_VCF_NumLines, infile, TRUE, step, NULL, verbose))
     }
 
     # the BGZF file is read in the C code, to record the virtual offsets
     pnum <- .NumParallel(parallel)
     rg <- if (pnum > 1L) .Call(SEQ_bgzip_split, fn, pnum) else NULL
     if (NROW(rg) <= 1L)
-    {
-        return(.Call(SEQ_VCF_NumLines, fn, TRUE, .vcf_offset_step, NULL,
-            verbose))
-    }
+        return(.Call(SEQ_VCF_NumLines, fn, TRUE, step, NULL, verbose))
 
     # count each part of the file in parallel
     lst <- seqParApply(parallel, seq_len(NROW(rg)),
@@ -84,7 +82,7 @@
         {
             # only the first part has the VCF header
             .Call(SEQ_VCF_NumLines, fn, i==1L, step, rg[i, ], FALSE)
-        }, fn=fn, rg=rg, step=.vcf_offset_step)
+        }, fn=fn, rg=rg, step=step)
 
     # combine: the variant indices of each part are shifted by the number of
     #     the variants in the previous parts
@@ -145,6 +143,7 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
     stopifnot(is.logical(getnum), length(getnum)==1L)
     stopifnot(is.logical(use_Rsamtools), length(use_Rsamtools)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
+    pnum <- .NumParallel(parallel)
 
     #########################################################
     # open the vcf file
@@ -211,9 +210,19 @@ seqVCF_Header <- function(vcf.fn, getnum=FALSE, use_Rsamtools=NA,
                     }
                     if (isTRUE(getnum))
                     {
-                        nVariant <- nVariant + length(s) +
-                            .Call(SEQ_VCF_NumLines, infile, FALSE, 0, NULL,
-                                verbose)$num
+                        if (pnum > 1L && !grepl("^(ftp|http|https)://",
+                            vcf.fn[i], ignore.case=TRUE) && .bgzf_is(vcf.fn[i]))
+                        {
+                            # a BGZF file can be split at the block boundaries
+                            #   and counted in parallel; the count includes
+                            #   all the lines after '#CHROM'
+                            nVariant <- nVariant + .vcf_count_offset(
+                                vcf.fn[i], parallel, verbose, step=0L)$num
+                        } else {
+                            nVariant <- nVariant + length(s) +
+                                .Call(SEQ_VCF_NumLines, infile, FALSE, 0, NULL,
+                                    verbose)$num
+                        }
                     }
                 }
                 break
