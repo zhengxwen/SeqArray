@@ -54,6 +54,9 @@ BUG FIXES
     o `seqVCF2GDS(, start=, count=, parallel=n)`: the upper bound of the
       splitting was wrong when 'start' was not 1
 
+    o `seqSetFilterPos()` errored for an empty 'pos' vector (e.g.,
+      `integer(0)`); now it clears the variant filter instead
+
     o `seqVCF2GDS(, variant_count=, parallel=n)`: 'variant_count' should be
       exact now, since the variants beyond it are not converted; it was
       documented as "could be an approximate"

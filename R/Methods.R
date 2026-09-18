@@ -359,6 +359,17 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
     chr_lst <- unique(chr)
     node <- index.gdsn(object, "allele")
 
+    # no positions to match, set an empty variant filter
+    if (length(pos) == 0L)
+    {
+        seqSetFilter(object, variant.sel=integer(0), warn=FALSE,
+            verbose=verbose)
+        if (isTRUE(ret.idx))
+            return(integer(0))
+        else
+            return(invisible())
+    }
+
     # for-loop each chromosome
     dd <- lapply(chr_lst, function(chr1)
     {
