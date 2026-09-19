@@ -64,6 +64,12 @@ BUG FIXES
       exact now, since the variants beyond it are not converted; it was
       documented as "could be an approximate"
 
+    o `seqGetData()` and `seqBlockApply()` failed with "LENGTH or similar
+      applied to S4 object" when reading a FORMAT variable stored in a
+      sparse array (e.g., "sp.real32" or "sp.real8u"); a sparse matrix is
+      returned with the dimnames 'sample' and 'variant', or a list of sparse
+      matrices if '.tolist=TRUE'
+
 
 CHANGES IN VERSION 1.53.2
 -------------------------

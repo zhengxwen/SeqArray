@@ -1060,6 +1060,21 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 	return rv_ans;
 }
 
+/// set the dimnames of a dense or sparse matrix
+static void set_dimnames(SEXP x, SEXP dimnames)
+{
+	if (Rf_isS4(x))
+	{
+		// sparse matrix (e.g., dgCMatrix), set the slot 'Dimnames'
+		PROTECT(x);
+		SEXP nm = Rf_install("Dimnames");
+		if (R_has_slot(x, nm))
+			R_do_slot_assign(x, nm, dimnames);
+		UNPROTECT(1);
+	} else if (XLENGTH(x) > 0)
+		SET_DIMNAMES(x, dimnames);
+}
+
 /// get data from annotation/format/VARIABLE, TODO
 static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 {
@@ -1080,8 +1095,7 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 		C_Int32 dimst[2]  = { C_Int32(Sel.varStart), 0 };
 		C_Int32 dimcnt[2] = { C_Int32(Sel.varEnd-Sel.varStart), Var.Dim[1] };
 		rv_ans = GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode);
-		if (XLENGTH(rv_ans) > 0)
-			SET_DIMNAMES(rv_ans, R_Data_Dim2_Name);
+		set_dimnames(rv_ans, R_Data_Dim2_Name);
 
 	} else {
 		int var_start, var_count;
@@ -1102,14 +1116,41 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 				SEXP DAT = GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode);
 				SET_ELEMENT(rv_ans, 1, DAT);
 				SET_NAMES(rv_ans, R_Data_Name);
-				if (XLENGTH(DAT) > 0)
-					SET_DIMNAMES(DAT, R_Data_Dim2_Name);
+				set_dimnames(DAT, R_Data_Dim2_Name);
 				SET_CLASS(rv_ans, R_Data_ListClass);
 			UNPROTECT(2);
 		} else {
-			// check
 			SEXP val = PROTECT(GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss,
 				UseMode));
+			const int n = Rf_length(I32);
+			int *psel = INTEGER(I32);
+			if (Rf_isS4(val))
+			{
+				// sparse matrix (dgCMatrix), split the columns into a list of
+				//   sparse matrices
+				const double *px = REAL(R_do_slot(val, Rf_install("x")));
+				const int *pi = INTEGER(R_do_slot(val, Rf_install("i")));
+				const int *pp = INTEGER(R_do_slot(val, Rf_install("p")));
+				const int nrow = INTEGER(R_do_slot(val, Rf_install("Dim")))[0];
+				rv_ans = PROTECT(NEW_LIST(n));
+				for (int i=0, col=0; i < n; col+=psel[i], i++)
+				{
+					const int st = pp[col], nx = pp[col+psel[i]] - st;
+					SEXP x_r = PROTECT(NEW_NUMERIC(nx));
+					SEXP i_r = PROTECT(NEW_INTEGER(nx));
+					SEXP p_r = PROTECT(NEW_INTEGER(psel[i]+1));
+					memcpy(REAL(x_r), px+st, sizeof(double)*nx);
+					memcpy(INTEGER(i_r), pi+st, sizeof(int)*nx);
+					int *p = INTEGER(p_r);
+					for (int j=0; j <= psel[i]; j++) p[j] = pp[col+j] - st;
+					SET_ELEMENT(rv_ans, i,
+						GDS_New_SpCMatrix2(x_r, i_r, p_r, nrow, psel[i]));
+					UNPROTECT(3);
+				}
+				UNPROTECT(3);
+				return rv_ans;
+			}
+			// check
 			switch (TYPEOF(val))
 			{
 				case INTSXP: case REALSXP: case LGLSXP:
@@ -1119,9 +1160,7 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 					throw ErrSeqArray("Not support data type for .tolist=TRUE.");
 			}
 			// convert to a list
-			const int n = Rf_length(I32);
 			rv_ans = PROTECT(NEW_LIST(n));
-			int *psel = INTEGER(I32);
 			size_t d2 = File.SampleNum(), pt = 0;
 			SEXP ZeroLen = NULL;
 			for (int i=0; i < n; i++)
