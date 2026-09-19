@@ -1161,13 +1161,13 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 			}
 			// convert to a list
 			rv_ans = PROTECT(NEW_LIST(n));
-			size_t d2 = File.SampleNum(), pt = 0;
+			size_t d2 = File.SampleSelNum(), pt = 0;
 			SEXP ZeroLen = NULL;
 			for (int i=0; i < n; i++)
 			{
 				SEXP vv;
 				size_t nn = psel[i] * d2;
-				if (nn <= 0)
+				if (psel[i] <= 0)
 				{
 					if (!ZeroLen) ZeroLen = Rf_allocMatrix(TYPEOF(val), d2, 0);
 					vv = ZeroLen;

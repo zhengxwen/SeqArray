@@ -70,6 +70,11 @@ BUG FIXES
       returned with the dimnames 'sample' and 'variant', or a list of sparse
       matrices if '.tolist=TRUE'
 
+    o `seqGetData(, .tolist=TRUE or NA)` and `seqBlockApply(, .tolist=TRUE or
+      NA)` on a FORMAT variable: each matrix in the returned list should
+      have the number of selected samples, instead of the total number of
+      samples, when there is a sample filter
+
 
 CHANGES IN VERSION 1.53.2
 -------------------------
