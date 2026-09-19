@@ -378,7 +378,12 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
         {
             i_sub <- order(pos)
         } else {
-            i_sub <- which(chr==chr1)
+            # NA chromosome entries never match any variant, but keep their
+            # indices so that ret.idx can be aligned with the query
+            if (is.na(chr1))
+                i_sub <- which(is.na(chr))
+            else
+                i_sub <- which(chr==chr1)
             i_sub <- i_sub[order(pos[i_sub])]
             if (isTRUE(intersect))
             {
