@@ -44,6 +44,11 @@ UTILITIES
     o `seqVCF2GDS(, parallel=n)` no longer requires a tabix index file (.tbi
       or .csi): the number of variants is always counted directly
 
+    o `seqVCF2GDS(, parallel=n)`: the temporary files are merged in order as
+      soon as they are ready while the other parallel jobs are still
+      running, instead of waiting for all of the jobs to finish; the output
+      GDS file is created before the parallel jobs start
+
 BUG FIXES
 
     o `seqVCF2GDS(, start=, count=, parallel=n)` returned more variants than
