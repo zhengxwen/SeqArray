@@ -1225,15 +1225,15 @@ COREARRAY_DLL_EXPORT SEXP FC_SetPackedGenoSubsetVxS(SEXP geno_out,
 
 // ======================================================================
 
-/// the 0-based index of the j-th smallest GDS position, when the positions
-///     are in ascending order
+/// the 0-based index of the j-th smallest value, when the values are in
+///     ascending order
 struct TIndexSorted
 {
 	inline R_xlen_t operator[](R_xlen_t j) const { return j; }
 };
 
-/// the 0-based index of the j-th smallest GDS position, via the 1-based
-///     order from R's order()
+/// the 0-based index of the j-th smallest value, via the 1-based order from
+///     R's order()
 struct TIndexOrder
 {
 	const int *ord;
@@ -1244,21 +1244,23 @@ struct TIndexOrder
 /// Many-to-many left join on integer position key using sort-merge join
 /// pos0: full query position vector
 /// ref0, alt0: query ref/alt character vectors (or R_NilValue if NULL)
-/// ord0: sorted indices into pos0 (1-based, subset for this chromosome)
+/// ord0: sorted indices into pos0 (1-based, subset for this chromosome), or
+///     NULL if all the query positions are in ascending order; returned as i0
+/// k0, n0: the 0-based index of the i-th smallest query position (TIndexSorted
+///     or TIndexOrder) and the number of query positions
 /// pos1, idx1: GDS positions and their variant indices
 /// k1: the 0-based index of the j-th smallest value in pos1 (TIndexSorted or
-///     TIndexOrder), so the order of pos1 is not checked in the loops
+///     TIndexOrder); the order of pos0 and pos1 is not checked in the loops
 /// node: GDS node for allele data
 /// need_i2: whether to return multiple matches for the same position
 /// Returns a list with i0, i1 and i2 integer vectors
-template<typename TIndex> static SEXP find_match_index(SEXP pos0,
-	SEXP ref0, SEXP alt0, SEXP ord0, SEXP pos1, SEXP idx1, const TIndex &k1,
-	SEXP node, bool need_i2)
+template<typename TIndex0, typename TIndex1> static SEXP find_match_index(
+	SEXP pos0, SEXP ref0, SEXP alt0, SEXP ord0, const TIndex0 &k0,
+	R_xlen_t n0, SEXP pos1, SEXP idx1, const TIndex1 &k1, SEXP node,
+	bool need_i2)
 {
-	const R_xlen_t n0 = XLENGTH(ord0);
 	const R_xlen_t n1 = XLENGTH(pos1);
 	const int *p0 = INTEGER(pos0);
-	const int *k0 = INTEGER(ord0);  // 1-based sorted indices into p0
 	const int *p1 = INTEGER(pos1);
 	const int *i1 = INTEGER(idx1);
 	const bool use_allele = !Rf_isNull(ref0) && !Rf_isNull(alt0);
@@ -1270,14 +1272,14 @@ template<typename TIndex> static SEXP find_match_index(SEXP pos0,
 		R_xlen_t i = 0, j = 0;
 		while (i < n0)
 		{
-			int v0 = p0[k0[i] - 1];
+			int v0 = p0[k0[i]];
 			// advance j past values smaller than v0
 			while (j < n1 && p1[k1[j]] < v0) j++;
 			if (j < n1 && p1[k1[j]] == v0)
 			{
 				// count duplicates on both sides
 				R_xlen_t cnt0 = 0;
-				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
+				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii]] == v0; ii++)
 					cnt0 ++;
 				R_xlen_t cnt1 = 0;
 				for (R_xlen_t jj = j; jj < n1 && p1[k1[jj]] == v0; jj++)
@@ -1288,7 +1290,7 @@ template<typename TIndex> static SEXP find_match_index(SEXP pos0,
 			} else {
 				// no match: count consecutive duplicates on left side
 				R_xlen_t cnt0 = 0;
-				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii] - 1] == v0; ii++)
+				for (R_xlen_t ii = i; ii < n0 && p0[k0[ii]] == v0; ii++)
 					cnt0 ++;
 				i += cnt0;
 			}
@@ -1318,7 +1320,7 @@ template<typename TIndex> static SEXP find_match_index(SEXP pos0,
 	R_xlen_t i = 0, j = 0;
 	while (i < n0)
 	{
-		int v0 = p0[k0[i] - 1];
+		int v0 = p0[k0[i]];
 		// advance j past values smaller than v0
 		while ((j < n1) && (p1[k1[j]] < v0)) j++;
 		// find the run of equal values on the right side
@@ -1357,14 +1359,14 @@ template<typename TIndex> static SEXP find_match_index(SEXP pos0,
 			}
 		}
 		// emit cross-product for all left entries with this position
-		while ((i < n0) && (p0[k0[i] - 1] == v0))
+		while ((i < n0) && (p0[k0[i]] == v0))
 		{
 			if (j_start < j_end)
 			{
 				if (use_allele)
 				{
 					// check: (is.na(ref) | ref==r) & (is.na(alt) | alt==a)
-					const int k0_i = k0[i] - 1;
+					const R_xlen_t k0_i = k0[i];
 					SEXP ref_s = STRING_ELT(ref0, k0_i);
 					SEXP alt_s = STRING_ELT(alt0, k0_i);
 					const bool ref_is_na = (ref_s == NA_STRING);
@@ -1408,7 +1410,7 @@ template<typename TIndex> static SEXP find_match_index(SEXP pos0,
 					}
 					// set oi1 for remaining left entries at this position
 					i++;
-					while ((i < n0) && (p0[k0[i] - 1] == v0))
+					while ((i < n0) && (p0[k0[i]] == v0))
 					{
 						oi1[i] = i1_k1_j_start;
 						i++;
@@ -1432,6 +1434,8 @@ extern "C"
 {
 
 /// Many-to-many left join on integer position key, see find_match_index()
+/// ord0: sorted indices into pos0 (1-based, subset for this chromosome), or
+///     NULL if all the query positions are in ascending order
 /// ord1: order indices for pos1 (1-based, from R's order()), or NULL if pos1
 ///     is in ascending order
 /// multi_pos: whether to return multiple matches for the same position
@@ -1440,17 +1444,26 @@ COREARRAY_DLL_EXPORT SEXP SEQ_FindMatchIndex(SEXP pos0,
 	SEXP node, SEXP multi_pos)
 {
 	const bool need_i2 = Rf_asLogical(multi_pos) != FALSE;  // TRUE or NA
+	const bool sorted0 = Rf_isNull(ord0), sorted1 = Rf_isNull(ord1);
+	const R_xlen_t n0 = sorted0 ? XLENGTH(pos0) : XLENGTH(ord0);
+	const TIndexOrder k0(sorted0 ? NULL : INTEGER(ord0));
+	const TIndexOrder k1(sorted1 ? NULL : INTEGER(ord1));
+	const TIndexSorted ks;
 
 	COREARRAY_TRY
 
-		if (Rf_isNull(ord1))
-		{
-			rv_ans = find_match_index(pos0, ref0, alt0, ord0, pos1, idx1,
-				TIndexSorted(), node, need_i2);
-		} else {
-			rv_ans = find_match_index(pos0, ref0, alt0, ord0, pos1, idx1,
-				TIndexOrder(INTEGER(ord1)), node, need_i2);
-		}
+		if (sorted0 && sorted1)
+			rv_ans = find_match_index(pos0, ref0, alt0, ord0, ks, n0, pos1,
+				idx1, ks, node, need_i2);
+		else if (sorted0)
+			rv_ans = find_match_index(pos0, ref0, alt0, ord0, ks, n0, pos1,
+				idx1, k1, node, need_i2);
+		else if (sorted1)
+			rv_ans = find_match_index(pos0, ref0, alt0, ord0, k0, n0, pos1,
+				idx1, ks, node, need_i2);
+		else
+			rv_ans = find_match_index(pos0, ref0, alt0, ord0, k0, n0, pos1,
+				idx1, k1, node, need_i2);
 
 	COREARRAY_CATCH
 }
