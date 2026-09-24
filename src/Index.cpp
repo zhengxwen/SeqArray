@@ -800,6 +800,81 @@ void TVarMap::get_obj(CFileInfo &file, const string &varnm)
 	IsBit1 = (strcmp(classname, "dBit1") == 0);
 }
 
+// CPositionCache
+
+/// the maximum number of positions in CPositionCache
+static const C_Int32 POS_CACHE_SIZE = 65536;
+
+CPositionCache::CPositionCache()
+{
+	_Node = NULL;
+	_NumVariant = _Start = _End = 0;
+}
+
+void CPositionCache::Reset(PdAbstractArray node, C_Int32 num_variant)
+{
+	_Node = node;
+	_NumVariant = num_variant;
+	_Start = _End = 0;
+	vector<C_Int32>().swap(_Buffer);
+}
+
+void CPositionCache::Read(C_Int32 start, C_Int32 len, const C_BOOL *sel,
+	C_Int32 *out)
+{
+	if (len <= 0) return;
+	if (len > POS_CACHE_SIZE)
+	{
+		// more than the cache size, slide the window forward over the selected
+		//     variants, so the GDS node is read forward and a gap is skipped
+		//     by seeking (no decompression of the unselected blocks)
+		for (; len > 0; len--, start++)
+			if (*sel++) *out++ = (*this)[start];
+	} else {
+		if ((start < _Start) || (start + len > _End))
+			Load(start, start + len);
+		const C_Int32 *p = &_Buffer[start - _Start];
+		for (; len > 0; len--, p++)
+			if (*sel++) *out++ = *p;
+	}
+}
+
+void CPositionCache::Load(C_Int32 st, C_Int32 ed)
+{
+	if (!_Node)
+		throw ErrSeqArray("CPositionCache should be initialized.");
+	if ((st < 0) || (st >= ed) || (ed > _NumVariant) ||
+			(ed - st > POS_CACHE_SIZE))
+		throw ErrSeqArray("Invalid variant index in reading positions.");
+	// the new window is [st, new_end): read ahead up to the cache size if the
+	//     variants are accessed forward, otherwise (e.g., a random access)
+	//     only read the requested positions
+	C_Int32 new_end = ed;
+	if ((_Start < _End) && (_Start <= st) && (st - _End <= POS_CACHE_SIZE))
+	{
+		new_end = (_NumVariant - st > POS_CACHE_SIZE) ?
+			(st + POS_CACHE_SIZE) : _NumVariant;
+	}
+	if (_Buffer.empty())
+	{
+		_Buffer.resize((_NumVariant > POS_CACHE_SIZE) ?
+			POS_CACHE_SIZE : _NumVariant);
+	}
+	// keep the cached positions from 'st', so that the node is read forward
+	C_Int32 keep = 0;
+	if ((_Start <= st) && (st < _End))
+	{
+		keep = _End - st;
+		memmove(&_Buffer[0], &_Buffer[st - _Start], sizeof(C_Int32)*keep);
+	}
+	_Start = _End = 0;  // invalid in case of a failure in reading
+	C_Int32 rd_st = st + keep, rd_len = new_end - rd_st;
+	if (rd_len > 0)
+		GDS_Array_ReadData(_Node, &rd_st, &rd_len, &_Buffer[keep], svInt32);
+	_Start = st; _End = new_end;
+}
+
+
 // CFileInfo
 
 CFileInfo::CFileInfo(PdGDSFolder root)
@@ -837,6 +912,7 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 		_Root = root;
 		_Chrom.Clear();
 		_Position.clear();
+		_PosCache.Reset(NULL, 0);
 		clear_selection();
 
 		// sample.id
@@ -922,11 +998,7 @@ vector<C_Int32> &CFileInfo::Position()
 		throw ErrSeqArray(ERR_FILE_ROOT);
 	if (_Position.empty())
 	{
-		PdAbstractArray N = GetObj("position", TRUE);
-		// check
-		if ((GDS_Array_DimCnt(N) != 1) ||
-				(GDS_Array_GetTotalCount(N) != _VariantNum))
-			throw ErrSeqArray(ERR_DIM, "position");
+		PdAbstractArray N = PositionObj();
 		// read
 		_Position.resize(_VariantNum);
 		GDS_Array_ReadData(N, NULL, NULL, &_Position[0], svInt32);
@@ -940,6 +1012,25 @@ void CFileInfo::ClearPosition()
 		throw ErrSeqArray(ERR_FILE_ROOT);
 	_Position.clear();
 	std::vector<C_Int32>().swap(_Position);
+	_PosCache.Reset(NULL, 0);
+}
+
+PdAbstractArray CFileInfo::PositionObj()
+{
+	PdAbstractArray N = GetObj("position", TRUE);
+	if ((GDS_Array_DimCnt(N) != 1) ||
+			(GDS_Array_GetTotalCount(N) != _VariantNum))
+		throw ErrSeqArray(ERR_DIM, "position");
+	return N;
+}
+
+CPositionCache &CFileInfo::PositionCache()
+{
+	// find the node each time, and reset the cache if the node is replaced
+	PdAbstractArray N = PositionObj();
+	if (N != _PosCache.Node())
+		_PosCache.Reset(N, _VariantNum);
+	return _PosCache;
 }
 
 CGenoIndex &CFileInfo::GenoIndex()

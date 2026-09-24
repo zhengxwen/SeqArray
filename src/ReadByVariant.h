@@ -48,7 +48,7 @@ public:
 class COREARRAY_DLL_LOCAL CApply_Variant_Pos: public CApply_Variant
 {
 protected:
-	int *PtrPos;
+	CPositionCache *PosCache;  ///< positions cached in a sliding window
 	SEXP VarNode;  ///< R object
 public:
 	/// constructor
@@ -274,7 +274,7 @@ class COREARRAY_DLL_LOCAL CApply_Variant_ChromPos: public CApply_Variant
 {
 protected:
 	CChromIndex *ChromIndex;
-	int *PtrPos;
+	CPositionCache *PosCache;  ///< positions cached in a sliding window
 	SEXP VarNode;  ///< R object
 public:
 	/// constructor
@@ -292,7 +292,7 @@ private:
 	string strbuf;
 protected:
 	CChromIndex *ChromIndex;
-	int *PtrPos;
+	CPositionCache *PosCache;  ///< positions cached in a sliding window
 	SEXP VarNode;  ///< R object
 public:
 	/// constructor

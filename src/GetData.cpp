@@ -105,20 +105,26 @@ static SEXP get_sample_1d(CFileInfo &File, TVarMap &Var, void *param)
 		GDS_R_READ_DEFAULT_MODE | (P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0));
 }
 
-/// get position from 'position'
-static SEXP get_position(CFileInfo &File, TVarMap &Var, void *param)
+/// read the positions of selected variants (return an unprotected R object)
+static SEXP read_position(CFileInfo &File)
 {
 	int n = File.VariantSelNum();
 	SEXP rv_ans = NEW_INTEGER(n);
 	if (n > 0)
 	{
+		// read via the positions cached in a sliding window, instead of
+		//     loading the positions of all variants into memory
 		TSelection &Sel = File.Selection();
-		const int *base = &File.Position()[0] + Sel.varStart;
-		C_BOOL *s = Sel.pVariant + Sel.varStart;
-		for (int *p=INTEGER(rv_ans); n > 0; base++)
-			if (*s++) { *p++ = *base; n--; }
+		File.PositionCache().Read(Sel.varStart, Sel.varEnd - Sel.varStart,
+			Sel.pVariant + Sel.varStart, INTEGER(rv_ans));
 	}
 	return rv_ans;
+}
+
+/// get position from 'position'
+static SEXP get_position(CFileInfo &File, TVarMap &Var, void *param)
+{
+	return read_position(File);
 }
 
 /// get chromosome from 'chromosome'
@@ -688,7 +694,8 @@ static SEXP get_chrom_pos(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		CChromIndex &Chrom = File.Chromosome();
 		TSelection &Sel = File.Selection();
-		const int *pos = &File.Position()[0];
+		SEXP Pos = PROTECT(read_position(File));  // selected positions
+		const int *pos = INTEGER(Pos);
 		C_BOOL *s = Sel.pVariant + Sel.varStart;
 		size_t p = 0, i = Sel.varStart;
 		char buf[1024] = { 0 };
@@ -696,11 +703,12 @@ static SEXP get_chrom_pos(CFileInfo &File, TVarMap &Var, void *param)
 		{
 			if (*s++)
 			{
-				snprintf(buf, sizeof(buf), "%s:%d", Chrom[i].c_str(), pos[i]);
+				snprintf(buf, sizeof(buf), "%s:%d", Chrom[i].c_str(), pos[p]);
 				SET_STRING_ELT(rv_ans, p++, Rf_mkChar(buf));
 				n--;
 			}
 		}
+		UNPROTECT(1);
 	}
 	UNPROTECT(1);
 	return rv_ans;
@@ -715,7 +723,8 @@ static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		CChromIndex &Chrom = File.Chromosome();
 		TSelection &Sel = File.Selection();
-		const int *pos = &File.Position()[0];
+		SEXP Pos = PROTECT(read_position(File));  // selected positions
+		const int *pos = INTEGER(Pos);
 		C_BOOL *s = Sel.pVariant + Sel.varStart;
 		size_t p = 0, i = Sel.varStart;
 		char buf1[1024] = { 0 };
@@ -727,11 +736,11 @@ static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 			if (*s++)
 			{
 				const char *chr = Chrom[i].c_str();
-				snprintf(p1, sizeof(buf1), "%s:%d", chr, pos[i]);
+				snprintf(p1, sizeof(buf1), "%s:%d", chr, pos[p]);
 				if (strcmp(p1, p2) == 0)
 				{
 					dup ++;
-					snprintf(p1, sizeof(buf1), "%s:%d_%d", chr, pos[i], dup);
+					snprintf(p1, sizeof(buf1), "%s:%d_%d", chr, pos[p], dup);
 					SET_STRING_ELT(rv_ans, p++, Rf_mkChar(p1));
 				} else {
 					char *tmp;
@@ -742,6 +751,7 @@ static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 				n--;
 			}
 		}
+		UNPROTECT(1);
 	}
 	UNPROTECT(1);
 	return rv_ans;
@@ -752,9 +762,10 @@ static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 {
 	TSelection &Sel = File.Selection();
 	CChromIndex &Chrom = File.Chromosome();
-	const int *PosBase = &File.Position()[0];
 	ssize_t num = File.VariantSelNum();
 	SEXP rv_ans = PROTECT(NEW_CHARACTER(num));
+	SEXP Pos = PROTECT(read_position(File));  // selected positions
+	const int *PosSel = INTEGER(Pos);
 	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
 	C_BOOL *psel = Sel.pVariant + Sel.varStart;
 	vector<string> buffer(1024);
@@ -766,7 +777,7 @@ static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 		{
 			while (!*psel) psel++;
 			size_t j = (psel++) - Sel.pVariant;
-			const int pos = PosBase[j];
+			const int pos = PosSel[k];
 			const char *chr = Chrom[j].c_str();
 			const char *allele = buffer[i].c_str();
 			for (char *p=(char*)allele; *p; p++)
@@ -775,7 +786,7 @@ static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 			SET_STRING_ELT(rv_ans, k++, Rf_mkChar(strbuf));
 		}
 	}
-	UNPROTECT(1);
+	UNPROTECT(2);
 	return rv_ans;
 }
 

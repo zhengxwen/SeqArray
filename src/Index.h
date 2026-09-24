@@ -390,6 +390,38 @@ private:
 };
 
 
+/// The positions of consecutive variants cached in a sliding window, instead
+///     of loading the positions of all variants into memory; it is efficient
+///     when the variant index increases, since the GDS node is read forward
+class COREARRAY_DLL_LOCAL CPositionCache
+{
+public:
+	/// constructor
+	CPositionCache();
+	/// reset with the GDS node 'position', and clear the cached positions
+	void Reset(PdAbstractArray node, C_Int32 num_variant);
+	/// the GDS node 'position'
+	inline PdAbstractArray Node() const { return _Node; }
+	/// return the position of the variant with index 'idx' (starting from 0)
+	inline C_Int32 operator[](C_Int32 idx)
+	{
+		if ((idx < _Start) || (idx >= _End)) Load(idx, idx+1);
+		return _Buffer[idx - _Start];
+	}
+	/// read the positions of selected variants in [start, start+len) to 'out'
+	void Read(C_Int32 start, C_Int32 len, const C_BOOL *sel, C_Int32 *out);
+
+private:
+	PdAbstractArray _Node;    ///< the GDS node 'position'
+	C_Int32 _NumVariant;      ///< the total number of variants
+	C_Int32 _Start;           ///< the variant index of _Buffer[0]
+	C_Int32 _End;             ///< the cached variants are in [_Start, _End)
+	vector<C_Int32> _Buffer;  ///< the cached positions
+	/// cache the positions of variants in [st, ed)
+	void Load(C_Int32 st, C_Int32 ed);
+};
+
+
 /// GDS file object
 class COREARRAY_DLL_LOCAL CFileInfo
 {
@@ -419,6 +451,10 @@ public:
 	vector<C_Int32> &Position();
 	/// clear the buffer for variant positions
 	void ClearPosition();
+	/// return the GDS node 'position' after checking its dimension
+	PdAbstractArray PositionObj();
+	/// return the positions cached in a sliding window
+	CPositionCache &PositionCache();
 
 	/// return _GenoIndex which has been initialized
 	CGenoIndex &GenoIndex();
@@ -455,6 +491,7 @@ protected:
 
 	CChromIndex _Chrom;  ///< chromosome indexing
 	vector<C_Int32> _Position;  ///< position
+	CPositionCache _PosCache;   ///< positions cached in a sliding window
 	CGenoIndex _GenoIndex;  ///< the indexing object for genotypes
 	map<string, TVarMap> _VarMap;  ///< the indexing objects for seqGetData()
 

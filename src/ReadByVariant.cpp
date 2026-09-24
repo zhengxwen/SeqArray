@@ -98,14 +98,14 @@ CApply_Variant_Pos::CApply_Variant_Pos(CFileInfo &File):
 {
 	fVarType = ctBasic;
 	Node = File.GetObj("position", TRUE);
-	PtrPos = &File.Position()[0];
+	PosCache = &File.PositionCache();
 	VarNode = NULL;
 	Reset();
 }
 
 void CApply_Variant_Pos::ReadData(SEXP val)
 {
-	INTEGER(val)[0] = PtrPos[Position];
+	INTEGER(val)[0] = (*PosCache)[Position];
 }
 
 SEXP CApply_Variant_Pos::NeedRData(int &nProtected)
@@ -967,7 +967,7 @@ CApply_Variant_ChromPos::CApply_Variant_ChromPos(CFileInfo &File):
 	fVarType = ctBasic;
 	Node = File.GetObj("chromosome", TRUE);
 	ChromIndex = &File.Chromosome();
-	PtrPos = &File.Position()[0];
+	PosCache = &File.PositionCache();
 	VarNode = NULL;
 	Reset();
 }
@@ -976,7 +976,7 @@ void CApply_Variant_ChromPos::ReadData(SEXP val)
 {
 	char buf[1024];
 	snprintf(buf, sizeof(buf), "%s:%d",
-		(*ChromIndex)[Position].c_str(), PtrPos[Position]);
+		(*ChromIndex)[Position].c_str(), (*PosCache)[Position]);
 	SET_STRING_ELT(val, 0, Rf_mkChar(buf));
 }
 
@@ -1001,7 +1001,7 @@ CApply_Variant_ChromPosAllele::CApply_Variant_ChromPosAllele(CFileInfo &File):
 	fVarType = ctBasic;
 	Node = File.GetObj("allele", TRUE);
 	ChromIndex = &File.Chromosome();
-	PtrPos = &File.Position()[0];
+	PosCache = &File.PositionCache();
 	VarNode = NULL;
 	Reset();
 }
@@ -1015,7 +1015,7 @@ void CApply_Variant_ChromPosAllele::ReadData(SEXP val)
 		if (strbuf[i] == ',') strbuf[i] = '_';
 	char buf[8192];
 	snprintf(buf, sizeof(buf), "%s:%d_%s",
-		(*ChromIndex)[Position].c_str(), PtrPos[Position], strbuf.c_str());
+		(*ChromIndex)[Position].c_str(), (*PosCache)[Position], strbuf.c_str());
 	SET_STRING_ELT(val, 0, Rf_mkChar(buf));
 }
 
