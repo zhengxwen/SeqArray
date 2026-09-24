@@ -565,6 +565,63 @@ void CRangeSet::GetRanges(int Start[], int End[])
 // SeqArray GDS file information
 // ===========================================================
 
+// pack n bytes (FALSE or non-zero) to bits: byte i of src is stored in bit
+//     (i % 8) of dst[i / 8], and dst has (n+7)/8 bytes with zero padding bits
+static void pack_bits(const C_BOOL *src, size_t n, C_UInt8 *dst)
+{
+	for (; n >= 8; n -= 8, src += 8)
+	{
+		*dst++ = (src[0] != 0) | ((src[1] != 0) << 1) | ((src[2] != 0) << 2) |
+			((src[3] != 0) << 3) | ((src[4] != 0) << 4) | ((src[5] != 0) << 5) |
+			((src[6] != 0) << 6) | ((src[7] != 0) << 7);
+	}
+	if (n > 0)
+	{
+		C_UInt8 b = 0;
+		for (size_t i=0; i < n; i++)
+			if (src[i] != 0) b |= (1 << i);
+		*dst = b;
+	}
+}
+
+// unpack n bits (see pack_bits) to n bytes of TRUE or FALSE
+static void unpack_bits(const C_UInt8 *src, size_t n, C_BOOL *dst)
+{
+	for (; n >= 8; n -= 8, dst += 8)
+	{
+		C_UInt8 b = *src++;
+		dst[0] = b & 0x01; dst[1] = (b >> 1) & 0x01;
+		dst[2] = (b >> 2) & 0x01; dst[3] = (b >> 3) & 0x01;
+		dst[4] = (b >> 4) & 0x01; dst[5] = (b >> 5) & 0x01;
+		dst[6] = (b >> 6) & 0x01; dst[7] = (b >> 7) & 0x01;
+	}
+	if (n > 0)
+	{
+		C_UInt8 b = *src;
+		for (size_t i=0; i < n; i++)
+			dst[i] = (b >> i) & 0x01;
+	}
+}
+
+// return the index of the first non-zero bit in [start, n) of a bit vector
+//     (see pack_bits), or n if there is no non-zero bit
+static size_t find_true_bit(const C_UInt8 *bits, size_t start, size_t n)
+{
+	size_t i = start;
+	while (i < n)
+	{
+		C_UInt8 b = bits[i >> 3] >> (i & 0x07);
+		if (b)
+		{
+			while (!(b & 0x01)) { b >>= 1; i++; }
+			return (i < n) ? i : n;
+		}
+		i = (i | 0x07) + 1;  // the first bit of the next byte
+	}
+	return n;
+}
+
+
 TSelection::TSelection(CFileInfo &File, bool init)
 {
 	Link = NULL;
@@ -742,6 +799,44 @@ void TSelection::ClearStructVariant()
 {
 	varTrueNum = -1;
 	varStart = varEnd = 0;
+}
+
+void TSelection::Pack()
+{
+	if (IsPacked()) return;
+	// allocate first, so nothing is changed if it fails
+	bitSample.resize((numSamp + 7) / 8);
+	bitVariant.resize((numVar + 7) / 8);
+	pack_bits(pSample, numSamp, bitSample.data());
+	pack_bits(pVariant, numVar, bitVariant.data());
+	delete[] pSample; pSample = NULL;
+	delete[] pVariant; pVariant = NULL;
+}
+
+void TSelection::Unpack()
+{
+	if (!IsPacked()) return;
+	// allocate first, so nothing is changed if it fails
+	C_BOOL *s = new C_BOOL[numSamp];
+	C_BOOL *v = NULL;
+	try {
+		v = new C_BOOL[numVar];
+	} catch (...) {
+		delete[] s; throw;
+	}
+	unpack_bits(bitSample.data(), numSamp, s);
+	unpack_bits(bitVariant.data(), numVar, v);
+	pSample = s; pVariant = v;
+	// release the memory of bit vectors
+	vector<C_UInt8>().swap(bitSample);
+	vector<C_UInt8>().swap(bitVariant);
+}
+
+size_t TSelection::NextSelVariant(size_t start) const
+{
+	if (!IsPacked())
+		throw ErrSeqArray("Internal error: the selection is not packed.");
+	return find_true_bit(bitVariant.data(), start, numVar);
 }
 
 // TVarMap
@@ -1040,11 +1135,18 @@ TSelection &CFileInfo::Selection()
 TSelection &CFileInfo::Push_Selection(bool init_samp, bool init_var)
 {
 	TSelection *n = new TSelection(*this, false);
+	try {
+		if (init_samp)
+			memcpy(n->pSample, _SelList->pSample, _SampleNum);
+		if (init_var)
+			memcpy(n->pVariant, _SelList->pVariant, _VariantNum);
+		// pack the current selection into bit vectors to save memory, since
+		// it is not used until popped back
+		_SelList->Pack();
+	} catch (...) {
+		delete n; throw;
+	}
 	n->Link = _SelList;
-	if (init_samp)
-		memcpy(n->pSample, _SelList->pSample, _SampleNum);
-	if (init_var)
-		memcpy(n->pVariant, _SelList->pVariant, _VariantNum);
 	_SelList = n;
 	return *n;
 }
@@ -1054,6 +1156,8 @@ void CFileInfo::Pop_Selection()
 	if (_SelList==NULL || _SelList->Link==NULL)
 		throw ErrSeqArray("No filter can be pop up.");
 	TSelection *n = _SelList;
+	// unpack the previous selection before it becomes the current one
+	n->Link->Unpack();
 	_SelList = n->Link;
 	delete n;
 }

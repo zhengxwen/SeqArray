@@ -1653,9 +1653,10 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		Sel.ClearStructVariant();
 		memset(Sel.pVariant, 0, File.VariantNum());
 
-		C_BOOL *pBase, *pSel, *pEnd;
-		pBase = pSel = Selection.pVariant;
-		pEnd = pBase + File.VariantNum();
+		// the base selection 'Selection' is packed in bit vectors after being
+		// pushed to the stack, use Selection.NextSelVariant() to access it
+		const size_t nBase = File.VariantNum();
+		size_t iSel = 0;
 
 		// progress object
 		CProgress progress(NumBlock, prog_file, prog_flag);
@@ -1668,9 +1669,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 			case 1:  // relative
 				INTEGER(R_Index)[0] = idx*bsize + 1; break;
 			case 2:  // absolute
-				while ((pSel < pEnd) && (*pSel == FALSE))
-					pSel ++;
-				INTEGER(R_Index)[0] = pSel - pBase + 1; break;
+				iSel = Selection.NextSelVariant(iSel);
+				INTEGER(R_Index)[0] = int(iSel + 1); break;
 			}
 
 			// assign sub-selection
@@ -1678,24 +1678,23 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 				// clear selection
 				Sel.ClearSelectVariant();
 				// find the first TRUE
-				pSel = VEC_BOOL_FIND_TRUE(pSel, pEnd);
-				Sel.varStart = pSel - pBase;
+				iSel = Selection.NextSelVariant(iSel);
+				Sel.varStart = iSel;
 				// for-loop
 				C_BOOL *pNewSel = Sel.pVariant;
 				int bs = bsize;
 				for (; bs > 0; bs--)
 				{
-					while ((pSel < pEnd) && (*pSel == FALSE))
-						pSel ++;
-					if (pSel < pEnd)
+					iSel = Selection.NextSelVariant(iSel);
+					if (iSel < nBase)
 					{
-						pNewSel[pSel - pBase] = TRUE;
-						pSel ++;
+						pNewSel[iSel] = TRUE;
+						iSel ++;
 					} else
 						break;
 				}
 				Sel.varTrueNum = bsize - bs;
-				Sel.varEnd = pSel - pBase;
+				Sel.varEnd = iSel;
 			}
 
 			// load data and call the user-defined function

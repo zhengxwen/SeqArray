@@ -330,8 +330,8 @@ struct COREARRAY_DLL_LOCAL TSelection
 	};
 
 	TSelection *Link;  ///< the pointer to the last one
-	C_BOOL *pSample;   ///< sample selection
-	C_BOOL *pVariant;  ///< variant selection
+	C_BOOL *pSample;   ///< sample selection, NULL if packed in bitSample
+	C_BOOL *pVariant;  ///< variant selection, NULL if packed in bitVariant
 
 	ssize_t varTrueNum;  ///< the number of TRUEs in pVariant, -1 for requiring initialization
 	ssize_t varStart;    ///< the start position of the first TRUE in pVariant
@@ -354,12 +354,27 @@ struct COREARRAY_DLL_LOCAL TSelection
 	/// clear the structure of selected variants for resetting the variant filter
 	void ClearStructVariant();
 
+	/// pack pSample and pVariant into bit vectors to save memory when the
+	///     selection is pushed to the stack (pSample and pVariant are NULL
+	///     after packing, and the selection should not be used until unpacked)
+	void Pack();
+	/// unpack the bit vectors to pSample and pVariant, when the selection is
+	///     popped from the stack
+	void Unpack();
+	/// return true if the selection is packed in bit vectors
+	inline bool IsPacked() const { return pVariant == NULL; }
+	/// return the index of the first selected variant in [start, numVar) of
+	///     a packed selection, or numVar if there is no selected variant
+	size_t NextSelVariant(size_t start) const;
+
 private:
 	size_t numSamp;    ///< the total number of samples
 	size_t numVar;     ///< the total number of variants
 	size_t numPloidy;  ///< the ploidy
 	C_BOOL *pFlagGenoSel;  ///< the pointer to the genotype selection according to the selected samples
 	vector<TSampStruct> pSampList;
+	vector<C_UInt8> bitSample;   ///< packed sample selection, (numSamp+7)/8 bytes
+	vector<C_UInt8> bitVariant;  ///< packed variant selection, (numVar+7)/8 bytes
 };
 
 

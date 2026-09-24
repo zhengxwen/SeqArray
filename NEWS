@@ -18,6 +18,12 @@ UTILITIES
       reading, and binary search is used in a chunk if its positions are
       sorted
 
+    o `seqFilterPush()` and `seqSetFilter(, action="push")`, also used
+      internally by `seqBlockApply()`, `seqUnitApply()`, etc., store the
+      pushed sample and variant filters as bit vectors instead of byte
+      vectors, so each pushed filter uses 1/8 of the memory (1 bit per
+      sample or variant) until it is popped back
+
     o the internal function `.buffer_position()` is removed, since the
       positions of all variants are no longer loaded into memory
 
