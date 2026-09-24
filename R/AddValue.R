@@ -76,6 +76,7 @@
     n <- add.gdsn(gdsfile, "position", as.integer(val), compress=compress,
         closezip=TRUE, replace=TRUE)
     .DigestCode(n, TRUE, FALSE)
+    .Call(SEQ_ResetPosition, gdsfile)  # clear the cached positions
     if (verbose)
         print(n, attribute=verbose.attr)
     TRUE

@@ -410,15 +410,33 @@ public:
 	}
 	/// read the positions of selected variants in [start, start+len) to 'out'
 	void Read(C_Int32 start, C_Int32 len, const C_BOOL *sel, C_Int32 *out);
+	/// set flag[i]=TRUE for the variants in [start, end) (e.g., a run of the
+	///     same chromosome) with positions in 'rng', only if sel[i]=TRUE when
+	///     'sel' is not NULL; the minimum and maximum positions of each piece
+	///     of [start, end) in a chunk of variants are kept, so a piece is
+	///     skipped without reading if no position in it can be in 'rng';
+	///     in a piece with positions in ascending order, the variants in
+	///     each range are found by binary search
+	void FindInRange(C_Int32 start, C_Int32 end, CRangeSet &rng,
+		const C_BOOL *sel, C_BOOL *flag);
 
 private:
+	/// the minimum and maximum positions of variants in [start, End), and
+	///     whether the positions are in ascending order
+	struct TMinMax { C_Int32 End, Min, Max; bool Sorted; };
+
 	PdAbstractArray _Node;    ///< the GDS node 'position'
 	C_Int32 _NumVariant;      ///< the total number of variants
 	C_Int32 _Start;           ///< the variant index of _Buffer[0]
 	C_Int32 _End;             ///< the cached variants are in [_Start, _End)
 	vector<C_Int32> _Buffer;  ///< the cached positions
+	map<C_Int32, TMinMax> _MinMax;  ///< start ==> minimum and maximum positions
 	/// cache the positions of variants in [st, ed)
 	void Load(C_Int32 st, C_Int32 ed);
+	/// return the positions of variants in [st, ed), valid until next loading
+	const C_Int32 *Positions(C_Int32 st, C_Int32 ed);
+	/// return the minimum and maximum positions of variants in [st, ed)
+	const TMinMax &MinMax(C_Int32 st, C_Int32 ed);
 };
 
 
@@ -447,14 +465,12 @@ public:
 	CChromIndex &Chromosome();
 	/// reload chromosome coding when it is changed
 	void ResetChromosome();
-	/// return _Position which has been initialized
-	vector<C_Int32> &Position();
-	/// clear the buffer for variant positions
-	void ClearPosition();
 	/// return the GDS node 'position' after checking its dimension
 	PdAbstractArray PositionObj();
 	/// return the positions cached in a sliding window
 	CPositionCache &PositionCache();
+	/// clear the cached positions when 'position' is changed
+	void ResetPosition();
 
 	/// return _GenoIndex which has been initialized
 	CGenoIndex &GenoIndex();
@@ -490,7 +506,6 @@ protected:
 	int _Ploidy;      ///< ploidy
 
 	CChromIndex _Chrom;  ///< chromosome indexing
-	vector<C_Int32> _Position;  ///< position
 	CPositionCache _PosCache;   ///< positions cached in a sliding window
 	CGenoIndex _GenoIndex;  ///< the indexing object for genotypes
 	map<string, TVarMap> _VarMap;  ///< the indexing objects for seqGetData()

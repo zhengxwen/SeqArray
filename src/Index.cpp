@@ -20,6 +20,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstdio>
+#include <algorithm>
 #include "Index.h"
 #include <sys/stat.h>
 
@@ -803,7 +804,7 @@ void TVarMap::get_obj(CFileInfo &file, const string &varnm)
 // CPositionCache
 
 /// the maximum number of positions in CPositionCache
-static const C_Int32 POS_CACHE_SIZE = 65536;
+static const C_Int32 POS_CACHE_SIZE = 65536*2;
 
 CPositionCache::CPositionCache()
 {
@@ -817,6 +818,7 @@ void CPositionCache::Reset(PdAbstractArray node, C_Int32 num_variant)
 	_NumVariant = num_variant;
 	_Start = _End = 0;
 	vector<C_Int32>().swap(_Buffer);
+	_MinMax.clear();
 }
 
 void CPositionCache::Read(C_Int32 start, C_Int32 len, const C_BOOL *sel,
@@ -831,11 +833,65 @@ void CPositionCache::Read(C_Int32 start, C_Int32 len, const C_BOOL *sel,
 		for (; len > 0; len--, start++)
 			if (*sel++) *out++ = (*this)[start];
 	} else {
-		if ((start < _Start) || (start + len > _End))
-			Load(start, start + len);
-		const C_Int32 *p = &_Buffer[start - _Start];
+		const C_Int32 *p = Positions(start, start + len);
 		for (; len > 0; len--, p++)
 			if (*sel++) *out++ = *p;
+	}
+}
+
+void CPositionCache::FindInRange(C_Int32 start, C_Int32 end, CRangeSet &rng,
+	const C_BOOL *sel, C_BOOL *flag)
+{
+	if ((start >= end) || (rng.Size() <= 0)) return;
+	// the ranges are sorted and not overlapping
+	const size_t nrng = rng.Size();
+	vector<int> rs(nrng), re(nrng);
+	rng.GetRanges(&rs[0], &re[0]);
+	while (start < end)
+	{
+		// the variants in [start, ed) are in the same chunk
+		const C_Int32 cst = (start / POS_CACHE_SIZE) * POS_CACHE_SIZE;
+		const C_Int32 ed = (end - cst > POS_CACHE_SIZE) ?
+			(cst + POS_CACHE_SIZE) : end;
+		// whether a range overlaps [minimum, maximum] of the variants
+		const TMinMax &mm = MinMax(start, ed);
+		vector<int>::const_iterator k =
+			std::lower_bound(re.begin(), re.end(), mm.Min);
+		bool flag_read = (k != re.end()) && (rs[k - re.begin()] <= mm.Max);
+		// whether there is a selected variant
+		if (flag_read && sel)
+			flag_read = (VEC_BOOL_FIND_TRUE(sel + start, sel + ed) < sel + ed);
+		if (flag_read)
+		{
+			const C_Int32 *p = Positions(start, ed);
+			if (mm.Sorted)
+			{
+				// positions in ascending order, move forward along the
+				//     positions and the ranges together (sorted and not
+				//     overlapping), the positions in each range are found
+				//     by binary search
+				const C_Int32 *pe = p + (ed - start), *pp = p;
+				for (size_t j=k-re.begin(); (j < nrng) && (pp < pe); j++)
+				{
+					pp = std::lower_bound(pp, pe, rs[j]);
+					const C_Int32 *q = std::upper_bound(pp, pe, re[j]);
+					for (C_Int32 i=start+(pp-p); pp < q; pp++, i++)
+						if (!sel || sel[i]) flag[i] = TRUE;
+				}
+			} else if (nrng == 1)
+			{
+				// only one range, optimized for this situation
+				const int st = rs[0], et = re[0];
+				for (C_Int32 i=start; i < ed; i++, p++)
+					if ((!sel || sel[i]) && (st <= *p) && (*p <= et))
+						flag[i] = TRUE;
+			} else {
+				for (C_Int32 i=start; i < ed; i++, p++)
+					if ((!sel || sel[i]) && rng.IsIncluded(*p))
+						flag[i] = TRUE;
+			}
+		}
+		start = ed;
 	}
 }
 
@@ -872,6 +928,33 @@ void CPositionCache::Load(C_Int32 st, C_Int32 ed)
 	if (rd_len > 0)
 		GDS_Array_ReadData(_Node, &rd_st, &rd_len, &_Buffer[keep], svInt32);
 	_Start = st; _End = new_end;
+}
+
+const C_Int32 *CPositionCache::Positions(C_Int32 st, C_Int32 ed)
+{
+	if ((st < _Start) || (ed > _End))
+		Load(st, ed);
+	return &_Buffer[st - _Start];
+}
+
+const CPositionCache::TMinMax &CPositionCache::MinMax(C_Int32 st, C_Int32 ed)
+{
+	TMinMax &v = _MinMax[st];  // End = 0 if it is new
+	if (v.End != ed)
+	{
+		v.End = 0;  // invalid in case of a failure in reading
+		const C_Int32 *p = Positions(st, ed);
+		C_Int32 v1 = p[0], v2 = p[0];
+		bool sorted = true;
+		for (C_Int32 i=1, n=ed-st; i < n; i++)
+		{
+			if (p[i] < v1) v1 = p[i];
+			if (p[i] > v2) v2 = p[i];
+			if (p[i] < p[i-1]) sorted = false;
+		}
+		v.Min = v1; v.Max = v2; v.Sorted = sorted; v.End = ed;
+	}
+	return v;
 }
 
 
@@ -911,7 +994,6 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 		_File = GDS_Node_File(root);
 		_Root = root;
 		_Chrom.Clear();
-		_Position.clear();
 		_PosCache.Reset(NULL, 0);
 		clear_selection();
 
@@ -992,26 +1074,10 @@ void CFileInfo::ResetChromosome()
 	_Chrom.Clear();
 }
 
-vector<C_Int32> &CFileInfo::Position()
+void CFileInfo::ResetPosition()
 {
 	if (!_Root)
 		throw ErrSeqArray(ERR_FILE_ROOT);
-	if (_Position.empty())
-	{
-		PdAbstractArray N = PositionObj();
-		// read
-		_Position.resize(_VariantNum);
-		GDS_Array_ReadData(N, NULL, NULL, &_Position[0], svInt32);
-	}
-	return _Position;
-}
-
-void CFileInfo::ClearPosition()
-{
-	if (!_Root)
-		throw ErrSeqArray(ERR_FILE_ROOT);
-	_Position.clear();
-	std::vector<C_Int32>().swap(_Position);
 	_PosCache.Reset(NULL, 0);
 }
 

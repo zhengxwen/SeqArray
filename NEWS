@@ -6,9 +6,20 @@ UTILITIES
     o `seqGetData(, "position")`, "$chrom_pos", "$chrom_pos2" and
       "$chrom_pos_allele", and `seqApply()` with these variables no longer
       load the positions of all variants into memory: the positions are read
-      from the GDS file via a cache of up to 65536 consecutive variants per
-      file, which is efficient when the variants are accessed in order
+      from the GDS file via a cache of up to 131072 consecutive variants
+      per file, which is efficient when the variants are accessed in order
       (e.g., `seqBlockApply()` and `seqUnitApply()`)
+
+    o `seqSetFilterChrom(, from.bp=, to.bp=)`, and so `seqSetFilter()` with
+      GRanges or IRanges and `seqSetFilterPos()`, no longer load the
+      positions of all variants into memory: only the minimum and maximum
+      positions of every 131072 variants on a chromosome are kept, the
+      chunks of variants out of the requested ranges are skipped without
+      reading, and binary search is used in a chunk if its positions are
+      sorted
+
+    o the internal function `.buffer_position()` is removed, since the
+      positions of all variants are no longer loaded into memory
 
 BUG FIXES
 

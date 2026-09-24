@@ -276,17 +276,6 @@ process_balancing_multiple <- 3L
 
 
 #######################################################################
-# Get or clear the memory buffer storing variant positions
-# (return pointer or NULL)
-#
-.buffer_position <- function(gdsfile, clear=FALSE)
-{
-    .Call(SEQ_BufferPosition, gdsfile, clear)
-}
-
-
-
-#######################################################################
 # Open and close a connection,
 # Please always call '.close_conn' after '.open_bin' and '.open_text'
 

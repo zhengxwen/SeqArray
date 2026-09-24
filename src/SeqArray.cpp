@@ -779,9 +779,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceChrom(SEXP gdsfile, SEXP include,
 
 		} else {
 			// include != NULL
-			vector<C_Int32> *varPos = NULL;
+			// with from.bp and to.bp, the positions are read from the GDS node
+			//     via a cache, instead of loading the positions of all variants
+			CPositionCache *PosCache = NULL;
 			if (pFrom && pTo)
-				varPos = &File.Position();
+				PosCache = &File.PositionCache();
 
 			CChromIndex &Chrom = File.Chromosome();
 			map<string, CRangeSet> RngSets;  // Chromosome ==> CRangeSet
@@ -802,7 +804,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceChrom(SEXP gdsfile, SEXP include,
 					Chrom.Map.find(s);
 				if (it != Chrom.Map.end())
 				{
-					if (varPos)
+					if (PosCache)
 					{
 						// if specify from.bp and to.bp
 						int from = pFrom[idx], to = pTo[idx];
@@ -821,47 +823,18 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceChrom(SEXP gdsfile, SEXP include,
 				}
 			}
 
-			if (varPos)
+			if (PosCache)
 			{
 				// Chromosome ==> CRangeSet
 				map<string, CRangeSet>::iterator it;
 				for (it=RngSets.begin(); it != RngSets.end(); it++)
 				{
 					CChromIndex::TRangeList &rng = Chrom.Map[it->first];
-					CRangeSet &RngSet = it->second;
 					vector<CChromIndex::TRange>::const_iterator p;
 					for (p=rng.begin(); p != rng.end(); p++)
 					{
-						size_t i=p->Start, n=p->Length;
-						C_Int32 *s = &((*varPos)[0]) + i;
-						if (RngSet.Size() == 1)
-						{
-							// there is only a range, optimized for this situation
-							int st, ed;
-							RngSet.GetRanges(&st, &ed);
-							if (!IsIntersect)
-							{
-								for (; n > 0; n--, i++, s++)
-									if (st<=*s && *s<=ed) array[i] = TRUE;
-							} else {
-								C_BOOL *b = &sel_array[i];
-								for (; n > 0; n--, i++, s++)
-									if (*b++ && st<=*s && *s<=ed) array[i] = TRUE;
-							}
-						} else {
-							if (!IsIntersect)
-							{
-								for (; n > 0; n--, i++)
-									if (RngSet.IsIncluded(*s++)) array[i] = TRUE;
-							} else {
-								C_BOOL *b = &sel_array[i];
-								for (; n > 0; n--, i++, s++)
-								{
-									if (*b++)
-										if (RngSet.IsIncluded(*s)) array[i] = TRUE;
-								}
-							}
-						}
+						PosCache->FindInRange(p->Start, p->Start + p->Length,
+							it->second, IsIntersect ? sel_array : NULL, array);
 					}
 				}
 			}
@@ -1281,6 +1254,15 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ResetChrom(SEXP gdsfile)
 	COREARRAY_CATCH
 }
 
+/// clear the cached positions when 'position' is changed
+COREARRAY_DLL_EXPORT SEXP SEQ_ResetPosition(SEXP gdsfile)
+{
+	COREARRAY_TRY
+		CFileInfo &File = GetFileInfo(gdsfile);
+		File.ResetPosition();
+	COREARRAY_CATCH
+}
+
 
 
 // ===========================================================
@@ -1399,30 +1381,6 @@ COREARRAY_DLL_EXPORT SEXP SEQ_ClearVarMap(SEXP gdsfile)
 		File.VarMap().clear();
 	COREARRAY_CATCH
 }
-
-
-
-// ===========================================================
-// Get or clear the memory buffer storing variant positions
-// ===========================================================
-
-COREARRAY_DLL_EXPORT SEXP SEQ_BufferPosition(SEXP gdsfile, SEXP clear)
-{
-	int clear_flag = Rf_asLogical(clear);
-	COREARRAY_TRY
-		CFileInfo &File = GetFileInfo(gdsfile);
-		if (clear_flag == 1)  // TRUE
-		{
-			File.ClearPosition();
-			rv_ans = R_NilValue;
-		} else {
-			vector<C_Int32> &pos = File.Position();
-			SEXP n = Rf_ScalarInteger(pos.size());  // # of positions
-			rv_ans = R_MakeExternalPtr(&pos[0], R_NilValue, n);
-		}
-	COREARRAY_CATCH
-}
-
 
 
 // ===========================================================
@@ -1810,10 +1768,11 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 
 		CALL(SEQ_ConvBED2GDS, 6),
 		CALL(SEQ_SelectFlag, 2),            CALL(SEQ_ResetChrom, 1),
+		CALL(SEQ_ResetPosition, 1),
 
 		CALL(SEQ_SetProcess, 3),            CALL(SEQ_SetProcessBlock, 2),
 		CALL(SEQ_AppendFill, 3),
-		CALL(SEQ_ClearVarMap, 1),           CALL(SEQ_BufferPosition, 2),
+		CALL(SEQ_ClearVarMap, 1),
 
 		CALL(SEQ_bgzip_create, 1),        CALL(SEQ_bgzip_is, 1),
 		CALL(SEQ_bgzip_index, 2),         CALL(SEQ_bgzip_split, 2),
