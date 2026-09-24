@@ -398,8 +398,8 @@ seqSetFilterPos <- function(object, chr, pos, ref=NULL, alt=NULL,
         # gds variant position and index
         p1 <- seqGetData(object, "position")
         i1 <- seqGetData(object, "$variant_index")
-        # match
-        ord1 <- order(p1)
+        # match, no need to order the positions if they are in ascending order
+        ord1 <- if (isFALSE(is.unsorted(p1))) NULL else order(p1)
         .Call(SEQ_FindMatchIndex, pos, ref, alt, i_sub, p1, i1, ord1,
             node, multi.pos)
     })
