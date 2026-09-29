@@ -868,9 +868,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP RetIdx
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
 	static const char *VarName = "annotation/id";
 
-	int ret_idx = Rf_asLogical(RetIdx);
-	if (ret_idx == NA_LOGICAL)
-		Rf_error("'ret.idx' must be TRUE or FALSE.");
+	// ret.idx=NA is treated as FALSE
+	const bool ret_idx = (Rf_asLogical(RetIdx) == TRUE);
 	int verbose = Rf_asLogical(Verbose);
 	if (verbose == NA_LOGICAL)
 		Rf_error("'verbose' must be TRUE or FALSE.");

@@ -108,13 +108,12 @@ test_filterannotid_ret_idx_na <- function()
 
     ids <- seqGetData(f, "annotation/id")
     seqSetFilterAnnotID(f, ids[1:3], verbose=FALSE)
-    sel <- seqGetFilter(f)$variant.sel
 
-    # an error before setting the filter
-    checkException(seqSetFilterAnnotID(f, ids[4:6], ret.idx=NA,
-        verbose=FALSE), "ret_idx_na: error", silent=TRUE)
-    checkIdentical(seqGetFilter(f)$variant.sel, sel,
-        "ret_idx_na: the filter is not changed")
+    # ret.idx=NA is treated as ret.idx=FALSE
+    v <- seqSetFilterAnnotID(f, ids[4:6], ret.idx=NA, verbose=FALSE)
+    checkTrue(is.null(v), "ret_idx_na: returns NULL")
+    checkIdentical(seqGetFilter(f)$variant.sel, ids %in% ids[4:6],
+        "ret_idx_na: selected variants")
 
     invisible()
 }

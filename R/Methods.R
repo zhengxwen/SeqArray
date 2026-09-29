@@ -501,10 +501,10 @@ seqSetFilterAnnotID <- function(object, id, ret.idx=FALSE, verbose=TRUE)
     stopifnot(is.character(id))
     stopifnot(is.logical(ret.idx), length(ret.idx)==1L)
     # call C function, return match(id, seqGetData(object, "annotation/id"))
-    #   if ret.idx=TRUE
+    #   if ret.idx=TRUE (NA is treated as FALSE)
     rv <- .Call(SEQ_SetSpaceAnnotID, object, id, ret.idx, verbose)
     # output
-    if (ret.idx) rv else invisible()
+    if (isTRUE(ret.idx)) rv else invisible()
 }
 
 
