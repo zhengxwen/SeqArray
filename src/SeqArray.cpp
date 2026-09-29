@@ -888,8 +888,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbos
 		for (size_t i=0; i < n; i++)
 		{
 			SEXP s = STRING_ELT(ID, i);
-			if ((s != NA_STRING) && (CHAR(s) != 0))
-				id_set.insert(CHAR(s));
+			if (s == NA_STRING) continue;
+			const char *p = CHAR(s);
+			// skip missing IDs: "" or "."
+			if ((p[0] != 0) && !(p[0] == '.' && p[1] == 0))
+				id_set.insert(p);
 		}
 
 		const int SIZE = 4096;

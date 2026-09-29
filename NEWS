@@ -33,6 +33,9 @@ BUG FIXES
       used the old positions after `seqAddValue(, varnm="position")`
       replaced them in the opened file
 
+    o `seqSetFilterAnnotID()` ignores "" and "." in `id`, instead of
+      selecting all variants without an ID
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------
