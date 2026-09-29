@@ -862,11 +862,15 @@ inline static bool str_less(const char *a, const char *b)
 	{ return strcmp(a, b) < 0; }
 
 /// set a working space flag with selected annotation id
-COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbose)
+COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP RetIdx,
+	SEXP Verbose)
 {
 	static const char *ERR_DIM = "Invalid dimension of '%s'.";
 	static const char *VarName = "annotation/id";
 
+	int ret_idx = Rf_asLogical(RetIdx);
+	if (ret_idx == NA_LOGICAL)
+		Rf_error("'ret.idx' must be TRUE or FALSE.");
 	int verbose = Rf_asLogical(Verbose);
 	if (verbose == NA_LOGICAL)
 		Rf_error("'verbose' must be TRUE or FALSE.");
@@ -900,6 +904,13 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbos
 				id_lst.push_back(p);
 		}
 		sort(id_lst.begin(), id_lst.end(), str_less);
+		typedef vector<const char*>::iterator TIter;
+		const TIter it_st = id_lst.begin(), it_ed = id_lst.end();
+
+		// if ret.idx, the first matching index among the selected variants
+		//   for each sorted ID (0 for no match)
+		vector<C_Int32> first_idx(ret_idx ? id_lst.size() : 0, 0);
+		C_Int32 num_sel = 0;
 
 		const int SIZE = 4096;
 		C_BOOL *p = Sel.pVariant;
@@ -908,10 +919,27 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbos
 		{
 			C_Int32 m = (len <= SIZE) ? len : SIZE;
 			GDS_Array_ReadData(N, &st, &m, &buffer[0], svStrUTF8);
-			for (C_Int32 i=0; i < m; i++)
+			if (ret_idx)
 			{
-				*p++ = binary_search(id_lst.begin(), id_lst.end(),
-					buffer[i].c_str(), str_less);
+				for (C_Int32 i=0; i < m; i++)
+				{
+					const char *s = buffer[i].c_str();
+					TIter it = lower_bound(it_st, it_ed, s, str_less);
+					const bool found = (it != it_ed) && !str_less(s, *it);
+					*p++ = found;
+					if (found)
+					{
+						num_sel ++;
+						C_Int32 &v = first_idx[it - it_st];
+						if (v == 0) v = num_sel;
+					}
+				}
+			} else {
+				for (C_Int32 i=0; i < m; i++)
+				{
+					*p++ = binary_search(it_st, it_ed, buffer[i].c_str(),
+						str_less);
+				}
 			}
 			st += m; len -= m;
 		}
@@ -919,6 +947,27 @@ COREARRAY_DLL_EXPORT SEXP SEQ_SetSpaceAnnotID(SEXP gdsfile, SEXP ID, SEXP Verbos
 		Sel.varTrueNum = -1;
 		if (verbose)
 			Rprintf(INFO_SEL_NUM_VARIANT, PrettyInt(File.VariantSelNum()));
+
+		// output, the same as match(ID, seqGetData(, "annotation/id"))
+		if (ret_idx)
+		{
+			PROTECT(rv_ans = NEW_INTEGER(n));
+			int *pv = INTEGER(rv_ans);
+			for (size_t i=0; i < n; i++)
+			{
+				SEXP s = STRING_ELT(ID, i);
+				pv[i] = NA_INTEGER;
+				if (s == NA_STRING) continue;
+				const char *ss = CHAR(s);
+				TIter it = lower_bound(it_st, it_ed, ss, str_less);
+				if ((it != it_ed) && !str_less(ss, *it))
+				{
+					C_Int32 v = first_idx[it - it_st];
+					if (v > 0) pv[i] = v;
+				}
+			}
+			UNPROTECT(1);
+		}
 
 	COREARRAY_CATCH
 }
@@ -1765,7 +1814,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_SetSpaceSample, 4),        CALL(SEQ_SetSpaceSample2, 5),
 		CALL(SEQ_SetSpaceVariant, 4),       CALL(SEQ_SetSpaceVariant2, 5),
 		CALL(SEQ_GetSortedIndex, 2),
-		CALL(SEQ_SetSpaceChrom, 7),         CALL(SEQ_SetSpaceAnnotID, 3),
+		CALL(SEQ_SetSpaceChrom, 7),         CALL(SEQ_SetSpaceAnnotID, 4),
 
 		CALL(SEQ_SplitSelection, 5),        CALL(SEQ_SplitSelectionX, 9),
 		CALL(SEQ_GetSpace, 2),
