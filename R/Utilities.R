@@ -481,13 +481,25 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 
 ####  run with a cluster object  ####
 
+# load the packages (e.g., '.package' in seqParallel())
+.load_package <- function(package)
+{
+    for (pkg in package)
+    {
+        # 'quietly=TRUE' does not suppress the messages of masked objects
+        suppressPackageStartupMessages(library(pkg, character.only=TRUE,
+            quietly=TRUE, verbose=FALSE))
+    }
+    invisible()
+}
+
 .fc_parallel_initializer <- function(i, njobs, st_fname, gdsfn, totnum,
-    init, param)
+    init, param, package)
 {
     # load the package
-    for (pkg in attr(gdsfn, "pkgname"))
-        library(pkg, character.only=TRUE, quietly=TRUE, verbose=FALSE)
+    .load_package(attr(gdsfn, "pkgname"))
     library(SeqArray, quietly=TRUE, verbose=FALSE)
+    .load_package(package)
     # export to global variables
     .init_proc(i, njobs, st_fname)
     .set_proc_block(0L, totnum)
@@ -497,12 +509,12 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 }
 
 .fc_parallel_initializer_bl <- function(i, njobs, st_fname, nblock, gdsfn,
-    sel, totcnt, init, param)
+    sel, totcnt, init, param, package)
 {
     # load the package
-    for (pkg in attr(gdsfn, "pkgname"))
-        library(pkg, character.only=TRUE, quietly=TRUE, verbose=FALSE)
+    .load_package(attr(gdsfn, "pkgname"))
     library(SeqArray, quietly=TRUE, verbose=FALSE)
+    .load_package(package)
     # export to global variables
     .init_proc(i, njobs, st_fname)
     .set_proc_block(1L, nblock)
@@ -585,7 +597,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 # run with a cluster object
 .run_parallel_cluster <- function(cl, gdsfile, FUN, split, .combine,
     .selection.flag, .initialize, .finalize, .initparam,
-    .balancing, .bl_size, .bl_progress, .status_file, ...)
+    .balancing, .bl_size, .bl_progress, .status_file, .package, ...)
 {
     # number of nodes
     stopifnot(inherits(cl, "cluster"))
@@ -628,7 +640,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             gdsfn = if (inherits(gdsfile, "SeqVarGDSClass"))
                 gdsfile$filename else NULL,
             totnum = if (is.numeric(gdsfile)) totnum else 0L,
-            init=.initialize, param=.initparam)
+            init=.initialize, param=.initparam, package=.package)
         # exit call
         on.exit({
             clusterApply(cl, seq_len(njobs), fun=.fc_parallel_finalizer,
@@ -668,7 +680,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             fun = .fc_parallel_initializer_bl,
             njobs = njobs, st_fname = st_fname, nblock = v$nblock,
             gdsfn = gdsfile$filename, sel = sel, totcnt = v$totcnt,
-            init = .initialize, param = .initparam
+            init = .initialize, param = .initparam, package = .package
         )
         remove(sel)
         # exit call
@@ -853,7 +865,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 # run with a BiocParallelParam object
 .run_biocparallel <- function(cl, gdsfile, FUN, split, .combine,
     .selection.flag, .initialize, .finalize, .initparam,
-    .balancing, .bl_size, .bl_progress, ...)
+    .balancing, .bl_size, .bl_progress, .package, ...)
 {
     # number of workers
     njobs <- BiocParallel::bpnworkers(cl)
@@ -864,6 +876,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         BiocParallel::bplapply(seq_len(njobs),
             function(i, .initparam) {
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
+                .load_package(.package)
                 .initialize(i, .initparam)
             }, .initparam=.initparam, BPPARAM=cl)
     }
@@ -874,6 +887,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
             BiocParallel::bplapply(seq_len(njobs),
                 function(i, .initparam) {
                     library(SeqArray, quietly=TRUE, verbose=FALSE)
+                    .load_package(.package)
                     .finalize(i, .initparam)
                 }, .initparam=.initparam, BPPARAM=cl)
         }
@@ -908,6 +922,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
                 function(.proc_idx, .proc_cnt, .FUN, ...)
                 {
                     library(SeqArray, quietly=TRUE, verbose=FALSE)
+                    .load_package(.package)
                     .init_proc(.proc_idx, .proc_cnt, NULL)
                     .FUN(...)
                 },
@@ -921,6 +936,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
                     .sel_variant, .FUN, .split, .selection.flag, ...)
                 {
                     library(SeqArray, quietly=TRUE, verbose=FALSE)
+                    .load_package(.package)
                     .init_proc(.proc_idx, .proc_cnt, NULL)
                     f <- seqOpen(.gds.fn, allow.duplicate=TRUE)
                     on.exit(seqClose(f))
@@ -945,6 +961,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
                 function(.i, .njobs, .FUN, ...)
                 {
                     library(SeqArray, quietly=TRUE, verbose=FALSE)
+                    .load_package(.package)
                     .init_proc(0L, .njobs, NULL)
                     .set_proc_block(.i, NULL)
                     .FUN(.i, ...)
@@ -980,6 +997,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
                 ...)
             {
                 library(SeqArray, quietly=TRUE, verbose=FALSE)
+                .load_package(.package)
                 f <- seqOpen(.gds.fn, allow.duplicate=TRUE)
                 on.exit(seqClose(f))
                 seqSetFilter(f,
@@ -1009,7 +1027,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
     .balancing=FALSE, .bl_size=NA_integer_, .bl_progress=FALSE,
-    .status_file=FALSE, .proc_time=FALSE, ...)
+    .status_file=FALSE, .proc_time=FALSE, .package=NULL, ...)
 {
     # check
     stopifnot(is.null(cl) || is.logical(cl) || is.numeric(cl) ||
@@ -1032,6 +1050,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     stopifnot(is.logical(.selection.flag), length(.selection.flag)==1L)
     stopifnot(is.logical(.status_file), length(.status_file)==1L)
     stopifnot(is.logical(.proc_time), length(.proc_time)==1L)
+    stopifnot(is.null(.package) || is.character(.package))
     stopifnot(is.logical(.balancing), length(.balancing)==1L)
     if (is.na(.balancing))
         .balancing <- isTRUE(getOption("seqarray.balancing", TRUE))
@@ -1073,6 +1092,7 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
     if (njobs <= 1L)
     {
         # run with a single core
+        .load_package(.package)
         ans <- .run_single_core(gdsfile, FUN, split, .combine, .selection.flag,
             .initialize, .finalize, .initparam, ...)
 
@@ -1081,14 +1101,14 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
         # multiple processes with a cluster object
         ans <- .run_parallel_cluster(cl, gdsfile, FUN, split, .combine,
             .selection.flag, .initialize, .finalize, .initparam,
-            .balancing, .bl_size, .bl_progress, .status_file, ...)
+            .balancing, .bl_size, .bl_progress, .status_file, .package, ...)
 
     } else if (inherits(cl, "BiocParallelParam"))
     {
         ## multiple processes with a predefined cluster from BiocParallel
         ans <- .run_biocparallel(cl, gdsfile, FUN, split, .combine,
             .selection.flag, .initialize, .finalize, .initparam,
-            .balancing, .bl_size, .bl_progress, ...)
+            .balancing, .bl_size, .bl_progress, .package, ...)
 
     } else {
         # forking processes, when cl is an integer
@@ -1100,8 +1120,11 @@ seqParallel <- function(cl=seqGetParallel(), gdsfile, FUN,
             # call
             return(seqParallel(cl, gdsfile, FUN, split, .combine,
                 .selection.flag, .initialize, .finalize, .initparam,
-                .balancing, .bl_size, .bl_progress, .status_file, ...))
+                .balancing, .bl_size, .bl_progress, .status_file,
+                .package=.package, ...))
         }
+        # load the packages before forking
+        .load_package(.package)
         # call
         ans <- .run_forking(njobs, gdsfile, FUN, split, .combine,
             .selection.flag, .initialize, .finalize, .initparam,

@@ -9,7 +9,7 @@ margins of genotypes and annotations via blocking.
 seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
     as.is=c("none", "list", "unlist"), var.index=c("none", "relative", "absolute"),
     bsize=1024L, parallel=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE,
-    .balancing=FALSE, .progress=FALSE, ...)
+    .balancing=FALSE, .progress=FALSE, .package=NULL, ...)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object or a GDS file name}
@@ -49,6 +49,9 @@ seqBlockApply(gdsfile, var.name, FUN, margin=c("by.variant"),
         as a default until \code{getOption("seqarray.balancing")} is set and
         not \code{TRUE}}
     \item{.progress}{if \code{TRUE}, show progress information}
+    \item{.package}{\code{NULL} or a character vector of package names, which
+        are loaded via \code{library()} before calling \code{FUN}, see
+        \code{.package} in \code{\link{seqParallel}}}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{

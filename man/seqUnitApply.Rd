@@ -7,7 +7,7 @@
 \usage{
 seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
     parallel=FALSE, ..., .bl_size=256L, .progress=FALSE, .useraw=FALSE,
-    .padNA=TRUE, .tolist=FALSE, .envir=NULL)
+    .padNA=TRUE, .tolist=FALSE, .envir=NULL, .package=NULL)
 }
 \arguments{
     \item{gdsfile}{a \code{\link{SeqVarGDSClass}} object}
@@ -36,6 +36,9 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
     \item{.tolist}{if \code{TRUE}, return a list of vectors instead of the
         structure \code{list(length, data)} for variable-length data}
     \item{.envir}{NULL, an environment object, or a list/data.frame}
+    \item{.package}{\code{NULL} or a character vector of package names, which
+        are loaded via \code{library()} before calling \code{FUN}, see
+        \code{.package} in \code{\link{seqParallel}}}
     \item{...}{optional arguments to \code{FUN}}
 }
 \details{

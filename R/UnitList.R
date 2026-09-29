@@ -289,7 +289,8 @@ seqUnitSetDiff <- function(ut1, ut2, drop=TRUE)
 #
 seqUnitApply <- function(gdsfile, units, var.name, FUN,
     as.is=c("none", "list", "unlist"), parallel=FALSE, ..., .bl_size=256L,
-    .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE, .envir=NULL)
+    .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE, .envir=NULL,
+    .package=NULL)
 {
     # check
     stopifnot(inherits(gdsfile, "SeqVarGDSClass"))
@@ -303,6 +304,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
     stopifnot(is.logical(.useraw), length(.useraw)==1L)
     stopifnot(is.logical(.padNA), length(.padNA)==1L)
     stopifnot(is.null(.envir) || is.environment(.envir) || is.list(.envir))
+    stopifnot(is.null(.package) || is.character(.package))
 
     # further check units
     stopifnot(is.data.frame(units$desp))
@@ -319,6 +321,8 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
     njobs <- .NumParallel(parallel)
     if (njobs == 1L)
     {
+        # load the packages
+        .load_package(.package)
         # save state
         seqFilterPush(gdsfile)
         on.exit(seqFilterPop(gdsfile))
@@ -359,6 +363,8 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             .PkgEnv$units <- units$index
             .PkgEnv$var.name <- var.name
             .PkgEnv$envir <- .envir
+            # load the packages before forking
+            .load_package(.package)
             parallel <- parallel::makeForkCluster(njobs)
             on.exit({
                 with(.PkgEnv, gdsfile <- units <- var.name <- envir <- NULL)
@@ -372,8 +378,9 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
                 parallel <- makeCluster(njobs)
             }
             # distribute the parameters to each node
-            clusterCall(parallel, function(fn, ut, vn, ss, env)
+            clusterCall(parallel, function(fn, ut, vn, ss, env, pkg)
             {
+                .load_package(pkg)
                 f <- SeqArray::seqOpen(fn, allow.duplicate=TRUE)
                 .PkgEnv$gdsfile <- f
                 ss <- .decompress(ss)
@@ -384,7 +391,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
                 invisible()
             }, fn=gdsfile$filename, ut=units$index, vn=var.name,
                 ss=.compress(.Call(SEQ_GetSpaceSample, gdsfile)),
-                env=.envir)
+                env=.envir, pkg=.package)
             # finalize
             on.exit({
                 clusterCall(parallel, function() {

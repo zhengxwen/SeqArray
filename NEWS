@@ -1,6 +1,15 @@
 CHANGES IN VERSION 1.53.4
 -------------------------
 
+NEW FEATURES
+
+    o new argument '.package' in `seqParallel()`, `seqApply()`,
+      `seqBlockApply()` and `seqUnitApply()` for the packages loaded before
+      calling the user-defined function, so that the functions in these
+      packages can be used directly: they are loaded in each child process
+      of a cluster or a `BiocParallelParam` object, or in the current R
+      process before forking or when only one process is used
+
 UTILITIES
 
     o `seqGetData(, "position")`, "$chrom_pos", "$chrom_pos2" and

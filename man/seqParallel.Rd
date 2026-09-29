@@ -10,7 +10,7 @@ seqParallel(cl=seqGetParallel(), gdsfile, FUN,
     split=c("by.variant", "by.sample", "none"), .combine="unlist",
     .selection.flag=FALSE, .initialize=NULL, .finalize=NULL, .initparam=NULL,
     .balancing=FALSE, .bl_size=NA_integer_, .bl_progress=FALSE,
-    .status_file=FALSE, .proc_time=FALSE, ...)
+    .status_file=FALSE, .proc_time=FALSE, .package=NULL, ...)
 seqParApply(cl=seqGetParallel(), x, FUN, .balancing=TRUE, ...)
 }
 \arguments{
@@ -55,6 +55,14 @@ seqParApply(cl=seqGetParallel(), x, FUN, .balancing=TRUE, ...)
         function}
     \item{.proc_time}{if \code{TRUE}, show the elapsed time calling the
         function}
+    \item{.package}{\code{NULL} or a character vector of package names, e.g.,
+        \code{.package="S4Vectors"}, which are loaded via \code{library()}
+        before calling \code{.initialize} and \code{FUN}, so that the functions
+        in these packages can be used directly in the user-defined functions;
+        the packages are loaded in each child process of a cluster or a
+        \code{BiocParallelParam} object, or in the current R process before
+        forking (the forked processes inherit the loaded packages) or when
+        only one process is used}
     \item{x}{a vector (atomic or list), passed to \code{FUN}}
     \item{...}{optional arguments to \code{FUN}}
 }
