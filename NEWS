@@ -45,94 +45,11 @@ BUG FIXES
     o `seqSetFilterAnnotID()` ignores "" and "." in `id`, instead of
       selecting all variants without an ID
 
-    o `seqVCF2GDS()` fails with "more columns than what expected" on a VCF
-      file with the FORMAT column but no sample
+    o `seqVCF2GDS()` failed with "more columns than what expected" on a VCF
+      file with a FORMAT column but no sample
 
 
 CHANGES IN VERSION 1.53.3
--------------------------
-
-UTILITIES
-
-    o `seqVCF2GDS(, parallel=n)`: the number of variants is now counted
-      together with the file offsets of the variants, so that each of the
-      parallel jobs seeks to its starting position directly, instead of
-      scanning (and decompressing) the file from the beginning; it works on
-      an uncompressed VCF file and on a BGZF file (i.e., created by bgzip),
-      the latter using the block structure of the BGZF format
-
-    o SeqArray no longer needs the Rsamtools package: reading and writing
-      the BGZF format (i.e., bgzip) and building the .csi index are
-      implemented in the package using zlib, so they work on all platforms
-      including Windows; `use_Rsamtools` in `seqVCF_Header()`,
-      `seqVCF2GDS()` and `seqGDS2VCF()` is deprecated and ignored
-
-    o `seqGDS2VCF()` always outputs a BGZF file (i.e., bgzip) when the file
-      name ends with .gz or .bgz, together with a .csi index instead of a
-      .tbi index, since the position in a .tbi index is limited to 2^29
-      (~512Mb)
-
-    o `seqVCF2GDS(, parallel=n)` seeks to the starting position only if the
-      input is a plain text file or a BGZF file; a VCF file compressed by
-      gzip (instead of bgzip) does not support seeking, and a hint is shown
-      when 'verbose=TRUE'
-
-    o new `split` in `seqVCF2GDS()` for the parallel jobs: "block" (default)
-      splits a BGZF file at the block boundaries, so counting the variants
-      is not needed at all; it requires all of the input files to be in the
-      BGZF format and cannot be used together with 'start', 'count' or
-      'variant_count', in which case it falls back to "variant"; "variant"
-      counts the variants first and splits by the variant index. With
-      split="block", the progress is measured by the compressed bytes of the
-      BGZF blocks instead of the variants, so the estimated time is still
-      shown although the number of variants is unknown
-
-    o `seqVCF2GDS(, parallel=n)` on a BGZF file: counting the variants and
-      recording the file offsets is done in parallel, since a BGZF file can
-      be split at the block boundaries by reading the block headers only
-      (i.e., nothing is decompressed)
-
-    o `seqVCF2GDS(, parallel=n)` no longer requires a tabix index file (.tbi
-      or .csi): the number of variants is always counted directly
-
-    o `seqVCF2GDS(, parallel=n)`: the temporary files are merged in order as
-      soon as they are ready while the other parallel jobs are still
-      running, instead of waiting for all of the jobs to finish; the output
-      GDS file is created before the parallel jobs start
-
-BUG FIXES
-
-    o `seqVCF2GDS(, start=, count=, parallel=n)` returned more variants than
-      requested: the last job was not limited by 'count', to tolerate an
-      inaccurate number of variants reported by the Rsamtools package; the
-      variants are now always counted exactly, so the limit is applied
-
-    o `seqVCF2GDS(, start=, count=, parallel=n)`: the upper bound of the
-      splitting was wrong when 'start' was not 1
-
-    o `seqSetFilterPos()` errored for an empty 'pos' vector (e.g.,
-      `integer(0)`), or when 'chr' contained `NA` values (e.g.,
-      `c("1", NA, "2")`); an empty 'pos' now clears the variant filter,
-      and `NA` chromosomes simply do not match, with `ret.idx` staying
-      aligned with the query
-
-    o `seqVCF2GDS(, variant_count=, parallel=n)`: 'variant_count' should be
-      exact now, since the variants beyond it are not converted; it was
-      documented as "could be an approximate"
-
-    o `seqGetData()` and `seqBlockApply()` failed with "LENGTH or similar
-      applied to S4 object" when reading a FORMAT variable stored in a
-      sparse array (e.g., "sp.real32" or "sp.real8u"); a sparse matrix is
-      returned with the dimnames 'sample' and 'variant', or a list of sparse
-      matrices if '.tolist=TRUE'
-
-    o `seqGetData(, .tolist=TRUE or NA)` and `seqBlockApply(, .tolist=TRUE or
-      NA)` on a FORMAT variable: each matrix in the returned list should
-      have the number of selected samples, instead of the total number of
-      samples, when there is a sample filter
-
-
-CHANGES IN VERSION 1.53.2
 -------------------------
 
 NEW FEATURES
@@ -146,6 +63,29 @@ NEW FEATURES
       load balancing, init/finalize hooks, and numeric/NULL `gdsfile` inputs
 
 UTILITIES
+
+    o `seqVCF2GDS(, parallel=n)`: each parallel job seeks to its starting
+      position directly instead of reading the file from the beginning (for
+      a plain text or BGZF file, but not a gzip file), no tabix index is
+      needed, and the temporary files are merged while the other jobs are
+      still running
+
+    o new `split` in `seqVCF2GDS()`: "block" (default) splits BGZF files at
+      the block boundaries without counting the variants; "variant" counts
+      the variants (in parallel for BGZF files) and splits by the variant
+      index, which is used if not all files are BGZF or 'start', 'count' or
+      'variant_count' is given
+
+    o SeqArray no longer needs the Rsamtools package: reading and writing
+      the BGZF format (i.e., bgzip) and building the .csi index are
+      implemented in the package using zlib, so they work on all platforms
+      including Windows; `use_Rsamtools` in `seqVCF_Header()`,
+      `seqVCF2GDS()` and `seqGDS2VCF()` is deprecated and ignored
+
+    o `seqGDS2VCF()` always outputs a BGZF file (i.e., bgzip) when the file
+      name ends with .gz or .bgz, together with a .csi index instead of a
+      .tbi index, since the position in a .tbi index is limited to 2^29
+      (~512Mb)
 
     o `seqUnitMerge()` now properly supports merging more than two
       'SeqUnitListClass' objects via '...'
@@ -161,6 +101,29 @@ UTILITIES
       in `seqAddValue()`, passed to the second argument of the user-defined
       function 'val(k, param)'
 
+BUG FIXES
+
+    o `seqVCF2GDS(, start=, count=, parallel=n)` returned more variants than
+      requested, and split the variants wrongly when 'start' was not 1;
+      'variant_count' should be exact now, since the variants beyond it are
+      not converted
+
+    o `seqSetFilterPos()` errored for an empty 'pos' vector (e.g.,
+      `integer(0)`), or when 'chr' contained `NA` values (e.g.,
+      `c("1", NA, "2")`); an empty 'pos' now clears the variant filter,
+      and `NA` chromosomes simply do not match, with `ret.idx` staying
+      aligned with the query
+
+    o `seqGetData()` and `seqBlockApply()` failed with "LENGTH or similar
+      applied to S4 object" when reading a FORMAT variable stored in a
+      sparse array (e.g., "sp.real32" or "sp.real8u"); a sparse matrix is
+      returned with the dimnames 'sample' and 'variant', or a list of sparse
+      matrices if '.tolist=TRUE'
+
+    o `seqGetData(, .tolist=TRUE or NA)` and `seqBlockApply(, .tolist=TRUE or
+      NA)` on a FORMAT variable: each matrix in the returned list should
+      have the number of selected samples, instead of the total number of
+      samples, when there is a sample filter
 
 
 CHANGES IN VERSION 1.52.1
