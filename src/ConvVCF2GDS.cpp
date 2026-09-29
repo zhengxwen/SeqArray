@@ -233,6 +233,9 @@ inline static void DoneText()
 }
 
 /// get a string with a seperator '\t', which is saved in _Text_Buffer
+/// \param last_column  TRUE: it should be the last column in the line;
+///                     FALSE: it should not be the last column;
+///                     NA_INTEGER: no check on the number of columns
 inline static void GetText(int last_column)
 {
 	if (VCF_EOF_Signal)
@@ -1686,7 +1689,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			// initialize
 			for (pI = info_list.begin(); pI != info_list.end(); pI++)
 				pI->used = false;
-			GetText(SampleNum<=0);
+			// no sample: INFO is the last column, or followed by FORMAT
+			GetText((SampleNum > 0) ? FALSE : NA_INTEGER);
 			SkipTextWithDot();
 
 			// parse
@@ -1828,7 +1832,12 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 			// -----------------------------------------------------
 			// column 9: FORMAT
 
-			if (SampleNum <= 0) continue;
+			if (SampleNum <= 0)
+			{
+				// skip the FORMAT column if any, which should be the last
+				if (VCF_NextColumnNum > 1) GetText(TRUE);
+				continue;
+			}
 
 			// initialize
 			for (pF = fmt_ptr.begin(); pF != fmt_ptr.end(); pF++)

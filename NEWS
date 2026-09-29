@@ -36,6 +36,9 @@ BUG FIXES
     o `seqSetFilterAnnotID()` ignores "" and "." in `id`, instead of
       selecting all variants without an ID
 
+    o `seqVCF2GDS()` fails with "more columns than what expected" on a VCF
+      file with the FORMAT column but no sample
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------
