@@ -804,26 +804,6 @@ COREARRAY_DLL_EXPORT SEXP FC_AC_DS_Allele(SEXP List)
 
 // ======================================================================
 
-/// Convert a SeqArray GDS file to a SNP GDS file in `seqGDS2SNP()`
-COREARRAY_DLL_EXPORT SEXP FC_AlleleStr(SEXP allele)
-{
-	const R_xlen_t n = XLENGTH(allele);
-	for (R_xlen_t i=0; i < n; i++)
-	{
-		char *s = (char*)CHAR(STRING_ELT(allele, i));
-		while (*s)
-		{
-			if (*s == ',')
-				{ *s = '/'; break; }
-			s ++;
-		}
-	}
-	return allele;
-}
-
-
-// ======================================================================
-
 /// Get a list of allele counts
 COREARRAY_DLL_EXPORT SEXP FC_AlleleCount(SEXP List)
 {

@@ -484,7 +484,7 @@ seqGDS2SNP <- function(gdsfile, out.gdsfn, dosage=FALSE,
 
     # add "snp.allele"
     add.gdsn(gfile, "snp.allele",
-        .cfunction("FC_AlleleStr")(seqGetData(gdsfile, "allele")),
+        sub(",", "/", seqGetData(gdsfile, "allele"), fixed=TRUE),
         compress=compress.annotation, closezip=TRUE)
 
     # add "genotype"

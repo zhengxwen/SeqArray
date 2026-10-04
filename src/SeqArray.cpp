@@ -1758,7 +1758,6 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 	extern SEXP FC_AC_DS_Index(SEXP);
 	extern SEXP FC_AC_Allele(SEXP);
 	extern SEXP FC_AC_DS_Allele(SEXP);
-	extern SEXP FC_AlleleStr(SEXP);
 	extern SEXP FC_AlleleCount(SEXP);
 	extern SEXP FC_AF_AC_MISS_Init(SEXP, SEXP, SEXP, SEXP);
 	extern SEXP FC_AF_AC_MISS_Geno(SEXP);
@@ -1858,7 +1857,7 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(FC_AC_Ref, 1),                 CALL(FC_AC_DS_Ref, 1),
 		CALL(FC_AC_Index, 1),               CALL(FC_AC_DS_Index, 1),
 		CALL(FC_AC_Allele, 1),              CALL(FC_AC_DS_Allele, 1),
-		CALL(FC_AlleleStr, 1),              CALL(FC_AlleleCount, 1),
+		CALL(FC_AlleleCount, 1),
 		CALL(FC_AF_AC_MISS_Init, 4),        CALL(FC_AF_AC_MISS_Geno, 1),
 		CALL(FC_AF_AC_MISS_DS, 1),
 		CALL(FC_DigestInit, 1),             CALL(FC_DigestDone, 1),
