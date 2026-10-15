@@ -241,10 +241,8 @@
         if (verbose)
             cat("Chromosomes:\n")
 
-        ans <- table(seqGetData(gdsfile, "chromosome"))
-        class(ans) <- NULL
-        i <- suppressWarnings(as.integer(names(ans)))
-        ans <- ans[order(i)]
+        # count and sort the selected variants in C from the RLE of chromosome
+        ans <- .Call(SEQ_SummaryChrom, gdsfile)
 
         if (verbose)
         {

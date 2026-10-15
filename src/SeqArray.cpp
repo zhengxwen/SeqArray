@@ -1278,6 +1278,74 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Summary(SEXP gdsfile, SEXP varname)
 }
 
 
+/// numeric chromosome codes in ascending order, followed by the others
+static bool chrom_less(const pair<string, int> &a, const pair<string, int> &b)
+{
+	bool na = is_numeric(a.first), nb = is_numeric(b.first);
+	if (na && nb)
+	{
+		return strtol(a.first.c_str(), NULL, 10) <
+			strtol(b.first.c_str(), NULL, 10);
+	}
+	return na && !nb;
+}
+
+/// get the number of selected variants per chromosome, using the
+///     run-length encoding of chromosome instead of reading 'chromosome'
+COREARRAY_DLL_EXPORT SEXP SEQ_SummaryChrom(SEXP gdsfile)
+{
+	COREARRAY_TRY
+
+		CFileInfo &File = GetFileInfo(gdsfile);
+		CChromIndex &Chrom = File.Chromosome();
+		const vector<string> &rle_val = Chrom.RLE_Values();
+		const vector<C_UInt32> &rle_len = Chrom.RLE_Lengths();
+		const bool sel_all = (File.VariantSelNum() == File.VariantNum());
+
+		// a chromosome may have several runs if 'chromosome' is not sorted
+		map<string, int> cnt;
+		if (sel_all)
+		{
+			for (size_t i=0; i < rle_val.size(); i++)
+				cnt[rle_val[i]] += rle_len[i];
+		} else {
+			TSelection &Sel = File.Selection();
+			ssize_t st = 0;
+			for (size_t i=0; i < rle_val.size(); i++)
+			{
+				// only count within [varStart, varEnd)
+				ssize_t s = std::max(st, Sel.varStart);
+				ssize_t e = std::min(st + (ssize_t)rle_len[i], Sel.varEnd);
+				if (s < e)
+				{
+					size_t n = GetNumOfTRUE(Sel.pVariant + s, e - s);
+					if (n > 0) cnt[rle_val[i]] += n;
+				}
+				st += rle_len[i];
+			}
+		}
+
+		// sort, and the non-numeric codes stay in the byte order of map
+		vector< pair<string, int> > lst(cnt.begin(), cnt.end());
+		std::stable_sort(lst.begin(), lst.end(), chrom_less);
+
+		// output a named integer vector
+		const size_t n = lst.size();
+		rv_ans = PROTECT(NEW_INTEGER(n));
+		SEXP nm = PROTECT(NEW_CHARACTER(n));
+		for (size_t k=0; k < n; k++)
+		{
+			INTEGER(rv_ans)[k] = lst[k].second;
+			const string &s = lst[k].first;
+			SET_STRING_ELT(nm, k, Rf_mkCharLen(s.c_str(), s.size()));
+		}
+		SET_NAMES(rv_ans, nm);
+		UNPROTECT(2);
+
+	COREARRAY_CATCH
+}
+
+
 /// get a logical vector with selection
 COREARRAY_DLL_EXPORT SEXP SEQ_SelectFlag(SEXP select, SEXP len)
 {
@@ -1818,7 +1886,8 @@ COREARRAY_DLL_EXPORT void R_init_SeqArray(DllInfo *info)
 		CALL(SEQ_GetSpace, 2),
 		CALL(SEQ_GetSpaceSample, 1),        CALL(SEQ_GetSpaceVariant, 1),
 
-		CALL(SEQ_Summary, 2),               CALL(SEQ_System, 0),
+		CALL(SEQ_Summary, 2),               CALL(SEQ_SummaryChrom, 1),
+		CALL(SEQ_System, 0),
 
 		CALL(SEQ_GetData, 6),               CALL(SEQ_ListVarData, 2),
 		CALL(SEQ_Apply_Sample, 7),          CALL(SEQ_Apply_Variant, 7),
