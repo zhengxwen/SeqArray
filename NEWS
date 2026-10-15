@@ -33,6 +33,13 @@ UTILITIES
       vectors, so each pushed filter uses 1/8 of the memory (1 bit per
       sample or variant) until it is popped back
 
+    o to reduce memory usage, `seqOpen()` no longer allocates the sample
+      and variant filters (1 byte per sample or variant), since all samples
+      and variants are selected; a filter is allocated only when it is
+      needed (e.g., to set a filter or read data), and resetting the filter
+      (e.g., `seqResetFilter()`) does not release the allocated memory,
+      which is released when the file is closed
+
     o the internal function `.buffer_position()` is removed, since the
       positions of all variants are no longer loaded into memory
 

@@ -97,7 +97,7 @@ static void SNPRelate_InitSelSampOnly(C_BOOL *Sel, TParam *Param)
 	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
 	TSelection &s = File.Selection();
 	s.ClearStructSample();
-	memcpy(s.pSample, Sel, *Param->pTotalSampleNum);
+	memcpy(s.pSample(), Sel, *Param->pTotalSampleNum);
 
 	Done_Object(Param);
 }
@@ -110,7 +110,7 @@ static void SNPRelate_InitSelSNPOnly(C_BOOL *Sel, TParam *Param)
 	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
 	TSelection &s = File.Selection();
 	s.ClearStructVariant();
-	memcpy(s.pVariant, Sel, *Param->pTotalSNPNum);
+	memcpy(s.pVariant(), Sel, *Param->pTotalSNPNum);
 
 	Done_Object(Param);
 }
@@ -199,7 +199,7 @@ static void SNPRelate_SampleRead(C_Int32 SampStart, C_Int32 SampCount,
 			TSelection &Sel = File.Selection();
 			Obj->InitObject(CVariable::ctGenotype,
 				"genotype/data", Root, File.VariantNum(),
-				Sel.pVariant, File.SampleNum(), Sel.pSample, false);
+				Sel.pVariant(), File.SampleNum(), Sel.pSample(), false);
 
 			size_t SIZE = (Obj->Num_Variant) * (Obj->DLen[2]);
 			Param->GenoBuffer = new C_UInt8[SIZE];
@@ -348,7 +348,7 @@ static void SNPRelate_SetSnpSelection(C_BOOL *sel, TParam *Param)
 	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
 	TSelection &s = File.Selection();
 	s.ClearStructVariant();
-	C_BOOL *p = s.pVariant;
+	C_BOOL *p = s.pVariant();
 
 	int sum = 0;
 	for (int i=0; i < *Param->pTotalSNPNum; i++, p++)
@@ -372,7 +372,7 @@ static void SNPRelate_SetSampSelection(C_BOOL *sel, TParam *Param)
 	CFileInfo &File = GetFileInfo(Param->SeqGDSFile);
 	TSelection &s = File.Selection();
 	s.ClearStructSample();
-	C_BOOL *p = s.pSample;
+	C_BOOL *p = s.pSample();
 
 	int sum = 0;
 	for (int i=0; i < *Param->pTotalSampleNum; i++, p++)

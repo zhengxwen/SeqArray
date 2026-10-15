@@ -323,6 +323,8 @@ class CFileInfo;
 /// selection object used in GDS file
 struct COREARRAY_DLL_LOCAL TSelection
 {
+	friend class CFileInfo;
+
 	struct COREARRAY_DLL_LOCAL TSampStruct {
 		ssize_t length;
 		ssize_t offset;
@@ -330,17 +332,24 @@ struct COREARRAY_DLL_LOCAL TSelection
 	};
 
 	TSelection *Link;  ///< the pointer to the last one
-	C_BOOL *pSample;   ///< sample selection, NULL if packed in bitSample
-	C_BOOL *pVariant;  ///< variant selection, NULL if packed in bitVariant
 
 	ssize_t varTrueNum;  ///< the number of TRUEs in pVariant, -1 for requiring initialization
 	ssize_t varStart;    ///< the start position of the first TRUE in pVariant
 	ssize_t varEnd;      ///< the next position of the last TRUE in pVariant
 
-	/// constructor
-	TSelection(CFileInfo &File, bool init);
+	/// constructor, all samples and variants are selected
+	TSelection(CFileInfo &File);
 	/// destructor
 	~TSelection();
+
+	/// return the sample selection, allocated with all TRUEs if it is NULL
+	C_BOOL *pSample();
+	/// return the variant selection, allocated with all TRUEs if it is NULL
+	C_BOOL *pVariant();
+	/// select all samples, and the sample selection is not allocated if NULL
+	void SelectAllSample();
+	/// select all variants, and the variant selection is not allocated if NULL
+	void SelectAllVariant();
 
 	/// get the pointer to the sample reading structure
 	TSampStruct *GetStructSample();
@@ -355,19 +364,20 @@ struct COREARRAY_DLL_LOCAL TSelection
 	void ClearStructVariant();
 
 	/// pack pSample and pVariant into bit vectors to save memory when the
-	///     selection is pushed to the stack (pSample and pVariant are NULL
-	///     after packing, and the selection should not be used until unpacked)
+	///     selection is pushed to the stack (pSample and pVariant are
+	///     (C_BOOL*)1 after packing unless NULL, and the selection should not
+	///     be used until unpacked)
 	void Pack();
 	/// unpack the bit vectors to pSample and pVariant, when the selection is
 	///     popped from the stack
 	void Unpack();
-	/// return true if the selection is packed in bit vectors
-	inline bool IsPacked() const { return pVariant == NULL; }
 	/// return the index of the first selected variant in [start, numVar) of
 	///     a packed selection, or numVar if there is no selected variant
 	size_t NextSelVariant(size_t start) const;
 
 private:
+	C_BOOL *_pSample;   ///< sample selection, NULL for all samples, (C_BOOL*)1 if packed in bitSample
+	C_BOOL *_pVariant;  ///< variant selection, NULL for all variants, (C_BOOL*)1 if packed in bitVariant
 	size_t numSamp;    ///< the total number of samples
 	size_t numVar;     ///< the total number of variants
 	size_t numPloidy;  ///< the ploidy

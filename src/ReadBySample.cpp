@@ -562,7 +562,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_Apply_Sample(SEXP gdsfile, SEXP var_name,
 			}
 
 			NodeList[i].InitObject(VarType, s.c_str(), Root, File.VariantNum(),
-				Sel.pVariant, File.SampleNum(), Sel.pSample,
+				Sel.pVariant(), File.SampleNum(), Sel.pSample(),
 				use_raw_flag != FALSE);
 		}
 

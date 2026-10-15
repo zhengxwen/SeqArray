@@ -100,7 +100,7 @@ struct COREARRAY_DLL_LOCAL TParam
 static SEXP get_sample_1d(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
-	C_BOOL *ss = File.Selection().pSample;
+	C_BOOL *ss = File.Selection().pSample();
 	return GDS_R_Array_Read(Var.Obj, NULL, NULL, &ss,
 		GDS_R_READ_DEFAULT_MODE | (P->use_raw ? GDS_R_READ_ALLOW_RAW_TYPE : 0));
 }
@@ -116,7 +116,7 @@ static SEXP read_position(CFileInfo &File)
 		//     loading the positions of all variants into memory
 		TSelection &Sel = File.Selection();
 		File.PositionCache().Read(Sel.varStart, Sel.varEnd - Sel.varStart,
-			Sel.pVariant + Sel.varStart, INTEGER(rv_ans));
+			Sel.pVariant() + Sel.varStart, INTEGER(rv_ans));
 	}
 	return rv_ans;
 }
@@ -136,7 +136,7 @@ static SEXP get_chrom(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		CChromIndex &Chrom = File.Chromosome();
 		TSelection &Sel = File.Selection();
-		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		C_BOOL *s = Sel.pVariant() + Sel.varStart;
 		size_t p = 0, i = Sel.varStart;
 		SEXP lastR = Rf_mkChar("");
 		string lastS;
@@ -211,7 +211,7 @@ static SEXP get_chrom_rle(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		CChromIndex &Chrom = File.Chromosome();
 		TSelection &Sel = File.Selection();
-		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		C_BOOL *s = Sel.pVariant() + Sel.varStart;
 		size_t i = Sel.varStart;
 		string lastS;
 		for (; n > 0; i++)
@@ -241,7 +241,7 @@ static SEXP get_data_1d(CFileInfo &File, TVarMap &Var, void *param)
 	const TParam *P = (const TParam*)param;
 	TSelection &Sel = File.Selection();
 	Sel.GetStructVariant();
-	C_BOOL *ss = Sel.pVariant + Sel.varStart;
+	C_BOOL *ss = Sel.pVariant() + Sel.varStart;
 	C_Int32 dimst  = Sel.varStart;
 	C_Int32 dimcnt = Sel.varEnd - Sel.varStart;
 	return GDS_R_Array_Read(Var.Obj, &dimst, &dimcnt, &ss,
@@ -305,7 +305,7 @@ static SEXP get_phase(CFileInfo &File, TVarMap &Var, void *param)
 {
 	const TParam *P = (const TParam*)param;
 	TSelection &Sel = File.Selection();
-	C_BOOL *ss[3] = { Sel.pVariant, Sel.pSample, NULL };
+	C_BOOL *ss[3] = { Sel.pVariant(), Sel.pSample(), NULL };
 	if (Var.NDim == 3)
 		ss[2] = NeedArrayTRUEs(Var.Dim[2]);
 	return GDS_R_Array_Read(Var.Obj, NULL, NULL, ss,
@@ -627,7 +627,7 @@ static SEXP get_num_allele(CFileInfo &File, TVarMap &Var, void *param)
 	TSelection &Sel = File.Selection();
 	ssize_t num = File.VariantSelNum();
 	SEXP rv_ans = PROTECT(NEW_INTEGER(num));
-	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
+	CVectorRead<string> D(Var.Obj, Sel.pVariant(), Sel.varStart, num);
 	vector<string> buffer(1024);
 	int n, *p = INTEGER(rv_ans);
 	while ((n = D.Read(&buffer[0], 1024)) > 0)
@@ -645,7 +645,7 @@ static SEXP get_ref_allele(CFileInfo &File, TVarMap &Var, void *param)
 	TSelection &Sel = File.Selection();
 	ssize_t num = File.VariantSelNum();
 	SEXP rv_ans = PROTECT(NEW_CHARACTER(num));
-	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
+	CVectorRead<string> D(Var.Obj, Sel.pVariant(), Sel.varStart, num);
 	vector<string> buffer(1024);
 	int n, k = 0;
 	while ((n = D.Read(&buffer[0], 1024)) > 0)
@@ -668,7 +668,7 @@ static SEXP get_alt_allele(CFileInfo &File, TVarMap &Var, void *param)
 	TSelection &Sel = File.Selection();
 	ssize_t num = File.VariantSelNum();
 	SEXP rv_ans = PROTECT(NEW_CHARACTER(num));
-	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
+	CVectorRead<string> D(Var.Obj, Sel.pVariant(), Sel.varStart, num);
 	vector<string> buffer(1024);
 	int n, k = 0;
 	while ((n = D.Read(&buffer[0], 1024)) > 0)
@@ -696,7 +696,7 @@ static SEXP get_chrom_pos(CFileInfo &File, TVarMap &Var, void *param)
 		TSelection &Sel = File.Selection();
 		SEXP Pos = PROTECT(read_position(File));  // selected positions
 		const int *pos = INTEGER(Pos);
-		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		C_BOOL *s = Sel.pVariant() + Sel.varStart;
 		size_t p = 0, i = Sel.varStart;
 		char buf[1024] = { 0 };
 		for (; n > 0; i++)
@@ -725,7 +725,7 @@ static SEXP get_chrom_pos2(CFileInfo &File, TVarMap &Var, void *param)
 		TSelection &Sel = File.Selection();
 		SEXP Pos = PROTECT(read_position(File));  // selected positions
 		const int *pos = INTEGER(Pos);
-		C_BOOL *s = Sel.pVariant + Sel.varStart;
+		C_BOOL *s = Sel.pVariant() + Sel.varStart;
 		size_t p = 0, i = Sel.varStart;
 		char buf1[1024] = { 0 };
 		char buf2[1024] = { 0 };
@@ -766,8 +766,9 @@ static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 	SEXP rv_ans = PROTECT(NEW_CHARACTER(num));
 	SEXP Pos = PROTECT(read_position(File));  // selected positions
 	const int *PosSel = INTEGER(Pos);
-	CVectorRead<string> D(Var.Obj, Sel.pVariant, Sel.varStart, num);
-	C_BOOL *psel = Sel.pVariant + Sel.varStart;
+	C_BOOL *sel = Sel.pVariant();
+	CVectorRead<string> D(Var.Obj, sel, Sel.varStart, num);
+	C_BOOL *psel = sel + Sel.varStart;
 	vector<string> buffer(1024);
 	char strbuf[8192] = { 0 };
 	int n, k = 0;
@@ -776,7 +777,7 @@ static SEXP get_chrom_pos_allele(CFileInfo &File, TVarMap &Var, void *param)
 		for (int i=0; i < n; i++)
 		{
 			while (!*psel) psel++;
-			size_t j = (psel++) - Sel.pVariant;
+			size_t j = (psel++) - sel;
 			const int pos = PosSel[k];
 			const char *chr = Chrom[j].c_str();
 			const char *allele = buffer[i].c_str();
@@ -796,7 +797,7 @@ static SEXP get_sample_index(CFileInfo &File, TVarMap &Var, void *param)
 	ssize_t num = File.SampleSelNum();
 	SEXP rv_ans = NEW_INTEGER(num);
 	int *p = INTEGER(rv_ans), i = 0;
-	const C_BOOL *s = File.Selection().pSample;
+	const C_BOOL *s = File.Selection().pSample();
 	while (num > 0)
 		if (s[i++]) { *p++ = i; num--; }
 	return rv_ans;
@@ -809,7 +810,7 @@ static SEXP get_variant_index(CFileInfo &File, TVarMap &Var, void *param)
 	ssize_t num = File.VariantSelNum();
 	SEXP rv_ans = NEW_INTEGER(num);
 	int *p = INTEGER(rv_ans), i = Sel.varStart;
-	const C_BOOL *s = Sel.pVariant;
+	const C_BOOL *s = Sel.pVariant();
 	while (num > 0)
 		if (s[i++]) { *p++ = i; num--; }
 	return rv_ans;
@@ -954,7 +955,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		// no index or fixed-one
 		Sel.GetStructVariant();
-		C_BOOL *ss[2] = { Sel.pVariant+Sel.varStart, NULL };
+		C_BOOL *ss[2] = { Sel.pVariant()+Sel.varStart, NULL };
 		if (Var.NDim == 2)
 			ss[1] = NeedArrayTRUEs(Var.Dim[1]);
 		C_Int32 dimst[2]  = { C_Int32(Sel.varStart), 0 };
@@ -971,7 +972,7 @@ static SEXP get_info(CFileInfo &File, TVarMap &Var, void *param)
 		int var_start, var_count;
 		vector<C_BOOL> var_sel;
 		// get var_start, var_count, var_sel
-		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count,
+		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant(), var_start, var_count,
 			var_sel));
 
 		C_BOOL *ss[2] = { &var_sel[0], NULL };
@@ -1102,7 +1103,7 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 	{
 		// no index or fixed-one
 		Sel.GetStructVariant();
-		C_BOOL *ss[2] = { Sel.pVariant+Sel.varStart, Sel.pSample };
+		C_BOOL *ss[2] = { Sel.pVariant()+Sel.varStart, Sel.pSample() };
 		C_Int32 dimst[2]  = { C_Int32(Sel.varStart), 0 };
 		C_Int32 dimcnt[2] = { C_Int32(Sel.varEnd-Sel.varStart), Var.Dim[1] };
 		rv_ans = GDS_R_Array_Read(Var.Obj, dimst, dimcnt, ss, UseMode);
@@ -1111,10 +1112,10 @@ static SEXP get_format(CFileInfo &File, TVarMap &Var, void *param)
 	} else {
 		int var_start, var_count;
 		vector<C_BOOL> var_sel;
-		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant, var_start, var_count,
+		SEXP I32 = PROTECT(V.GetLen_Sel(Sel.pVariant(), var_start, var_count,
 			var_sel));
 
-		C_BOOL *ss[2] = { &var_sel[0], Sel.pSample };
+		C_BOOL *ss[2] = { &var_sel[0], Sel.pSample() };
 		C_Int32 dimst[2]  = { var_start, 0 };
 		C_Int32 dimcnt[2];
 		GDS_Array_GetDim(Var.Obj, dimcnt, 2);
@@ -1251,7 +1252,7 @@ static SEXP get_env_R(CFileInfo &File, TVarMap &Var, void *param)
 			rv_ans = PROTECT(NEW_INTEGER(n)); nprot++;
 			int *b = INTEGER(x), *p = INTEGER(rv_ans);
 			size_t i = Sel.varStart;
-			C_BOOL *s = Sel.pVariant;
+			C_BOOL *s = Sel.pVariant();
 			for (; n > 0; i++)
 				if (s[i]) { *p++ = b[i]; n--; }
 		} else if (Rf_isLogical(x))
@@ -1259,7 +1260,7 @@ static SEXP get_env_R(CFileInfo &File, TVarMap &Var, void *param)
 			rv_ans = PROTECT(NEW_LOGICAL(n)); nprot++;
 			int *b = INTEGER(x), *p = INTEGER(rv_ans);
 			size_t i = Sel.varStart;
-			C_BOOL *s = Sel.pVariant;
+			C_BOOL *s = Sel.pVariant();
 			for (; n > 0; i++)
 				if (s[i]) { *p++ = b[i]; n--; }
 		} else if (Rf_isReal(x))
@@ -1267,14 +1268,14 @@ static SEXP get_env_R(CFileInfo &File, TVarMap &Var, void *param)
 			rv_ans = PROTECT(NEW_NUMERIC(n)); nprot++;
 			double *b = REAL(x), *p = REAL(rv_ans);
 			size_t i = Sel.varStart;
-			C_BOOL *s = Sel.pVariant;
+			C_BOOL *s = Sel.pVariant();
 			for (; n > 0; i++)
 				if (s[i]) { *p++ = b[i]; n--; }
 		} else if (Rf_isString(x))
 		{
 			rv_ans = PROTECT(NEW_CHARACTER(n)); nprot++;
 			size_t p=0, i=Sel.varStart;
-			C_BOOL *s = Sel.pVariant;
+			C_BOOL *s = Sel.pVariant();
 			for (; n > 0; i++)
 			{
 				if (s[i])
@@ -1651,7 +1652,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 		// local selection
 		TSelection &Sel = File.Push_Selection(true, false);
 		Sel.ClearStructVariant();
-		memset(Sel.pVariant, 0, File.VariantNum());
+		memset(Sel.pVariant(), 0, File.VariantNum());
 
 		// the base selection 'Selection' is packed in bit vectors after being
 		// pushed to the stack, use Selection.NextSelVariant() to access it
@@ -1681,7 +1682,7 @@ COREARRAY_DLL_EXPORT SEXP SEQ_BApply_Variant(SEXP gdsfile, SEXP var_name,
 				iSel = Selection.NextSelVariant(iSel);
 				Sel.varStart = iSel;
 				// for-loop
-				C_BOOL *pNewSel = Sel.pVariant;
+				C_BOOL *pNewSel = Sel.pVariant();
 				int bs = bsize;
 				for (; bs > 0; bs--)
 				{

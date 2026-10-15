@@ -622,40 +622,76 @@ static size_t find_true_bit(const C_UInt8 *bits, size_t start, size_t n)
 }
 
 
-TSelection::TSelection(CFileInfo &File, bool init)
+// the value of TSelection::_pSample or _pVariant when packed in bit vectors
+static C_BOOL *const SEL_PACKED = (C_BOOL*)1;
+
+TSelection::TSelection(CFileInfo &File)
 {
 	Link = NULL;
 	if (File.Ploidy() <= 0)
 		throw ErrSeqArray("Unable to determine ploidy.");
 	numPloidy = File.Ploidy();
-	numSamp = File.SampleNum(); pSample = new C_BOOL[numSamp];
-	if (init) memset(pSample, TRUE, numSamp);
-	numVar = File.VariantNum(); pVariant = new C_BOOL[numVar];
-	if (init) memset(pVariant, TRUE, numVar);
+	numSamp = File.SampleNum();
+	numVar = File.VariantNum();
+	// all selected, and the arrays are allocated when they are needed
+	_pSample = _pVariant = NULL;
 	pFlagGenoSel = NULL;
 	varTrueNum = -1; varStart = varEnd = 0;
 }
 
 TSelection::~TSelection()
 {
-	if (pSample)
-		{ delete[] pSample; pSample = NULL; }
-	if (pVariant)
-		{ delete[] pVariant; pVariant = NULL; }
+	if (_pSample != SEL_PACKED) delete[] _pSample;
+	if (_pVariant != SEL_PACKED) delete[] _pVariant;
+	_pSample = _pVariant = NULL;
 	ClearStructSample();
 	Link = NULL;
+}
+
+C_BOOL *TSelection::pSample()
+{
+	if (!_pSample)
+	{
+		_pSample = new C_BOOL[numSamp];
+		memset(_pSample, TRUE, numSamp);
+	}
+	return _pSample;
+}
+
+C_BOOL *TSelection::pVariant()
+{
+	if (!_pVariant)
+	{
+		_pVariant = new C_BOOL[numVar];
+		memset(_pVariant, TRUE, numVar);
+	}
+	return _pVariant;
+}
+
+void TSelection::SelectAllSample()
+{
+	// the allocated array is kept, since it might be used by other objects
+	if (_pSample) memset(_pSample, TRUE, numSamp);
+}
+
+void TSelection::SelectAllVariant()
+{
+	// the allocated array is kept, since it might be used by other objects
+	if (_pVariant) memset(_pVariant, TRUE, numVar);
 }
 
 TSelection::TSampStruct *TSelection::GetStructSample()
 {
 	// the block size considered in the block reading
 	static ptrdiff_t block_size = 512;
+	// the sample selection
+	C_BOOL *const pSamp = pSample();
 
 	if (!pFlagGenoSel)
 	{
 		const size_t SIZE = numSamp * numPloidy;
 		pFlagGenoSel = new C_BOOL[SIZE];  // set the output
-		C_BOOL *p = pFlagGenoSel, *s = pSample;
+		C_BOOL *p = pFlagGenoSel, *s = pSamp;
 		memset(p, TRUE, SIZE);
 		for (size_t n=numSamp; n > 0; n--)
 		{
@@ -672,7 +708,7 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 	{
 		TSampStruct ss, last;
 		last.length = last.offset = 0; last.sel = NULL;
-		C_BOOL *pSt = pSample, *pEnd = pSample + numSamp;
+		C_BOOL *pSt = pSamp, *pEnd = pSamp + numSamp;
 		// find the first TRUE
 		while (pSt<pEnd && !*pSt) pSt++;
 		// for-loop all TRUE blocks
@@ -694,7 +730,7 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 					last.length = 0;
 				}
 				ss.length = (pE - pSt) * numPloidy;
-				ss.offset = (pSt - pSample) * numPloidy;
+				ss.offset = (pSt - pSamp) * numPloidy;
 				ss.sel = NULL;
 				pSampList.push_back(ss);
 			} else if (pSt2-pE >= block_size)
@@ -703,14 +739,14 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 				if (last.length > 0)
 				{
 					// merge with the last block
-					last.length = (pE - pSample) * numPloidy - last.offset;
+					last.length = (pE - pSamp) * numPloidy - last.offset;
 					if (!last.sel)
 						last.sel = pFlagGenoSel + last.offset;
 					pSampList.push_back(last);
 					last.length = 0;
 				} else {
 					ss.length = (pE - pSt) * numPloidy;
-					ss.offset = (pSt - pSample) * numPloidy;
+					ss.offset = (pSt - pSamp) * numPloidy;
 					ss.sel = NULL;
 					pSampList.push_back(ss);
 				}
@@ -719,12 +755,12 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 				if (last.length > 0)
 				{
 					// merge with the last block
-					last.length = (pE - pSample) * numPloidy - last.offset;
+					last.length = (pE - pSamp) * numPloidy - last.offset;
 					if (!last.sel)
 						last.sel = pFlagGenoSel + last.offset;
 				} else {
 					last.length = (pE - pSt) * numPloidy;
-					last.offset = (pSt - pSample) * numPloidy;
+					last.offset = (pSt - pSamp) * numPloidy;
 					last.sel = NULL;
 				}
 			}
@@ -750,7 +786,7 @@ TSelection::TSampStruct *TSelection::GetStructSample()
 			else
 				num += p->length;
 		}
-		ssize_t num_samp = GetNumOfTRUE(pSample, numSamp);
+		ssize_t num_samp = GetNumOfTRUE(pSamp, numSamp);
 		if (num_samp*int(numPloidy) != num)
 			throw ErrSeqArray("Internal error when preparing structure for selected samples, please email to zhengxwen@gmail.com.");
 	}
@@ -772,25 +808,31 @@ void TSelection::GetStructVariant()
 {
 	if (varTrueNum < 0)
 	{
-		C_BOOL *end = pVariant + numVar;
-		C_BOOL *p = VEC_BOOL_FIND_TRUE(pVariant, end);
-		varStart = p - pVariant;
+		if (!_pVariant)
+		{
+			// all variants are selected
+			varStart = 0; varEnd = varTrueNum = numVar;
+			return;
+		}
+		C_BOOL *end = _pVariant + numVar;
+		C_BOOL *p = VEC_BOOL_FIND_TRUE(_pVariant, end);
+		varStart = p - _pVariant;
 		C_BOOL *last = end - 1;
 		size_t num = 0;
 		for (; p < end; p++)
 			if (*p) { num++; last = p; }
 		varTrueNum = num;
-		varEnd = last + 1 - pVariant;
+		varEnd = last + 1 - _pVariant;
 	}
 }
 
 void TSelection::ClearSelectVariant()
 {
-	if (varTrueNum < 0)
+	if ((varTrueNum < 0) || !_pVariant)
 	{
-		memset(pVariant, 0, numVar);
+		memset(pVariant(), 0, numVar);
 	} else {
-		memset(pVariant+varStart, 0, varEnd-varStart);
+		memset(_pVariant+varStart, 0, varEnd-varStart);
 	}
 	varTrueNum = varStart = varEnd = 0;
 }
@@ -803,38 +845,58 @@ void TSelection::ClearStructVariant()
 
 void TSelection::Pack()
 {
-	if (IsPacked()) return;
+	// NULL (all selected) is kept, only the allocated arrays are packed
+	const bool ps = _pSample && (_pSample != SEL_PACKED);
+	const bool pv = _pVariant && (_pVariant != SEL_PACKED);
 	// allocate first, so nothing is changed if it fails
-	bitSample.resize((numSamp + 7) / 8);
-	bitVariant.resize((numVar + 7) / 8);
-	pack_bits(pSample, numSamp, bitSample.data());
-	pack_bits(pVariant, numVar, bitVariant.data());
-	delete[] pSample; pSample = NULL;
-	delete[] pVariant; pVariant = NULL;
+	if (ps) bitSample.resize((numSamp + 7) / 8);
+	if (pv) bitVariant.resize((numVar + 7) / 8);
+	if (ps)
+	{
+		pack_bits(_pSample, numSamp, bitSample.data());
+		delete[] _pSample; _pSample = SEL_PACKED;
+	}
+	if (pv)
+	{
+		pack_bits(_pVariant, numVar, bitVariant.data());
+		delete[] _pVariant; _pVariant = SEL_PACKED;
+	}
 }
 
 void TSelection::Unpack()
 {
-	if (!IsPacked()) return;
 	// allocate first, so nothing is changed if it fails
-	C_BOOL *s = new C_BOOL[numSamp];
-	C_BOOL *v = NULL;
-	try {
-		v = new C_BOOL[numVar];
-	} catch (...) {
-		delete[] s; throw;
+	C_BOOL *s = NULL, *v = NULL;
+	if (_pSample == SEL_PACKED)
+		s = new C_BOOL[numSamp];
+	if (_pVariant == SEL_PACKED)
+	{
+		try {
+			v = new C_BOOL[numVar];
+		} catch (...) {
+			delete[] s; throw;
+		}
 	}
-	unpack_bits(bitSample.data(), numSamp, s);
-	unpack_bits(bitVariant.data(), numVar, v);
-	pSample = s; pVariant = v;
-	// release the memory of bit vectors
-	vector<C_UInt8>().swap(bitSample);
-	vector<C_UInt8>().swap(bitVariant);
+	// release the memory of bit vectors after unpacking
+	if (s)
+	{
+		unpack_bits(bitSample.data(), numSamp, s);
+		_pSample = s;
+		vector<C_UInt8>().swap(bitSample);
+	}
+	if (v)
+	{
+		unpack_bits(bitVariant.data(), numVar, v);
+		_pVariant = v;
+		vector<C_UInt8>().swap(bitVariant);
+	}
 }
 
 size_t TSelection::NextSelVariant(size_t start) const
 {
-	if (!IsPacked())
+	if (!_pVariant)  // all variants are selected
+		return (start < numVar) ? start : numVar;
+	if (_pVariant != SEL_PACKED)
 		throw ErrSeqArray("Internal error: the selection is not packed.");
 	return find_true_bit(bitVariant.data(), start, numVar);
 }
@@ -1121,7 +1183,7 @@ void CFileInfo::ResetRoot(PdGDSFolder root)
 			_Ploidy = 2;
 
 		// initialize selection
-		_SelList = new TSelection(*this, true);
+		_SelList = new TSelection(*this);
 	}
 }
 
@@ -1134,12 +1196,14 @@ TSelection &CFileInfo::Selection()
 
 TSelection &CFileInfo::Push_Selection(bool init_samp, bool init_var)
 {
-	TSelection *n = new TSelection(*this, false);
+	// all samples and variants are selected in the new selection
+	TSelection *n = new TSelection(*this);
 	try {
-		if (init_samp)
-			memcpy(n->pSample, _SelList->pSample, _SampleNum);
-		if (init_var)
-			memcpy(n->pVariant, _SelList->pVariant, _VariantNum);
+		// copy the current selection unless it is NULL (all selected)
+		if (init_samp && _SelList->_pSample)
+			memcpy(n->pSample(), _SelList->_pSample, _SampleNum);
+		if (init_var && _SelList->_pVariant)
+			memcpy(n->pVariant(), _SelList->_pVariant, _VariantNum);
 		// pack the current selection into bit vectors to save memory, since
 		// it is not used until popped back
 		_SelList->Pack();
@@ -1225,7 +1289,8 @@ PdAbstractArray CFileInfo::GetObj(const char *name, C_BOOL MustExist)
 int CFileInfo::SampleSelNum()
 {
 	TSelection &s = Selection();
-	return vec_i8_cnt_nonzero((C_Int8*)s.pSample, _SampleNum);
+	if (!s._pSample) return _SampleNum;  // all samples are selected
+	return vec_i8_cnt_nonzero((C_Int8*)s._pSample, _SampleNum);
 }
 
 int CFileInfo::VariantSelNum()
@@ -1330,7 +1395,7 @@ void CApply_Variant::InitMarginal(CFileInfo &File)
 	Sel.GetStructVariant();
 	MarginalStart = Sel.varStart;
 	MarginalEnd = Sel.varEnd;
-	MarginalSelect = Sel.pVariant;
+	MarginalSelect = Sel.pVariant();
 }
 
 

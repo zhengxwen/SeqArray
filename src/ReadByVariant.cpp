@@ -627,7 +627,7 @@ void CApply_Variant_Phase::Init(CFileInfo &File, bool use_raw)
 	Selection.resize(SiteCount);
 	C_BOOL *p = &Selection[0];
 	memset(p, TRUE, SiteCount);
-	C_BOOL *s = File.Selection().pSample;
+	C_BOOL *s = File.Selection().pSample();
 	for (int n=DLen[1]; n > 0; n--)
 	{
 		if (*s++ == FALSE)
@@ -789,7 +789,7 @@ void CApply_Variant_Format::Init(CFileInfo &File, const char *var_name)
 
 	// initialize selection
 	SelPtr[0] = NULL;
-	SelPtr[1] = File.Selection().pSample;
+	SelPtr[1] = File.Selection().pSample();
 
 	Reset();
 }
