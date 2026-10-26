@@ -1325,7 +1325,7 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
                 nc <- .seldim(gds)[3L]
                 g <- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
                 .cfunction("FC_InitPackedGeno")(g)
-                seqApply(gdsfile, varnm, FUN=.cfunction("FC_SetPackedGenoSxV"),
+                seqApply(gds, varnm, FUN=.cfunction("FC_SetPackedGenoSxV"),
                     as.is="none", .useraw=NA)
                 # output
                 list(i=process_block_index, g=g)
@@ -1347,7 +1347,7 @@ seqGet2bGeno <- function(gdsfile, samp_by_var=TRUE, ext_nbyte=0L,
                 nr <- ceiling(.seldim(gds)[3L]/4L)
                 g <- matrix(as.raw(0xFF), nrow=nr, ncol=nc)
                 .cfunction("FC_InitPackedGeno")(g)
-                seqApply(gdsfile, varnm, FUN=.cfunction("FC_SetPackedGenoVxS"),
+                seqApply(gds, varnm, FUN=.cfunction("FC_SetPackedGenoVxS"),
                     as.is="none", .useraw=NA)
                 # output
                 list(i=process_block_index, g=g)

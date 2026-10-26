@@ -803,7 +803,7 @@ seqDigest <- function(gdsfile, varname, algo=c("md5"), parallel=FALSE,
                 # initialize
                 .cfunction("FC_DigestInit")(algo)
                 # scan
-                seqApply(gdsfile, varname, FUN=.cfunction("FC_DigestScan"),
+                seqApply(f, varname, FUN=.cfunction("FC_DigestScan"),
                     margin="by.variant", as.is="none", .useraw=NA,
                     .progress=verbose && (process_index==1L))
                 # return a string

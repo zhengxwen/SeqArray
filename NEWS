@@ -55,6 +55,10 @@ BUG FIXES
     o `seqVCF2GDS()` failed with "more columns than what expected" on a VCF
       file with a FORMAT column but no sample
 
+    o `seqDigest()` and `seqGet2bGeno()` in parallel failed if another GDS
+      file had been opened before the input file, and `seqDigest()` returned
+      an incorrect digest with a BiocParallel `MulticoreParam` object
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------
