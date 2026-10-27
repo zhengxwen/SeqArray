@@ -59,6 +59,9 @@ BUG FIXES
       file had been opened before the input file, and `seqDigest()` returned
       an incorrect digest with a BiocParallel `MulticoreParam` object
 
+    o `seqParallel()` and `seqUnitApply()` with a cluster object returned
+      incorrect results after a previous call on the same cluster failed
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------

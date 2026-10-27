@@ -519,18 +519,34 @@ process_balancing_multiple <- 3L
         p <- length(cl)
         if ((.num > 0L) && p)
         {
+            # the number of the submitted jobs whose results are not received
+            nwait <- 0L
+
             ####  this closure is sending to all nodes
 
             argfun <- function(i) c(i, list(...))
             submit <- function(node, job)
+            {
                 .sendCall(cl[[node]], .fun, argfun(job), tag = job)
+                nwait <<- nwait + 1L
+            }
+
+            # when exiting on error, receive the results of the running jobs,
+            #   otherwise they would be received by the next call on 'cl'
+            on.exit({
+                while (nwait > 0L)
+                {
+                    nwait <- nwait - 1L
+                    if (inherits(try(.recvOneResult(cl), silent=TRUE),
+                        "try-error")) break
+                }
+            })
 
             for (i in 1:min(.num, p)) submit(i, i)
             for (i in seq_len(.num))
             {
                 d <- .recvOneResult(cl)
-                j <- i + min(.num, p)
-                if (j <= .num) submit(d$node, j)
+                nwait <- nwait - 1L
 
                 dv <- d$value
                 if (inherits(dv, "try-error"))
@@ -538,6 +554,9 @@ process_balancing_multiple <- 3L
                     stop("One of the nodes produced an error: ",
                         as.character(dv))
                 }
+
+                j <- i + min(.num, p)
+                if (j <= .num) submit(d$node, j)
 
                 if (is.function(.combinefun))
                 {
