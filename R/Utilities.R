@@ -837,30 +837,76 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 
 ####  Run with BiocParallel  ####
 
-# combine results from bplapply
-.bp_combine_results <- function(ans, .combine)
+# call .dofun(i, ...) for i in 1:.num with a BiocParallelParam object, like
+#   .DynamicClusterCall(): the jobs are sent to the workers one by one, and
+#   the results are combined by .combinefun once they are received
+.bp_dynamic_call <- function(cl, .num, .dofun, .combinefun, .updatefun=NULL,
+    ...)
 {
-    if (identical(.combine, "none"))
+    argone <- FALSE
+    if (is.function(.combinefun))
+        argone <- length(formals(args(.combinefun))) == 1L
+    if (identical(.combinefun, "unlist") | identical(.combinefun, "list"))
+        ans <- vector("list", .num)
+    else
+        ans <- NULL
+
+    # the number of received results
+    k <- 0L
+    # the error in .combinefun or .updatefun, which is raised after all
+    #   running jobs are done, since an error in bpiterate(REDUCE=) would leave
+    #   their results to the next call on 'cl'
+    err <- NULL
+    # combine a result d = list(job index, value)
+    reduce <- function(x, d)
     {
-        return(invisible())
-    } else if (identical(.combine, "unlist"))
-    {
-        return(unlist(ans, recursive=FALSE))
-    } else if (identical(.combine, "list"))
-    {
-        return(ans)
-    } else if (is.function(.combine))
-    {
-        if (length(formals(args(.combine))) == 1L)
-        {
-            for (v in ans) .combine(v)
-            return(invisible())
-        } else {
-            return(Reduce(.combine, ans))
-        }
+        if (!is.null(err)) return(NULL)
+        err <<- tryCatch({
+            dv <- d[[2L]]
+            if (is.function(.combinefun))
+            {
+                if (argone)
+                {
+                    .combinefun(dv)
+                } else {
+                    if (is.null(ans))
+                        ans <<- dv
+                    else
+                        ans <<- .combinefun(ans, dv)
+                }
+            } else if (.combinefun %in% c("unlist", "list"))
+            {
+                # assignment NULL would remove it from the list
+                if (!is.null(dv)) ans[[d[[1L]]]] <<- dv
+            }
+            k <<- k + 1L
+            if (is.function(.updatefun)) .updatefun(k)
+            NULL
+        }, error = function(e) e)
+        NULL
     }
+
+    if (inherits(cl, "DoparParam"))
+    {
+        # bpiterate() is not supported, so combine after all jobs are done
+        v <- BiocParallel::bplapply(seq_len(.num), .bp_tag, .dofun=.dofun,
+            ..., BPPARAM=cl)
+        for (d in v) reduce(NULL, d)
+    } else {
+        # the job index, no new job after an error
+        i <- 0L
+        iter <- function() if (is.null(err) && i < .num) (i <<- i + 1L)
+        BiocParallel::bpiterate(iter, .bp_tag, .dofun=.dofun, ...,
+            REDUCE=reduce, init=NULL, BPPARAM=cl)
+    }
+    if (!is.null(err)) stop(err)
+
+    # output
     ans
 }
+
+# call .dofun(i, ...) in a worker, and return list(i, value)
+.bp_tag <- function(i, .dofun, ...) list(i, .dofun(i, ...))
 
 # the functions below are called in the workers of BiocParallel; they are not
 #   closures, so that the caller's environment is not sent to the workers;
@@ -985,24 +1031,24 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         if (is.null(gdsfile))
         {
             # no GDS file: call FUN(...) on each worker
-            ans <- BiocParallel::bplapply(seq_len(njobs), .bp_do_0,
-                .cnt=njobs, .fun=FUN, .args=args, .package=.package,
-                BPPARAM=cl)
+            ans <- .bp_dynamic_call(cl, njobs, .dofun = .bp_do_0,
+                .combinefun=.combine, .cnt=njobs, .fun=FUN, .args=args,
+                .package=.package)
 
         } else if (inherits(gdsfile, "SeqVarGDSClass"))
         {
             # GDS file: open, set filter, split, call FUN
-            ans <- BiocParallel::bplapply(seq_len(njobs), .bp_do,
-                .cnt=njobs, .gds.fn=gdsfile$filename, .sel=sel, .fun=FUN,
-                .args=args, .split=split, .selection.flag=.selection.flag,
-                .package=.package, BPPARAM=cl)
+            ans <- .bp_dynamic_call(cl, njobs, .dofun = .bp_do,
+                .combinefun=.combine, .cnt=njobs, .gds.fn=gdsfile$filename,
+                .sel=sel, .fun=FUN, .args=args, .split=split,
+                .selection.flag=.selection.flag, .package=.package)
 
         } else {
             # numeric gdsfile: call FUN(i, ...) for i in 1:gdsfile
             stopifnot(is.numeric(gdsfile))
-            ans <- BiocParallel::bplapply(seq_len(as.integer(gdsfile)),
-                .bp_do_1, .cnt=njobs, .fun=FUN, .args=args,
-                .package=.package, BPPARAM=cl)
+            ans <- .bp_dynamic_call(cl, as.integer(gdsfile),
+                .dofun = .bp_do_1, .combinefun=.combine, .cnt=njobs,
+                .fun=FUN, .args=args, .package=.package)
         }
 
     } else {
@@ -1010,27 +1056,26 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 
         # selection indexing
         v <- .prepare_balancing(gdsfile, njobs, dm, split, .bl_size)
+        progress <- if (.bl_progress) .seqProgress(v$totcnt) else NULL
+        updatefun <- if (.bl_progress)
+            function(i) .seqProgForward(progress, v$bl_size) else NULL
 
-        # use BiocParallel's progress bar if requested
-        if (isTRUE(.bl_progress))
-        {
-            old_prog <- BiocParallel::bpprogressbar(cl)
-            BiocParallel::bpprogressbar(cl) <- TRUE
-            on.exit({
-                BiocParallel::bpprogressbar(cl) <- old_prog
-            }, add=TRUE)
-        }
-
-        # distribute blocks across workers via bplapply
-        ans <- BiocParallel::bplapply(seq_len(v$nblock), .bp_do_bl,
+        # distribute blocks across workers
+        ans <- .bp_dynamic_call(cl, v$nblock, .dofun = .bp_do_bl,
+            .combinefun=.combine, .updatefun=updatefun,
             .gds.fn=gdsfile$filename, .sel=sel, .fun=FUN, .args=args,
             .split=(split=="by.variant"), .sel_idx=v$sel_idx,
             .bl_size=v$bl_size, .selection.flag=.selection.flag,
-            .totcnt=v$totcnt, .package=.package, BPPARAM=cl)
+            .totcnt=v$totcnt, .package=.package)
+
+        # close progress object
+        remove(progress)
     }
 
-    # combine results
-    .bp_combine_results(ans, .combine)
+    # return
+    if (is.list(ans) & identical(.combine, "unlist"))
+        ans <- unlist(ans, recursive=FALSE)
+    ans
 }
 
 
