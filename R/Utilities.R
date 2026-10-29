@@ -91,19 +91,31 @@ seqParallelSetup <- function(cluster=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.null(cluster) || is.logical(cluster) ||
-        is.numeric(cluster) || inherits(cluster, "cluster"))
+        is.numeric(cluster) || inherits(cluster, "cluster") ||
+        inherits(cluster, "BiocParallelParam"))
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.na(verbose)) verbose <- FALSE
 
     if (is.null(cluster) || isFALSE(cluster))
     {
         cl <- .PkgEnv$seqarray.parallel
+        .PkgEnv$seqarray.parallel <- NULL
         if (inherits(cl, "cluster"))
         {
-            .PkgEnv$seqarray.parallel <- NULL
             stopCluster(cl)
             if (verbose)
                 cat("Stop the computing cluster.\n")
+        } else if (inherits(cl, "BiocParallelParam"))
+        {
+            # the workers are running only if they are started by the user
+            if (BiocParallel::bpisup(cl))
+            {
+                BiocParallel::bpstop(cl)
+                # DoparParam is still up, since the foreach backend is not
+                #   stopped by bpstop()
+                if (verbose && !BiocParallel::bpisup(cl))
+                    cat("Stop the computing cluster.\n")
+            }
         }
         return(invisible())
     }

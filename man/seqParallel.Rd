@@ -81,6 +81,20 @@ of forking on Windows, without allocating clusters frequently.
 \code{SeqArray:::process_count} and \code{SeqArray:::process_index} to
 tell the total number of cluster nodes and which cluster node being used.
 
+    When \code{cl} is a \code{BiocParallelParam} object, the jobs are sent to
+the workers one by one via \code{BiocParallel::bpiterate()} and the results
+are combined once they are received (\code{BiocParallel::bplapply()} is used
+for a \code{DoparParam} object, since \code{bpiterate()} is not supported).
+If the workers are not started, they are started by \code{bpstart()} at the
+beginning of the call and stopped by \code{bpstop()} at the end; otherwise,
+they are kept running. \code{.initialize} is called in a worker when it
+receives the first job of the call, and \code{.finalize} is called at the end
+of the call in each worker that has been initialized. For \code{SnowParam}
+and \code{MulticoreParam}, the process ID (i.e., the first argument of
+\code{.initialize} and \code{SeqArray:::process_index}) is between 1 and
+\code{SeqArray:::process_count}; for the other backends, it may be larger,
+and \code{.finalize} may not be called in all initialized workers.
+
     \code{seqParallel(, gdsfile=NULL, FUN=..., split="none")} could be used to
 setup multiple streams of pseudo-random numbers, and see
 \code{\link{nextRNGStream}} or \code{\link{nextRNGSubStream}} in the package

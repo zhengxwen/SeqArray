@@ -10,7 +10,16 @@ NEW FEATURES
       of a cluster or a `BiocParallelParam` object, or in the current R
       process before forking or when only one process is used
 
+    o `seqUnitApply()` and `seqParallelSetup()` accept a `BiocParallelParam`
+      object
+
 UTILITIES
+
+    o `seqParallel()` with a `BiocParallelParam` object sends the jobs to the
+      workers one by one and combines each result once it is received, as
+      with a cluster object; the workers not started yet are started once
+      for the whole call, and `.initialize` and `.finalize` are called once
+      in each worker
 
     o `seqGetData(, "position")`, "$chrom_pos", "$chrom_pos2" and
       "$chrom_pos_allele", and `seqApply()` with these variables no longer
@@ -62,6 +71,22 @@ BUG FIXES
     o `seqParallel()` and `seqUnitApply()` with a cluster object returned
       incorrect results after a previous call on the same cluster failed
 
+    o `seqApply()` and `seqBlockApply()` failed with a `BiocParallelParam`
+      object, and `seqGet2bGeno()` crashed R with it
+
+    o `seqParallel()` with a `BiocParallelParam` object: the variables set by
+      `.initialize` were not visible in `FUN` unless the workers had been
+      started, `process_index` was 0 for a numeric `gdsfile`, and
+      `process_block_index` was 0 for `.balancing=TRUE`
+
+    o `seqParallel()` with a `BiocParallelParam` object called `FUN` with an
+      empty selection if fewer variants (or samples) were selected than the
+      workers
+
+    o `seqParallelSetup(FALSE)` did not remove the setting of
+      `seqParallelSetup(TRUE)` or `seqParallelSetup(<number>)` on Linux and
+      macOS, so the following calls still ran in parallel
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------
@@ -73,8 +98,7 @@ NEW FEATURES
       ARM64 platforms
 
     o `seqParallel()` supports a `BiocParallelParam` object for the `cl`
-      argument, with full feature parity to the cluster-based path, including
-      load balancing, init/finalize hooks, and numeric/NULL `gdsfile` inputs
+      argument
 
 UTILITIES
 

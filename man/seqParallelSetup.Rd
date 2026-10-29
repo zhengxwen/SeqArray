@@ -16,7 +16,8 @@ seqMulticoreSetup(num, type=c("psock", "fork"), verbose=TRUE)
         parallel processing with the maximum number of cores minor one;
         a numeric value: the number of cores to be used;
         a cluster object for parallel processing, created by the functions
-        in the package \code{\link{parallel}}, like \code{\link{makeCluster}}.
+        in the package \code{\link{parallel}}, like \code{\link{makeCluster}};
+        a \code{BiocParallelParam} object from the BiocParallel package.
         See details}
     \item{num}{the maximum number of cores used for the user-defined multicore
         setting; FALSE, NA or any value less than 2, to disable the pre-defined
@@ -35,6 +36,10 @@ multiple processes created by \code{\link{makeCluster}} are used instead.
 to the value of \code{cluster}.
     Using \code{seqParallelSetup(FALSE)} removes the registered cluster, as
 does stopping the registered cluster.
+    For a registered \code{BiocParallelParam} object,
+\code{seqParallelSetup(FALSE)} calls \code{bpstop()} if its workers have been
+started by \code{bpstart()}; if they are not started, the workers are started
+and stopped in each call (see \code{\link{seqParallel}}).
 
     \code{seqMulticoreSetup} sets a multicore cluster and can avoid large
 memory usage when forking is used for the number of cores specified in the

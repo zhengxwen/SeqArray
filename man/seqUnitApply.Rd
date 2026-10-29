@@ -22,7 +22,8 @@ seqUnitApply(gdsfile, units, var.name, FUN, as.is=c("none", "list", "unlist"),
         object; if "unlist" is used, produces a vector which contains all the
         atomic components, via \code{unlist(..., recursive=FALSE)}}
     \item{parallel}{\code{FALSE} (serial processing), \code{TRUE} (multicore
-        processing), numeric value or other value; \code{parallel} is passed
+        processing), numeric value or other value (e.g., a cluster object or a
+        \code{BiocParallelParam} object); \code{parallel} is passed
         to the argument \code{cl} in \code{\link{seqParallel}}, see
         \code{\link{seqParallel}} for more details.}
     \item{.bl_size}{chuck size, the increment for load balancing, 256 for units}
