@@ -287,6 +287,31 @@ seqUnitSetDiff <- function(ut1, ut2, drop=TRUE)
 #######################################################################
 # Apply a user-defined function to each unit
 #
+
+# call FUN(x, ...) on the units in the i-th block in a worker of BiocParallel,
+#   using the file opened in .bp_init_worker()
+.bp_do_unit <- function(i, .fun, .args, .units, .var.name, .bl_size, .useraw,
+    .padNA, .tolist, .envir, .init)
+{
+    .bp_init_worker(i, .init)
+    .set_proc_block(i, NULL)
+    f <- .PkgEnv$bp_worker$gdsfile
+    # chuck size
+    k <- (i - 1L) * .bl_size
+    b <- min(.bl_size, length(.units) - k)
+    rv <- vector("list", b)
+    # set variant filter for each sub unit
+    for (j in seq_len(b))
+    {
+        seqSetFilter(f, variant.sel=.units[[j+k]], verbose=FALSE)
+        x <- seqGetData(f, .var.name, .useraw, .padNA, .tolist, .envir)
+        v <- do.call(.fun, c(list(x), .args), quote=TRUE)
+        if (!is.null(v)) rv[[j]] <- v
+    }
+    # return
+    rv
+}
+
 seqUnitApply <- function(gdsfile, units, var.name, FUN,
     as.is=c("none", "list", "unlist"), parallel=FALSE, ..., .bl_size=256L,
     .progress=FALSE, .useraw=FALSE, .padNA=TRUE, .tolist=FALSE, .envir=NULL,
@@ -339,6 +364,45 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             if (!is.null(v)) ans[[i]] <- v
             if (!is.null(progress)) .seqProgForward(progress, 1L)
         }
+        # release progress info bar
+        remove(progress)
+
+    } else if (inherits(parallel, "BiocParallelParam"))
+    {
+        # multiple cores with BiocParallel
+
+        # parameters for load balancing
+        n <- length(units$index)
+        .bl_size <- as.integer(.bl_size)
+        if (is.na(.bl_size) || (.bl_size * njobs > n))
+        {
+            .bl_size <- n %/% njobs
+            if (.bl_size <= 0L) .bl_size <- 1L
+        }
+        ntot <- as.integer(ceiling(n / .bl_size))
+
+        # start the workers if needed, so that they are kept during this call
+        isup <- BiocParallel::bpisup(parallel)
+        if (!isup) BiocParallel::bpstart(parallel)
+        token <- .bp_token()
+        # the file is opened once in each worker with the sample selection
+        init <- list(token=token, pkgname=attr(gdsfile$filename, "pkgname"),
+            package=.package, cnt=njobs, blcnt=ntot, gds.fn=gdsfile$filename,
+            sel=list(.compress(.Call(SEQ_GetSpaceSample, gdsfile)), NULL))
+        # finalize the workers on exit, and stop the workers if started here
+        on.exit(.bp_done(parallel, isup, token), add=TRUE)
+
+        # progress information
+        progress <- if (.progress) .seqProgress(n) else NULL
+        updatefun <- if (.progress)
+            function(i) .seqProgForward(progress, .bl_size) else NULL
+        # distributed for-loop
+        ans <- .bp_dynamic_call(parallel, ntot, .dofun = .bp_do_unit,
+            .combinefun="list", .updatefun=updatefun, .fun=FUN,
+            .args=list(...), .units=units$index, .var.name=var.name,
+            .bl_size=.bl_size, .useraw=.useraw, .padNA=.padNA,
+            .tolist=.tolist, .envir=.envir, .init=init)
+        ans <- unlist(ans, recursive=FALSE)
         # release progress info bar
         remove(progress)
 

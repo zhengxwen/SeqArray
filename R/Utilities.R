@@ -908,6 +908,30 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 # call .dofun(i, ...) in a worker, and return list(i, value)
 .bp_tag <- function(i, .dofun, ...) list(i, .dofun(i, ...))
 
+# the identifier of a call, so that each worker is initialized once per call
+.bp_token <- function()
+{
+    .PkgEnv$bp_ncall <- if (is.null(.PkgEnv$bp_ncall)) 1L else
+        .PkgEnv$bp_ncall + 1L
+    paste(Sys.getpid(), .PkgEnv$bp_ncall)
+}
+
+# finalize the workers initialized in the call 'token', and stop the workers
+#   if they are not started before the call (isup=FALSE); each worker receives
+#   one of the jobs with SnowParam and MulticoreParam, but it is not
+#   guaranteed with the other backends
+.bp_done <- function(cl, isup, token, .finalize=NULL, .initparam=NULL)
+{
+    tryCatch({
+        if (is.function(.finalize) || isup)
+        {
+            BiocParallel::bplapply(seq_len(BiocParallel::bpnworkers(cl)),
+                .bp_final, .token=token, .fun=.finalize, .param=.initparam,
+                BPPARAM=cl)
+        }
+    }, finally = if (!isup) BiocParallel::bpstop(cl))
+}
+
 # the functions below are called in the workers of BiocParallel; they are not
 #   closures, so that the caller's environment is not sent to the workers;
 #   the user-defined function and its arguments are passed in '.fun' and
@@ -916,10 +940,10 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
 #   these functions
 
 # initialize a worker once per call (identified by '.init$token'): load the
-#   packages, open the GDS file for load balancing and call .initialize();
-#   'i' is the first job run by the worker in this call, and it is used as the
-#   process id, which is in 1..njobs for SnowParam and MulticoreParam since
-#   the first njobs jobs are sent to different workers
+#   packages, open the GDS file for load balancing or seqUnitApply() and call
+#   .initialize(); 'i' is the first job run by the worker in this call, and it
+#   is used as the process id, which is in 1..njobs for SnowParam and
+#   MulticoreParam since the first njobs jobs are sent to different workers
 .bp_init_worker <- function(i, .init)
 {
     if (identical(.PkgEnv$bp_worker$token, .init$token)) return(invisible())
@@ -936,13 +960,14 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     .init_proc(i, .init$cnt, if (is.null(st)) FALSE else st)
     .set_proc_block(0L, .init$blcnt)
     .PkgEnv$process_status_fname <- st
-    # open the file for load balancing
+    # open the file for load balancing or seqUnitApply()
     if (!is.null(.init$gds.fn))
     {
         f <- seqOpen(.init$gds.fn, allow.duplicate=TRUE)
         .PkgEnv$bp_worker$gdsfile <- f
         ss <- .decompress(.init$sel[[1L]])
-        vs <- .decompress(.init$sel[[2L]])
+        # no variant selection for seqUnitApply()
+        vs <- if (!is.null(.init$sel[[2L]])) .decompress(.init$sel[[2L]])
         seqSetFilter(f, sample.sel=ss, variant.sel=vs, verbose=FALSE)
         .PkgEnv$bp_worker$sample.sel <- ss
         .PkgEnv$bp_worker$variant.sel <- vs
@@ -1032,8 +1057,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     .balancing, .bl_size, .bl_progress, .status_file, .package, ...)
 {
     # number of workers
-    nworker <- BiocParallel::bpnworkers(cl)
-    njobs <- nworker
+    njobs <- BiocParallel::bpnworkers(cl)
     # the arguments passed to FUN
     args <- list(...)
 
@@ -1062,28 +1086,14 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     # start the workers if needed, so that they are kept during this call
     isup <- BiocParallel::bpisup(cl)
     if (!isup) BiocParallel::bpstart(cl)
-    # the identifier of this call, so that each worker is initialized once
-    .PkgEnv$bp_ncall <- if (is.null(.PkgEnv$bp_ncall)) 1L else
-        .PkgEnv$bp_ncall + 1L
-    token <- paste(Sys.getpid(), .PkgEnv$bp_ncall)
+    token <- .bp_token()
     init <- list(token=token,
         pkgname = if (inherits(gdsfile, "SeqVarGDSClass"))
             attr(gdsfile$filename, "pkgname"),
         package=.package, cnt=njobs, blcnt=0L, st_fname=st_fname,
         initialize=.initialize, param=.initparam)
-    # finalize the workers on exit, and stop the workers if started here;
-    #   each worker receives one of the jobs with SnowParam and
-    #   MulticoreParam, but it is not guaranteed with the other backends
-    on.exit({
-        tryCatch({
-            if (is.function(.finalize) || isup)
-            {
-                BiocParallel::bplapply(seq_len(nworker), .bp_final,
-                    .token=token, .fun=.finalize, .param=.initparam,
-                    BPPARAM=cl)
-            }
-        }, finally = if (!isup) BiocParallel::bpstop(cl))
-    }, add=TRUE)
+    # finalize the workers on exit, and stop the workers if started here
+    on.exit(.bp_done(cl, isup, token, .finalize, .initparam), add=TRUE)
 
     if (!isTRUE(.balancing) || split == "none")
     {
