@@ -633,6 +633,10 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         } else {
             if (njobs > dm[2L]) cl <- cl[1L:dm[2L]]
         }
+    }
+    # the selection used in the child processes (also for split="none")
+    if (inherits(gdsfile, "SeqVarGDSClass"))
+    {
         sel <- seqGetFilter(gdsfile, .useraw=TRUE)
         sel$sample.sel <- .compress(sel$sample.sel)
         sel$variant.sel <- .compress(sel$variant.sel)
@@ -1079,11 +1083,15 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         dm <- .seldim(gdsfile)
         # no more jobs than the selected variants or samples
         njobs <- min(njobs, if (split == "by.variant") dm[3L] else dm[2L])
+    } else
+        dm <- NULL
+    # the selection used in the workers (also for split="none")
+    if (inherits(gdsfile, "SeqVarGDSClass"))
+    {
         sel <- seqGetFilter(gdsfile, .useraw=TRUE)
         sel$sample.sel <- .compress(sel$sample.sel)
         sel$variant.sel <- .compress(sel$variant.sel)
     } else {
-        dm <- NULL
         sel <- list(sample.sel=raw(), variant.sel=raw())
     }
     # status files

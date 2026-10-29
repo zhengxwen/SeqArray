@@ -66,6 +66,12 @@ test.biocparallel_seqParallel <- function()
 		checkIdentical(list(1L), seqParallel(bp, f, function(g)
 			length(seqGetData(g, "variant.id")), .combine="list"),
 			msg("1 variant selected"))
+		# split="none", each worker uses all selected samples and variants
+		seqSetFilter(f, sample.sel=1:10, variant.sel=seq(1L, 1348L, 2L),
+			verbose=FALSE)
+		checkIdentical(rep(list(c(10L, 674L)), 2L), seqParallel(bp, f,
+			function(g) SeqArray:::.seldim(g)[2:3], split="none",
+			.combine="list"), msg("split='none'"))
 		seqResetFilter(f, verbose=FALSE)
 	}
 

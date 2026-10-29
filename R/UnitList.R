@@ -444,6 +444,7 @@ seqUnitApply <- function(gdsfile, units, var.name, FUN,
             # distribute the parameters to each node
             clusterCall(parallel, function(fn, ut, vn, ss, env, pkg)
             {
+                .load_package(attr(fn, "pkgname"))
                 .load_package(pkg)
                 f <- SeqArray::seqOpen(fn, allow.duplicate=TRUE)
                 .PkgEnv$gdsfile <- f

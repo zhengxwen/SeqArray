@@ -87,6 +87,13 @@ BUG FIXES
       `seqParallelSetup(TRUE)` or `seqParallelSetup(<number>)` on Linux and
       macOS, so the following calls still ran in parallel
 
+    o `seqParallel(, gdsfile, split="none")` failed with a cluster or a
+      `BiocParallelParam` object, if `gdsfile` was a GDS file
+
+    o `seqUnitApply()` with a cluster object did not load the package in
+      `attr(gdsfile$filename, "pkgname")` in the child processes, as
+      `seqParallel()` does
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------
