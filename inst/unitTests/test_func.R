@@ -443,6 +443,33 @@ test.parallel_cluster <- function()
 	checkIdentical(rep(list(c(10L, 674L)), 2L), v,
 		"seqParallel(, split='none') with a cluster")
 
+	# no more processes than the selected variants or samples
+	seqSetFilter(f, sample.sel=5L, variant.sel=3L, verbose=FALSE)
+	pv <- function(g) c(SeqArray:::.seldim(g)[2:3], SeqArray:::process_index,
+		SeqArray:::process_count)
+	for (bl in c(FALSE, TRUE))
+	{
+		for (sp in c("by.variant", "by.sample"))
+		{
+			v <- seqParallel(cl, f, pv, split=sp, .balancing=bl,
+				.combine="list")
+			checkIdentical(list(c(1L, 1L, 1L, 1L)), v, paste0(
+				"seqParallel() with a cluster, 1 selected, ", sp,
+				", .balancing=", bl))
+		}
+	}
+
+	# the status files are removed
+	seqResetFilter(f, verbose=FALSE)
+	st <- list.files(".", "^_parallel_.*\\.txt$")
+	for (bl in c(FALSE, TRUE))
+	{
+		seqParallel(cl, f, function(g) NULL, .balancing=bl, .status_file=TRUE)
+		checkIdentical(st, list.files(".", "^_parallel_.*\\.txt$"),
+			paste0("seqParallel() with a cluster, .status_file=TRUE, ",
+			".balancing=", bl))
+	}
+
 	invisible()
 }
 

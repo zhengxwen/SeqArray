@@ -94,6 +94,16 @@ BUG FIXES
       `attr(gdsfile$filename, "pkgname")` in the child processes, as
       `seqParallel()` does
 
+    o `seqParallel()` with a cluster object, if fewer variants (or samples)
+      were selected than the nodes: `.initialize` and `.finalize` were
+      called more than once in a node with incorrect `process_index` and
+      `process_count`, and `FUN` was also called with an empty selection
+      if `.balancing=FALSE`
+
+    o `seqParallel(, .balancing=TRUE, .status_file=TRUE)` with a cluster
+      object did not remove the status files "_parallel_*.txt" in the
+      working directory, e.g., `seqApply(, parallel=, .progress=TRUE)`
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------

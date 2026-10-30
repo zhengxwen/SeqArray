@@ -614,14 +614,6 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
     # number of nodes
     stopifnot(inherits(cl, "cluster"))
     njobs <- length(cl)
-    # status files
-    st_fname <- NULL
-    if (isTRUE(.status_file))
-    {
-        st_fname <- .get_status_filename(njobs)
-        file.create(st_fname, showWarnings=FALSE)
-        on.exit(unlink(st_fname, force=TRUE))
-    }
 
     if (split %in% c("by.variant", "by.sample"))
     {
@@ -633,6 +625,8 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         } else {
             if (njobs > dm[2L]) cl <- cl[1L:dm[2L]]
         }
+        # no more jobs than the selected variants or samples
+        njobs <- length(cl)
     }
     # the selection used in the child processes (also for split="none")
     if (inherits(gdsfile, "SeqVarGDSClass"))
@@ -642,6 +636,14 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         sel$variant.sel <- .compress(sel$variant.sel)
     } else {
         sel <- list(sample.sel=raw(), variant.sel=raw())
+    }
+    # status files
+    st_fname <- NULL
+    if (isTRUE(.status_file))
+    {
+        st_fname <- .get_status_filename(njobs)
+        file.create(st_fname, showWarnings=FALSE)
+        on.exit(unlink(st_fname, force=TRUE))
     }
 
     # call the user-defined function
@@ -703,7 +705,7 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         on.exit({
             clusterApply(cl, seq_len(njobs), fun=.fc_parallel_finalizer,
                 fc=.finalize, param=.initparam)
-        })
+        }, add=TRUE)
 
         # do parallel
         ans <- .DynamicClusterCall(cl, v$nblock,
