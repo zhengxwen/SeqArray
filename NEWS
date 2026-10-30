@@ -104,6 +104,10 @@ BUG FIXES
       object did not remove the status files "_parallel_*.txt" in the
       working directory, e.g., `seqApply(, parallel=, .progress=TRUE)`
 
+    o `seqParApply(, .balancing=TRUE)` with a `BiocParallelParam` object did
+      not balance the workload, since `x` was split into one chunk per
+      worker in advance
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------

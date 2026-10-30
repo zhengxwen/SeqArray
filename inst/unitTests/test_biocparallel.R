@@ -20,6 +20,14 @@ library(RUnit)
 		if (BiocParallel::bpisup(bp)) BiocParallel::bpstop(bp)
 }
 
+# the first element is slow; defined here instead of in a test function, so
+#   that the objects in the test function are not sent to the workers
+.bp_slow1 <- function(i)
+{
+	if (i == 1L) Sys.sleep(1)
+	c(i, Sys.getpid())
+}
+
 
 test.biocparallel_seqParallel <- function()
 {
@@ -196,6 +204,32 @@ test.biocparallel_error <- function()
 	v <- BiocParallel::bplapply(1:2, function(i)
 		is.null(SeqArray:::.PkgEnv$bp_worker), BPPARAM=bp)
 	checkTrue(all(unlist(v)), "no state left in the workers")
+
+	invisible()
+}
+
+
+test.biocparallel_parapply <- function()
+{
+	if (!requireNamespace("BiocParallel", quietly=TRUE)) return(invisible())
+	lst <- .bp_list()
+	on.exit(.bp_stop(lst))
+
+	for (nm in names(lst))
+	{
+		bp <- lst[[nm]]
+		msg <- function(s) paste0(nm, ": ", s)
+		# the first element is slow, so the others are sent to the other worker
+		m <- do.call(rbind, seqParApply(bp, 1:6, .bp_slow1, .balancing=TRUE))
+		checkIdentical(1:6, m[,1L], msg(".balancing=TRUE, results"))
+		checkTrue(all(m[-1L,2L] != m[1L,2L]), msg(".balancing=TRUE, workers"))
+		m <- do.call(rbind, seqParApply(bp, 1:6, .bp_slow1, .balancing=FALSE))
+		checkIdentical(1:6, m[,1L], msg(".balancing=FALSE, results"))
+	}
+
+	# the workers not started are stopped after the call
+	checkTrue(!BiocParallel::bpisup(lst$mcore), "bpisup()")
+	checkTrue(BiocParallel::bpisup(lst$snow), "bpisup()")
 
 	invisible()
 }

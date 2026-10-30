@@ -95,6 +95,13 @@ and \code{MulticoreParam}, the process ID (i.e., the first argument of
 \code{SeqArray:::process_count}; for the other backends, it may be larger,
 and \code{.finalize} may not be called in all initialized workers.
 
+    In \code{seqParApply()} with a \code{BiocParallelParam} object,
+\code{.balancing=TRUE} sends each element of \code{x} to an idle worker as a
+separate task (like \code{clusterApplyLB()} for a cluster object), which could
+be slow if \code{x} has many elements and each takes little time; in that
+case, \code{.balancing=FALSE} is faster, which splits \code{x} into one chunk
+per worker in advance.
+
     \code{seqParallel(, gdsfile=NULL, FUN=..., split="none")} could be used to
 setup multiple streams of pseudo-random numbers, and see
 \code{\link{nextRNGStream}} or \code{\link{nextRNGSubStream}} in the package

@@ -1319,7 +1319,20 @@ seqParApply <- function(cl=seqGetParallel(), x, FUN, .balancing=TRUE, ...)
     } else if (inherits(cl, "BiocParallelParam"))
     {
         # multiple cores
-        ans <- BiocParallel::bplapply(x, FUN, ..., BPPARAM=cl)
+        if (.balancing)
+        {
+            # one task per element, sent to an idle worker like clusterApplyLB();
+            #   the workers not started are started once for the call, otherwise
+            #   MulticoreParam forks a new process for each task
+            if (!BiocParallel::bpisup(cl))
+            {
+                BiocParallel::bpstart(cl)
+                on.exit(BiocParallel::bpstop(cl))
+            }
+            ans <- BiocParallel::bplapply(x, FUN, ..., BPPARAM=cl,
+                BPOPTIONS=BiocParallel::bpoptions(tasks=length(x)))
+        } else
+            ans <- BiocParallel::bplapply(x, FUN, ..., BPPARAM=cl)
     } else {
         # multiple cores
         if (!inherits(cl, "cluster"))
