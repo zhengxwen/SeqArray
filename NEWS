@@ -52,6 +52,8 @@ UTILITIES
     o the internal function `.buffer_position()` is removed, since the
       positions of all variants are no longer loaded into memory
 
+    o `seqVCF2GDS()` is faster on VCF files with many INFO fields
+
 BUG FIXES
 
     o `seqGetData(, "position")` and `seqSetFilterChrom(, from.bp=, to.bp=)`

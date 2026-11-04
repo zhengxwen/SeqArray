@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <set>
+#include <unordered_map>
 #include <algorithm>
 #include "Index.h"
 #include "CompressIO.h"
@@ -1428,6 +1429,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 
 		// INFO
 		vector<TVCF_Info> info_list;
+		// INFO ID -> the index in info_list, instead of comparing with all IDs
+		unordered_map<string, size_t> info_index;
 		set<string> info_missing;
 		{
 			SEXP info = RGetListElement(header, "info");
@@ -1449,6 +1452,8 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					(string("annotation/info/@") + val.name).c_str(), FALSE);
 
 				info_list.push_back(val);
+				// the first one is used if the ID is duplicated
+				info_index.insert(make_pair(val.name, info_list.size()-1));
 			}
 		}
 
@@ -1728,10 +1733,11 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 						Text_pBegin = p;
 				}
 
-				for (pI=info_list.begin(); pI != info_list.end(); pI++)
 				{
-					if (pI->name == cell)
-						break;
+					unordered_map<string, size_t>::const_iterator it =
+						info_index.find(cell);
+					pI = (it != info_index.end()) ?
+						(info_list.begin() + it->second) : info_list.end();
 				}
 
 				if (pI != info_list.end())
