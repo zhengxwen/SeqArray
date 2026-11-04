@@ -84,7 +84,8 @@ tell the total number of cluster nodes and which cluster node being used.
     When \code{cl} is a \code{BiocParallelParam} object, the jobs are sent to
 the workers one by one via \code{BiocParallel::bpiterate()} and the results
 are combined once they are received (\code{BiocParallel::bplapply()} is used
-for a \code{DoparParam} object, since \code{bpiterate()} is not supported).
+for a \code{DoparParam} or \code{BatchtoolsParam} object, and the results are
+combined after all jobs are done).
 If the workers are not started, they are started by \code{bpstart()} at the
 beginning of the call and stopped by \code{bpstop()} at the end; otherwise,
 they are kept running. \code{.initialize} is called in a worker when it

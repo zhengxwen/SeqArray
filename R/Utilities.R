@@ -904,9 +904,11 @@ seqStorageOption <- function(compression=c("ZIP_RA", "ZIP_RA.fast",
         NULL
     }
 
-    if (inherits(cl, "DoparParam"))
+    if (inherits(cl, c("DoparParam", "BatchtoolsParam")))
     {
-        # bpiterate() is not supported, so combine after all jobs are done
+        # bpiterate() is not supported by DoparParam, and it does not clear
+        #   the registry of BatchtoolsParam, so the next bplapply() fails;
+        #   combine after all jobs are done
         v <- BiocParallel::bplapply(seq_len(.num), .bp_tag, .dofun=.dofun,
             ..., BPPARAM=cl)
         for (d in v) reduce(NULL, d)

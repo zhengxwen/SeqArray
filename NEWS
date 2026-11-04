@@ -108,6 +108,10 @@ BUG FIXES
       not balance the workload, since `x` was split into one chunk per
       worker in advance
 
+    o `seqParallel()` and `seqUnitApply()` with a `BatchtoolsParam` object
+      failed with "Registry must be empty" after all jobs were done, if
+      `.finalize` was given or the workers had been started by the user
+
 
 CHANGES IN VERSION 1.53.3
 -------------------------
