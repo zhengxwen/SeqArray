@@ -618,8 +618,6 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
                 `annotation/format/GP`="packedreal16:offset=0,scale=0.0001"
             )
         }
-    } else {
-        scenario <- ""
     }
 
     stopifnot(inherits(storage.option, "SeqGDSStorageClass"))
@@ -778,10 +776,10 @@ seqVCF2GDS <- function(vcf.fn, out.fn, header=NULL,
         .cat("    genotype field: ", genotype.var.name)
         .cat("    genotype storage: ", genotype.storage)
 
-        if (!is.character(storage.tmp))
-            storage.tmp <- "customized"
-        .cat("    compression method: ", storage.tmp)
-        if (identical(scenario, "imputation"))
+        .cat("    compression method: ",
+            if (is.character(storage.tmp)) storage.tmp else "customized")
+        # 'scenario' is not used with a customized storage option
+        if (scenario=="imputation" && is.character(storage.tmp))
         {
             cat("    scenario: imputation\n")
             if ("DS" %in% header$format$ID)

@@ -1,4 +1,4 @@
-CHANGES IN VERSION 1.53.4
+CHANGES IN VERSION 1.53.6
 -------------------------
 
 NEW FEATURES
@@ -65,6 +65,9 @@ BUG FIXES
 
     o `seqVCF2GDS()` failed with "more columns than what expected" on a VCF
       file with a FORMAT column but no sample
+
+    o `seqVCF2GDS(, parallel=)` failed with "'arg' should be one of ..." if
+      `storage.option` was an object from `seqStorageOption()`
 
     o `seqDigest()` and `seqGet2bGeno()` in parallel failed if another GDS
       file had been opened before the input file, and `seqDigest()` returned
