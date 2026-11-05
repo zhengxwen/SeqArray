@@ -54,6 +54,9 @@ UTILITIES
 
     o `seqVCF2GDS()` is faster on VCF files with many INFO fields
 
+    o `seqVCF2GDS()` parses diploid genotypes with single-digit alleles
+      (e.g., "0|1" and "0/1") faster
+
 BUG FIXES
 
     o `seqGetData(, "position")` and `seqSetFilterChrom(, from.bp=, to.bp=)`

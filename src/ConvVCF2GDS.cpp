@@ -581,6 +581,12 @@ inline static C_Int16 getGeno(const char *p, const char *end, int num_allele)
 	return val;
 }
 
+/// whether 'ch' is a single-digit allele index less than 'num_allele'
+inline static bool is_digit_geno(char ch, int num_allele)
+{
+	return ('0' <= ch) && (ch <= '9') && ((ch - '0') < num_allele);
+}
+
 
 /// get a real number from a string
 inline static double getFloat(char *p, char *end)
@@ -1926,75 +1932,91 @@ COREARRAY_DLL_EXPORT SEXP SEQ_VCF_Parse(SEXP vcf_fn, SEXP header,
 					// -------------------------------------------------
 					// the first field -- genotypes (GT)
 
-					const char *p = Text_pBegin;
-					while ((Text_pBegin<Text_pEnd) && (*Text_pBegin!=':'))
-						Text_pBegin ++;
-					const char *end = Text_pBegin;
-
-					if ((Text_pBegin<Text_pEnd) && (*Text_pBegin==':'))
-						Text_pBegin ++;
-
-					I32s.clear(); // genotype extra data
-					I8s.clear(); // phase extra data
-					size_t tmp_num_ploidy = 0;
-
-					while (p < end)
+					// fast path for a diploid call with single-digit alleles (e.g.,
+					//     "0|1" or "0/1"), which is the most common; the others are
+					//     parsed by the general code in the else-branch
+					const char *s = Text_pBegin;
+					const size_t n = Text_pEnd - Text_pBegin;
+					if ((num_ploidy == 2) && ((n == 3) || ((n > 3) && (s[3] == ':'))) &&
+						((s[1] == '|') || (s[1] == '/')) &&
+						is_digit_geno(s[0], num_allele) &&
+						is_digit_geno(s[2], num_allele))
 					{
-						const char *start = p;
-						while ((p<end) && (*p!='|') && (*p!='/'))
-							p ++;
-						C_Int16 g = getGeno(start, p, num_allele);
+						*pGeno ++ = s[0] - '0';
+						*pGeno ++ = s[2] - '0';
+						*pPhase ++ = (s[1] == '|') ? 1 : 0;
+						Text_pBegin += (n == 3) ? 3 : 4;  // skip ':' if any
+					} else {
+						const char *p = Text_pBegin;
+						while ((Text_pBegin<Text_pEnd) && (*Text_pBegin!=':'))
+							Text_pBegin ++;
+						const char *end = Text_pBegin;
 
-						tmp_num_ploidy ++;
-						if (tmp_num_ploidy <= num_ploidy)
-							*pGeno ++ = g;
-						else
-							I32s.push_back(g);
+						if ((Text_pBegin<Text_pEnd) && (*Text_pBegin==':'))
+							Text_pBegin ++;
 
-						if (p < end)
+						I32s.clear(); // genotype extra data
+						I8s.clear(); // phase extra data
+						size_t tmp_num_ploidy = 0;
+
+						while (p < end)
 						{
-							C_Int8 v = 0;
-							if (*p == '|')
-							{
-								v = 1; p ++;
-							} else if (*p == '/')
-							{
-								v = 0; p ++;
-							}
-							if (tmp_num_ploidy <= num_ploidy_less)
-								*pPhase ++ = v;
+							const char *start = p;
+							while ((p<end) && (*p!='|') && (*p!='/'))
+								p ++;
+							C_Int16 g = getGeno(start, p, num_allele);
+
+							tmp_num_ploidy ++;
+							if (tmp_num_ploidy <= num_ploidy)
+								*pGeno ++ = g;
 							else
-								I8s.push_back(v);
+								I32s.push_back(g);
+
+							if (p < end)
+							{
+								C_Int8 v = 0;
+								if (*p == '|')
+								{
+									v = 1; p ++;
+								} else if (*p == '/')
+								{
+									v = 0; p ++;
+								}
+								if (tmp_num_ploidy <= num_ploidy_less)
+									*pPhase ++ = v;
+								else
+									I8s.push_back(v);
+							}
 						}
-					}
 
-					for (size_t m=tmp_num_ploidy; m < num_ploidy; m++)
-						*pGeno ++ = -1;
-					for (size_t m=tmp_num_ploidy; m < num_ploidy_less; m++)
-						*pPhase ++ = 0;
+						for (size_t m=tmp_num_ploidy; m < num_ploidy; m++)
+							*pGeno ++ = -1;
+						for (size_t m=tmp_num_ploidy; m < num_ploidy_less; m++)
+							*pPhase ++ = 0;
 
-					// check "genotype/extra", e.g., triploid call: 0/0/1
-					if (!I32s.empty())
-					{
-						GDS_Array_AppendData(varGenoExtra, I32s.size(), &(I32s[0]), svInt32);
-						I32 = si + 1;
-						GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-						I32 = variant_index - variant_start_index;
-						GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-						I32 = I32s.size();
-						GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
-					}
+						// check "genotype/extra", e.g., triploid call: 0/0/1
+						if (!I32s.empty())
+						{
+							GDS_Array_AppendData(varGenoExtra, I32s.size(), &(I32s[0]), svInt32);
+							I32 = si + 1;
+							GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
+							I32 = variant_index - variant_start_index;
+							GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
+							I32 = I32s.size();
+							GDS_Array_AppendData(varGenoExtraIdx, 1, &I32, svInt32);
+						}
 
-					// check "phase/extra", e.g., triploid call: 0/0/1
-					if (varPhase && !I8s.empty())
-					{
-						GDS_Array_AppendData(varPhaseExtra, I8s.size(), &(I8s[0]), svInt8);
-						I32 = si + 1;
-						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-						I32 = variant_index - variant_start_index;
-						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
-						I32 = I8s.size();
-						GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+						// check "phase/extra", e.g., triploid call: 0/0/1
+						if (varPhase && !I8s.empty())
+						{
+							GDS_Array_AppendData(varPhaseExtra, I8s.size(), &(I8s[0]), svInt8);
+							I32 = si + 1;
+							GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+							I32 = variant_index - variant_start_index;
+							GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+							I32 = I8s.size();
+							GDS_Array_AppendData(varPhaseExtraIdx, 1, &I32, svInt32);
+						}
 					}
 				}
 
